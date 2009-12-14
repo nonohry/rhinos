@@ -1,8 +1,5 @@
 [BITS 16]
 	
-%define	KLOADOFF	0x200	; Adresse de chargement du noyau
-%define KSIZE		1	; Taille du noyau
-	
 jmp 	start
 
 	fastmsg         db      'Checking BIOS fast A20 support ...',13,10,0
@@ -21,6 +18,18 @@ jmp 	start
 	ES_SELECTOR	equ	24 ; ES = 00000011  0  00   = (byte) 24
 	SS_SELECTOR	equ	32 ; SS = 00000100  0  00   = (byte) 32
 
+	;;
+	;; Autres
+	;; 
+	
+	KLOADOFF	equ	0x820	; Segment de chargement du noyau
+	KADDR		equ	0x8200	; Adresse de chargement du noyau
+	KSIZE		equ	1	; Taille du noyau
+	CUROFF		equ	0x7E0	; Offset courant
+	STACKPTR	equ	0x7C00	; Pointeur de pile
+
+	
+	
 	;;
 	;; GDT  
 	;; 
@@ -64,7 +73,7 @@ real2phys:			; Arg: DX=Segment, AX=Offset
 	
 start:
 	
-	mov	ax,0x100	; Simule une origine a 0
+	mov	ax,CUROFF	; Simule une origine a 0
 	mov	ds,ax		; alors que le boot
 	mov	es,ax		; nous place a 0x1000
 
@@ -147,14 +156,16 @@ fast_ok:
 	jmp	next		; Vide les caches processeur en sautant
 
 next:
+
+	
 	mov     ax,DS_SELECTOR
 	mov     ds,ax  	 	; Reinitialisation
 	mov     ax,ES_SELECTOR	;
 	mov     es,ax   	; des registres
 	mov     ax,SS_SELECTOR	;
 	mov     ss,ax   	; de segments
-	mov     esp,0x9F000
-	
-	jmp	CS_SELECTOR:0x2000 ; Saut vers les noyau
+	mov     esp,STACKPTR
+
+	jmp	CS_SELECTOR:KADDR 	; Saut vers les noyau	
 
 	times	1024-($-$$) 	db 0	; Padding pour atteindre 1024 octets

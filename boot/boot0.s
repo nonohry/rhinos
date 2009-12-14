@@ -1,7 +1,5 @@
 [BITS 16]
 
-%define	LOADOFF		0x100	; Offset du second programme de boot
-%define LOADSIZE	2	; Taille (en secteur)
 	
 jmp	start			; Evite les declarations des donnees & fonctions
 	
@@ -15,6 +13,12 @@ jmp	start			; Evite les declarations des donnees & fonctions
 	i80286msg	db	'80286 CPU found, need 80386+ CPU',13,10,0
 	i80386msg	db	'80386 CPU found !', 13,10,0
 	bootdrv		db	0
+
+	LOADOFF		equ	0x7E0 	; Offset du second programme de boot
+	LOADSIZE	equ	2	; Taille (en secteur de 512o)
+	CUROFF		equ	0x7C0 	; Offset Courant
+	STACKPTR	equ	0x1C00 	; Offset SP
+	STACKOFF	equ	0x600 	; Base de la pile
 	
 	;;
 	;; Fonction Utiles
@@ -62,14 +66,14 @@ cpu_end:
 	;; 
 
 start:
-	mov	ax,0x7C0	; Simule une origine a 0
+	mov	ax,CUROFF	; Simule une origine a 0
 	mov	ds,ax		; alors que le BIOS
 	mov	es,ax		; nous place a 0x7C00
 
 	cli			; Bloque les interruptions
-	mov	ax,0x9000	; L'adresse de le pile (comme sur Linux)
+	mov	ax,STACKOFF	; L'adresse de le pile
 	mov	ss,ax		; On la met dans SS
-	mov	sp,0xFFFF	; Etend la pile au maximum
+	mov	sp,STACKPTR	; Positionne SP
 	sti			; Restaure les interruptions
 
 	mov	[bootdrv],dl	; Recupere le lecteur de boot
@@ -88,7 +92,7 @@ start:
 	mov	cl,2		; Le numero de secteur dans CL
 	call	load_sect	; Appelle la fonction de chargement
 
-	jmp	LOADOFF:0x0	; Saute au second boot
+	jmp	LOADOFF:0x0	; Saute au second boot jmp	LOADOFF:0x0
 	
 	times	510-($-$$) db 0	; Padding pour atteinde 512 octets
 	dw	0xAA55		; BIOS Magic Number

@@ -25,6 +25,9 @@ clean:
 	@for dir in $(SUBDIRS) ; do\
 	cd $$dir; \
 	echo "Cleaning $$dir"; \
-	$(RM) *~; \
+	$(MAKE) clean ;\
 	cd ..; \
 	done
+	@echo "Cleaning current dir";
+	$(RM) $(IMG)
+	$(RM) *~

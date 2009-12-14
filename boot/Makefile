@@ -4,6 +4,7 @@
 # Macros
 
 AS	=	nasm
+RM	=	rm -f
 
 # Regle de Suffixes
 
@@ -19,3 +20,7 @@ ASM_OUT	=	${ASM_SRC:.s=}
 # Cibles
 
 boot:	$(ASM_OUT)
+
+clean:
+	$(RM) *~
+	$(RM) $(ASM_OUT)
