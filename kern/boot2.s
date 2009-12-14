@@ -12,6 +12,10 @@
 	out	dx,ax
 	mov	ax,'e'
 	out	dx,ax
+	mov	ax,13
+	out	dx,ax
+	mov	ax,10
+	out	dx,ax
 	
 start:
 	
