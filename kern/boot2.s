@@ -1,5 +1,5 @@
 [BITS 32]
-
+[ORG 0x8200]
 	
 	mov	dx,0xe9
 	mov	ax,'P'
