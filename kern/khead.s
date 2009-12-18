@@ -1,12 +1,20 @@
 [BITS 32]
 
+
 global	_bochs_print
 extern	cstart
 
-	
-section .text
-	
-jmp	start
+	;;
+	;; Point d'Entree
+	;; 
+
+start:
+	push	pmodemsg
+	call	_bochs_print
+	call	cstart
+
+hang:
+	jmp 	hang
 
 	;;
 	;; Affichage dans Bochs
@@ -32,13 +40,9 @@ bochs_end:
 	pop	ebp		; Restaure EBP
 	ret
 
+
 	;;
-	;; Point d'Entree
-	;; 
+	;; Declaration des Donnees
+	;;
 
-start:
-	call	cstart
-
-hang:
-	jmp 	hang
-	
+	pmodemsg 	db	'Protected Mode enabled !',13,10,0	

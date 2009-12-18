@@ -14,10 +14,9 @@
 
 extern void _bochs_print(char*);
 
-
 void cstart()
 {
   
-  _bochs_print("Protected Mode enabled !\n");
+  _bochs_print("Fonction cstart\n");
 
 }

@@ -6,7 +6,7 @@
 AS	=	nasm -f elf
 CC	=	gcc -Wall -c
 RM	=	rm -f
-LD	=	ld --oformat binary -Ttext 0x8200
+LD	=	ld -s --oformat binary -Ttext 0x8200
 
 # Regle de Suffixes
 
