@@ -7,7 +7,7 @@ DD	=	dd
 RM	=	rm -f
 IMG	=	disk.img
 SIZE	=	2880 # secteurs de 512
-OBJ	=	boot/boot0 boot/boot1 kern/lowlvl
+OBJ	=	boot/boot0 boot/boot1 kern/kern
 
 
 sub:

@@ -1,9 +1,10 @@
 [BITS 32]
-[ORG 0x8200]
 
 global	_bochs_print
+extern	cstart
 
-segment .text
+	
+section .text
 	
 jmp	start
 
@@ -14,6 +15,8 @@ jmp	start
 _bochs_print:
 	push 	ebp         	; Sauvegarde de EBP
 	mov  	ebp,esp 	; Mise en place de la base
+	push	esi		; Sauvegarde ESI (Requis par GCC)
+	push	edi		; Sauvegarde EDI (Requis par GCC)
 	mov  	esi,[ebp+8]	; Recupere l'argument dans ESI
 bochs_loop:	
 	lodsb			; Identique a print_message
@@ -23,6 +26,8 @@ bochs_loop:
 	out	dx,al		; Emet le caractere courant
 	jmp	bochs_loop	; Boucle
 bochs_end:
+	pop	edi		; Restaure EDI
+	pop	esi		; Restaure ESI
 	mov	ebp,esp		; Restaure la pile
 	pop	ebp		; Restaure EBP
 	ret
@@ -32,16 +37,8 @@ bochs_end:
 	;; 
 
 start:
-	push	pmodemsg
-	call	_bochs_print
+	call	cstart
+
 hang:
 	jmp 	hang
-
 	
-	;;
-	;; Section de donnees
-	;; 
-	
-segment .data
-
-	pmodemsg	db	'Protected mode enabled !',13,10,0
