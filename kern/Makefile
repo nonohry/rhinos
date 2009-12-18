@@ -14,7 +14,7 @@ RM	=	rm -f
 	$(AS) $< 
 
 # Fichiers source et de sortie
-ASM_SRC	=	boot2.s
+ASM_SRC	=	lowlvl.s
 ASM_OUT	=	${ASM_SRC:.s=}
 
 # Cibles
