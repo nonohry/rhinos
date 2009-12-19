@@ -5,6 +5,7 @@
  */
 
 #include "types.h"
+#include "prot.h"
 
 /*
  * Declaration des fonctions assembleur
@@ -12,11 +13,11 @@
  *
  */
 
-extern void _bochs_print(char*);
+extern void bochs_print(char*);
 
 void cstart()
 {
   
-  _bochs_print("Fonction cstart\n");
+  bochs_print("Fonction cstart\n");
 
 }

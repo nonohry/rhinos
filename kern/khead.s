@@ -1,7 +1,7 @@
 [BITS 32]
 
 
-global	_bochs_print
+global	bochs_print
 extern	cstart
 
 	;;
@@ -10,7 +10,7 @@ extern	cstart
 
 start:
 	push	pmodemsg
-	call	_bochs_print
+	call	bochs_print
 	call	cstart
 
 hang:
@@ -20,7 +20,7 @@ hang:
 	;; Affichage dans Bochs
 	;; 
 	
-_bochs_print:
+bochs_print:
 	push 	ebp         	; Sauvegarde de EBP
 	mov  	ebp,esp 	; Mise en place de la base
 	push	esi		; Sauvegarde ESI (Requis par GCC)
