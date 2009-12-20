@@ -2,7 +2,8 @@
 
 
 global	bochs_print
-extern	cstart
+extern	cstart			; Fonction d'initialisation en C
+extern  gdt_desc		; Descripteur de la GDT en C
 
 	;;
 	;; Point d'Entree
@@ -12,6 +13,7 @@ start:
 	push	pmodemsg
 	call	bochs_print
 	call	cstart
+	
 
 hang:
 	jmp 	hang

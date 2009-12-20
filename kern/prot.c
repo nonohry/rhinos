@@ -17,7 +17,7 @@ PUBLIC void pmode_init()
 {
 
   gdt_desc.limit = GDT_SIZE*8;  /* GDT_SIZE descripteurs de 8 octets */
-  /* gdt_desc.base = linear(gdt);  /* Adresse de gdt dans l espace lineaire */
+  /* gdt_desc.base = linear(gdt);   Adresse de gdt dans l espace lineaire */
 
   return;
 }
