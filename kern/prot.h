@@ -36,6 +36,7 @@
 /* Masques pour le champ attributes de seg_desc */
 
 #define SEG_PRESENT     0x80 /* 10000000b = 0x80 - Segment Present en memoire */
+#define SEG_DPL_0       0x00 /* 00000000b = 0x00 - Niveau de Privilege 0 */
 #define SEG_DPL_1       0x20 /* 00100000b = 0x40 - Niveau de Privilege 1 */
 #define SEG_DPL_2       0x40 /* 01000000b = 0x40 - Niveau de Privilege 2 */
 #define SEG_DPL_3       0x60 /* 01100000b = 0x60 - Niveau de Privilege 3 */
@@ -68,6 +69,11 @@
 #define SEG_B           0x40 /* 01000000b = 0x40 */
 #define SEG_GRANULAR    0x80 /* 10000000b = 0x40 */
 
+/* Limite des segments  */
+
+#define GRANULAR_LIMIT  0xFFFFFL   /* Pas de granularite au dessous (L pour Long) */
+#define KERN_LIMIT      0xC0000       /* Limit de l'espace Noyau */
+
 
 /*****************************
  * Structures (cf Doc Intel)
@@ -91,7 +97,7 @@ struct seg_desc
 
 struct table_desc
 {
-  u8_t limit;
+  u16_t limit;
   u32_t base;
 } __attribute__ ((packed));
 
@@ -104,5 +110,7 @@ PUBLIC struct seg_desc gdt[GDT_SIZE]; /* GDT */
 PUBLIC struct table_desc gdt_desc;    /* Descripteur de la GDT */
 
 PUBLIC void pmode_init();
+PUBLIC void init_code_seg(struct seg_desc *desc, u32_t base, u32_t size, u32_t dpl);
+PUBLIC void init_data_seg(struct seg_desc *desc, u32_t base, u32_t size, u32_t dpl);
 
 #endif
