@@ -1,17 +1,15 @@
 #ifndef PROT_H
 #define PROT_H
 
-/*
+/*************
  * Includes 
- *
- */
+ *************/
 
 #include "types.h"
 
-/*
+/**************
  * Constantes
- *
- */
+ **************/
 
 
 /* Indexes de la GDT */
@@ -71,10 +69,9 @@
 #define SEG_GRANULAR    0x80 /* 10000000b = 0x40 */
 
 
-/*
+/*****************************
  * Structures (cf Doc Intel)
- *
- */
+ *****************************/
 
 
 /* Descripteur de Segment */
@@ -97,5 +94,12 @@ struct table_desc
   u8_t limit;
   u32_t base;
 }__attribute__ ((packed));
+
+
+/***************************
+ * Prototypes de fonctions
+ ***************************/
+
+
 
 #endif
