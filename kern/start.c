@@ -9,11 +9,11 @@
 
 /*
  * Declaration des fonctions assembleur
- * definies dans lowlvl.s
+ * definies dans khead.s
  *
  */
 
-extern void bochs_print(char*);
+EXTERN void bochs_print(char*);
 
 void cstart()
 {

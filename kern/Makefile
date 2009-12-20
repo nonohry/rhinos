@@ -21,7 +21,7 @@ LD	=	ld -s --oformat binary -Ttext 0x8200
 # Fichiers source et de sortie
 ASM_SRC	=	khead.s
 ASM_OUT	=	${ASM_SRC:.s=.o}
-C_SRC	=	start.c
+C_SRC	=	start.c prot.c
 C_OUT	=	${C_SRC:.c=.o}
 HEADER  =       types.h prot.h
 OBJ	=	$(ASM_OUT) $(C_OUT)
