@@ -35,6 +35,42 @@
 #define	SS_SELECTOR	32   /* SS = 00000100  0  00   = (byte) 32 */
 
 
+/* Masques pour le champ attributes de seg_desc */
+
+#define SEG_PRESENT     0x80 /* 10000000b = 0x80 - Segment Present en memoire */
+#define SEG_DPL_1       0x20 /* 00100000b = 0x40 - Niveau de Privilege 1 */
+#define SEG_DPL_2       0x40 /* 01000000b = 0x40 - Niveau de Privilege 2 */
+#define SEG_DPL_3       0x60 /* 01100000b = 0x60 - Niveau de Privilege 3 */
+#define SEG_DATA_CODE   0x10 /* 00010000b = 0x10 - Segment de code ou de donnees */
+
+#define SEG_RO          0x00 /* Type - cf Doc Intel */
+#define SEG_RO_ACC      0x01 
+#define SEG_RW          0x02
+#define SEG_RW_ACC      0x03
+#define SEG_RO_ED       0x04
+#define SEG_RO_ED_ACC   0x05
+#define SEG_RW_ED       0x06
+#define SEG_RW_ED_ACC   0x07
+
+#define SEG_EO          0x08
+#define SEG_EO_ACC      0x09 
+#define SEG_ER          0x0A
+#define SEG_ER_ACC      0x0B
+#define SEG_EO_ED       0x0C
+#define SEG_EO_ED_ACC   0x0D
+#define SEG_ER_ED       0x0E
+#define SEG_ER_ED_ACC   0x0F
+
+
+/* Masques pour le champs granularity de seg_desc */
+
+#define SEG_LIMIT       0x0F /* 00001111b = 0x0F */
+#define SEG_AVL         0x10 /* 00001000b = 0x10 */
+#define SEG_D           0x40 /* 01000000b = 0x40 */
+#define SEG_B           0x40 /* 01000000b = 0x40 */
+#define SEG_GRANULAR    0x80 /* 10000000b = 0x40 */
+
+
 /*
  * Structures (cf Doc Intel)
  *
