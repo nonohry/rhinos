@@ -7,9 +7,17 @@
 #include "types.h"
 #include "prot.h"
 
-/* Declaration */
+/* Declarations preliminaires */
 
 EXTERN void bochs_print(char*);
-PUBLIC struct seg_desc gdt[GDT_SIZE];
 
+/* Fonction principale */
  
+PUBLIC void pmode_init()
+{
+
+  gdt_desc.limit = GDT_SIZE*8;  /* GDT_SIZE descripteurs de 8 octets */
+  /* gdt_desc.base = linear(gdt);  /* Adresse de gdt dans l espace lineaire */
+
+  return;
+}

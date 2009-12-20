@@ -15,9 +15,12 @@
 
 EXTERN void bochs_print(char*);
 
-void cstart()
+PUBLIC void cstart()
 {
   
   bochs_print("Fonction cstart\n");
 
+  pmode_init();
+
+  return;
 }

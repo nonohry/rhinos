@@ -84,7 +84,7 @@ struct seg_desc
   u8_t attributes;     /* |P|DPL|S| Type |            */
   u8_t granularity;    /* |G|D/B|0|AVL|Seg Lim 19:16| */
   u8_t base_high;
-}__attribute__ ((packed));
+} __attribute__ ((packed));
 
 
 /* Descripteur de Table (GDT & LDT) */
@@ -93,13 +93,16 @@ struct table_desc
 {
   u8_t limit;
   u32_t base;
-}__attribute__ ((packed));
+} __attribute__ ((packed));
 
 
-/***************************
- * Prototypes de fonctions
- ***************************/
+/**************
+ * Prototypes 
+ **************/
 
+PUBLIC struct seg_desc gdt[GDT_SIZE]; /* GDT */
+PUBLIC struct table_desc gdt_desc;    /* Descripteur de la GDT */
 
+PUBLIC void pmode_init();
 
 #endif
