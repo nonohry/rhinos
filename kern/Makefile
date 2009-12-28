@@ -19,11 +19,11 @@ LD	=	ld -s --oformat binary -Ttext 0x8200
 	$(CC) $<
 
 # Fichiers source et de sortie
-ASM_SRC	=	khead.s
+ASM_SRC	=	khead.s klib.s
 ASM_OUT	=	${ASM_SRC:.s=.o}
 C_SRC	=	start.c prot.c main.c
 C_OUT	=	${C_SRC:.c=.o}
-HEADER  =       types.h prot.h
+HEADER  =       types.h prot.h klib.h
 OBJ	=	$(ASM_OUT) $(C_OUT)
 
 # Cibles

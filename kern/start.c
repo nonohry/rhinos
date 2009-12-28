@@ -5,15 +5,9 @@
  */
 
 #include "types.h"
+#include "klib.h"
 #include "prot.h"
 
-/*
- * Declaration des fonctions assembleur
- * definies dans khead.s
- *
- */
-
-EXTERN void bochs_print(char*);
 
 PUBLIC void cstart()
 {

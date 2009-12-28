@@ -1,7 +1,7 @@
 [BITS 32]
 
 
-global	bochs_print
+extern	bochs_print
 extern	cstart			; Fonction d'initialisation en C
 extern  gdt_desc		; Descripteur de la GDT en C
 extern  main			; RhinOS Main en C
@@ -27,30 +27,6 @@ next:
 
 	jmp	CS_SELECTOR:main
 	
-	;;
-	;; Affichage dans Bochs
-	;; 
-	
-bochs_print:
-	push 	ebp         	; Sauvegarde de EBP
-	mov  	ebp,esp 	; Mise en place de la base
-	push	esi		; Sauvegarde ESI (Requis par GCC)
-	push	edi		; Sauvegarde EDI (Requis par GCC)
-	mov  	esi,[ebp+8]	; Recupere l'argument dans ESI
-bochs_loop:	
-	lodsb			; Identique a print_message
-	cmp	al,0		; Fin de chaine ?
-	je	bochs_end	; On retourne si oui
-	mov	dx,0xe9		; Port de Bochs
-	out	dx,al		; Emet le caractere courant
-	jmp	bochs_loop	; Boucle
-bochs_end:
-	pop	edi		; Restaure EDI
-	pop	esi		; Restaure ESI
-	mov	ebp,esp		; Restaure la pile
-	pop	ebp		; Restaure EBP
-	ret
-
 
 	;;
 	;; Declaration des Donnees

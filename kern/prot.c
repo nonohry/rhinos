@@ -5,13 +5,9 @@
  */
 
 #include "types.h"
+#include "klib.h"
 #include "prot.h"
 
-/****************************** 
- * Declarations preliminaires 
- *****************************/
-
-EXTERN void bochs_print(char*);
 
 /***********************
  * Fonction principale 
