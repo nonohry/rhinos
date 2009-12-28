@@ -108,6 +108,7 @@ struct table_desc
 
 PUBLIC struct seg_desc gdt[GDT_SIZE]; /* GDT */
 PUBLIC struct table_desc gdt_desc;    /* Descripteur de la GDT */
+PUBLIC struct table_desc idt_desc;    /* Descripteur de l'IDT */
 
 PUBLIC void pmode_init();
 PUBLIC void init_code_seg(struct seg_desc *desc, u32_t base, u32_t size, u32_t dpl);
