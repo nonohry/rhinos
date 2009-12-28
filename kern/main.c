@@ -13,7 +13,6 @@
 PUBLIC void main()
 {
   bochs_print("Fonction main\n");
-  
 
   while(1)
     {

@@ -2,6 +2,7 @@
 
 global bochs_print
 global outb
+global inb
 	
 	;; 
 	;; Affichage dans bochs
@@ -28,7 +29,7 @@ bochs_end:
 	ret
 
 	;;
-	;; outb
+	;; outb(u16_t,u8_t)
 	;;
 
 outb:
@@ -39,6 +40,25 @@ outb:
 	mov  	dx,[ebp+8]	; Recupere le port dans dx
 	mov     al,[ebp+12]     ; Recupere la valeur dans al
 	out     dx,al		; instruction out
+	pop	edi		; Restaure EDI
+	pop	esi		; Restaure ESI
+	mov	ebp,esp		; Restaure la pile
+	pop	ebp		; Restaure EBP
+	ret
+
+	;;
+	;; inb(u16_t,u8_t*)
+	;;
+
+inb:
+	push 	ebp         	; Sauvegarde de EBP
+	mov  	ebp,esp 	; Mise en place de la base
+	push	esi		; Sauvegarde ESI (Requis par GCC)
+	push	edi		; Sauvegarde EDI (Requis par GCC)
+	mov  	dx,[ebp+8]	; Recupere le port dans dx
+	mov	ebx,[ebp+12]	; Recupere le buffer dans ebx
+	in      al,dx		; Instruction in
+	mov	byte [ebx],al	; Affecte la valeur 
 	pop	edi		; Restaure EDI
 	pop	esi		; Restaure ESI
 	mov	ebp,esp		; Restaure la pile

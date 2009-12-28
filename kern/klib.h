@@ -5,5 +5,6 @@
 
 EXTERN void bochs_print(char*);
 EXTERN void outb(u16_t,u8_t);
+EXTERN void inb(u16_t,u8_t*);
 
 #endif
