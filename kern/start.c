@@ -4,16 +4,22 @@
  *
  */
 
+
+/*************
+ * Includes 
+ *************/
+
 #include "types.h"
 #include "klib.h"
 #include "prot.h"
 
+/*******************
+ * Fonction cstart
+ *******************/
 
 PUBLIC void cstart()
 {
   
-  bochs_print("Fonction cstart\n");
-
   pmode_init();
 
   return;

@@ -4,8 +4,14 @@
  *
  */
 
+
+/*************
+ * Includes 
+ *************/
+
 #include "types.h"
 #include "klib.h"
+#include "i8259.h"
 #include "prot.h"
 
 
@@ -16,6 +22,8 @@
 PUBLIC void pmode_init()
 {
   
+  bochs_print("Creating the new GDT...\n");
+
   /* Descripteur de GDT */
 
   gdt_desc.limit = sizeof(gdt) - 1;  /* la GDT commence a 0, d'ou le -1 */
@@ -27,6 +35,10 @@ PUBLIC void pmode_init()
   init_data_seg(&gdt[DS_INDEX],(u32_t) 0, KERN_LIMIT, SEG_DPL_0);
   init_data_seg(&gdt[ES_INDEX],(u32_t) 0, KERN_LIMIT, SEG_DPL_0);
   init_data_seg(&gdt[SS_INDEX],(u32_t) 0, KERN_LIMIT, SEG_DPL_0);
+
+  /* Initialisation du PIC i8259 */
+  i8259_init();
+  bochs_print("PIC i8259 initialized\n");
 
   return;
 }
