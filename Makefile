@@ -11,7 +11,7 @@ OBJ	=	boot/boot0 boot/boot1 kern/kern
 
 
 sub:
-	@for dir in $(SUBDIRS) ; do\
+	@for dir in $(SUBDIRS) ; do \
 	cd $$dir; \
 	echo "Entering $$dir"; \
 	$(MAKE); \
@@ -22,10 +22,10 @@ img:	sub
 	cat $(OBJ) /dev/zero | $(DD) of=$(IMG) count=$(SIZE) bs=512 conv=notrunc
 
 clean:
-	@for dir in $(SUBDIRS) ; do\
+	@for dir in $(SUBDIRS) ; do \
 	cd $$dir; \
 	echo "Cleaning $$dir"; \
-	$(MAKE) clean ;\
+	$(MAKE) clean ; \
 	cd ..; \
 	done
 	@echo "Cleaning current dir";
