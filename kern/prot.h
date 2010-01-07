@@ -74,6 +74,9 @@
 #define GRANULAR_LIMIT  0xFFFFFL   /* Pas de granularite au dessous (L pour Long) */
 #define KERN_LIMIT      0xC0000       /* Limit de l'espace Noyau */
 
+/* IRQs */
+
+#define IRQ_VECTORS     16
 
 /*****************************
  * Structures (cf Doc Intel)
@@ -102,6 +105,16 @@ struct table_desc
 } __attribute__ ((packed));
 
 
+/* Liste chainee des handlers d'IRQs */
+
+struct irq_chained
+{
+  struct irq_chained* next;
+  u8_t (*handler)();
+  u32_t id;
+} __attribute__ ((packed));
+
+
 /**************
  * Prototypes 
  **************/
@@ -109,6 +122,9 @@ struct table_desc
 PUBLIC struct seg_desc gdt[GDT_SIZE]; /* GDT */
 PUBLIC struct table_desc gdt_desc;    /* Descripteur de la GDT */
 PUBLIC struct table_desc idt_desc;    /* Descripteur de l'IDT */
+PUBLIC struct irq_chained* irq_handlers[IRQ_VECTORS];  /* Tableau des irq handlers */
+PUBLIC u32_t  irq_active[IRQ_VECTORS];                 /* Tableau des bitmaps d'irq actives */
+
 
 PUBLIC void pmode_init();
 PUBLIC void init_code_seg(struct seg_desc *desc, u32_t base, u32_t size, u32_t dpl);
