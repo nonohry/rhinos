@@ -46,3 +46,52 @@ PUBLIC void i8259_init()
 
   return;
 }
+
+
+/*******************************
+ * Activation d'une ligne IRQ
+ *******************************/
+
+PUBLIC void irq_enable(u8_t n)
+{
+  /* IRQ : 0 -> 15 */
+  if (n<16)
+    {
+      u8_t read;
+      u16_t port;
+
+      /* Determine le PIC concerne */
+      port = (n<8)?IRQ_MASTER_PORT+1:IRQ_SLAVE_PORT+1;
+
+      /* Active la ligne */
+      inb(port,&read);
+      read &= ~(1<<n);
+      outb(port,read);
+    }
+
+  return;
+}
+
+/*******************************
+ * Desactivation d'une ligne IRQ
+ *******************************/
+
+PUBLIC void irq_disable(u8_t n)
+{
+  /* IRQ : 0 -> 15 */
+  if (n<16)
+    {
+      u8_t read;
+      u16_t port;
+
+      /* Determine le PIC concerne */
+      port = (n<8)?IRQ_MASTER_PORT+1:IRQ_SLAVE_PORT+1;
+
+      /* Desactive la ligne */
+      inb(port,&read);
+      read |= (1<<n);
+      outb(port,read);
+    }
+
+  return;
+}
