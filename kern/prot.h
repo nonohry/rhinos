@@ -109,9 +109,9 @@ struct table_desc
 
 struct irq_chained
 {
-  struct irq_chained* next;
-  u8_t (*handler)();
-  u32_t id;
+  struct irq_chained* next;  /* Chaine */
+  u8_t (*handler)();         /* ISR */
+  u32_t id;                  /* ID  */
 } __attribute__ ((packed));
 
 
