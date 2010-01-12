@@ -43,8 +43,11 @@ next:
 	add	esp,4		; Depile l'IRQ
 	cmp	dword [irq_active+4*%1],0 ; Verifie qu'aucune ISR n est active
 	je	%%noactive0	; Saute a l EOI si pas d ISR active
-	push	%1		; Sinon, empile l'IRQ
-	call	irq_disable	; Desactive la ligne (via le C)
+	in	al,IRQ_MASTER+1	; Lit OCW1
+	mov	bl,1		; Prepare le masque
+	shl	bl,%1		; %1 ieme bit mis a 1
+	or	al,bl		; L'IRQ %1 est masquee
+	out	IRQ_MASTER+1,al	; Envoie OCW1
 %%noactive0:
 	mov	al,IRQ_EOI	; Envoi la fin d interruption
 	out	IRQ_MASTER,al	; au PIC Maitre
@@ -62,8 +65,11 @@ next:
 	add	esp,4		; Depile l'IRQ
 	cmp	dword [irq_active+4*%1],0 ; Verifie qu'aucune ISR n est active
 	je	%%noactive1	; Saute a l EOI si pas d ISR active
-	push	%1		; Sinon, empile l'IRQ
-	call	irq_disable	; Desactive la ligne (via le C)
+	in	al,IRQ_SLAVE+1	; Lit OCW1
+	mov	bl,1		; Prepare le masque
+	shl	bl,%1		; %1 ieme bit mis a 1
+	or	al,bl		; L'IRQ %1 est masquee
+	out	IRQ_SLAVE+1,al	; Envoie OCW1
 %%noactive1:
 	mov	al,IRQ_EOI	; Envoi la fin d interruption
 	out	IRQ_SLAVE,al	; au PIC Esclave
