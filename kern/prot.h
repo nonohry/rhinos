@@ -72,7 +72,7 @@
 /* Limite des segments  */
 
 #define GRANULAR_LIMIT  0xFFFFFL   /* Pas de granularite au dessous (L pour Long) */
-#define KERN_LIMIT      0xC0000       /* Limit de l'espace Noyau */
+#define KERN_LIMIT      0xC0000    /* Limit de l'espace Noyau */
 
 /* IRQs */
 
@@ -85,7 +85,7 @@
 
 /* Descripteur de Segment */
 
-struct seg_desc 
+PUBLIC struct seg_desc 
 {
   u16_t limit_low;
   u16_t base_low;
@@ -98,7 +98,7 @@ struct seg_desc
 
 /* Descripteur de Table (GDT & LDT) */
 
-struct table_desc
+PUBLIC struct table_desc
 {
   u16_t limit;
   u32_t base;
@@ -107,9 +107,9 @@ struct table_desc
 
 /* Liste chainee des handlers d'IRQs */
 
-struct irq_chained
+PUBLIC struct irq_chaine
 {
-  struct irq_chained* next;  /* Chaine */
+  struct irq_chaine* next;   /* Chaine */
   u8_t (*handler)();         /* ISR */
   u32_t id;                  /* ID  */
 } __attribute__ ((packed));

@@ -34,4 +34,6 @@
 PUBLIC void i8259_init();
 PUBLIC void irq_enable(u8_t n);
 PUBLIC void irq_disable(u8_t n);
+PUBLIC void irq_handle(u8_t n);
+
 #endif

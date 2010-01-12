@@ -12,6 +12,10 @@
 #define   TRUE     1
 #define   FALSE    0
 
+/* NULL */
+
+#define   NULL     ((void*)0)
+
 /* Entiers de 8, 16 et 32 bits */
 
 typedef unsigned char  u8_t;

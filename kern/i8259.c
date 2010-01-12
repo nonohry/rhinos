@@ -10,6 +10,7 @@
 
 #include "types.h"
 #include "klib.h"
+#include "prot.h"
 #include "i8259.h"
 
 
@@ -72,9 +73,9 @@ PUBLIC void irq_enable(u8_t n)
   return;
 }
 
-/*******************************
+/*********************************
  * Desactivation d'une ligne IRQ
- *******************************/
+ *********************************/
 
 PUBLIC void irq_disable(u8_t n)
 {
@@ -93,5 +94,39 @@ PUBLIC void irq_disable(u8_t n)
       outb(port,read);
     }
 
+  return;
+}
+
+/*******************************
+ * Execution des ISR d'une IRQ
+ *******************************/
+
+PUBLIC void irq_handle(u8_t n)
+{
+  if (n < IRQ_VECTORS)
+    {
+      /* Debut de la chaine de handlers */
+      struct irq_chaine* p = irq_handlers[n];
+      
+      /* Execution des handlers */
+      while (p != NULL)
+	{
+	  /* Indique que l ISR est active */
+	  irq_active[n] |= p->id;
+	  
+	  /* ISR fini ? */
+	  if (p->handler())
+	    {
+	      /* Indique que l ISR est inactive */
+	      irq_active[n] &= ~p->id;
+	    }
+
+	  /* Suit la liste chainee */
+	  p=p->next;
+
+	}
+
+
+    }
   return;
 }

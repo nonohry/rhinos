@@ -5,6 +5,9 @@ extern	bochs_print
 extern	cstart			; Fonction d'initialisation en C
 extern  gdt_desc		; Descripteur de la GDT en C
 extern  idt_desc		; Descripteur de l'IDT en C
+extern	irq_handle		; Handlers pour les IRQ en C
+extern	irq_active		; Tableau des ISR actives en C
+extern	irq_disable		; Desactive une ligne IRQ en C
 extern  main			; RhinOS Main en C
 	
 	
@@ -35,7 +38,14 @@ next:
 	
 %macro	hwint_generic0	1
 	call	hwint_save	; Sauvegarde des registres
-	; Code de lancement des handlers en C
+	push	%1		; Empile l'IRQ
+	call	irq_handle	; Appel les handles C
+	add	esp,4		; Depile l'IRQ
+	cmp	dword [irq_active+4*%1],0 ; Verifie qu'aucune ISR n est active
+	je	%%noactive0	; Saute a l EOI si pas d ISR active
+	push	%1		; Sinon, empile l'IRQ
+	call	irq_disable	; Desactive la ligne (via le C)
+%%noactive0:
 	mov	al,IRQ_EOI	; Envoi la fin d interruption
 	out	IRQ_MASTER,al	; au PIC Maitre
 	ret			; Retourne a hwint_ret !
@@ -46,8 +56,15 @@ next:
 	;;
 
 %macro	hwint_generic1	1
-	call	hwint_save
-	; Code de lancement des handlers en C
+	call	hwint_save	; Sauvegarde des registres
+	push	%1		; Empile l'IRQ 
+	call	irq_handle	; Appel les handles C
+	add	esp,4		; Depile l'IRQ
+	cmp	dword [irq_active+4*%1],0 ; Verifie qu'aucune ISR n est active
+	je	%%noactive1	; Saute a l EOI si pas d ISR active
+	push	%1		; Sinon, empile l'IRQ
+	call	irq_disable	; Desactive la ligne (via le C)
+%%noactive1:
 	mov	al,IRQ_EOI	; Envoi la fin d interruption
 	out	IRQ_SLAVE,al	; au PIC Esclave
 	out	IRQ_MASTER,al	; puis au Maitre
