@@ -22,5 +22,8 @@ typedef unsigned char  u8_t;
 typedef unsigned short u16_t;
 typedef unsigned int   u32_t;
 
+/* Alias pour le pointeur d'ISR */
+
+typedef u8_t (*irq_handler_t)();
 
 #endif

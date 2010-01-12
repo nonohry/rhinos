@@ -130,3 +130,53 @@ PUBLIC void irq_handle(u8_t n)
     }
   return;
 }
+
+/********************************
+ * Ajout d'une ISR pour une IRQ
+ ********************************/
+
+PUBLIC u32_t irq_add_handler(u8_t n, irq_handler_t handler)
+{
+  if (n < IRQ_VECTORS)
+    {
+      u32_t id;  /* ID de la nouvelle ISR */
+      struct irq_chaine chaine;  /* irq_chaine contenant la nouvelle ISR */
+      struct irq_chaine** p = &irq_handlers[n];  /* Pointeur pour lier la nouvelle chaine */
+
+      chaine.next = NULL;
+      chaine.handler = handler;
+
+      /* Determine l id */
+      id=1;
+      while ( *p != NULL )
+	{
+	  id = id << 1;
+	  p = &(*p)->next;
+	}
+
+      /* Si id=0, on a trop shifte => plus de 32 ISR */
+      if (id == 0)
+	{
+	  bochs_print("Too much handlers for IRQ\n");
+	  return 0;
+	}
+
+      /* Desormais on peut affecter l'id */
+      chaine.id = id;
+
+      /* On lie la nouvelle chaine */
+      *p = &chaine;
+
+      /* Active l'IRQ au niveau des PICs */
+      irq_enable(n);
+
+      /* Retourne l id */
+      return id;
+
+    }
+  else
+    {
+      /* Retourne 0 sinon */
+      return 0;
+    }
+}

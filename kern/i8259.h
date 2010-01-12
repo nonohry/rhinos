@@ -7,7 +7,6 @@
 
 #include "types.h"
 
-
 /***************
  * Constantes
  ***************/
@@ -35,5 +34,6 @@ PUBLIC void i8259_init();
 PUBLIC void irq_enable(u8_t n);
 PUBLIC void irq_disable(u8_t n);
 PUBLIC void irq_handle(u8_t n);
+PUBLIC u32_t irq_add_handler(u8_t n, irq_handler_t handler);
 
 #endif
