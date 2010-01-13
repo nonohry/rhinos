@@ -45,57 +45,13 @@ PUBLIC void pmode_init()
   struct irq_chaine titi;
   struct irq_chaine tutu;
 
-  /* Dummy IRQ */
+  /* Dummy IRQ (debug) */
   irq_add_handler(1,irq_dummy,&toto);
   irq_add_handler(1,irq_dummy,&titi);
   irq_add_handler(1,irq_dummy,&tata);
   irq_add_handler(1,irq_dummy,&tutu);
-  /*
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  irq_add_handler(1,irq_dummy);
-  */
+
+
   return;
 }
 
@@ -169,6 +125,6 @@ PUBLIC void init_data_seg(struct seg_desc *desc, u32_t base, u32_t size, u32_t d
 
 PUBLIC u8_t irq_dummy()
 {
-  bochs_print("Dummy");
+  bochs_print("Dummy\n");
   return TRUE;
 }
