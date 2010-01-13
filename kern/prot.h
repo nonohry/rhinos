@@ -114,6 +114,9 @@ PUBLIC struct irq_chaine
   u32_t id;                  /* ID  */
 } __attribute__ ((packed));
 
+/* Alias pour le pointeur d'ISR */
+
+typedef u8_t (*irq_handler_t)();
 
 /**************
  * Prototypes 
@@ -129,5 +132,5 @@ PUBLIC u32_t  irq_active[IRQ_VECTORS];                 /* Tableau des bitmaps d'
 PUBLIC void pmode_init();
 PUBLIC void init_code_seg(struct seg_desc *desc, u32_t base, u32_t size, u32_t dpl);
 PUBLIC void init_data_seg(struct seg_desc *desc, u32_t base, u32_t size, u32_t dpl);
-
+PUBLIC u8_t irq_dummy();
 #endif

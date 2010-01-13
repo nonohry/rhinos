@@ -40,6 +40,62 @@ PUBLIC void pmode_init()
   i8259_init();
   bochs_print("PIC i8259 initialized\n");
 
+  struct irq_chaine toto;
+  struct irq_chaine tata;
+  struct irq_chaine titi;
+  struct irq_chaine tutu;
+
+  /* Dummy IRQ */
+  irq_add_handler(1,irq_dummy,&toto);
+  irq_add_handler(1,irq_dummy,&titi);
+  irq_add_handler(1,irq_dummy,&tata);
+  irq_add_handler(1,irq_dummy,&tutu);
+  /*
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  irq_add_handler(1,irq_dummy);
+  */
   return;
 }
 
@@ -105,4 +161,14 @@ PUBLIC void init_data_seg(struct seg_desc *desc, u32_t base, u32_t size, u32_t d
 
   return;
 
+}
+
+/**************************
+ * Dummy irq (debug only)
+ **************************/
+
+PUBLIC u8_t irq_dummy()
+{
+  bochs_print("Dummy");
+  return TRUE;
 }
