@@ -109,6 +109,7 @@ PUBLIC struct table_desc
 
 PUBLIC struct irq_chaine
 {
+  u8_t irq;                  /* IRQ */
   struct irq_chaine* next;   /* Chaine */
   u8_t (*handler)();         /* ISR */
   u32_t id;                  /* ID  */

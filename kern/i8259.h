@@ -36,5 +36,5 @@ PUBLIC void irq_enable(u8_t n);
 PUBLIC void irq_disable(u8_t n);
 PUBLIC void irq_handle(u8_t n);
 PUBLIC void irq_add_handler(u8_t n, irq_handler_t handler,struct irq_chaine* chaine);
-
+PUBLIC void irq_rm_handler(struct irq_chaine* chaine);
 #endif

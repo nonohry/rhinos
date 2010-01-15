@@ -51,7 +51,6 @@ PUBLIC void pmode_init()
   irq_add_handler(1,irq_dummy,&tata);
   irq_add_handler(1,irq_dummy,&tutu);
 
-
   return;
 }
 

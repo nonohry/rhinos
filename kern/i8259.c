@@ -111,6 +111,7 @@ PUBLIC void irq_handle(u8_t n)
       /* Execution des handlers */
       while (p != NULL)
 	{
+
 	  /* Indique que l ISR est active */
 	  irq_active[n] |= p->id;
 	  
@@ -146,6 +147,7 @@ PUBLIC void irq_add_handler(u8_t n, irq_handler_t handler, struct irq_chaine* ch
       p = &irq_handlers[n];
       chaine->next = NULL;
       chaine->handler = handler;
+      chaine->irq = n;
    
       /* Determine l id */
       id=1;
@@ -173,5 +175,55 @@ PUBLIC void irq_add_handler(u8_t n, irq_handler_t handler, struct irq_chaine* ch
 
     }
  
+  return;
+}
+
+/********************************
+ * Retrait d'une ISR pour une IRQ
+ ********************************/
+
+PUBLIC void irq_rm_handler(struct irq_chaine* chaine)
+{
+  u8_t irq;  /* IRQ */
+
+  irq = chaine->irq;
+
+  if (irq < IRQ_VECTORS)
+    {
+      u32_t id;  /* ID de la chaine */
+      struct irq_chaine** p;  /* Pointeur pour le parcours de la chaine */
+
+      id = chaine->id;
+      p = &irq_handlers[irq];
+
+      /* Cherche la chaine voulue */
+      while ( *p != NULL )
+	{
+	  /* Si l id correspond */
+	  if ((*p)->id == id)
+	    {
+	      *p = (*p)->next;  /* place l element suivant a sa place */
+	      break; 
+	    }
+
+	  /* Poursuit la recherche */
+	  p = &(*p)->next;
+	}
+      
+      /* Mise a jour du champ id */
+      p = &irq_handlers[irq];
+      id=1;
+      while ( *p != NULL )
+	{
+	  (*p)->id = id;   /* Reaffecte le champs id */
+	  id = id << 1;    /* Shift */
+
+	  /* Poursuit le parcours */
+	  p = &(*p)->next;
+	}
+      
+
+    }
+
   return;
 }
