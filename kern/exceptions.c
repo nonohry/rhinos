@@ -13,12 +13,6 @@
 
 PUBLIC void excep_handle(u32_t num, u32_t code)
 {
-  int i;
-
-  for(i=0;i<=num;i++)
-    {
-      bochs_print(" Exception ");
-    }
 
   return;
 }
