@@ -7,7 +7,7 @@ extern  gdt_desc		; Descripteur de la GDT en C
 extern  idt_desc		; Descripteur de l'IDT en C
 extern	irq_handle		; Handlers pour les IRQ en C
 extern	irq_active		; Tableau des ISR actives en C
-extern	irq_disable		; Desactive une ligne IRQ en C
+extern	excep_handle		; Handlers pour les exceptions en C
 extern  main			; RhinOS Main en C
 	
 	
@@ -28,9 +28,11 @@ next:
 	mov     es,ax   	; des registres
 	mov     ax,SS_SELECTOR	;
 	mov     ss,ax   	; de segments (ESP invariable)
-	
-	jmp	CS_SELECTOR:main
 
+	call	excep_03
+	
+	jmp	CS_SELECTOR:main 
+	
 
 	;;
 	;; Traitement generique des IRQ (macro maitre)
@@ -130,9 +132,10 @@ hwint_15:
 	hwint_generic1	15
 	
 	;;
-	;; Sauvegarde du contexte pour les IRQ
+	;; Sauvegarde du contexte pour les IRQ et les exceptions
 	;;
 
+excep_save:	
 hwint_save:
 	pushad			; Sauve les registres generaux 32bits
 	mov	eax,esp		; Sauve la position de ESP pour le retour
@@ -148,9 +151,10 @@ hwint_save:
 	jmp	[eax+32]	; 32 = 8 registres (pusad) => jmp a l'adresse empilee par call
 
 	;;
-	;;Restauration du contexte pour les IRQ
+	;;Restauration du contexte pour les IRQ et les exceptions
 	;; 
-	
+
+excep_ret:	
 hwint_ret:
 	pop	gs		; Restaure les registres
 	pop	fs		; sauves par hwint_save
@@ -160,16 +164,118 @@ hwint_ret:
 	add	esp,4		; Ignore l'adresse empilee par le call de hwint_generic
 	iret			; Retour d'interruption
 
+
+
+	;;
+	;; Exceptions Handlers
+	;; 
+
+excep_00:
+	push	DIVIDE_VECTOR
+	jmp	excep_noerr
+
+excep_01:
+	push	DEBUG_VECTOR
+	jmp	excep_noerr
+
+excep_02:
+	push	NMI_VECTOR
+	jmp	excep_noerr
+
+excep_03:
+	push	BREAKPT_VECTOR
+	jmp	excep_noerr
+
+excep_04:
+	push	OVERFLOW_VECTOR	
+	jmp	excep_noerr
+
+excep_05:	
+	push	BOUND_VECTOR
+	jmp	excep_noerr
+
+excep_06:
+	push	OPCODE_VECTOR	
+	jmp	excep_noerr
+
+excep_07:
+	push	NOMATH_VECTOR
+	jmp	excep_noerr
+	
+excep_08:
+	push	DFAULT_VECTOR
+	jmp	excep_err
+
+excep_09:
+	push	COSEG_VECTOR	
+	jmp	excep_noerr	
+
+excep_10:
+	push	TSS_VECTOR	
+	jmp	excep_err
+
+excep_11:
+	push	NOSEG_VECTOR
+	jmp	excep_err	
+
+excep_12:
+	push	SSFAULT_VECTOR	
+	jmp	excep_err
+
+excep_13:
+	push	GPROT_VECTOR	
+	jmp	excep_err
+
+excep_14:
+	push	PFAULT_VECTOR	
+	jmp	excep_err
+	
+excep_16:
+	push	MFAULT_VECTOR
+	jmp	excep_noerr	
+
+excep_17:
+	push	ALIGN_VECTOR
+	jmp	excep_err
+
+excep_18:
+	push	MACHINE_VECTOR	
+	jmp	excep_noerr	
+
+	
+	;;
+	;; Gestion des exceptions sans code d erreur
+	;; 
+
+excep_noerr:
+
+	mov	dword [excep_code],0	; Cree un faux code d erreur
+	pop	dword [excep_num]	; Recupere le vecteur
+	jmp	excep_err_next		; Saute a la gestion avec erreur
+
+	;;
+	;; Gestion des exceptions avec code erreur
+	;; 
+
+excep_err:
+	pop	dword [excep_num] 	; Recupere le vecteur
+	pop	dword [excep_code]	; Recupere le code d erreur (empile par le proc)	
+excep_err_next:	
+	call	excep_save	; Sauve le contexte
+	push	dword [excep_code]	; Argument 2 de excep_handle
+	push	dword [excep_num]	; Argument 1 de excep_handle
+	call	excep_handle	; Gestion de l exception en C
+	add	esp,2*4		; Depile les arguments
+	ret			; Retourne a excep_ret !
+	
 	
 	;;
 	;; Declaration des Donnees
 	;;
 
 	pmodemsg 	db	'Protected Mode enabled !',13,10,0
-	savemsg		db	'message from hwint_save',13,10,0
-	retmsg		db	'message from hwint_ret',13,10,0
-	hwintmsg	db	'message from hwint_01',13,10,0
-	
+	excep_code	dd	0 ; Code Erreur des exceptions
+	excep_num	dd	0 ; Vecteur de l exception
 	;; 
 	;; Segment Selector
 	;;
@@ -186,3 +292,27 @@ hwint_ret:
 	IRQ_EOI		equ	0x20
 	IRQ_MASTER	equ	0x20
 	IRQ_SLAVE	equ	0xA0
+
+	;;
+	;; Vecteurs Exceptions
+	;;
+
+	DIVIDE_VECTOR	equ	0
+	DEBUG_VECTOR	equ	1
+	NMI_VECTOR	equ	2
+	BREAKPT_VECTOR	equ	3
+	OVERFLOW_VECTOR	equ	4
+	BOUND_VECTOR	equ	5
+	OPCODE_VECTOR	equ	6
+	NOMATH_VECTOR	equ	7
+	DFAULT_VECTOR	equ	8
+	COSEG_VECTOR	equ	9
+	TSS_VECTOR	equ	10
+	NOSEG_VECTOR	equ	11
+	SSFAULT_VECTOR	equ	12
+	GPROT_VECTOR	equ	13
+	PFAULT_VECTOR	equ	14
+	MFAULT_VECTOR	equ	16
+	ALIGN_VECTOR	equ	17
+	MACHINE_VECTOR	equ	18
+	
