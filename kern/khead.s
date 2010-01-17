@@ -9,7 +9,41 @@ extern	irq_handle		; Handlers pour les IRQ en C
 extern	irq_active		; Tableau des ISR actives en C
 extern	excep_handle		; Handlers pour les exceptions en C
 extern  main			; RhinOS Main en C
-	
+
+global	hwint_00		; ISR visibles pour le C
+global	hwint_01
+global	hwint_02
+global	hwint_03
+global	hwint_04
+global	hwint_05
+global	hwint_06
+global	hwint_07
+global	hwint_08
+global	hwint_09
+global	hwint_10
+global	hwint_11
+global	hwint_12
+global	hwint_13
+global	hwint_14
+global	hwint_15
+global	excep_00
+global	excep_01
+global	excep_02
+global	excep_03
+global	excep_04
+global	excep_05
+global	excep_06
+global	excep_07
+global	excep_08
+global	excep_09
+global	excep_10
+global	excep_11
+global	excep_12
+global	excep_13
+global	excep_14
+global	excep_16
+global	excep_17
+global	excep_18
 	
 start:
 	push	pmodemsg	; Empile le message
@@ -17,8 +51,9 @@ start:
 	add	esp,4		; Depile le message
 	call	cstart
 	
-	lgdt	[gdt_desc]
-	jmp	next
+	lgdt	[gdt_desc]	; Charge la nouvelle GDT
+   	lidt	[idt_desc]	; Charge l IDT
+	jmp	next		; Vide les caches processeurs
 	
 next:	
 
@@ -28,8 +63,7 @@ next:
 	mov     es,ax   	; des registres
 	mov     ax,SS_SELECTOR	;
 	mov     ss,ax   	; de segments (ESP invariable)
-
-	call	excep_03
+	sti			; Restaure les interruptions
 	
 	jmp	CS_SELECTOR:main 
 	
@@ -39,9 +73,9 @@ next:
 	;;
 	
 %macro	hwint_generic0	1
-	call	hwint_save	; Sauvegarde des registres
+   	call	hwint_save	; Sauvegarde des registres
 	push	%1		; Empile l'IRQ
-	call	irq_handle	; Appel les handles C
+   	call	irq_handle	; Appel les handles C
 	add	esp,4		; Depile l'IRQ
 	cmp	dword [irq_active+4*%1],0 ; Verifie qu'aucune ISR n est active
 	je	%%noactive0	; Saute a l EOI si pas d ISR active
@@ -78,7 +112,7 @@ next:
 	out	IRQ_MASTER,al	; puis au Maitre
 	ret			; Retourne a hwint_ret !
 %endmacro
-
+	
 	;;
 	;; IRQ handlers
 	;; 
@@ -88,7 +122,7 @@ hwint_00:
 
 hwint_01:
 	hwint_generic0	1
-
+	
 hwint_02:
 	hwint_generic0	2
 

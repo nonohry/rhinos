@@ -21,9 +21,10 @@
 #define SS_INDEX       4
 #define LDT_INDEX      5     /* Index de la premiere LDT */
 
-/* Taille de la GDT */
+/* Taille de la GDT & IDT */
 
 #define GDT_SIZE       LDT_INDEX
+#define IDT_SIZE       255
 
 /* Selecteurs de segment */
 
@@ -72,7 +73,7 @@
 /* Limite des segments  */
 
 #define GRANULAR_LIMIT  0xFFFFFL   /* Pas de granularite au dessous (L pour Long) */
-#define KERN_LIMIT      0xC0000    /* Limit de l'espace Noyau */
+#define KERN_LIMIT      0xC0000    /* Limite de l'espace Noyau */
 
 /* IRQs */
 
@@ -96,6 +97,18 @@ PUBLIC struct seg_desc
 } __attribute__ ((packed));
 
 
+/* Descripteur de Gate */
+
+PUBLIC struct gate_desc
+{
+  u16_t offset_low;
+  u16_t segment;
+  u8_t zero;
+  u8_t attributes;   /* |P|DPL|0111?| */
+  u16_t offset_high;
+} __attribute__ ((packed));
+
+
 /* Descripteur de Table (GDT & LDT) */
 
 PUBLIC struct table_desc
@@ -111,7 +124,7 @@ PUBLIC struct irq_chaine
 {
   u8_t irq;                  /* IRQ */
   struct irq_chaine* next;   /* Chaine */
-  u8_t (*handler)();         /* ISR */
+  u8_t (*handler)(void);     /* ISR */
   u32_t id;                  /* ID  */
 } __attribute__ ((packed));
 
@@ -119,11 +132,53 @@ PUBLIC struct irq_chaine
 
 typedef u8_t (*irq_handler_t)();
 
+/******************
+ * ISR assembleur
+ ******************/
+
+EXTERN void isr_default(void);
+EXTERN void hwint_00(void);
+EXTERN void hwint_01(void);
+EXTERN void hwint_02(void);
+EXTERN void hwint_03(void);
+EXTERN void hwint_04(void);
+EXTERN void hwint_05(void);
+EXTERN void hwint_06(void);
+EXTERN void hwint_07(void);
+EXTERN void hwint_08(void);
+EXTERN void hwint_09(void);
+EXTERN void hwint_10(void);
+EXTERN void hwint_11(void);
+EXTERN void hwint_12(void);
+EXTERN void hwint_13(void);
+EXTERN void hwint_14(void);
+EXTERN void hwint_15(void);
+EXTERN void excep_00(void);
+EXTERN void excep_01(void);
+EXTERN void excep_02(void);
+EXTERN void excep_03(void);
+EXTERN void excep_04(void);
+EXTERN void excep_05(void);
+EXTERN void excep_06(void);
+EXTERN void excep_07(void);
+EXTERN void excep_08(void);
+EXTERN void excep_09(void);
+EXTERN void excep_10(void);
+EXTERN void excep_11(void);
+EXTERN void excep_12(void);
+EXTERN void excep_13(void);
+EXTERN void excep_14(void);
+EXTERN void excep_16(void);
+EXTERN void excep_17(void);
+EXTERN void excep_18(void);
+
+
 /**************
  * Prototypes 
  **************/
 
-PUBLIC struct seg_desc gdt[GDT_SIZE]; /* GDT */
+PUBLIC struct seg_desc gdt[GDT_SIZE];  /* GDT */
+PUBLIC struct gate_desc idt[IDT_SIZE]; /* IDT */
 PUBLIC struct table_desc gdt_desc;    /* Descripteur de la GDT */
 PUBLIC struct table_desc idt_desc;    /* Descripteur de l'IDT */
 PUBLIC struct irq_chaine* irq_handlers[IRQ_VECTORS];  /* Tableau des irq handlers */
@@ -131,7 +186,9 @@ PUBLIC u32_t  irq_active[IRQ_VECTORS];                 /* Tableau des bitmaps d'
 
 
 PUBLIC void pmode_init();
-PUBLIC void init_code_seg(struct seg_desc *desc, u32_t base, u32_t size, u32_t dpl);
-PUBLIC void init_data_seg(struct seg_desc *desc, u32_t base, u32_t size, u32_t dpl);
-PUBLIC u8_t irq_dummy();
+PUBLIC void init_code_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dpl);
+PUBLIC void init_data_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dpl);
+PUBLIC void init_int_gate(struct gate_desc* gate, u16_t seg, u32_t off,u8_t flags);
+PUBLIC void init_trap_gate(struct gate_desc* gate, u16_t seg, u32_t off,u8_t flags);
+
 #endif

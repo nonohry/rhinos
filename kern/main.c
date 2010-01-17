@@ -10,6 +10,19 @@
 
 #include "types.h"
 #include "klib.h"
+#include "i8259.h"
+
+
+/**************************
+ * Dummy irq (debug only)
+ **************************/
+
+PUBLIC u8_t irq_dummy()
+{
+  bochs_print("Dummy\n");
+  return TRUE;
+}
+
 
 /***********************
  * Fonction principale 
@@ -18,6 +31,20 @@
 PUBLIC void main()
 {
   bochs_print("Fonction main\n");
+
+  // Dummy Keyboard (debug)
+
+  struct irq_chaine toto;
+  struct irq_chaine tata;
+  struct irq_chaine titi;
+  struct irq_chaine tutu;
+
+  irq_add_handler(1,irq_dummy,&toto);
+  irq_add_handler(1,irq_dummy,&titi);
+  irq_add_handler(1,irq_dummy,&tata);
+  irq_add_handler(1,irq_dummy,&tutu);
+
+  // Fin Dummy
 
   while(1)
     {

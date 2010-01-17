@@ -106,7 +106,9 @@ PUBLIC void irq_handle(u8_t n)
   if (n < IRQ_VECTORS)
     {
       /* Debut de la chaine de handlers */
-      struct irq_chaine* p = irq_handlers[n];
+      struct irq_chaine* p;
+
+      p = irq_handlers[n];
       
       /* Execution des handlers */
       while (p != NULL)
@@ -117,10 +119,10 @@ PUBLIC void irq_handle(u8_t n)
 	  
 	  /* ISR fini ? */
 	  if (p->handler())
-	    {
-	      /* Indique que l ISR est inactive */
-	      irq_active[n] &= ~p->id;
-	    }
+	  {
+	    /* Indique que l ISR est inactive */
+	    irq_active[n] &= ~p->id;
+	  }
 
 	  /* Suit la liste chainee */
 	  p=p->next;
