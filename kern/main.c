@@ -23,6 +23,20 @@ PUBLIC u8_t irq_dummy()
   return TRUE;
 }
 
+PUBLIC u8_t irq_dummyy()
+{
+  static int tic = 0;
+  static int sec = 0;
+  tic++;
+  if (tic % 100 == 0) {
+    sec++;
+    tic = 0;
+    bochs_print("clock\n");
+  }
+
+  return TRUE;
+}
+
 
 /***********************
  * Fonction principale 
@@ -39,7 +53,7 @@ PUBLIC void main()
   struct irq_chaine titi;
   struct irq_chaine tutu;
 
-  irq_add_handler(1,irq_dummy,&toto);
+  irq_add_handler(0,irq_dummyy,&toto);
   irq_add_handler(1,irq_dummy,&titi);
   irq_add_handler(1,irq_dummy,&tata);
   irq_add_handler(1,irq_dummy,&tutu);
