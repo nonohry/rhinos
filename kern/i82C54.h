@@ -6,8 +6,8 @@
 
 /* Constantes */
 
-#define CLOCK_MAX_FREQ     1193182    /* Frequence maximal du PIT en MHz */
-#define CLOCK_FREQ         100        /* Frequence a 100MHz */
+#define CLOCK_MAX_FREQ     1193182    /* Frequence maximal du PIT */
+#define CLOCK_FREQ         100        /* Frequence a 100Hz */
 
 /* I/O Ports */
 
