@@ -19,7 +19,7 @@
 /* Mot de Controle */
 
 #define CLOCK_MODE2        0x34   /* 0x34=00110100b, Mode 2 pour le compteur 0 */
-#define CLOCK_MODE3        0x36   /* 0x34=00110110b, Mode 3 pour le compteur 0 */
+#define CLOCK_MODE3        0x36   /* 0x36=00110110b, Mode 3 pour le compteur 0 */
 
 /* Counter Latch */
 
