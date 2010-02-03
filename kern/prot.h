@@ -19,7 +19,8 @@
 #define DS_INDEX       2
 #define ES_INDEX       3
 #define SS_INDEX       4
-#define LDT_INDEX      5     /* Index de la premiere LDT */
+#define TSS_INDEX      5
+#define LDT_INDEX      6     /* Index de la premiere LDT */
 
 /* Taille de la GDT & IDT */
 
@@ -61,6 +62,7 @@
 #define SEG_ER_ED       0x0E
 #define SEG_ER_ED_ACC   0x0F
 
+#define SEG_TSS         0x09
 
 /* Masques pour le champs granularity de seg_desc */
 
@@ -74,6 +76,7 @@
 
 #define GRANULAR_LIMIT  0xFFFFFL   /* Pas de granularite au dessous (L pour Long) */
 #define KERN_LIMIT      0xC0000    /* Limite de l'espace Noyau */
+#define KERN_TOP_STACK  0x7C00     /* ESP noyau */
 
 /* IRQs */
 
@@ -221,6 +224,7 @@ EXTERN void excep_18(void);
 
 PUBLIC struct seg_desc gdt[GDT_SIZE];  /* GDT */
 PUBLIC struct gate_desc idt[IDT_SIZE]; /* IDT */
+PUBLIC struct tss tss; /* TSS */
 PUBLIC struct table_desc gdt_desc;    /* Descripteur de la GDT */
 PUBLIC struct table_desc idt_desc;    /* Descripteur de l'IDT */
 PUBLIC struct irq_chaine* irq_handlers[IRQ_VECTORS];  /* Tableau des irq handlers */
@@ -232,5 +236,6 @@ PUBLIC void init_code_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dp
 PUBLIC void init_data_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dpl);
 PUBLIC void init_int_gate(struct gate_desc* gate, u16_t seg, u32_t off,u8_t flags);
 PUBLIC void init_trap_gate(struct gate_desc* gate, u16_t seg, u32_t off,u8_t flags);
+PUBLIC void init_tss_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dpl);
 
 #endif

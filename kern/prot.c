@@ -24,6 +24,11 @@ PUBLIC void pmode_init()
   
   bochs_print("Creating the new GDT...\n");
 
+  /* Initialisation du TSS */
+
+  tss.ss0 = SS_SELECTOR;
+  tss.esp0 = KERN_TOP_STACK;
+
   /* Descripteur de GDT */
 
   gdt_desc.limit = sizeof(gdt) - 1;  /* la GDT commence a 0, d'ou le -1 */
@@ -35,6 +40,7 @@ PUBLIC void pmode_init()
   init_data_seg(&gdt[DS_INDEX],(u32_t) 0, KERN_LIMIT, SEG_DPL_0);
   init_data_seg(&gdt[ES_INDEX],(u32_t) 0, KERN_LIMIT, SEG_DPL_0);
   init_data_seg(&gdt[SS_INDEX],(u32_t) 0, KERN_LIMIT, SEG_DPL_0);
+  init_tss_seg(&gdt[TSS_INDEX],(u32_t) &tss, sizeof(tss), SEG_DPL_0);
 
   /* Initialisation du PIC i8259 */
   i8259_init();
@@ -197,4 +203,36 @@ PUBLIC void init_trap_gate(struct gate_desc* gate, u16_t seg, u32_t off,u8_t fla
   gate->attributes = magic | flags;
 
   return;
+}
+
+/***************************
+ * Initialisation des TSS
+ ***************************/
+
+PUBLIC void init_tss_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dpl)
+{
+
+  /* Définit l'adresse de base */
+
+  desc->base_low = base;
+  desc->base_middle = base >> 16;
+  desc->base_high = base >> 24;
+
+  /* Active la granularite pour les grandes tailles */
+
+  if ((size-1) > GRANULAR_LIMIT)      /* Le descripteur commence a 0, d'ou le -1 */
+    {
+      desc->limit_low = size >> 12;   /* Divise la taille par 4k (ie shift par 12) */
+      desc->granularity = SEG_GRANULAR | size >> (16 + 12)  ; /* Partie haute de la limite */
+    }
+  else
+    {
+      desc->limit_low = size;          /* Bits 15:00 de la limite */
+      desc->granularity = size >> 16;  /* Bits 19:16 de la limite */
+    }
+
+  desc->attributes = dpl | SEG_PRESENT | SEG_TSS;  /* Attributes */
+
+  return;
+
 }
