@@ -64,6 +64,9 @@ next:
 	mov     ax,SS_SELECTOR	;
 	mov     ss,ax   	; de segments (ESP invariable)
 	sti			; Restaure les interruptions
+
+	mov	ax,TSS_SELECTOR	; Index du TSS
+	ltr	ax		; Charge le task register
 	
 	jmp	CS_SELECTOR:main 
 	
@@ -302,7 +305,6 @@ excep_err_next:
 	add	esp,2*4		; Depile les arguments
 	ret			; Retourne a excep_ret !
 	
-	
 	;;
 	;; Declaration des Donnees
 	;;
@@ -314,11 +316,12 @@ excep_err_next:
 	;; Segment Selector
 	;;
 
-	CS_SELECTOR	equ	8  ; CS = 00000001  0  00   = (byte) 8
-	DS_SELECTOR	equ	16 ; DS = 00000010  0  00   = (byte) 16
-	ES_SELECTOR	equ	24 ; ES = 00000011  0  00   = (byte) 24
-	SS_SELECTOR	equ	32 ; SS = 00000100  0  00   = (byte) 32
-
+	CS_SELECTOR	equ	8  ; CS  = 00000001  0  00   = (byte) 8
+	DS_SELECTOR	equ	16 ; DS  = 00000010  0  00   = (byte) 16
+	ES_SELECTOR	equ	24 ; ES  = 00000011  0  00   = (byte) 24
+	SS_SELECTOR	equ	32 ; SS  = 00000100  0  00   = (byte) 32
+	TSS_SELECTOR    equ     40 ; TSS = 00000101  0  00   = (byte) 40
+	
 	;;
 	;; IRQ Magic Numbers
 	;;
