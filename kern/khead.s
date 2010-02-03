@@ -196,7 +196,7 @@ hwint_ret:
 	pop	ds
 	popad
 	add	esp,4		; Ignore l'adresse empilee par le call de hwint_generic
-	iret			; Retour d'interruption
+	iretd			; Retour d'interruption
 
 
 
