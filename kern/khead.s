@@ -67,9 +67,8 @@ next:
 
 	mov	ax,TSS_SELECTOR	; Index du TSS
 	ltr	ax		; Charge le task register
-	
+
 	jmp	CS_SELECTOR:main 
-	
 
 	;;
 	;; Traitement generique des IRQ (macro maitre)
