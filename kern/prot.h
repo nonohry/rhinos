@@ -34,7 +34,6 @@
 #define	ES_SELECTOR	24   /* ES = 00000011  0  00   = (byte) 24 */
 #define	SS_SELECTOR	32   /* SS = 00000100  0  00   = (byte) 32 */
 
-
 /* Masques pour le champ attributes de seg_desc */
 
 #define SEG_PRESENT     0x80 /* 10000000b = 0x80 - Segment Present en memoire */
