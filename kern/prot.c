@@ -36,11 +36,11 @@ PUBLIC void pmode_init()
 
   /* Initialisation de la GDT */
   
-  init_code_seg(&gdt[CS_INDEX],(u32_t) 0, KERN_LIMIT, SEG_DPL_0);
-  init_data_seg(&gdt[DS_INDEX],(u32_t) 0, KERN_LIMIT, SEG_DPL_0);
-  init_data_seg(&gdt[ES_INDEX],(u32_t) 0, KERN_LIMIT, SEG_DPL_0);
-  init_data_seg(&gdt[SS_INDEX],(u32_t) 0, KERN_LIMIT, SEG_DPL_0);
-  init_tss_seg(&gdt[TSS_INDEX],(u32_t) &tss, sizeof(tss), SEG_DPL_0);
+  init_code_seg(&gdt[CS_INDEX],(u32_t) 0, KERN_LIMIT, 0);
+  init_data_seg(&gdt[DS_INDEX],(u32_t) 0, KERN_LIMIT, 0);
+  init_data_seg(&gdt[ES_INDEX],(u32_t) 0, KERN_LIMIT, 0);
+  init_data_seg(&gdt[SS_INDEX],(u32_t) 0, KERN_LIMIT, 0);
+  init_tss_seg(&gdt[TSS_INDEX],(u32_t) &tss, sizeof(tss), 0);
 
   /* Initialisation du PIC i8259 */
   i8259_init();
@@ -126,7 +126,7 @@ PUBLIC void init_code_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dp
 
   desc->granularity |= SEG_D;      /* Flag D */
 
-  desc->attributes = dpl | SEG_PRESENT | SEG_DATA_CODE | SEG_ER;  /* Attributes */
+  desc->attributes = (dpl << SEG_DPL_SHIFT) | SEG_PRESENT | SEG_DATA_CODE | SEG_ER;  /* Attributes */
 
   return;
 
@@ -155,7 +155,7 @@ PUBLIC void init_data_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dp
   
   desc->granularity |= SEG_B;      /* Flag B */
 
-  desc->attributes = dpl | SEG_PRESENT | SEG_DATA_CODE | SEG_RW; /* Attributes */
+  desc->attributes = (dpl << SEG_DPL_SHIFT) | SEG_PRESENT | SEG_DATA_CODE | SEG_RW; /* Attributes */
 
   return;
 
@@ -231,7 +231,7 @@ PUBLIC void init_tss_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dpl
       desc->granularity = size >> 16;  /* Bits 19:16 de la limite */
     }
 
-  desc->attributes = dpl | SEG_PRESENT | SEG_TSS;  /* Attributes */
+  desc->attributes = (dpl << SEG_DPL_SHIFT) | SEG_PRESENT | SEG_TSS;  /* Attributes */
 
   return;
 

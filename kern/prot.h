@@ -29,10 +29,16 @@
 
 /* Selecteurs de segment */
 
-#define CS_SELECTOR	8    /* CS = 00000001  0  00   = (byte) 8  */
-#define	DS_SELECTOR     16   /* DS = 00000010  0  00   = (byte) 16 */
-#define	ES_SELECTOR	24   /* ES = 00000011  0  00   = (byte) 24 */
-#define	SS_SELECTOR	32   /* SS = 00000100  0  00   = (byte) 32 */
+#define CS_SELECTOR	8    /* CS = 0000000000001  0  00   =  8  */
+#define	DS_SELECTOR     16   /* DS = 0000000000010  0  00   =  16 */
+#define	ES_SELECTOR	24   /* ES = 0000000000011  0  00   =  24 */
+#define	SS_SELECTOR	32   /* SS = 0000000000100  0  00   =  32 */
+
+/* RPL pour les selecteurs de segments */
+
+#define RPL_1   1
+#define RPL_2   2
+#define RPL_3   3
 
 /* Masques pour le champ attributes de seg_desc */
 
@@ -42,6 +48,8 @@
 #define SEG_DPL_2       0x40 /* 01000000b = 0x40 - Niveau de Privilege 2 */
 #define SEG_DPL_3       0x60 /* 01100000b = 0x60 - Niveau de Privilege 3 */
 #define SEG_DATA_CODE   0x10 /* 00010000b = 0x10 - Segment de code ou de donnees */
+
+#define SEG_DPL_SHIFT   5    /* Permet de determiner le DPL a partir de 1,2 ou 3 */
 
 #define SEG_RO          0x00 /* Type - cf Doc Intel */
 #define SEG_RO_ACC      0x01 
