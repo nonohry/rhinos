@@ -24,15 +24,18 @@
 
 /* Taille de la GDT & IDT */
 
-#define GDT_SIZE       LDT_INDEX
+#define GDT_SIZE       LDT_INDEX+1
 #define IDT_SIZE       255
 
 /* Selecteurs de segment */
 
-#define CS_SELECTOR	8    /* CS = 0000000000001  0  00   =  8  */
-#define	DS_SELECTOR     16   /* DS = 0000000000010  0  00   =  16 */
-#define	ES_SELECTOR	24   /* ES = 0000000000011  0  00   =  24 */
-#define	SS_SELECTOR	32   /* SS = 0000000000100  0  00   =  32 */
+#define CS_SELECTOR	8    /*  CS = 0000000000001  0  00   =  8  */
+#define	DS_SELECTOR     16   /*  DS = 0000000000010  0  00   =  16 */
+#define	ES_SELECTOR	24   /*  ES = 0000000000011  0  00   =  24 */
+#define	SS_SELECTOR	32   /*  SS = 0000000000100  0  00   =  32 */
+#define TSS_SELECTOR    40   /* TSS = 0000000000101  0  00   =  40 */
+
+#define SHIFT_SELECTOR  3    /* INDEX << SHIFT_SELECTOR = SELECTOR */
 
 /* RPL pour les selecteurs de segments */
 
@@ -70,6 +73,7 @@
 #define SEG_ER_ED_ACC   0x0F
 
 #define SEG_TSS         0x09
+#define SEG_LDT         0x02
 
 /* Masques pour le champs granularity de seg_desc */
 
@@ -244,5 +248,6 @@ PUBLIC void init_data_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dp
 PUBLIC void init_int_gate(struct gate_desc* gate, u16_t seg, u32_t off,u8_t flags);
 PUBLIC void init_trap_gate(struct gate_desc* gate, u16_t seg, u32_t off,u8_t flags);
 PUBLIC void init_tss_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dpl);
+PUBLIC void init_ldt_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dpl);
 
 #endif

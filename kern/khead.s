@@ -8,6 +8,7 @@ extern  idt_desc		; Descripteur de l'IDT en C
 extern	irq_handle		; Handlers pour les IRQ en C
 extern	irq_active		; Tableau des ISR actives en C
 extern	excep_handle		; Handlers pour les exceptions en C
+extern	proc_current		; Pointeur sur le processus a executer
 extern  main			; RhinOS Main en C
 
 global	hwint_00		; ISR visibles pour le C
@@ -44,6 +45,8 @@ global	excep_14
 global	excep_16
 global	excep_17
 global	excep_18
+
+global	task_mgmt		; Gestion des taches
 	
 start:
 	push	pmodemsg	; Empile le message
@@ -52,7 +55,7 @@ start:
 	call	cstart
 	
 	lgdt	[gdt_desc]	; Charge la nouvelle GDT
-   	lidt	[idt_desc]	; Charge l IDT
+    	lidt	[idt_desc]	; Charge l IDT
 	jmp	next		; Vide les caches processeurs
 	
 next:	
@@ -63,12 +66,12 @@ next:
 	mov     es,ax   	; des registres
 	mov     ax,SS_SELECTOR	;
 	mov     ss,ax   	; de segments (ESP invariable)
-	sti			; Restaure les interruptions
+ 	sti			; Restaure les interruptions
 
 	mov	ax,TSS_SELECTOR	; Index du TSS
 	ltr	ax		; Charge le task register
 
-	jmp	CS_SELECTOR:main 
+	jmp	CS_SELECTOR:main
 
 	;;
 	;; Traitement generique des IRQ (macro maitre)
@@ -175,10 +178,10 @@ excep_save:
 hwint_save:
 	pushad			; Sauve les registres generaux 32bits
 	mov	eax,esp		; Sauve la position de ESP pour le retour
-	push	ds		; Sauve les registres de segments
-	push	es
-	push	fs
-	push	gs
+	o16 push	ds	; Sauve les registres de segments (empile en 16bits)
+	o16 push	es
+	o16 push	fs
+	o16 push	gs
 	mov	dx,DS_SELECTOR	; Ajuste les segments noyau (CS & SS sont deja positionnes)
 	mov	ds,dx
 	mov	dx,ES_SELECTOR
@@ -186,20 +189,28 @@ hwint_save:
 	push	hwint_ret	; Empile l'adresse de hwint_ret comme adresse de retour
 	jmp	[eax+32]	; 32 = 8 registres (pusad) => jmp a l'adresse empilee par call
 
+
+	;;
+	;; Gestion des taches (s'acheve avec *_ret)
+	;; 
+
+task_mgmt:
+	mov	esp,[proc_current] ; La pile pointe sur le contexte
+	lldt	[esp+PROC_LDT_SEL] ; Charge la LDT du processus courant
+
 	;;
 	;;Restauration du contexte pour les IRQ et les exceptions
 	;; 
 
 excep_ret:	
 hwint_ret:
-	pop	gs		; Restaure les registres
-	pop	fs		; sauves par hwint_save
-	pop	es
-	pop	ds
+	o16 pop gs		; Restaure les registres
+	o16 pop fs		; sauves par hwint_save	
+	o16 pop	es		; en 16bits
+	o16 pop	ds
 	popad
 	add	esp,4		; Ignore l'adresse empilee par le call de hwint_generic
 	iretd			; Retour d'interruption
-
 
 
 	;;
@@ -351,4 +362,9 @@ excep_err_next:
 	MFAULT_VECTOR	equ	16
 	ALIGN_VECTOR	equ	17
 	MACHINE_VECTOR	equ	18
-	
+
+	;;
+	;; Offset dans la structure proc
+	;;
+
+	PROC_LDT_SEL	equ	66 ; Position, en octet, du selecteur

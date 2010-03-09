@@ -236,3 +236,35 @@ PUBLIC void init_tss_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dpl
   return;
 
 }
+
+/***************************
+ * Initialisation des LDT
+ ***************************/
+
+PUBLIC void init_ldt_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dpl)
+{
+
+  /* Définit l'adresse de base */
+
+  desc->base_low = base;
+  desc->base_middle = base >> 16;
+  desc->base_high = base >> 24;
+
+  /* Active la granularite pour les grandes tailles */
+
+  if ((size-1) > GRANULAR_LIMIT)      /* Le descripteur commence a 0, d'ou le -1 */
+    {
+      desc->limit_low = size >> 12;   /* Divise la taille par 4k (ie shift par 12) */
+      desc->granularity = SEG_GRANULAR | size >> (16 + 12)  ; /* Partie haute de la limite */
+    }
+  else
+    {
+      desc->limit_low = size;          /* Bits 15:00 de la limite */
+      desc->granularity = size >> 16;  /* Bits 19:16 de la limite */
+    }
+
+  desc->attributes = (dpl << SEG_DPL_SHIFT) | SEG_PRESENT | SEG_LDT;  /* Attributes */
+
+  return;
+
+}

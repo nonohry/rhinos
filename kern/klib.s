@@ -25,7 +25,7 @@ bochs_loop:
 bochs_end:
 	pop	edi		; Restaure EDI
 	pop	esi		; Restaure ESI
-	mov	ebp,esp		; Restaure la pile
+	mov	esp,ebp		; Restaure la pile
 	pop	ebp		; Restaure EBP
 	ret
 
@@ -43,7 +43,7 @@ outb:
 	out     dx,al		; instruction out
 	pop	edi		; Restaure EDI
 	pop	esi		; Restaure ESI
-	mov	ebp,esp		; Restaure la pile
+	mov	esp,ebp		; Restaure la pile
 	pop	ebp		; Restaure EBP
 	ret
 
@@ -62,13 +62,14 @@ inb:
 	mov	byte [ebx],al	; Affecte la valeur
 	pop	edi		; Restaure EDI
 	pop	esi		; Restaure ESI
-	mov	ebp,esp		; Restaure la pile
+	mov	esp,ebp		; Restaure la pile
 	pop	ebp		; Restaure EBP
 	ret
 
 	;;
 	;; phys_copy(u32_t src, u32_t dest, u32_t len)
-
+	;;
+	
 phys_copy:
 	push 	ebp         	; Sauvegarde de EBP
 	mov  	ebp,esp 	; Mise en place de la base
@@ -84,6 +85,6 @@ phys_copy:
 	pop	ecx		; Restaure ECX
 	pop	edi		; Restaure EDI
 	pop	esi		; Restaure ESI
-	mov	ebp,esp		; Restaure la pile
+	mov	esp,ebp		; Restaure la pile
 	pop	ebp		; Restaure EBP
 	ret	

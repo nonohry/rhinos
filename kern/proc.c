@@ -12,7 +12,7 @@
  * Creation d un processus 
  ***************************/
 
-PUBLIC void proc_allocate(struct proc* pr, u32_t base, u32_t data_code, u32_t stack, u8_t priv)
+PUBLIC void task_init(struct proc* pr, u32_t base, u32_t data_code, u32_t stack, u8_t priv, u32_t entry_point)
 {
 
   /* Cree les segments */
@@ -24,12 +24,24 @@ PUBLIC void proc_allocate(struct proc* pr, u32_t base, u32_t data_code, u32_t st
   init_data_seg(&(pr->ldt[LDT_SS_INDEX]), base+data_code, stack, priv);
 
   /* Affecte les registres de segments */
-  pr->context.cs = LDT_CS_SELECTOR;
-  pr->context.ds = LDT_DS_SELECTOR;
-  pr->context.es = LDT_ES_SELECTOR;
-  pr->context.fs = LDT_FS_SELECTOR;
-  pr->context.gs = LDT_GS_SELECTOR;
-  pr->context.ss = LDT_SS_SELECTOR;
+  pr->context.cs = LDT_CS_SELECTOR | priv;
+  pr->context.ds = LDT_DS_SELECTOR | priv;
+  pr->context.es = LDT_ES_SELECTOR | priv;
+  pr->context.fs = LDT_FS_SELECTOR | priv;
+  pr->context.gs = LDT_GS_SELECTOR | priv;
+  pr->context.ss = LDT_SS_SELECTOR | priv;
+
+  /* Copie le code au bon endroit */
+  phys_copy(entry_point, base, data_code);
+  
+  /* Positionne les registres nécessaires */
+  pr->context.esp = stack;   /* La pile */ 
+  pr->context.eip = 0;       /* Pointeur d instructions */
+  pr->context.eflags = 512;  /* Interrupt Enable Flag */
+
+  /* Le selecteur de la LDT */
+  init_ldt_seg(&gdt[LDT_INDEX],(u32_t) &(pr->ldt[0]), sizeof(pr->ldt), 0);
+  pr->ldt_selector = LDT_INDEX << SHIFT_SELECTOR;
 
   return;
 }

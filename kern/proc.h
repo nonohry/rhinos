@@ -49,16 +49,17 @@ PUBLIC struct stack_frame
   u32_t edi;
   u32_t esi;
   u32_t ebp;
+  u32_t orig_esp;
   u32_t ebx;
   u32_t edx;
   u32_t ecx;
   u32_t eax;
   u32_t ret_addr;   /* Adresse de retour empilee par hwint_save */
   u32_t eip;
-  u16_t cs;
+  u32_t cs;
   u32_t eflags;
   u32_t esp;
-  u16_t ss;
+  u32_t ss;
 } __attribute__ ((packed));
 
 
@@ -79,8 +80,9 @@ PUBLIC struct proc
  ***************/
 
 PUBLIC struct proc proc_table[PROC_NUM_MAX];  /* Table des processus */
+PUBLIC struct proc* proc_current;             /* Processus courant */
 
-PUBLIC void proc_allocate(struct proc* pr, u32_t base, u32_t data_code, u32_t stack, u8_t priv);
+PUBLIC void task_init(struct proc* pr, u32_t base, u32_t data_code, u32_t stack, u8_t priv, u32_t entry_point);
 
 
 #endif
