@@ -8,6 +8,7 @@ extern  idt_desc		; Descripteur de l'IDT en C
 extern	irq_handle		; Handlers pour les IRQ en C
 extern	irq_active		; Tableau des ISR actives en C
 extern	excep_handle		; Handlers pour les exceptions en C
+extern	tss			; TSS defini en C
 extern	proc_current		; Pointeur sur le processus a executer
 extern  main			; RhinOS Main en C
 
@@ -197,6 +198,7 @@ hwint_save:
 task_mgmt:
 	mov	esp,[proc_current] ; La pile pointe sur le contexte
 	lldt	[esp+PROC_LDT_SEL] ; Charge la LDT du processus courant
+	mov	[tss+TSS_ESP0],esp ; Sauve ESP dans le TSS pour recharger la LDT
 
 	;;
 	;;Restauration du contexte pour les IRQ et les exceptions
@@ -368,3 +370,9 @@ excep_err_next:
 	;;
 
 	PROC_LDT_SEL	equ	66 ; Position, en octet, du selecteur
+
+	;;
+	;; Offset dans le TSS
+	;;
+
+	TSS_ESP0	equ	4 ; Position, en octet, de ESP0
