@@ -43,8 +43,10 @@ PUBLIC void main()
   task_init(&dummy_proc, 0x9C00, 1024, 1024, 3, (u32_t)&dummy);
   proc_current = &dummy_proc;
 
+  /* Gestion des taches */
   task_mgmt();
 
+  /* On ne doit plus ariver ici */
   while(1)
     {
     }

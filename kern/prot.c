@@ -39,7 +39,7 @@ PUBLIC void pmode_init()
   init_code_seg(&gdt[CS_INDEX],(u32_t) 0, KERN_LIMIT, 0);
   init_data_seg(&gdt[DS_INDEX],(u32_t) 0, KERN_LIMIT, 0);
   init_data_seg(&gdt[ES_INDEX],(u32_t) 0, KERN_LIMIT, 0);
-  init_data_seg(&gdt[SS_INDEX],(u32_t) 0, KERN_LIMIT, 0);
+  init_data_seg(&gdt[SS_INDEX],(u32_t) 0, KERN_STACK_LIMIT, 0);
   init_tss_seg(&gdt[TSS_INDEX],(u32_t) &tss, sizeof(tss), 0);
 
   /* Initialisation du PIC i8259 */
