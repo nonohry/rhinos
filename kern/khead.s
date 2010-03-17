@@ -198,8 +198,7 @@ hwint_save:
 task_mgmt:
 	mov	esp,[proc_current] ; La pile pointe sur le contexte
 	lldt	[esp+PROC_LDT_SEL] ; Charge la LDT du processus courant
-   	mov	[tss+TSS_ESP0],esp ; Sauve ESP dans le TSS pour recharger la LDT
-
+				 
 	;; 
 	;; Restauration du contexte pour les IRQ et les exceptions
 	;; 

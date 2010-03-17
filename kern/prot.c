@@ -27,7 +27,7 @@ PUBLIC void pmode_init()
   /* Initialisation du TSS */
 
   tss.ss0 = SS_SELECTOR;
-  tss.esp0 = KERN_TOP_STACK;
+  tss.esp0 = KERN_LIMIT;
 
   /* Descripteur de GDT */
 
