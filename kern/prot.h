@@ -87,7 +87,6 @@
 
 #define GRANULAR_LIMIT    0xFFFFFL   /* Pas de granularite au dessous (L pour Long) */
 #define KERN_LIMIT        0xC0000    /* Limite de l'espace Noyau */
-#define KERN_STACK_LIMIT  4294967295 /* ESP Noyau (2^32 - 1) */
 #define KERN_TOP_STACK    0x7C00     /* ESP Noyau au boot */
 
 /* IRQs */
