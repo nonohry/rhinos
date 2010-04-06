@@ -1,7 +1,15 @@
 [BITS 16]
 
+	SRCADDR		equ	0x7C00
+	DSTADDR		equ	0x600
 	
-jmp	start			; Evite les declarations des donnees & fonctions
+	cld			; Fixe le sens du decompte
+	mov  	esi,SRCADDR	; Recupere l addresse source
+	mov	edi,DSTADDR	; Recupere l addresse de destination
+	mov	ecx,512 	; Recupere la taille (512o)
+	shr	ecx,0x2		; Divise la taille par 4
+	rep movsd		; Copie !
+	jmp	0:DSTADDR+start ; Saute au nouveau point d entree
 	
 	;; 
 	;; Declaration des donnees
@@ -14,9 +22,9 @@ jmp	start			; Evite les declarations des donnees & fonctions
 	i80386msg	db	'80386 CPU found !', 13,10,0
 	bootdrv		db	0
 
-	LOADOFF		equ	0x7E0 	; Offset du second programme de boot
+	LOADOFF		equ	0x80 	; Offset du second programme de boot
 	LOADSIZE	equ	2	; Taille (en secteur de 512o)
-	CUROFF		equ	0x7C0 	; Offset Courant
+	CUROFF		equ	0x60 	; Offset Courant
 	STACKPTR	equ	0x1C00 	; Offset SP
 	STACKOFF	equ	0x600 	; Base de la pile
 	
@@ -67,8 +75,8 @@ cpu_end:
 
 start:
 	mov	ax,CUROFF	; Simule une origine a 0
-	mov	ds,ax		; alors que le BIOS
-	mov	es,ax		; nous place a 0x7C00
+	mov	ds,ax		; alors que la copie
+	mov	es,ax		; nous place a 0x600
 
 	cli			; Bloque les interruptions
 	mov	ax,STACKOFF	; L'adresse de le pile
@@ -91,7 +99,7 @@ start:
 	mov	ch,LOADSIZE	; La taille dans CH
 	mov	cl,2		; Le numero de secteur dans CL
 	call	load_sect	; Appelle la fonction de chargement
-
+	
 	jmp	LOADOFF:0x0	; Saute au second boot jmp	LOADOFF:0x0
 	
 	times	510-($-$$) db 0	; Padding pour atteinde 512 octets

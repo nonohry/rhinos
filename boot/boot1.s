@@ -22,10 +22,10 @@ jmp 	start
 	;; Autres
 	;; 
 	
-	KLOADOFF	equ	0x820	; Segment de chargement du noyau
-	KADDR		equ	0x8200	; Adresse de chargement du noyau
+	KLOADOFF	equ	0xC0	; Segment de chargement du noyau
+	KADDR		equ	0xC00	; Adresse de chargement du noyau
 	KSIZE		equ	20	; Taille du noyau (KSIZE*512o)
-	CUROFF		equ	0x7E0	; Offset courant
+	CUROFF		equ	0x80	; Offset courant
 	STACKPTR	equ	0x7C00	; Pointeur de pile
 
 	
@@ -75,7 +75,7 @@ start:
 	
 	mov	ax,CUROFF	; Simule une origine a 0
 	mov	ds,ax		; alors que le boot
-	mov	es,ax		; nous place a 0x1000
+	mov	es,ax		; nous place a 0x800
 
 	;;
 	;; Chargement du Noyau a KLOADOFF
@@ -165,7 +165,7 @@ next:
 	mov     ax,SS_SELECTOR	;
 	mov     ss,ax   	; de segments
 	mov     esp,STACKPTR
-
+	
 	jmp	CS_SELECTOR:KADDR 	; Saut vers les noyau	
 
 	times	1024-($-$$) 	db 0	; Padding pour atteindre 1024 octets
