@@ -72,7 +72,7 @@ real2phys:			; Arg: DX=Segment, AX=Offset
 	;;
 	
 start:
-	
+
 	mov	ax,CUROFF	; Simule une origine a 0
 	mov	ds,ax		; alors que le boot
 	mov	es,ax		; nous place a 0x800
@@ -156,7 +156,6 @@ fast_ok:
 	jmp	next		; Vide les caches processeur en sautant
 
 next:
-
 	
 	mov     ax,DS_SELECTOR
 	mov     ds,ax  	 	; Reinitialisation
