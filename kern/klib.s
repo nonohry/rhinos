@@ -4,6 +4,7 @@ global bochs_print
 global outb
 global inb
 global phys_copy
+global random
 	
 	;; 
 	;; Affichage dans bochs
@@ -87,4 +88,33 @@ phys_copy:
 	pop	esi		; Restaure ESI
 	mov	esp,ebp		; Restaure la pile
 	pop	ebp		; Restaure EBP
-	ret	
+	ret
+
+	;;
+	;; u32_t random(void)
+	;;
+
+mod     equ     0x7FFFFFFF	; 2^31 - 1 (modulo de park-miller)
+cons    equ     16807		; constante de park-miller
+
+random:
+	push 	ebp         	; Sauvegarde de EBP
+	mov  	ebp,esp 	; Mise en place de la base
+	push	esi		; Sauvegarde ESI (Requis par GCC)
+	push	edi		; Sauvegarde EDI (Requis par GCC)
+        mov     eax,cons        ; EAX = 16807
+	mov	ebx,dword [seed] ; EBX =1
+	mul     ebx             ; EDX:EAX = EAX*EBX
+	add     eax,edx         ; EAX = EDX+EAX (algorithme de Carta)
+	jno     random_end 	; Saut a la fin si on ne depasse pas la limit 2^32
+	and     eax,mod       	; Sinon, bit 31 mis a 0
+	inc     eax             ; Incremente EAX
+random_end:	
+	mov     dword [seed],eax ; Met a jour seed pour l alea suivant
+	pop	edi		; Restaure EDI
+	pop	esi		; Restaure ESI
+	mov	esp,ebp		; Restaure la pile
+	pop	ebp		; Restaure EBP	
+	ret			; Retourne (le resultat est dans EAX)
+
+	seed	dd	1	; Debut de l alea
