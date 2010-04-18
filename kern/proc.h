@@ -33,6 +33,9 @@
 #define LDT_FS_INDEX       4
 #define LDT_GS_INDEX       5
 
+/* Skip List */
+
+#define SKIP_MAX_LEVEL     32
 
 /***************
  * Structures
@@ -75,13 +78,33 @@ PUBLIC struct proc
 } __attribute__ ((packed));
 
 
+/* Structure d'une skip list */
+
+PUBLIC struct skip_list
+{
+ u32_t level;
+ struct skip_node* header;
+};
+
+/* Structure d'un noeud de skip_list */
+
+PUBLIC struct skip_node
+{
+ u32_t key;
+ u32_t value;
+ struct skip_node* forwards[SKIP_MAX_LEVEL];
+};
+
 /***************
  * Prototypes
  ***************/
 
 PUBLIC struct proc proc_table[PROC_NUM_MAX];  /* Table des processus */
 PUBLIC struct proc* proc_current;             /* Processus courant */
+PUBLIC struct skip_list proc_ready;           /* Skip list des processus executables */
+PUBLIC struct skip_node* NIL;                 /* Element NIL de la skip list */
 
+PUBLIC void sched_init(struct skip_list* list);
 PUBLIC void task_init(struct proc* pr, u32_t base, u32_t data_code, u32_t stack, u8_t priv, u32_t entry_point);
 
 

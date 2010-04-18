@@ -8,6 +8,29 @@
 #include "prot.h"
 #include "proc.h"
 
+/**************************************
+ * Initialisation de l ordonnancement
+ **************************************/
+
+PUBLIC void sched_init(struct skip_list* list)
+{
+  u32_t i;
+
+  /* Initialisation de la cle de NIL*/
+  NIL->key = 0xFFFFFFFE;
+
+  /* Niveau intial = 0 */
+  list->level = 0;
+
+  /* Tous les successeurs du header sont NIL */
+ for(i=0; i<SKIP_MAX_LEVEL; i++)
+   {
+     list->header->forwards[i] = NIL;
+   }
+
+ return;
+}
+
 /***************************
  * Creation d un processus 
  ***************************/
@@ -45,3 +68,4 @@ PUBLIC void task_init(struct proc* pr, u32_t base, u32_t data_code, u32_t stack,
 
   return;
 }
+
