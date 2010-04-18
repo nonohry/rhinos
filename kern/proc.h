@@ -35,7 +35,7 @@
 
 /* Skip List */
 
-#define SKIP_MAX_LEVEL     32
+#define SKIP_MAX_LEVEL     5
 
 /***************
  * Structures
@@ -82,17 +82,18 @@ PUBLIC struct proc
 
 PUBLIC struct skip_list
 {
- u32_t level;
- struct skip_node* header;
+  u16_t level;
+  u32_t tickets;
+  struct skip_node* header;
 };
 
 /* Structure d'un noeud de skip_list */
 
 PUBLIC struct skip_node
 {
- u32_t key;
- u32_t value;
- struct skip_node* forwards[SKIP_MAX_LEVEL];
+  u32_t key;
+  u32_t value;
+  struct skip_node* forwards[SKIP_MAX_LEVEL];
 };
 
 /***************
@@ -105,6 +106,9 @@ PUBLIC struct skip_list proc_ready;           /* Skip list des processus executa
 PUBLIC struct skip_node* NIL;                 /* Element NIL de la skip list */
 
 PUBLIC void sched_init(struct skip_list* list);
+PUBLIC void sched_insert(struct skip_list* list, struct skip_node* node);
+PUBLIC void sched_delete(struct skip_list* list, u32_t key);
+PUBLIC void sched_print(struct skip_list* list);
 PUBLIC void task_init(struct proc* pr, u32_t base, u32_t data_code, u32_t stack, u8_t priv, u32_t entry_point);
 
 
