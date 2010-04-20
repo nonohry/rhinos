@@ -43,6 +43,9 @@ PUBLIC void sched_insert(struct skip_list* list, struct skip_node* node)
   int i;
   u32_t lvl;
   
+  /* Calcule la key */
+  node->key = node->tickets + list->tickets;
+
   /* Part du header */
   x=list->header;
 
@@ -81,7 +84,7 @@ PUBLIC void sched_insert(struct skip_list* list, struct skip_node* node)
     }
 
   /* Ajuste le total de ticket */
-  list->tickets += node->key;
+  list->tickets += node->tickets;
 
   return;
 }
@@ -94,6 +97,7 @@ PUBLIC void sched_delete(struct skip_list* list, u32_t key)
 {
   struct skip_node* update[SKIP_MAX_LEVEL];
   struct skip_node* x;
+  struct skip_node* y;
   int i;
   
   /* Part du header pour trouver la clé */
@@ -125,15 +129,23 @@ PUBLIC void sched_delete(struct skip_list* list, u32_t key)
          /* Court circuite le noeud à oter */
          update[i]->forwards[i] = x->forwards[i];
        }
-      
-      /* Ajuste le total de tickets */
-      list->tickets -= x->key;
+
+      /* Met a jour les cles des elements qui suivent */
+      y = x->forwards[0];
+      while(y != NIL)
+	{
+	  y->key -= x->tickets;
+	  y = y->forwards[0];
+	}
      
      /* Si l element etait le plus haut niveau, il faut changer le niveau de la liste */
      while((list->level > 0)&&(list->header->forwards[list->level] == NIL))
        {
          list->level = list->level-1;
        }
+
+     /* Ajuste le total de tickets */
+     list->tickets -= x->tickets;
      
     }
   
@@ -148,10 +160,30 @@ PUBLIC void sched_print(struct skip_list* list)
 {
   int i;
 
+      if (list->tickets == 10) bochs_print("10\n");
+      if (list->tickets == 20) bochs_print("20\n");
+      if (list->tickets == 30) bochs_print("30\n");
+      if (list->tickets == 40) bochs_print("40\n");
+      if (list->tickets == 50) bochs_print("50\n");
+      if (list->tickets == 60) bochs_print("60\n");
+      if (list->tickets == 70) bochs_print("70\n");
+      if (list->tickets == 80) bochs_print("80\n");
+      if (list->tickets == 90) bochs_print("90\n");
+      if (list->tickets == 100) bochs_print("100\n");
+      if (list->tickets == 110) bochs_print("110\n");
+      if (list->tickets == 120) bochs_print("120\n");
+      if (list->tickets == 130) bochs_print("130\n");
+      if (list->tickets == 140) bochs_print("140\n");
+      if (list->tickets == 150) bochs_print("150\n");
+      if (list->tickets == 160) bochs_print("160\n");
+      if (list->tickets == 170) bochs_print("170\n");
+      if (list->tickets == 180) bochs_print("180\n");
+      if (list->tickets == 190) bochs_print("190\n");
+
   for(i=SKIP_MAX_LEVEL-1; i>=0; i--)
     {
       struct skip_node* p;
-      
+
       p = list->header;
       bochs_print("HDR -> ");
    
@@ -164,6 +196,19 @@ PUBLIC void sched_print(struct skip_list* list)
 	  if (p->key == 40) bochs_print("40");
 	  if (p->key == 50) bochs_print("50");
 	  if (p->key == 60) bochs_print("60");
+	  if (p->key == 70) bochs_print("70");
+	  if (p->key == 80) bochs_print("80");
+	  if (p->key == 90) bochs_print("90");
+	  if (p->key == 100) bochs_print("100");
+	  if (p->key == 110) bochs_print("110");
+	  if (p->key == 120) bochs_print("120");
+	  if (p->key == 130) bochs_print("130");
+	  if (p->key == 140) bochs_print("140");
+	  if (p->key == 150) bochs_print("150");
+	  if (p->key == 160) bochs_print("160");
+	  if (p->key == 170) bochs_print("170");
+	  if (p->key == 180) bochs_print("180");
+	  if (p->key == 190) bochs_print("190");
 	  bochs_print(" -> ");
        }
       

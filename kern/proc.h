@@ -75,6 +75,8 @@ PUBLIC struct proc
   u16_t ldt_selector;              /* Selecteur de la ldt dans la gdt */
   struct seg_desc ldt[LDT_SIZE];   /* LDT du processus */
   char name[PROC_NAME_LEN];        /* Nom du processus */
+  u32_t tickets;                   /* Nombre de tickets */
+  u32_t key;                       /* Cle de rechercher */
 } __attribute__ ((packed));
 
 
@@ -82,18 +84,19 @@ PUBLIC struct proc
 
 PUBLIC struct skip_list
 {
-  u16_t level;
-  u32_t tickets;
-  struct skip_node* header;
+  u16_t level;                     /* Niveau courant de la liste */
+  u32_t tickets;                   /* Somme courante des tickets */
+  struct skip_node* header;        /* header */
 };
 
 /* Structure d'un noeud de skip_list */
 
 PUBLIC struct skip_node
 {
-  u32_t key;
-  u32_t value;
-  struct skip_node* forwards[SKIP_MAX_LEVEL];
+  u32_t key;                       /* Cle de recherche (somme des tickets) */
+  u32_t tickets;                   /* Tickets du process */
+  u32_t index;                     /* Index dans la table des processus */
+  struct skip_node* forwards[SKIP_MAX_LEVEL];  /* Successeurs par niveau */
 };
 
 /***************

@@ -46,10 +46,10 @@ PUBLIC void main()
   struct skip_node node3;
   struct skip_node node4;
 
-  node1.key = 10;
-  node2.key = 20;
-  node3.key = 30;
-  node4.key = 40;
+  node1.tickets = 10;
+  node2.tickets = 20;
+  node3.tickets = 30;
+  node4.tickets = 40;
 
   sched_init(&proc_ready);
   sched_insert(&proc_ready, &node1);
