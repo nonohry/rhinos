@@ -11,6 +11,7 @@
 #define LDT_SIZE      6
 #define PROC_NAME_LEN 32
 #define PROC_NUM_MAX  8192-LDT_INDEX  /* Toute la GDT disponible */
+#define PROC_IF       512             /* 1000000000b */
 
 /* Selecteur de segments de la LDT  
  *  Le RPL n'apparait pas ici !
@@ -113,7 +114,7 @@ PUBLIC void sched_init(struct skip_list* list);
 PUBLIC void sched_insert(struct skip_list* list, struct skip_node* node);
 PUBLIC void sched_delete(struct skip_list* list, u32_t key);
 PUBLIC void sched_print(struct skip_list* list);
-PUBLIC void task_init(struct proc* pr, u32_t base, u32_t data_code, u32_t stack, u8_t priv, u32_t entry_point);
+PUBLIC void task_init(struct proc* pr, u32_t base, u32_t size, u8_t priv, u32_t entry_point);
 
 
 #endif
