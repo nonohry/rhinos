@@ -87,6 +87,7 @@ PUBLIC struct skip_list
   u16_t level;                     /* Niveau courant de la liste */
   u32_t tickets;                   /* Somme courante des tickets */
   struct skip_node* header;        /* header */
+  struct skip_node* update[SKIP_MAX_LEVEL]; /* Tableau pour insertion */
 };
 
 /* Structure d'un noeud de skip_list */

@@ -26,6 +26,7 @@ PUBLIC void sched_init(struct skip_list* list)
   /* Tous les successeurs du header sont NIL */
  for(i=0; i<SKIP_MAX_LEVEL; i++)
    {
+     list->update[i] = list->header;
      list->header->forwards[i] = NIL;
    }
 
@@ -38,49 +39,24 @@ PUBLIC void sched_init(struct skip_list* list)
 
 PUBLIC void sched_insert(struct skip_list* list, struct skip_node* node)
 {
-  struct skip_node* update[SKIP_MAX_LEVEL];
-  struct skip_node* x;
   int i;
   u32_t lvl;
   
   /* Calcule la key */
   node->key = node->tickets + list->tickets;
 
-  /* Part du header */
-  x=list->header;
-
-  for(i=list->level; i>=0; i--)
-    {
-      /* Trouve la clé précédent le nouvel element */
-      while (x->forwards[i]->key < node->key)
-	{
-	  x = x->forwards[i];
-	}
-      /* Sauve le noeud a mettre à jour au niveau i */
-      update[i] = x;
-    }
-
   /* Choisit un niveau */
   lvl = random()%SKIP_MAX_LEVEL;
   
-  /* Si le niveau est superieur au niveau courant */
-  if (lvl > list->level)
-    {
-      /* Le header des niveaux en surplus est a mettre à jour */
-      for(i=list->level+1; i<=lvl; i++)
-	{
-	  update[i]=list->header;
-	}
-
-      /* Du coup on a un nouveau niveau */
-      list->level = lvl;
-    }
+  /* Si le niveau est superieur au niveau courant, on l ajuste*/
+  if (lvl > list->level) list->level = lvl;
 
   /* On met à jour ses prédécesseurs et ses succeseeurs */
   for(i=0; i<=lvl; i++)
     {
-      node->forwards[i] = update[i]->forwards[i];
-      update[i]->forwards[i] = node;
+      list->update[i]->forwards[i] = node;
+      node->forwards[i] = NIL;
+      list->update[i] = node;
     }
 
   /* Ajuste le total de ticket */
@@ -88,6 +64,7 @@ PUBLIC void sched_insert(struct skip_list* list, struct skip_node* node)
 
   return;
 }
+
 
 /********************************
  * Suppression dans la Skip_list
