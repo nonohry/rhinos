@@ -38,6 +38,12 @@
 
 #define SKIP_MAX_LEVEL     5
 
+/* Etat des processus */
+
+#define PROC_BLOCKED       0
+#define PROC_READY         1
+#define PROC_RUNNING       2
+
 /***************
  * Structures
  ***************/
@@ -75,6 +81,7 @@ PUBLIC struct proc
   u16_t index;                     /* Index dans la table de processus */
   u16_t ldt_selector;              /* Selecteur de la ldt dans la gdt */
   struct seg_desc ldt[LDT_SIZE];   /* LDT du processus */
+  u8_t state;                      /* Etat du processus */
   char name[PROC_NAME_LEN];        /* Nom du processus */
   u32_t tickets;                   /* Nombre de tickets */
   u32_t key;                       /* Cle de rechercher */
