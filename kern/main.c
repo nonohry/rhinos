@@ -61,7 +61,7 @@ PUBLIC void main()
   sched_print(&proc_ready);
 
   /* Initialisation de la dummy task */
-  task_init(&dummy_proc, 0x9C00, 1024, 3, (u32_t)&dummy);
+  task_init(&dummy_proc, 0x200000, 1024, 3, (u32_t)&dummy);
   proc_current = &dummy_proc;
 
   /* Gestion des taches */

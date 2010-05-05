@@ -86,7 +86,7 @@
 /* Limite des segments  */
 
 #define GRANULAR_LIMIT    0xFFFFFL   /* Pas de granularite au dessous (L pour Long) */
-#define KERN_LIMIT        0xC0000    /* Limite de l'espace Noyau */
+#define KERN_LIMIT        0x0 //0xC0000    /* Limite de l'espace Noyau */
 #define KERN_TOP_STACK    0x7C00     /* ESP Noyau au boot */
 
 /* IRQs */

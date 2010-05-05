@@ -27,7 +27,7 @@ PUBLIC void pmode_init()
   /* Initialisation du TSS */
 
   tss.ss0 = SS_SELECTOR;
-  tss.esp0 = KERN_LIMIT;
+  tss.esp0 = 0xC0000;
 
   /* Descripteur de GDT */
 
@@ -112,8 +112,8 @@ PUBLIC void init_code_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dp
   desc->base_high = base >> 24;
 
   /* Active la granularite pour les grandes tailles */
-
-  if ((size-1) > GRANULAR_LIMIT)      /* Le descripteur commence a 0, d'ou le -1 */
+  size--;                         /* 0 signifie 4G */
+  if (size > GRANULAR_LIMIT)      /* Le descripteur commence a 0, d'ou le -1 */
     {
       desc->limit_low = size >> 12;   /* Divise la taille par 4k (ie shift par 12) */
       desc->granularity = SEG_GRANULAR | size >> (16 + 12)  ; /* Partie haute de la limite */
@@ -141,8 +141,8 @@ PUBLIC void init_data_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dp
   desc->base_high = base >> 24;
 
   /* Active la granularite pour les grandes tailles */
-
-  if ((size-1) > GRANULAR_LIMIT)      /* Le descripteur commence a 0, d'ou le -1 */
+  size--;                         /* 0 signifie 4G */
+  if (size > GRANULAR_LIMIT)      /* Le descripteur commence a 0, d'ou le -1 */
     {
       desc->limit_low = size >> 12;   /* Divise la taille par 4k (ie shift par 12) */
       desc->granularity = SEG_GRANULAR | size >> (16 + 12)  ; /* Partie haute de la limite */
@@ -219,8 +219,8 @@ PUBLIC void init_tss_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dpl
   desc->base_high = base >> 24;
 
   /* Active la granularite pour les grandes tailles */
-
-  if ((size-1) > GRANULAR_LIMIT)      /* Le descripteur commence a 0, d'ou le -1 */
+  size--;                         /* 0 signifie 4G */
+  if (size > GRANULAR_LIMIT)      /* Le descripteur commence a 0, d'ou le -1 */
     {
       desc->limit_low = size >> 12;   /* Divise la taille par 4k (ie shift par 12) */
       desc->granularity = SEG_GRANULAR | size >> (16 + 12)  ; /* Partie haute de la limite */
@@ -251,8 +251,8 @@ PUBLIC void init_ldt_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dpl
   desc->base_high = base >> 24;
 
   /* Active la granularite pour les grandes tailles */
-
-  if ((size-1) > GRANULAR_LIMIT)      /* Le descripteur commence a 0, d'ou le -1 */
+  size--;                         /* 0 signifie 4G */
+  if (size > GRANULAR_LIMIT)      /* Le descripteur commence a 0, d'ou le -1 */
     {
       desc->limit_low = size >> 12;   /* Divise la taille par 4k (ie shift par 12) */
       desc->granularity = SEG_GRANULAR | size >> (16 + 12)  ; /* Partie haute de la limite */
