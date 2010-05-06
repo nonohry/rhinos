@@ -33,8 +33,6 @@ EXTERN void task_mgmt();
 PUBLIC void main()
 {
 
-  struct proc dummy_proc;
-
   /* Initialisation Horloge */
   clock_init();
   bochs_print("Clock initialized (100Hz)\n");
@@ -61,8 +59,8 @@ PUBLIC void main()
   sched_print(&proc_ready);
 
   /* Initialisation de la dummy task */
-  task_init(&dummy_proc, 0x200000, 1024, 3, (u32_t)&dummy);
-  proc_current = &dummy_proc;
+  task_init(&proc_table[0], 0xF00000, 1024, 3, (u32_t)&dummy);
+  proc_current = &proc_table[0];
 
   /* Gestion des taches */
   task_mgmt();
