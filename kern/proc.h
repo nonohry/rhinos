@@ -73,21 +73,6 @@ PUBLIC struct stack_frame
 } __attribute__ ((packed));
 
 
-/* Representation d'un processus */
-
-PUBLIC struct proc
-{
-  struct stack_frame context;      /* Le contexte sauvegarde */
-  u16_t index;                     /* Index dans la table de processus */
-  u16_t ldt_selector;              /* Selecteur de la ldt dans la gdt */
-  struct seg_desc ldt[LDT_SIZE];   /* LDT du processus */
-  u8_t state;                      /* Etat du processus */
-  char name[PROC_NAME_LEN];        /* Nom du processus */
-  u32_t tickets;                   /* Nombre de tickets */
-  u32_t key;                       /* Cle de rechercher */
-} __attribute__ ((packed));
-
-
 /* Structure d'une skip list */
 
 PUBLIC struct skip_list
@@ -107,6 +92,21 @@ PUBLIC struct skip_node
   u32_t index;                     /* Index dans la table des processus */
   struct skip_node* forwards[SKIP_MAX_LEVEL];  /* Successeurs par niveau */
 };
+
+
+/* Representation d'un processus */
+
+PUBLIC struct proc
+{
+  struct stack_frame context;      /* Le contexte sauvegarde */
+  u16_t index;                     /* Index dans la table de processus */
+  u16_t ldt_selector;              /* Selecteur de la ldt dans la gdt */
+  struct seg_desc ldt[LDT_SIZE];   /* LDT du processus */
+  u8_t state;                      /* Etat du processus */
+  char name[PROC_NAME_LEN];        /* Nom du processus */
+  struct skip_node node;           /* Noeud associe dans la skip list */
+} __attribute__ ((packed));
+
 
 /***************
  * Prototypes

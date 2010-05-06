@@ -39,21 +39,16 @@ PUBLIC void main()
  
   /* Initialisation de l'ordonnancement */
 
-  struct skip_node node1;
-  struct skip_node node2;
-  struct skip_node node3;
-  struct skip_node node4;
-
-  node1.tickets = 10;
-  node2.tickets = 20;
-  node3.tickets = 30;
-  node4.tickets = 40;
+  proc_table[0].node.tickets = 10;
+  proc_table[1].node.tickets = 20;
+  proc_table[2].node.tickets = 30;
+  proc_table[3].node.tickets = 40;
 
   sched_init(&proc_ready);
-  sched_insert(&proc_ready, &node1);
-  sched_insert(&proc_ready, &node2);
-  sched_insert(&proc_ready, &node3);
-  sched_insert(&proc_ready, &node4);
+  sched_insert(&proc_ready, &(proc_table[0].node));
+  sched_insert(&proc_ready, &(proc_table[1].node));
+  sched_insert(&proc_ready, &(proc_table[2].node));
+  sched_insert(&proc_ready, &(proc_table[3].node));
   sched_print(&proc_ready);
   sched_delete(&proc_ready, 30);
   sched_print(&proc_ready);
