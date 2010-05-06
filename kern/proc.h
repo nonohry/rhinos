@@ -116,12 +116,13 @@ PUBLIC struct proc proc_table[PROC_NUM_MAX];  /* Table des processus */
 PUBLIC struct proc* proc_current;             /* Processus courant */
 PUBLIC struct skip_list proc_ready;           /* Skip list des processus executables */
 PUBLIC struct skip_node* NIL;                 /* Element NIL de la skip list */
+PUBLIC u32_t  proc_ldt_index;                 /* Index d un slot libre dans la GDT pour la LDT (a partir de LDT_INDEX) */
 
 PUBLIC void sched_init(struct skip_list* list);
 PUBLIC void sched_insert(struct skip_list* list, struct skip_node* node);
 PUBLIC void sched_delete(struct skip_list* list, u32_t key);
 PUBLIC void sched_print(struct skip_list* list);
-PUBLIC void task_init(struct proc* pr, u32_t base, u32_t size, u8_t priv, u32_t entry_point);
+PUBLIC void task_init(struct proc* pr, u32_t base, u32_t size, u8_t priv, u32_t entry_point, u32_t tickets);
 
 
 #endif

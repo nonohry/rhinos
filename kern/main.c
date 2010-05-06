@@ -38,24 +38,17 @@ PUBLIC void main()
   bochs_print("Clock initialized (100Hz)\n");
  
   /* Initialisation de l'ordonnancement */
-
-  proc_table[0].node.tickets = 10;
-  proc_table[1].node.tickets = 20;
-  proc_table[2].node.tickets = 30;
-  proc_table[3].node.tickets = 40;
-
   sched_init(&proc_ready);
-  sched_insert(&proc_ready, &(proc_table[0].node));
-  sched_insert(&proc_ready, &(proc_table[1].node));
-  sched_insert(&proc_ready, &(proc_table[2].node));
-  sched_insert(&proc_ready, &(proc_table[3].node));
-  sched_print(&proc_ready);
-  sched_delete(&proc_ready, proc_table[2].node.key);
-  sched_print(&proc_ready);
 
   /* Initialisation de la dummy task */
-  task_init(&proc_table[0], 0xF00000, 1024, 3, (u32_t)&dummy);
-  proc_current = &proc_table[0];
+  task_init(&proc_table[0], 0xF00000, 1024, 3, (u32_t)&dummy,10);
+  task_init(&proc_table[1], 0xE00000, 1024, 3, (u32_t)&dummy,20);
+  task_init(&proc_table[2], 0xD00000, 1024, 3, (u32_t)&dummy,30);
+  task_init(&proc_table[3], 0xC00000, 1024, 3, (u32_t)&dummy,40);
+  proc_current = &proc_table[3];
+
+  /* DEBUG - Affiche la skip list */
+  sched_print(&proc_ready);
 
   /* Gestion des taches */
   task_mgmt();
