@@ -50,7 +50,7 @@ PUBLIC void main()
   sched_insert(&proc_ready, &(proc_table[2].node));
   sched_insert(&proc_ready, &(proc_table[3].node));
   sched_print(&proc_ready);
-  sched_delete(&proc_ready, 30);
+  sched_delete(&proc_ready, proc_table[2].node.key);
   sched_print(&proc_ready);
 
   /* Initialisation de la dummy task */
