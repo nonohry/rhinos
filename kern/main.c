@@ -32,7 +32,6 @@ EXTERN void task_mgmt();
 
 PUBLIC void main()
 {
-
   /* Initialisation Horloge */
   clock_init();
   bochs_print("Clock initialized (100Hz)\n");

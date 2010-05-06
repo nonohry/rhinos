@@ -8,6 +8,13 @@
 #include "prot.h"
 #include "proc.h"
 
+/************************************
+ * Declaration PRIVATE
+ ************************************/
+
+PRIVATE void sched_insert(struct skip_list* list, struct skip_node* node);
+PRIVATE void sched_delete(struct skip_list* list, u32_t key);
+
 /**************************************
  * Initialisation de l ordonnancement
  **************************************/
@@ -37,7 +44,7 @@ PUBLIC void sched_init(struct skip_list* list)
  * Insertion dans la skip_list
  ******************************/
 
-PUBLIC void sched_insert(struct skip_list* list, struct skip_node* node)
+PRIVATE void sched_insert(struct skip_list* list, struct skip_node* node)
 {
   int i;
   u32_t lvl;
@@ -70,7 +77,7 @@ PUBLIC void sched_insert(struct skip_list* list, struct skip_node* node)
  * Suppression dans la Skip_list
  ********************************/
 
-PUBLIC void sched_delete(struct skip_list* list, u32_t key)
+PRIVATE void sched_delete(struct skip_list* list, u32_t key)
 {
   struct skip_node* update[SKIP_MAX_LEVEL];
   struct skip_node* x;

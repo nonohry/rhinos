@@ -21,11 +21,11 @@
 #define SS_INDEX       4
 #define TSS_INDEX      5
 #define LDT_INDEX      6     /* Index de la premiere LDT */
-#define MAX_INDEX      8192
+#define MAX_INDEX      8192  /* Nombre maximum d index d une GDT */
 
 /* Taille de la GDT & IDT */
 
-#define GDT_SIZE       MAX_INDEX-1
+#define GDT_SIZE       MAX_INDEX-1  /* Debute a 0 */
 #define IDT_SIZE       255
 
 /* Selecteurs de segment */
@@ -87,7 +87,7 @@
 /* Limite des segments  */
 
 #define GRANULAR_LIMIT    0xFFFFFL   /* Pas de granularite au dessous (L pour Long) */
-#define KERN_LIMIT        0x0 //0xC0000    /* Limite de l'espace Noyau */
+#define KERN_LIMIT        0x0        /* Limite de l'espace Noyau */
 #define KERN_TOP_STACK    0x7C00     /* ESP Noyau au boot */
 
 /* IRQs */
@@ -236,11 +236,11 @@ EXTERN void excep_18(void);
 
 PUBLIC struct seg_desc gdt[GDT_SIZE];  /* GDT */
 PUBLIC struct gate_desc idt[IDT_SIZE]; /* IDT */
-PUBLIC struct tss tss; /* TSS */
-PUBLIC struct table_desc gdt_desc;    /* Descripteur de la GDT */
-PUBLIC struct table_desc idt_desc;    /* Descripteur de l'IDT */
+PUBLIC struct tss tss;                 /* TSS */
+PUBLIC struct table_desc gdt_desc;     /* Descripteur de la GDT */
+PUBLIC struct table_desc idt_desc;     /* Descripteur de l'IDT */
 PUBLIC struct irq_chaine* irq_handlers[IRQ_VECTORS];  /* Tableau des irq handlers */
-PUBLIC u32_t  irq_active[IRQ_VECTORS];                 /* Tableau des bitmaps d'irq actives */
+PUBLIC u32_t  irq_active[IRQ_VECTORS];                /* Tableau des bitmaps d'irq actives */
 
 
 PUBLIC void pmode_init();
