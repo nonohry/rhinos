@@ -39,6 +39,7 @@ PUBLIC void main()
  
   /* Initialisation de l'ordonnancement */
   sched_init(&proc_ready);
+  bochs_print("Lottery Scheduling initialized\n");
 
   /* Initialisation de la dummy task */
   task_init(&proc_table[0], 0xF00000, 1024, 3, (u32_t)&dummy,10);
