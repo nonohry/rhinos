@@ -6,6 +6,7 @@
 #include "types.h"
 #include "klib.h"
 #include "prot.h"
+#include "proc.h"
 #include "i8259.h"
 #include "i82C54.h"
 
@@ -54,13 +55,16 @@ PUBLIC void clock_init()
 
 PRIVATE u8_t clock_handler()
 {
+  
   static int tic = 0;
 
   tic++;
-  if (tic % 100 == 0) {
+  if (tic % 500 == 0) {
     tic = 0;
     bochs_print("clock\n");
+    
   }
+  
   return TRUE;
 }
 

@@ -113,10 +113,9 @@ PUBLIC void irq_handle(u8_t n)
       /* Execution des handlers */
       while (p != NULL)
 	{
-
 	  /* Indique que l ISR est active */
 	  irq_active[n] |= p->id;
-	  
+
 	  /* ISR fini ? */
 	  if (p->handler())
 	  {
@@ -126,11 +125,10 @@ PUBLIC void irq_handle(u8_t n)
 
 	  /* Suit la liste chainee */
 	  p=p->next;
-
 	}
 
-
     }
+
   return;
 }
 

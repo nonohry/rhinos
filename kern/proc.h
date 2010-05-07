@@ -11,7 +11,7 @@
 #define LDT_SIZE      6
 #define PROC_NAME_LEN 32
 #define PROC_NUM_MAX  8192-LDT_INDEX  /* Toute la GDT disponible */
-#define PROC_IF       512             /* 1000000000b */
+#define PROC_IF       0x200           /* 1000000000b */
 
 /* Selecteur de segments de la LDT  
  *  Le RPL n'apparait pas ici !
@@ -99,9 +99,9 @@ PUBLIC struct skip_node
 PUBLIC struct proc
 {
   struct stack_frame context;      /* Le contexte sauvegarde */
-  u16_t index;                     /* Index dans la table de processus */
   u16_t ldt_selector;              /* Selecteur de la ldt dans la gdt */
   struct seg_desc ldt[LDT_SIZE];   /* LDT du processus */
+  u16_t index;                     /* Index dans la table de processus */
   u8_t state;                      /* Etat du processus */
   char name[PROC_NAME_LEN];        /* Nom du processus */
   struct skip_node node;           /* Noeud associe dans la skip list */

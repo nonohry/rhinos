@@ -177,6 +177,7 @@ hwint_15:
 
 excep_save:	
 hwint_save:
+	cld		        ; Positionne le sens d empilement
 	pushad			; Sauve les registres generaux 32bits
 	mov	eax,esp		; Sauve la position de ESP pour le retour
 	o16 push	ds	; Sauve les registres de segments (empile en 16bits)
@@ -187,7 +188,7 @@ hwint_save:
 	mov	ds,dx
 	mov	dx,ES_SELECTOR
 	mov	es,dx		; note: FS & GS ne sont pas utilises par le noyau
-	push	hwint_ret	; Empile l'adresse de hwint_ret comme adresse de retour
+ 	push	hwint_ret	; Empile l'adresse de hwint_ret comme adresse de retour
 	jmp	[eax+32]	; 32 = 8 registres (pusad) => jmp a l'adresse empilee par call
 
 
@@ -197,8 +198,11 @@ hwint_save:
 
 task_mgmt:
 	mov	esp,[proc_current] ; La pile pointe sur le contexte
-	lldt	[esp+PROC_LDT_SEL] ; Charge la LDT du processus courant
-				 
+ 	lldt	[esp+PROC_LDT_SEL] ; Charge la LDT du processus courant
+	;; 	lea	eax,[esp+PROC_FRAME_END] ; Recupere l'adresse de la fin du stack_frame
+	;; 	mov	[tss+TSS_ESP0],eax ; Fait pointer ESP0 sur la fin du stack_frame
+				   ; de ce fait, hwint_save, en pushant les registres, va en meme temps
+				   ; les sauver dans le stack_frame du process
 	;; 
 	;; Restauration du contexte pour les IRQ et les exceptions
 	;; 
@@ -206,7 +210,7 @@ task_mgmt:
 excep_ret:	
 hwint_ret:
 	o16 pop gs		; Restaure les registres
-	o16 pop fs		; sauves par hwint_save	
+	o16 pop fs		; sauves par hwint_save
 	o16 pop	es		; en 16bits
 	o16 pop	ds
 	popad
@@ -368,8 +372,8 @@ excep_err_next:
 	;; Offset dans la structure proc
 	;;
 
-	PROC_LDT_SEL	equ	66 ; Position, en octet, du selecteur
-
+	PROC_LDT_SEL	equ	64 ; Position, en octet, du selecteur
+	PROC_FRAME_END	equ	64 ; Position, en octet, du dernier element de la stack_frame (SS)
 	;;
 	;; Offset dans le TSS
 	;;

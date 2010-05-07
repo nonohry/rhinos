@@ -240,7 +240,7 @@ PUBLIC void task_init(struct proc* pr, u32_t base, u32_t size, u8_t priv, u32_t 
   /* Le selecteur de la LDT */
   init_ldt_seg(&gdt[LDT_INDEX+proc_ldt_index],(u32_t) &(pr->ldt[0]), sizeof(pr->ldt), 0);
   pr->ldt_selector = (LDT_INDEX+proc_ldt_index) << SHIFT_SELECTOR;
-  proc_ldt_index ++;
+  proc_ldt_index++;
 
   /* Insert la tache dans la skip list */
   sched_insert(&proc_ready,&(pr->node));
