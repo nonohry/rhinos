@@ -14,6 +14,7 @@
 
 PRIVATE void sched_insert(struct skip_list* list, struct skip_node* node);
 PRIVATE void sched_delete(struct skip_list* list, u32_t key);
+PRIVATE void sched_search(struct skip_list* list, u32_t key, u32_t* index);
 
 /**************************************
  * Initialisation de l ordonnancement
@@ -135,6 +136,38 @@ PRIVATE void sched_delete(struct skip_list* list, u32_t key)
   
   return;
 }
+
+
+/******************************
+ * Recherche dans la skip_list
+ ******************************/
+
+PRIVATE void sched_search(struct skip_list* list, u32_t key, u32_t* index)
+{
+  struct skip_node* x;
+  int i;
+  
+  /* Part du header pour trouver la clé */
+  x=list->header;
+  
+  for(i=list->level; i>=0; i--)
+    {
+      /* Trouve la clé précédant celle a enlever */
+      while (x->forwards[i]->key < key)
+	{
+	  x = x->forwards[i];
+	}
+    }
+  
+  /* le noeud recherche est le successeur de la derniere cle trouvee */
+  x = x->forwards[0];
+  
+  /* Retourne son index */
+  *index = x->index;
+  
+  return;
+}
+
 
 /****************************
  * Print Skip_List (DEBUG)

@@ -399,6 +399,6 @@ excep_err_next:
 	;;
 
 kstack:
-	resb	KERN_STACK_SIZE
+	times	KERN_STACK_SIZE	db 0
 kstack_top:
 	
