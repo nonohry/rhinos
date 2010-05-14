@@ -57,12 +57,14 @@ PRIVATE u8_t clock_handler()
 {
   
   static int tic = 0;
+  static int proc = 0;
 
   tic++;
   if (tic % 500 == 0) {
     tic = 0;
     bochs_print("clock\n");
-    
+    proc = (proc+1)%3;
+    proc_current = &proc_table[proc];
   }
   
   return TRUE;
