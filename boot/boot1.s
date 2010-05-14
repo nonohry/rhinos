@@ -24,7 +24,7 @@ jmp 	start
 	
 	KLOADOFF	equ	0xC0	; Segment de chargement du noyau
 	KADDR		equ	0xC00	; Adresse de chargement du noyau
-	KSIZE		equ	20	; Taille du noyau (KSIZE*512o)
+	KSIZE		equ	40	; Taille du noyau (KSIZE*512o)
 	CUROFF		equ	0x80	; Offset courant
 	STACKPTR	equ	0x7C00	; Pointeur de pile
 
