@@ -42,7 +42,7 @@ PUBLIC void main()
 
   /* Initialisation de la dummy task */
   task_init(&proc_table[0], 0xF00000, 1024, 3, (u32_t)&dummy,10);
-  task_init(&proc_table[1], 0xD00000, 1024, 3, (u32_t)&dummy,10);
+  task_init(&proc_table[1], 0xD00000, 1024, 3, (u32_t)&dummy,20);
   task_init(&proc_table[2], 0xB00000, 1024, 3, (u32_t)&dummy,10);
   
   /* Initialisation du processus courant */

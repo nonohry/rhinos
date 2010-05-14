@@ -44,6 +44,10 @@
 #define PROC_READY         1
 #define PROC_RUNNING       2
 
+/* Quantum temps */
+
+#define PROC_QUANTUM       2     /* 20 ms de quantum d execution (on est a 100Hz, 2 = 20ms) */
+
 /***************
  * Structures
  ***************/
@@ -101,8 +105,8 @@ PUBLIC struct proc
   struct stack_frame context;      /* Le contexte sauvegarde */
   u16_t ldt_selector;              /* Selecteur de la ldt dans la gdt */
   struct seg_desc ldt[LDT_SIZE];   /* LDT du processus */
-  u16_t index;                     /* Index dans la table de processus */
   u8_t state;                      /* Etat du processus */
+  u32_t quantum;                   /* Quantum temps */
   char name[PROC_NAME_LEN];        /* Nom du processus */
   struct skip_node node;           /* Noeud associe dans la skip list */
 } __attribute__ ((packed));
@@ -116,11 +120,11 @@ PUBLIC struct proc proc_table[PROC_NUM_MAX];  /* Table des processus */
 PUBLIC struct proc* proc_current;             /* Processus courant */
 PUBLIC struct skip_list proc_ready;           /* Skip list des processus executables */
 PUBLIC struct skip_node* NIL;                 /* Element NIL de la skip list */
-PUBLIC u32_t  proc_ldt_index;                 /* Index d un slot libre dans la GDT pour la LDT (a partir de LDT_INDEX) */
+PUBLIC u32_t  proc_free_index;                /* Index d un slot libre pour la LDT (a partir de LDT_INDEX) et dans proc_table */
 
 PUBLIC void sched_init(struct skip_list* list);
 PUBLIC void sched_print(struct skip_list* list);
 PUBLIC void task_init(struct proc* pr, u32_t base, u32_t size, u8_t priv, u32_t entry_point, u32_t tickets);
-
+PUBLIC void task_schedule();
 
 #endif

@@ -267,17 +267,56 @@ PUBLIC void task_init(struct proc* pr, u32_t base, u32_t size, u8_t priv, u32_t 
   pr->context.eip = 0;           /* Pointeur d instructions */
   pr->context.eflags = PROC_IF;  /* Interrupt Enable Flag */
 
+  /* Affecte son quantum */
+  pr->quantum = PROC_QUANTUM;
+
   /* Affecte les tickets  */
   pr->node.tickets = tickets;
 
   /* Le selecteur de la LDT */
-  init_ldt_seg(&gdt[LDT_INDEX+proc_ldt_index],(u32_t) &(pr->ldt[0]), sizeof(pr->ldt), 0);
-  pr->ldt_selector = (LDT_INDEX+proc_ldt_index) << SHIFT_SELECTOR;
-  proc_ldt_index++;
+  init_ldt_seg(&gdt[LDT_INDEX+proc_free_index],(u32_t) &(pr->ldt[0]), sizeof(pr->ldt), 0);
+  pr->ldt_selector = (LDT_INDEX+proc_free_index) << SHIFT_SELECTOR;
+
+  /* Index de la tache */
+  pr->node.index = proc_free_index;
 
   /* Insert la tache dans la skip list */
   sched_insert(&proc_ready,&(pr->node));
 
+  proc_free_index++;
+
   return;
 }
 
+
+/****************
+ * Ordonnanceur
+ ****************/
+
+PUBLIC void task_schedule()
+{
+  /* Decremente le quantum temps de la tache */
+  proc_current->quantum--;
+
+  /* Si tout le quantum est utilise, on ordonnance */
+  if (proc_current->quantum == 0)
+    {
+      u32_t ticket;
+      u32_t index;
+
+      /* Rempli le quantum */
+      proc_current->quantum = PROC_QUANTUM;
+
+      /* Tire un ticket au sort */
+      ticket = random()%proc_ready.tickets;
+      
+      /* Cherche le gagnant */
+      sched_search(&proc_ready,ticket,&index);
+
+      /* Le gagnant devient la tache courante */
+      proc_current = &proc_table[index];
+
+    }
+
+  return;
+}
