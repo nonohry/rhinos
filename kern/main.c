@@ -49,7 +49,7 @@ PUBLIC void main()
   proc_current = &proc_table[0];
 
   /* Gestion des taches */
-  task_mgmt();
+  //task_mgmt();
 
   /* On ne doit plus arriver ici */
   while(1)

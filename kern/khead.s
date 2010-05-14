@@ -184,7 +184,10 @@ hwint_save:
 	o16 push	es
 	o16 push	fs
 	o16 push	gs
-	mov	esp,kstack_top 	;Positionne la pile noyau
+	mov	ebx,ds		; Prepare DS pour la comparaison
+	cmp	ebx,DS_SELECTOR	; Compare DS au selecteur du noyau
+	jz	kinterrupt	; Si c est le meme, le noyau a ete interrompu
+	mov	esp,kstack_top 	; Positionne la pile noyau
 	mov	dx,DS_SELECTOR	; Ajuste les segments noyau (CS & SS sont deja positionnes)
 	mov	ds,dx
 	mov	dx,ES_SELECTOR
@@ -192,6 +195,9 @@ hwint_save:
  	push	task_mgmt	; Empile l'adresse de task_mgmt comme adresse de retour
 	jmp	[eax+32]	; 32 = 8 registres (pusad) => jmp a l'adresse empilee par call
 
+kinterrupt:
+	push	hwint_ret	; Pas d ordonancement si le noyau a ete interrompu
+	jmp	[eax+32]	; Saute au retour
 
 	;;
 	;; Gestion des taches (s'acheve avec *_ret)
