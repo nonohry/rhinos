@@ -184,11 +184,12 @@ hwint_save:
 	o16 push	es
 	o16 push	fs
 	o16 push	gs
+	mov	esp,kstack_top 	;Positionne la pile noyau
 	mov	dx,DS_SELECTOR	; Ajuste les segments noyau (CS & SS sont deja positionnes)
 	mov	ds,dx
 	mov	dx,ES_SELECTOR
 	mov	es,dx		; note: FS & GS ne sont pas utilises par le noyau
- 	push	hwint_ret	; Empile l'adresse de hwint_ret comme adresse de retour
+ 	push	task_mgmt	; Empile l'adresse de task_mgmt comme adresse de retour
 	jmp	[eax+32]	; 32 = 8 registres (pusad) => jmp a l'adresse empilee par call
 
 
@@ -199,8 +200,8 @@ hwint_save:
 task_mgmt:
 	mov	esp,[proc_current] ; La pile pointe sur le contexte
  	lldt	[esp+PROC_LDT_SEL] ; Charge la LDT du processus courant
-	;; 	lea	eax,[esp+PROC_FRAME_END] ; Recupere l'adresse de la fin du stack_frame
-	;; 	mov	[tss+TSS_ESP0],eax ; Fait pointer ESP0 sur la fin du stack_frame
+ 	lea	eax,[esp+PROC_FRAME_END] ; Recupere l'adresse de la fin du stack_frame
+ 	mov	[tss+TSS_ESP0],eax ; Fait pointer ESP0 sur la fin du stack_frame
 				   ; de ce fait, hwint_save, en pushant les registres, va en meme temps
 				   ; les sauver dans le stack_frame du process
 	;; 
@@ -379,3 +380,19 @@ excep_err_next:
 	;;
 
 	TSS_ESP0	equ	4 ; Position, en octet, de ESP0
+
+	;;
+	;; Donnees de la pile noyau
+	;;
+
+	KERN_STACK_SIZE	equ	1024 ; Pile de 1024 octets
+
+
+	;;
+	;; La pile noyau pour gerer les interruptions
+	;;
+
+kstack:
+	resb	KERN_STACK_SIZE
+kstack_top:
+	
