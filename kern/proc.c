@@ -270,6 +270,9 @@ PUBLIC void task_init(struct proc* pr, u32_t index, u32_t base, u32_t size, u8_t
   /* Affecte son quantum */
   pr->quantum = PROC_QUANTUM;
 
+  /* Indique l'etat */
+  pr->state = PROC_READY;
+
   /* Affecte les tickets  */
   pr->node.tickets = tickets;
 
@@ -305,6 +308,9 @@ PUBLIC void task_schedule()
       /* Rempli le quantum */
       proc_current->quantum = PROC_QUANTUM;
 
+      /* Change l'etat */
+      proc_current->state = PROC_READY;
+
       /* Tire un ticket au sort */
       ticket = random()%proc_ready.tickets;
       
@@ -313,6 +319,7 @@ PUBLIC void task_schedule()
 
       /* Le gagnant devient la tache courante */
       proc_current = &proc_table[index];
+      proc_current->state = PROC_RUNNING;
 
     }
 
