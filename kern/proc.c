@@ -244,15 +244,14 @@ PUBLIC void task_index(u32_t* index)
   u32_t i;
 
   i=0;
-  while( (proc_table[i].state != PROC_TERMINATED) && (i<GDT_SIZE) )
+  while( (proc_table[i].state != PROC_TERMINATED) && (i<MAX_INDEX) )
     {
       i++;
     }
 
-  if (i >= GDT_SIZE)
+  if (i >= MAX_INDEX)
     {
       bochs_print("process table full !\n");
-      return;
     }
 
   *index = i;

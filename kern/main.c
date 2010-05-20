@@ -44,11 +44,11 @@ PUBLIC void main()
 
   /* Initialisation de la dummy task */
   task_index(&i);
-  task_init(&proc_table[i], i, 0xF00000, 1024, 3, (u32_t)&dummy,10);
+  if (i<MAX_INDEX) task_init(&proc_table[i], i, 0xF00000, 1024, 3, (u32_t)&dummy,10);
   task_index(&i);
-  task_init(&proc_table[i], i, 0xD00000, 1024, 3, (u32_t)&dummy,20);
+  if (i<MAX_INDEX) task_init(&proc_table[i], i, 0xD00000, 1024, 3, (u32_t)&dummy,20);
   task_index(&i);
-  task_init(&proc_table[i], i, 0xB00000, 1024, 3, (u32_t)&dummy,10);
+  if (i<MAX_INDEX) task_init(&proc_table[i], i, 0xB00000, 1024, 3, (u32_t)&dummy,10);
   
   /* Initialisation du processus courant */
   proc_current = &proc_table[0];
