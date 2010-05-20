@@ -40,9 +40,10 @@
 
 /* Etat des processus */
 
-#define PROC_BLOCKED       0
-#define PROC_READY         1
-#define PROC_RUNNING       2
+#define PROC_TERMINATED    0
+#define PROC_BLOCKED       1
+#define PROC_READY         2
+#define PROC_RUNNING       3
 
 /* Quantum temps */
 
