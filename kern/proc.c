@@ -235,6 +235,31 @@ PUBLIC void sched_print(struct skip_list* list)
   return;
 }
 
+/********************
+ * Choix d un index
+ ********************/
+
+PUBLIC void task_index(u32_t* index)
+{
+  u32_t i;
+
+  i=0;
+  while( (proc_table[i].state != PROC_TERMINATED) && (i<GDT_SIZE) )
+    {
+      i++;
+    }
+
+  if (i >= GDT_SIZE)
+    {
+      bochs_print("process table full !\n");
+      return;
+    }
+
+  *index = i;
+
+  return;
+}
+
 
 /***************************
  * Creation d un processus 
