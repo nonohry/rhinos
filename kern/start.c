@@ -17,9 +17,8 @@
  * Fonction cstart
  *******************/
 
-PUBLIC void cstart()
-{
-  
+PUBLIC void cstart(u16_t lower, u16_t upper)
+{ 
   pmode_init();
 
   return;

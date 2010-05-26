@@ -7,7 +7,10 @@ jmp 	start
 	nofastmsg       db      'Failed to enable A20 or no BIOS fast A20 support found',13,10,0
 	a20msg          db      'A20 Gate enabled',13,10,0
 	gdtmsg		db	'GDT Loaded',13,10,0
+	memerrmsg	db	'Failed ti get memory size',13,10,0
 	bootdrv		db	0
+	upper		dw	0
+	lower		dw	0
 	
 	;; 
 	;; Segment Selector
@@ -78,6 +81,22 @@ start:
 	mov	es,ax		; nous place a 0x800
 
 	;;
+	;;	Taille memoire selon int 0x15 (AX=0xE801)
+	;; 
+	
+	mov	ax,0xE801	; Argument de l interruption
+	int	0x15		; Interruption
+	jc	get_mem_e801_err; Erreur si CF
+	mov	[upper],dx	; DX= memoire haute en nombre de blocs de 64K 
+	mov	[lower],cx	; CX = taille memoire basse en K
+	jmp	get_mem_e801_end; Saut a la fin
+get_mem_e801_err:
+	mov	si,memerrmsg	; Charge le message d'erreur
+	call    print_message	; Affiche le message
+	call	reboot		; Reboot
+get_mem_e801_end:
+
+	;;
 	;; Chargement du Noyau a KLOADOFF
 	;; 
 	
@@ -135,7 +154,6 @@ fast_ok:
 	;; Mise en place de la GDT
 	;;
 
-
 	mov	dx,ds		; Segment = DS
 	mov	ax,gdt		; Offset = gdt
 	call	real2phys	; Calcule l'adresse physique de gdt
@@ -148,6 +166,9 @@ fast_ok:
 	mov	si,gdtmsg	; Affiche le chargement
 	call	print_message	; de la GDT
 
+	mov	cx, word [lower] ; Sauve la memoire basse
+	mov	dx, word [upper] ; Sauve la memoire haute
+	
 	cli                     ; Inhibe les interruptions
 	mov     eax,cr0		; Passe en mode protege
 	or      ax,0x1		; via les registres de controle
@@ -164,7 +185,7 @@ next:
 	mov     ax,SS_SELECTOR	;
 	mov     ss,ax   	; de segments
 	mov     esp,STACKPTR
-	
+
 	jmp	CS_SELECTOR:KADDR 	; Saut vers les noyau	
 
 	times	1024-($-$$) 	db 0	; Padding pour atteindre 1024 octets
