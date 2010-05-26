@@ -9,8 +9,10 @@ jmp 	start
 	gdtmsg		db	'GDT Loaded',13,10,0
 	memerrmsg	db	'Failed ti get memory size',13,10,0
 	bootdrv		db	0
-	upper		dw	0
-	lower		dw	0
+
+boot_info:	
+	mem_lower	dw	0
+	mem_upper	dw	0
 	
 	;; 
 	;; Segment Selector
@@ -87,8 +89,8 @@ start:
 	mov	ax,0xE801	; Argument de l interruption
 	int	0x15		; Interruption
 	jc	get_mem_e801_err; Erreur si CF
-	mov	[upper],dx	; DX= memoire haute en nombre de blocs de 64K 
-	mov	[lower],cx	; CX = taille memoire basse en K
+	mov	[mem_upper],dx	; DX= memoire haute en nombre de blocs de 64K 
+	mov	[mem_lower],cx	; CX = taille memoire basse en K
 	jmp	get_mem_e801_end; Saut a la fin
 get_mem_e801_err:
 	mov	si,memerrmsg	; Charge le message d'erreur
@@ -166,8 +168,10 @@ fast_ok:
 	mov	si,gdtmsg	; Affiche le chargement
 	call	print_message	; de la GDT
 
-	mov	cx, word [lower] ; Sauve la memoire basse
-	mov	dx, word [upper] ; Sauve la memoire haute
+	mov	dx,ds		; Segement = DS
+	mov	ax,boot_info	; Offset = boot_info
+	call	real2phys	; Calcule l'adresse physique de boot_info
+	mov	cx, ax		; Sauve l adresse de la structure
 	
 	cli                     ; Inhibe les interruptions
 	mov     eax,cr0		; Passe en mode protege

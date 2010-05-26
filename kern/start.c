@@ -12,13 +12,18 @@
 #include "types.h"
 #include "klib.h"
 #include "prot.h"
+#include "start.h"
 
 /*******************
  * Fonction cstart
  *******************/
 
-PUBLIC void cstart(u16_t lower, u16_t upper)
+PUBLIC void cstart(struct boot_info* binfo)
 { 
+  /* Recopie les informations de demarrage */
+  bootinfo = *binfo;
+
+  /* Initialise le mode protege (gdt, interruptions ...) */
   pmode_init();
 
   return;

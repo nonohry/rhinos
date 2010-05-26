@@ -50,12 +50,12 @@ global	excep_18
 global	task_mgmt		; Gestion des taches
 	
 start:
-	push	dx		; Empile la memoire haute
-	push	cx		; Empile la memoire basse
+	push	ecx		; Empile l adresse de boot_info
 	push	pmodemsg	; Empile le message
 	call	bochs_print	; Affiche dans Bochs
 	add	esp,4		; Depile le message
 	call	cstart		; Appelle cstart avec les 2 memoires en argument
+	add	esp,4		; Depile l argument de cstart
 	
 	lgdt	[gdt_desc]	; Charge la nouvelle GDT
     	lidt	[idt_desc]	; Charge l IDT
