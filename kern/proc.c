@@ -169,72 +169,6 @@ PRIVATE void sched_search(struct skip_list* list, u32_t key, u32_t* index)
 }
 
 
-/****************************
- * Print Skip_List (DEBUG)
- ****************************/
-
-PUBLIC void sched_print(struct skip_list* list)
-{
-  int i;
-
-      if (list->tickets == 10) bochs_print("10\n");
-      if (list->tickets == 20) bochs_print("20\n");
-      if (list->tickets == 30) bochs_print("30\n");
-      if (list->tickets == 40) bochs_print("40\n");
-      if (list->tickets == 50) bochs_print("50\n");
-      if (list->tickets == 60) bochs_print("60\n");
-      if (list->tickets == 70) bochs_print("70\n");
-      if (list->tickets == 80) bochs_print("80\n");
-      if (list->tickets == 90) bochs_print("90\n");
-      if (list->tickets == 100) bochs_print("100\n");
-      if (list->tickets == 110) bochs_print("110\n");
-      if (list->tickets == 120) bochs_print("120\n");
-      if (list->tickets == 130) bochs_print("130\n");
-      if (list->tickets == 140) bochs_print("140\n");
-      if (list->tickets == 150) bochs_print("150\n");
-      if (list->tickets == 160) bochs_print("160\n");
-      if (list->tickets == 170) bochs_print("170\n");
-      if (list->tickets == 180) bochs_print("180\n");
-      if (list->tickets == 190) bochs_print("190\n");
-
-  for(i=SKIP_MAX_LEVEL-1; i>=0; i--)
-    {
-      struct skip_node* p;
-
-      p = list->header;
-      bochs_print("HDR -> ");
-   
-      while (p->forwards[i] != NIL)
-	{
-	  p = p->forwards[i];
-	  if (p->key == 10) bochs_print("10");
-	  if (p->key == 20) bochs_print("20");
-	  if (p->key == 30) bochs_print("30");
-	  if (p->key == 40) bochs_print("40");
-	  if (p->key == 50) bochs_print("50");
-	  if (p->key == 60) bochs_print("60");
-	  if (p->key == 70) bochs_print("70");
-	  if (p->key == 80) bochs_print("80");
-	  if (p->key == 90) bochs_print("90");
-	  if (p->key == 100) bochs_print("100");
-	  if (p->key == 110) bochs_print("110");
-	  if (p->key == 120) bochs_print("120");
-	  if (p->key == 130) bochs_print("130");
-	  if (p->key == 140) bochs_print("140");
-	  if (p->key == 150) bochs_print("150");
-	  if (p->key == 160) bochs_print("160");
-	  if (p->key == 170) bochs_print("170");
-	  if (p->key == 180) bochs_print("180");
-	  if (p->key == 190) bochs_print("190");
-	  bochs_print(" -> ");
-       }
-      
-      bochs_print("NIL\n");
-    }
-
-  return;
-}
-
 /********************
  * Choix d un index
  ********************/
@@ -261,7 +195,7 @@ PUBLIC void task_index(u32_t* index)
 
 
 /***************************
- * Creation d un processus 
+ * Creation d une tache 
  ***************************/
 
 PUBLIC void task_init(struct proc* pr, u32_t index, u32_t base, u32_t size, u8_t priv, u32_t entry_point, u32_t tickets)
