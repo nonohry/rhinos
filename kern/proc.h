@@ -36,7 +36,7 @@
 
 /* Skip List */
 
-#define SKIP_MAX_LEVEL     5
+#define SKIP_MAX_LEVEL     8
 
 /* Etat des processus */
 
