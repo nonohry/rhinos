@@ -56,7 +56,7 @@ PUBLIC void i8259_init()
 PUBLIC void irq_enable(u8_t n)
 {
   /* IRQ : 0 -> 15 */
-  if (n<16)
+  if (n < IRQ_VECTORS)
     {
       u8_t read;
       u16_t port;
@@ -80,7 +80,7 @@ PUBLIC void irq_enable(u8_t n)
 PUBLIC void irq_disable(u8_t n)
 {
   /* IRQ : 0 -> 15 */
-  if (n<16)
+  if (n < IRQ_VECTORS)
     {
       u8_t read;
       u16_t port;
