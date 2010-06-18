@@ -190,6 +190,5 @@ next:
 	mov     ss,ax   	; de segments
 	mov     esp,STACKPTR
 
-	jmp	CS_SELECTOR:KADDR 	; Saut vers les noyau	
-
-	times	1024-($-$$) 	db 0	; Padding pour atteindre 1024 octets
+	jmp	CS_SELECTOR:KADDR 	; Saut vers les noyau
+	
