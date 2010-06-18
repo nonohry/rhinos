@@ -30,15 +30,23 @@ boot_info:
 	KLOADOFF	equ	0xC0	; Segment de chargement du noyau
 	KADDR		equ	0xC00	; Adresse de chargement du noyau
 	KSIZE		equ	15	; Taille du noyau (KSIZE*512o)
+	KSECTOR		equ	4	; Numero de secteur
+	
+	;;
+	;; Chargement du Memory Manager
+	;; 
 
+	MMLOADOFF	equ	0x3000	; Segment de chargement du mm
+	MMADDR		equ	0x30000	; Adresse de chargement du mm
+	MMSIZE		equ	10	; Taille du mm (MMSIZE*512o)
+	MMSECTOR	equ	19	; Numero de secteur
+	
 	;;
 	;; Autres
 	;; 
 
 	CUROFF		equ	0x80	; Offset courant
 	STACKPTR	equ	0x7C00	; Pointeur de pile
-
-	
 	
 	;;
 	;; GDT  
@@ -82,11 +90,12 @@ real2phys:			; Arg: DX=Segment, AX=Offset
 	;;
 	
 start:
-
 	mov	ax,CUROFF	; Simule une origine a 0
 	mov	ds,ax		; alors que le boot
 	mov	es,ax		; nous place a 0x800
-
+	
+	mov	[bootdrv],dl	; Recupere le bootdrive (sauvegarde par boot0)
+	
 	;;
 	;;	Taille memoire selon int 0x15 (AX=0xE801)
 	;; 
@@ -106,15 +115,24 @@ get_mem_e801_end:
 	;;
 	;; Chargement du Noyau a KLOADOFF
 	;; 
-	
-	mov	[bootdrv],dl	; Recupere le bootdrive (sauvegarde par boot0)
-	
-	mov	dl,[bootdrv]	; Le boot drive dans DL
+
+ 	mov	dl,[bootdrv]	; Le boot drive dans DL
 	mov	ax,KLOADOFF	; Le segment dans AX
 	mov	bx,0x0		; L'offset dans BX
 	mov	ch,KSIZE	; La taille dans CH
-	mov	cl,4		; Le numero de secteur dans CL
+	mov	cl,KSECTOR	; Le numero de secteur dans CL
 	call	load_sect	; Appelle la fonction de chargement
+
+	;; 
+	;; Chargement du Memory Manager 
+	;;
+
+	;; 	mov	dl,[bootdrv]	; Le boot drive dans DL
+	;; 	mov	ax,MMLOADOFF	; Le segment dans AX
+	;; 	mov	bx,0x0		; L'offset dans BX
+	;; 	mov	ch,MMSIZE	; La taille dans CH
+	;; 	mov	cl,MMSECTOR	; Le numero de secteur dans CL
+	;; 	call	load_sect	; Appelle la fonction de chargement
 	
 	;;
 	;; Mise en place de la ligne A20
