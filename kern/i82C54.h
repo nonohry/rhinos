@@ -1,7 +1,7 @@
 #ifndef I82C54_H
 #define I82C54_H
 
-#include "types.h"
+#include <types.h>
 #include "prot.h"
 
 /* Constantes */
