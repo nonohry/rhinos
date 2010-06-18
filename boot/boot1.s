@@ -7,7 +7,7 @@ jmp 	start
 	nofastmsg       db      'Failed to enable A20 or no BIOS fast A20 support found',13,10,0
 	a20msg          db      'A20 Gate enabled',13,10,0
 	gdtmsg		db	'GDT Loaded',13,10,0
-	memerrmsg	db	'Failed ti get memory size',13,10,0
+	memerrmsg	db	'Failed to get memory size',13,10,0
 	bootdrv		db	0
 
 boot_info:	

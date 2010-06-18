@@ -5,6 +5,7 @@
 	rebootmsg	db	'Press any key to reboot.',13,10,0
 	readmsg		db	'Unable to read bootdrive',13,10,0
 	bootdrive	db	0
+
 	;;
 	;; print_message
 	;; Affiche un message contenu dans SI
