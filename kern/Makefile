@@ -20,6 +20,7 @@ CFLAGS	=	-I../include
 	$(CC) $(CFLAGS) $<
 
 # Fichiers source et de sortie
+
 ASM_SRC	=	khead.s klib.s
 ASM_OUT	=	${ASM_SRC:.s=.o}
 C_SRC	=	start.c prot.c i8259.c i82C54.c exceptions.c proc.c main.c 
