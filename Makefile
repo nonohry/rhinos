@@ -11,6 +11,12 @@ BOOT0	=	boot/boot0
 BOOT1	= 	boot/boot1
 KERN	=	kern/kern
 
+# Offset en secteurs des differents modules
+
+BOOTSEEK	=	1
+KERNSEEK	=	3
+MMSEEK		=	18
+
 sub:
 	@for dir in $(SUBDIRS) ; do \
 	cd $$dir; \
@@ -22,8 +28,8 @@ sub:
 img:	sub
 	cat /dev/zero | $(DD) of=$(IMG) count=$(SIZE) bs=512 conv=notrunc
 	cat $(BOOT0) | $(DD) of=$(IMG) bs=512 conv=notrunc
-	cat $(BOOT1) | $(DD) of=$(IMG) seek=1 bs=512 conv=notrunc
-	cat $(KERN)  | $(DD) of=$(IMG) seek=3 bs=512 conv=notrunc
+	cat $(BOOT1) | $(DD) of=$(IMG) seek=$(BOOTSEEK) bs=512 conv=notrunc
+	cat $(KERN)  | $(DD) of=$(IMG) seek=$(KERNSEEK) bs=512 conv=notrunc
 
 clean:
 	@for dir in $(SUBDIRS) ; do \
