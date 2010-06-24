@@ -27,8 +27,7 @@ boot_info:
 	;; Chargement du Noyau
 	;; 
 	
-	KLOADOFF	equ	0xC0	; Segment de chargement du noyau
-	KADDR		equ	0xC00	; Adresse de chargement du noyau
+	KLOADOFF	equ	0xC00	; Segment de chargement du noyau
 	KSIZE		equ	15	; Taille du noyau (KSIZE*512o)
 	KSECTOR		equ	4	; Numero de secteur
 	
@@ -36,8 +35,7 @@ boot_info:
 	;; Chargement du Memory Manager
 	;; 
 
-	MMLOADOFF	equ	0x3000	; Segment de chargement du mm
-	MMADDR		equ	0x30000	; Adresse de chargement du mm
+	MMLOADOFF	equ	0x30000	; Segment de chargement du mm
 	MMSIZE		equ	10	; Taille du mm (MMSIZE*512o)
 	MMSECTOR	equ	19	; Numero de secteur
 	
@@ -117,8 +115,8 @@ get_mem_e801_end:
 	;; 
 
  	mov	dl,[bootdrv]	; Le boot drive dans DL
-	mov	ax,KLOADOFF	; Le segment dans AX
-	mov	bx,0x0		; L'offset dans BX
+	mov	bx,KLOADOFF	; L'offset dans BX
+	mov	ax,0x0		; Le segment dans AX
 	mov	ch,KSIZE	; La taille dans CH
 	mov	cl,KSECTOR	; Le numero de secteur dans CL
 	call	load_sect	; Appelle la fonction de chargement
@@ -128,8 +126,8 @@ get_mem_e801_end:
 	;;
 
 	;; 	mov	dl,[bootdrv]	; Le boot drive dans DL
-	;; 	mov	ax,MMLOADOFF	; Le segment dans AX
-	;; 	mov	bx,0x0		; L'offset dans BX
+	;; 	mov	bx,MMLOADOFF	; L'offset dans BX
+	;; 	mov	ax,0x0		; Le segment dans AX
 	;; 	mov	ch,MMSIZE	; La taille dans CH
 	;; 	mov	cl,MMSECTOR	; Le numero de secteur dans CL
 	;; 	call	load_sect	; Appelle la fonction de chargement
@@ -213,5 +211,5 @@ next:
 	mov     ss,ax   	; de segments
 	mov     esp,STACKPTR
 
-	jmp	CS_SELECTOR:KADDR 	; Saut vers les noyau
+	jmp	CS_SELECTOR:KLOADOFF 	; Saut vers les noyau
 	
