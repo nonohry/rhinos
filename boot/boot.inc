@@ -40,6 +40,7 @@ wait_key:
 load_sect:	
 	
 	push 	es		; Sauvegarde ES
+	push	di		; Sauvegarde DI
 	mov	[bootdrive],dl	; Sauvegarde du bootdrive
 	mov	di,0x3		; 3 essais de lecture du boot drive
 	
@@ -59,11 +60,13 @@ load_retry:
 	int	0x13		; Reset la tete de lecture via la BIOS
 	jnb	load_retry	; On reessaie
 	
-load_ok:	
+load_ok:
+	pop	di		; Restaure DI
 	pop	es		; Restaure ES
 	ret			; Retourne
 
 load_fail:
+	pop	di		; Restaure DI
 	pop	es		; Restaure ES
 	mov	si,readmsg	; Charge le message d'erreur
 	call	print_message	; Et l'affiche
