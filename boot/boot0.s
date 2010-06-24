@@ -22,7 +22,7 @@
 	i80386msg	db	'80386 CPU found !', 13,10,0
 	bootdrv		db	0
 
-	LOADOFF		equ	0x80 	; Offset du second programme de boot
+	LOADOFF		equ	0x800 	; Offset du second programme de boot
 	LOADSIZE	equ	2	; Taille (en secteur de 512o)
 	CUROFF		equ	0x60 	; Offset Courant
 	STACKPTR	equ	0x1C00 	; Offset SP
@@ -94,13 +94,13 @@ start:
 	call	cpu_type	; Detecte le type de CPU
 
 	mov	dl,[bootdrv]	; Le boot drive dans DL
-	mov	ax,LOADOFF	; Le segment dans AX
-	mov	bx,0x0		; L'offset dans BX
+	mov	bx,LOADOFF	; L'offset dans BX
+	mov	ax,0x0		; Le segment dans AX
 	mov	ch,LOADSIZE	; La taille dans CH
 	mov	cl,2		; Le numero de secteur dans CL
 	call	load_sect	; Appelle la fonction de chargement
 	
-	jmp	LOADOFF:0x0	; Saute au second boot jmp	LOADOFF:0x0
+	jmp	0x0:LOADOFF	; Saute au second boot jmp	LOADOFF:0x0
 	
 	times	510-($-$$) db 0	; Padding pour atteinde 512 octets
 	dw	0xAA55		; BIOS Magic Number
