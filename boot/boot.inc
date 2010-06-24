@@ -33,11 +33,23 @@ wait_key:
 
 	;;
 	;; Load_sect
-	;; Charge en memoire des secteurs depuis un lecteur
+	;; Charge en memoire des secteurs un par un depuis un lecteur
 	;; AX=Segment BX=Offset CH=Size CL=Secteur DL=bootdrv
 	;;
+
+load_sect:
+	push 	ax		; Sauvegarde les registres essentiels
+	push	cx
+	call	load_one_sect	; Appelle le chargement un par un 
+	pop	cx		; Restaure les registres
+	pop	ax
+	inc	cl		; Incremente le numero de secteur
+	add	bx,0x200	; Incremente de 512o la destination
+	dec	ch		; Decrement la taille
+	jnz	load_sect	; On boucle si tout n'est pas charge
+	ret
 	
-load_sect:	
+load_one_sect:	
 	
 	push 	es		; Sauvegarde ES
 	push	di		; Sauvegarde DI
@@ -47,7 +59,7 @@ load_sect:
 load_retry:	
 	mov 	es,ax		; ES:BX est la zone de chargement
 	mov	ah,0x02		; Argument de INT 0x13
-	mov	al,ch		; Taille a charger (dans CH)
+	mov	al,0x01		; Taille a charger (dans CH)
 	mov	ch,0x00		; Cylindre 0
 	mov	dh,0x00		; Tete 0
 	int	0x13		; INT 13
