@@ -7,6 +7,23 @@
 	bootdrive	db	0
 
 	;;
+	;; LBA to CHS
+	;; 
+
+	drv_cyl		db	0
+	drv_head	db	0
+	drv_sect	dw	0
+	drv_size	db	0
+	drv_one_sect	db	0
+
+	;;
+	;; Caracteristiques d une disquette
+	;; 
+
+	FLOPPY_HEAD	equ	2
+	FLOPPY_SECT	equ	18
+	
+	;;
 	;; print_message
 	;; Affiche un message contenu dans SI
 	;; 
@@ -34,18 +51,40 @@ wait_key:
 	;;
 	;; Load_sect
 	;; Charge en memoire des secteurs un par un depuis un lecteur
-	;; AX=Segment BX=Offset CH=Size CL=Secteur DL=bootdrv
+	;; AX=Segment BX=Offset [drv_size]=Size [drv_sect]=Secteur DL=bootdrv
 	;;
 
 load_sect:
+	;; LBA to CHS
 	push 	ax		; Sauvegarde les registres essentiels
 	push	cx
-	call	load_one_sect	; Appelle le chargement un par un 
-	pop	cx		; Restaure les registres
+	push	dx	
+	xor	ax,ax		; Vide les registres
+	xor	cx,cx
+	xor	dx,dx
+	
+	mov	ax,word [drv_sect] ; AX = LBA
+	mov	cx,FLOPPY_SECT	   ; CX = FLOPPY_SECT
+	div	cx		   ; Divise Dx:AX par CX
+	inc	dl		   ; Incremente le reste
+	mov	byte [drv_one_sect],dl ; Secteur = le reste + 1
+	xor	dx,dx		       ; Nettoie DX
+	mov	cx,FLOPPY_HEAD	   ; CX = FLOPPY_HEAD
+	div	cx		   ; Divise DX:AX (quotient de la premier DIV) par CX
+	mov	byte [drv_cyl],al  ; Cylindre = Quotient
+	mov	byte [drv_head],dl ; Tete = Reste
+	
+
+	pop	dx		; Restaure les registres
+	pop	cx
 	pop	ax
-	inc	cl		; Incremente le numero de secteur
-	add	bx,0x200	; Incremente de 512o la destination
-	dec	ch		; Decrement la taille
+	
+	push	ax		; Sauvegarde les registres essentiels
+	call	load_one_sect	; Appelle le chargement un par un 
+	pop	ax		; Restaure les registres
+	inc	word [drv_sect]	; Incremente le numero de secteur LBA
+	add	bx,0x200	; Incremente de 512o la destination	
+	dec	byte [drv_size]	; Decrement la taille
 	jnz	load_sect	; On boucle si tout n'est pas charge
 	ret
 	
@@ -60,8 +99,9 @@ load_retry:
 	mov 	es,ax		; ES:BX est la zone de chargement
 	mov	ah,0x02		; Argument de INT 0x13
 	mov	al,0x01		; Taille a charger (dans CH)
-	mov	ch,0x00		; Cylindre 0
-	mov	dh,0x00		; Tete 0
+	mov	cl,byte [drv_one_sect] 	; Secteur
+	mov	ch,byte [drv_cyl]	; Cylindre 
+	mov	dh,byte [drv_head]	; Tete 
 	int	0x13		; INT 13
 	jnb	load_ok		; Interruption reussie
 	dec	di		; Decremente DI sinon

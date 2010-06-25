@@ -27,17 +27,19 @@ boot_info:
 	;; Chargement du Noyau
 	;; 
 	
-	KLOADOFF	equ	0xC00	; Segment de chargement du noyau
+	KLOADOFF	equ	0xC00	; Offset de chargement du noyau
+	KSEGMENT	equ	0x0	; Segment de chargment du noyau
 	KSIZE		equ	15	; Taille du noyau (KSIZE*512o)
-	KSECTOR		equ	4	; Numero de secteur
+	KSECTOR		equ	3	; Numero de secteur
 	
 	;;
 	;; Chargement du Memory Manager
 	;; 
 
-	MMLOADOFF	equ	0x30000	; Segment de chargement du mm
+	MMLOADOFF	equ	0x0	; Offset de chargement du mm
+	MMSEGMENT	equ	0x3000 	; Segemnt de chargement du mm (pour obtenir 0x30000)
 	MMSIZE		equ	10	; Taille du mm (MMSIZE*512o)
-	MMSECTOR	equ	19	; Numero de secteur
+	MMSECTOR	equ	18	; Numero de secteur
 	
 	;;
 	;; Autres
@@ -116,21 +118,21 @@ get_mem_e801_end:
 
  	mov	dl,[bootdrv]	; Le boot drive dans DL
 	mov	bx,KLOADOFF	; L'offset dans BX
-	mov	ax,0x0		; Le segment dans AX
-	mov	ch,KSIZE	; La taille dans CH
-	mov	cl,KSECTOR	; Le numero de secteur dans CL
+	mov	ax,KSEGMENT		; Le segment dans AX
+	mov	byte [drv_size],KSIZE	; La taille dans [drv_size]
+	mov	word [drv_sect],KSECTOR	; Le numero de secteur dans [drv_sect]
 	call	load_sect	; Appelle la fonction de chargement
 
 	;; 
 	;; Chargement du Memory Manager 
 	;;
 
-	;; 	mov	dl,[bootdrv]	; Le boot drive dans DL
-	;; 	mov	bx,MMLOADOFF	; L'offset dans BX
-	;; 	mov	ax,0x0		; Le segment dans AX
-	;; 	mov	ch,MMSIZE	; La taille dans CH
-	;; 	mov	cl,MMSECTOR	; Le numero de secteur dans CL
-	;; 	call	load_sect	; Appelle la fonction de chargement
+ 	mov	dl,[bootdrv]	; Le boot drive dans DL
+	mov	bx,MMLOADOFF	; L'offset dans BX
+	mov	ax,MMSEGMENT		; Le segment dans AX
+	mov	byte [drv_size],MMSIZE		; La taille dans [drv_size]
+	mov	word [drv_sect],MMSECTOR	; Le numero de secteur dans [drv_sect]
+	call	load_sect	; Appelle la fonction de chargement
 	
 	;;
 	;; Mise en place de la ligne A20

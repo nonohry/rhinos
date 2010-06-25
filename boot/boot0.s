@@ -23,6 +23,7 @@
 	bootdrv		db	0
 
 	LOADOFF		equ	0x800 	; Offset du second programme de boot
+	LOADSEG		equ	0x0	; Segment du second programme de boot
 	LOADSIZE	equ	2	; Taille (en secteur de 512o)
 	CUROFF		equ	0x60 	; Offset Courant
 	STACKPTR	equ	0x1C00 	; Offset SP
@@ -95,9 +96,9 @@ start:
 
 	mov	dl,[bootdrv]	; Le boot drive dans DL
 	mov	bx,LOADOFF	; L'offset dans BX
-	mov	ax,0x0		; Le segment dans AX
-	mov	ch,LOADSIZE	; La taille dans CH
-	mov	cl,2		; Le numero de secteur dans CL
+	mov	ax,LOADSEG	; Le segment dans AX
+	mov	byte [drv_size],LOADSIZE	; La taille dans [drv_size]
+	mov	word [drv_sect],1		; Le numero de secteur LBA dans [drv_sect]
 	call	load_sect	; Appelle la fonction de chargement
 	
 	jmp	0x0:LOADOFF	; Saute au second boot jmp	LOADOFF:0x0
