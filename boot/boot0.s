@@ -17,8 +17,7 @@
 
 	bootmsg		db	'Booting RhinOS ...',13,10,0
 	cpumsg		db	'Checking CPU type ...',13,10,0
-	i8086msg	db	'8086 CPU found, need 80386+ CPU',13,10,0
-	i80286msg	db	'80286 CPU found, need 80386+ CPU',13,10,0
+	noi80386msg	db	'No 80386 CPU found',13,10,0
 	i80386msg	db	'80386 CPU found !', 13,10,0
 	bootdrv		db	0
 
@@ -59,11 +58,9 @@ cpu_type:
         popf                    ; Restaure FLAGS
         call    print_message   ; On l'affiche
         ret                     ; On retourne
-cpu_86:
-        mov     si,i8086msg     ; On a un 8086/8088
-        jmp     cpu_end
-cpu_286:
-        mov     si,i80286msg    ; On a un 30286
+cpu_86:				; On a un 8086/8088
+cpu_286:			; On a un 30286
+        mov     si,noi80386msg  ; Message d erreur
 cpu_end:
         popf                    ; Restaure FLAGS
         call    print_message   ; Affiche le CPU non 386
@@ -93,6 +90,11 @@ start:
 	mov	si,cpumsg	; Charge le message de CPU
 	call	print_message	; et l'affiche
 	call	cpu_type	; Detecte le type de CPU
+
+
+	mov	dl,[bootdrv]	; Le boot drive dans DL
+	call	get_geometry	; Recupere la geometrie du disque de boot
+	
 
 	mov	dl,[bootdrv]	; Le boot drive dans DL
 	mov	bx,LOADOFF	; L'offset dans BX

@@ -113,6 +113,12 @@ get_mem_e801_err:
 get_mem_e801_end:
 
 	;;
+	;; Geometrie du disque
+	;;
+	mov	dl,[bootdrv]	; Le boot drive dans DL
+	call	get_geometry	; Recupere la geometrie
+
+	;;
 	;; Chargement du Noyau a KLOADOFF
 	;; 
 

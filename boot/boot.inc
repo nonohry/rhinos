@@ -17,11 +17,11 @@
 	drv_one_sect	db	0
 
 	;;
-	;; Caracteristiques d une disquette
+	;; Caracteristiques du disque de boot
 	;; 
 
-	FLOPPY_HEAD	equ	2
-	FLOPPY_SECT	equ	18
+	bootdrv_head	dw	0
+	bootdrv_sect	dw	0
 	
 	;;
 	;; print_message
@@ -48,6 +48,29 @@ wait_key:
         int     0x16            ; Interruption
         ret
 
+
+	;;
+	;; get_geometry
+	;; Recupere la geometrie du disque
+	;; DL=drive
+	
+get_geometry:	
+	push	es		; Sauve ES
+	push	di		; Sauve DI
+	mov	ax,0x00		; On va mettre ES:DI a 0 pour eviter certains bugs
+	mov	es,ax		; Annule ES
+	xor	di,di		; Annule DI
+	mov	ah,0x08		; Argument de l INT 13
+	int	0x13		; INT 13
+	mov	byte [bootdrv_head],dh ; Recupere le dernier index de tetes
+	inc	word  [bootdrv_head]   ; Incremente cet index pour avoir le nombre de tete
+	mov	byte [bootdrv_sect],cl ; Recupere le nombre de secteurs
+	pop	di		; Restaure DI
+	pop	es		; Restaure ES
+	ret			; Retour
+
+
+	
 	;;
 	;; Load_sect
 	;; Charge en memoire des secteurs un par un depuis un lecteur
@@ -64,12 +87,12 @@ load_sect:
 	xor	dx,dx
 	
 	mov	ax,word [drv_sect] ; AX = LBA
-	mov	cx,FLOPPY_SECT	   ; CX = FLOPPY_SECT
-	div	cx		   ; Divise Dx:AX par CX
+	mov	cx,[bootdrv_sect]  ; CX = Nombre de secteurs
+	div	cx		   ; Divise DX:AX par CX
 	inc	dl		   ; Incremente le reste
 	mov	byte [drv_one_sect],dl ; Secteur = le reste + 1
 	xor	dx,dx		       ; Nettoie DX
-	mov	cx,FLOPPY_HEAD	   ; CX = FLOPPY_HEAD
+	mov	cx,[bootdrv_head]  ; CX = Nombre de tetes
 	div	cx		   ; Divise DX:AX (quotient de la premier DIV) par CX
 	mov	byte [drv_cyl],al  ; Cylindre = Quotient
 	mov	byte [drv_head],dl ; Tete = Reste
