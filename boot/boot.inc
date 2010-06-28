@@ -62,6 +62,7 @@ get_geometry:
 	xor	di,di		; Annule DI
 	mov	ah,0x08		; Argument de l INT 13
 	int	0x13		; INT 13
+	jc	load_fail	; Se sert du message d erreur de load_sect si besoins
 	mov	byte [bootdrv_head],dh ; Recupere le dernier index de tetes
 	inc	word  [bootdrv_head]   ; Incremente cet index pour avoir le nombre de tete
 	mov	byte [bootdrv_sect],cl ; Recupere le nombre de secteurs
