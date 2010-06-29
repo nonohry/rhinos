@@ -8,7 +8,7 @@
  * Constantes
  *************/
 
-/* Identification */
+/* ELF Header Identification */
 
 #define EI_NIDENT     16
 #define EI_MAG0       0
@@ -33,7 +33,7 @@
 #define ELFDATA2LSB   1
 #define ELFDATA2MSB   2
 
-/* Type */
+/* ELF Header Type */
 
 #define ET_NONE       0
 #define ET_REL        1
@@ -43,7 +43,7 @@
 #define ET_LOPROC     0xFF00
 #define ET_HIPROC     0xFFFF
 
-/* Architecture */
+/* ELF Header Architecture */
 
 #define EM_NONE       0
 #define EM_M32        1
@@ -54,10 +54,30 @@
 #define EM_860        7
 #define EM_MIPS       8
 
-/* Version */
+/* ELF Header Version */
 
 #define EV_NONE       0
 #define EV_CURRENT    1
+
+/* Program Header Type */
+
+#define PT_NULL       0
+#define PT_LOAD       1
+#define PT_DYNAMIC    2
+#define PT_INTERP     3
+#define PT_NOTE       4
+#define PT_SHLIB      5
+#define PT_PHDR       6
+#define PT_LOPROC     0x70000000
+#define PL_HIPROC     0x7FFFFFFF
+
+/* Program Header Flags */
+
+#define PF_R            0x4
+#define PF_W            0x2
+#define PF_X            0x1
+#define PF_MASKOS       0x0ff00000
+#define PF_MASKPROC     0xf0000000
 
 
 /**************
