@@ -5,6 +5,7 @@ global outb
 global inb
 global phys_copy
 global random
+global idle_task
 	
 	;; 
 	;; Affichage dans bochs
@@ -118,3 +119,11 @@ random_end:
 	ret			; Retourne (le resultat est dans EAX)
 
 	seed	dd	1	; Debut de l alea
+
+	;;
+	;; void idle_task()
+	;;
+
+idle_task:
+	hlt
+	jmp	idle_task

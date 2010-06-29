@@ -13,18 +13,12 @@
 #include "i82C54.h"
 #include "proc.h"
 
-/*********
- * DEBUG
- *********/
-
-PUBLIC void dummy();
 
 /**********
  * EXTERN
  **********/
 
 EXTERN void task_mgmt();
-
 
 /***********************
  * Fonction principale 
@@ -42,14 +36,9 @@ PUBLIC void main()
   sched_init(&proc_ready);
   bochs_print("Lottery Scheduling initialized\n");
 
-  /* Initialisation de la dummy task */
-  task_index(&i);
-  if (i<MAX_INDEX) task_init(&proc_table[i], i, 0xF00000, 1024, 3, (u32_t)&dummy,10);
-  task_index(&i);
-  if (i<MAX_INDEX) task_init(&proc_table[i], i, 0xD00000, 1024, 3, (u32_t)&dummy,20);
-  task_index(&i);
-  if (i<MAX_INDEX) task_init(&proc_table[i], i, 0xB00000, 1024, 3, (u32_t)&dummy,10);
-  
+  /* Idle Task */
+  task_init(&proc_table[PROC_IDLE], PROC_IDLE, 0xF00000, 10, 0, (u32_t)&idle_task,1);
+
   /* Initialisation du processus courant */
   proc_current = &proc_table[0];
 
@@ -57,20 +46,6 @@ PUBLIC void main()
   task_mgmt();
 
   /* On ne doit plus arriver ici */
-  while(1)
-    {
-    }
-
-  return;
-}
-
-
-/**************
- * Dummy task
- **************/
-
-PUBLIC void dummy()
-{
   while(1)
     {
     }
