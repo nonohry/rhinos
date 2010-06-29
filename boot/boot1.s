@@ -13,6 +13,7 @@ jmp 	start
 boot_info:	
 	mem_lower	dw	0
 	mem_upper	dw	0
+	idle_offset	dd	0x20000
 	mm_offset	dd	0x30000	
 	
 	;; 

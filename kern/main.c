@@ -9,6 +9,7 @@
  *************/
 
 #include <types.h>
+#include "start.h"
 #include "klib.h"
 #include "i82C54.h"
 #include "proc.h"
@@ -37,7 +38,7 @@ PUBLIC void main()
   bochs_print("Lottery Scheduling initialized\n");
 
   /* Idle Task */
-  task_init(&proc_table[PROC_IDLE], PROC_IDLE, 0xF00000, 10, 0, (u32_t)&idle_task,1);
+  task_init(&proc_table[PROC_IDLE], PROC_IDLE, bootinfo.idle_offset, PROC_IDLE_SIZE, 0, (u32_t)&idle_task,1);
 
   /* Initialisation du processus courant */
   proc_current = &proc_table[0];
