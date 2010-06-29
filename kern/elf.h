@@ -83,4 +83,21 @@ PUBLIC struct elf_header
 }__attribute__ ((packed));
 
 
+/******************
+ * Program Header
+ ******************/
+
+PUBLIC struct prog_header
+{
+  u32_t p_type;                     /* Type de segment */
+  u32_t p_offset;                   /* Offset du segment dans le fichier */
+  u32_t p_vaddr;                    /* Adresse virtuelle du premier octet */
+  u32_t p_paddr;                    /* Adresse physique du premier octet */
+  u32_t p_filesz;                   /* Taille en octet du segment dans le fichier */
+  u32_t p_memsz;                    /* Taille en octet du segment en memoire */
+  u32_t p_flags;                    /* Flags du segment */
+  u32_t p_align;                    /* Valeur de l alignement */
+}__attribute__ ((packed));
+
+
 #endif
