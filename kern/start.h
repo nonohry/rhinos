@@ -17,6 +17,7 @@ PUBLIC struct boot_info
 {
   u16_t mem_lower;      /* Memoire basse en Ko */
   u16_t mem_upper;      /* Memoire haute en 64Ko */
+  u32_t mm_offset;      /* Offset du Memory Manager */
 };
 
 

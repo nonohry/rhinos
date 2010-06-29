@@ -25,7 +25,7 @@ ASM_SRC	=	khead.s klib.s
 ASM_OUT	=	${ASM_SRC:.s=.o}
 C_SRC	=	start.c prot.c i8259.c i82C54.c exceptions.c proc.c main.c 
 C_OUT	=	${C_SRC:.c=.o}
-HEADER  =       prot.h klib.h i8259.h i82C54.h exceptions.h proc.h start.h
+HEADER  =       prot.h klib.h i8259.h i82C54.h exceptions.h proc.h start.h elf.h
 OBJ	=	$(ASM_OUT) $(C_OUT)
 
 # Cibles
