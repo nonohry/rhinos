@@ -38,7 +38,7 @@ PUBLIC void main()
   bochs_print("Lottery Scheduling initialized\n");
 
   /* Idle Task */
-  task_init(&proc_table[PROC_IDLE], PROC_IDLE, bootinfo.idle_offset, PROC_IDLE_SIZE, bootinfo.idle_offset+PROC_IDLE_SIZE,1,bootinfo.idle_offset+PROC_IDLE_SIZE+1,1,0, (u32_t)&idle_task,1);
+  task_init(&proc_table[PROC_IDLE_INDEX], PROC_IDLE_INDEX, bootinfo.idle_offset, PROC_IDLE_CODE_SIZE, bootinfo.idle_offset+PROC_IDLE_CODE_SIZE,PROC_IDLE_DATA_SIZE,bootinfo.idle_offset+PROC_IDLE_CODE_SIZE+PROC_IDLE_DATA_SIZE,PROC_IDLE_DATA_SIZE,RING0, (u32_t)&idle_task,PROC_IDLE_TICKETS);
 
   /* Initialisation du processus courant */
   proc_current = &proc_table[0];

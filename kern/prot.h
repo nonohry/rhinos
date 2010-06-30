@@ -38,6 +38,13 @@
 
 #define SHIFT_SELECTOR  3    /* INDEX << SHIFT_SELECTOR = SELECTOR */
 
+/* Rings */
+
+#define RING0   0
+#define RING1   1
+#define RING2   2
+#define RING3   3
+
 /* RPL pour les selecteurs de segments */
 
 #define RPL_1   1

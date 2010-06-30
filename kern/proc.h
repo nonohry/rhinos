@@ -49,10 +49,12 @@
 
 #define PROC_QUANTUM       2     /* 20 ms de quantum d execution (on est a 100Hz, 2 = 20ms) */
 
-/* Processus celebres */
+/* Processus Idle */
 
-#define PROC_IDLE          0
-#define PROC_IDLE_SIZE     10
+#define PROC_IDLE_INDEX         0
+#define PROC_IDLE_CODE_SIZE     10
+#define PROC_IDLE_DATA_SIZE     1
+#define PROC_IDLE_TICKETS       1
 
 /***************
  * Structures
