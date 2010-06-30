@@ -10,7 +10,7 @@
 
 #define LDT_SIZE      6
 #define PROC_NAME_LEN 32
-#define PROC_NUM_MAX  8192-LDT_INDEX  /* Toute la GDT disponible */
+#define PROC_NUM_MAX  500-LDT_INDEX  /* Toute la GDT disponible */
 #define PROC_IF       0x200           /* 1000000000b */
 
 /* Selecteur de segments de la LDT  
