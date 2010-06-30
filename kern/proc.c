@@ -198,16 +198,16 @@ PUBLIC void task_index(u32_t* index)
  * Creation d une tache 
  ***************************/
 
-PUBLIC void task_init(struct proc* pr, u32_t index, u32_t base, u32_t size, u8_t priv, u32_t entry_point, u32_t tickets)
+PUBLIC void task_init(struct proc* pr, u32_t index, u32_t code_base, u32_t code_size, u32_t data_base, u32_t data_size, u32_t stack_base, u32_t stack_size, u8_t priv, u32_t entry_point, u32_t tickets)
 {
 
   /* Cree les segments */
-  init_code_seg(&(pr->ldt[LDT_CS_INDEX]), base, size, priv);
-  init_data_seg(&(pr->ldt[LDT_DS_INDEX]), base, size, priv);
-  init_data_seg(&(pr->ldt[LDT_ES_INDEX]), base, size, priv);
-  init_data_seg(&(pr->ldt[LDT_FS_INDEX]), base, size, priv);
-  init_data_seg(&(pr->ldt[LDT_GS_INDEX]), base, size, priv);
-  init_data_seg(&(pr->ldt[LDT_SS_INDEX]), base, size, priv);
+  init_code_seg(&(pr->ldt[LDT_CS_INDEX]), code_base, code_size, priv);
+  init_data_seg(&(pr->ldt[LDT_DS_INDEX]), data_base, data_size, priv);
+  init_data_seg(&(pr->ldt[LDT_ES_INDEX]), data_base, data_size, priv);
+  init_data_seg(&(pr->ldt[LDT_FS_INDEX]), data_base, data_size, priv);
+  init_data_seg(&(pr->ldt[LDT_GS_INDEX]), data_base, data_size, priv);
+  init_data_seg(&(pr->ldt[LDT_SS_INDEX]), stack_base, stack_size, priv);
 
   /* Affecte les registres de segments */
   pr->context.cs = LDT_CS_SELECTOR | priv;
@@ -218,10 +218,10 @@ PUBLIC void task_init(struct proc* pr, u32_t index, u32_t base, u32_t size, u8_t
   pr->context.ss = LDT_SS_SELECTOR | priv;
 
   /* Copie le code au bon endroit */
-  phys_copy(entry_point, base, size);
+  phys_copy(entry_point, code_base, code_size);
   
   /* Positionne les registres nécessaires */
-  pr->context.esp = size;        /* La pile */ 
+  pr->context.esp = stack_size;  /* La pile */ 
   pr->context.eip = 0;           /* Pointeur d instructions */
   pr->context.eflags = PROC_IF;  /* Interrupt Enable Flag */
 
