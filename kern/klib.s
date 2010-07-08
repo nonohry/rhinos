@@ -125,5 +125,5 @@ random_end:
 	;;
 
 idle_task:
-	hlt
+	;; hlt	Commente pour ne pas polluer la sortie de bochs
 	jmp	idle_task

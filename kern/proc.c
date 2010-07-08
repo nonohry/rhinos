@@ -7,6 +7,7 @@
 #include "klib.h"
 #include "prot.h"
 #include "proc.h"
+#include "elf.h"
 
 /************************************
  * Declaration PRIVATE
@@ -169,6 +170,43 @@ PRIVATE void sched_search(struct skip_list* list, u32_t key, u32_t* index)
 }
 
 
+/****************
+ * Ordonnanceur
+ ****************/
+
+PUBLIC void task_schedule()
+{
+  /* Decremente le quantum temps de la tache */
+  proc_current->quantum--;
+
+  /* Si tout le quantum est utilise, on ordonnance */
+  if (proc_current->quantum == 0)
+    {
+      u32_t ticket;
+      u32_t index;
+
+      /* Rempli le quantum */
+      proc_current->quantum = PROC_QUANTUM;
+
+      /* Change l'etat */
+      proc_current->state = PROC_READY;
+
+      /* Tire un ticket au sort */
+      ticket = random()%proc_ready.tickets;
+      
+      /* Cherche le gagnant */
+      sched_search(&proc_ready,ticket,&index);
+
+      /* Le gagnant devient la tache courante */
+      proc_current = &proc_table[index];
+      proc_current->state = PROC_RUNNING;
+
+    }
+
+  return;
+}
+
+
 /********************
  * Choix d un index
  ********************/
@@ -248,37 +286,25 @@ PUBLIC void task_init(struct proc* pr, u32_t index, u32_t code_base, u32_t code_
 }
 
 
-/****************
- * Ordonnanceur
- ****************/
+/******************************
+ * Chargement d un format ELF 
+ ******************************/
 
-PUBLIC void task_schedule()
+PUBLIC void task_elf(u32_t* addr)
 {
-  /* Decremente le quantum temps de la tache */
-  proc_current->quantum--;
+  struct elf_header* header;
 
-  /* Si tout le quantum est utilise, on ordonnance */
-  if (proc_current->quantum == 0)
+  /* Recupere le header */
+  header = (struct elf_header*)addr;
+
+  /* Verifie le format */
+  if (header->e_ident[EI_MAG0] != ELFMAG0 ||
+      header->e_ident[EI_MAG1] != ELFMAG1 ||
+      header->e_ident[EI_MAG2] != ELFMAG2 ||
+      header->e_ident[EI_MAG3] != ELFMAG3 )
     {
-      u32_t ticket;
-      u32_t index;
-
-      /* Rempli le quantum */
-      proc_current->quantum = PROC_QUANTUM;
-
-      /* Change l'etat */
-      proc_current->state = PROC_READY;
-
-      /* Tire un ticket au sort */
-      ticket = random()%proc_ready.tickets;
-      
-      /* Cherche le gagnant */
-      sched_search(&proc_ready,ticket,&index);
-
-      /* Le gagnant devient la tache courante */
-      proc_current = &proc_table[index];
-      proc_current->state = PROC_RUNNING;
-
+      bochs_print("No elf format found\n");
+      return;
     }
 
   return;

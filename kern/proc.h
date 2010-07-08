@@ -133,5 +133,6 @@ PUBLIC void sched_init(struct skip_list* list);
 PUBLIC void task_index(u32_t* index);
 PUBLIC void task_init(struct proc* pr, u32_t index, u32_t code_base, u32_t code_size, u32_t data_base, u32_t data_size, u32_t stack_base, u32_t stack_size, u8_t priv, u32_t entry_point, u32_t tickets);
 PUBLIC void task_schedule();
+PUBLIC void task_elf(u32_t* addr);
 
 #endif
