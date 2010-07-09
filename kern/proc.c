@@ -240,9 +240,12 @@ PRIVATE void task_index(u32_t* index)
 PUBLIC void task_init(struct proc* pr, 
 		      u32_t index, 
 		      u32_t code_base, 
-		      u32_t code_size, 
+		      u32_t code_size,
+		      u32_t code_vaddr,
 		      u32_t data_base, 
-		      u32_t data_size, 
+		      u32_t data_size,
+		      u32_t data_vaddr,
+		      u32_t bss_size,
 		      u32_t stack_base, 
 		      u32_t stack_size, 
 		      u8_t priv, 
@@ -251,12 +254,16 @@ PUBLIC void task_init(struct proc* pr,
 		      u32_t tickets)
 {
 
+  /* Variables */
+  u8_t* p;
+  int i;
+
   /* Cree les segments */
-  init_code_seg(&(pr->ldt[LDT_CS_INDEX]), code_base, code_size, priv);
-  init_data_seg(&(pr->ldt[LDT_DS_INDEX]), data_base, data_size, priv);
-  init_data_seg(&(pr->ldt[LDT_ES_INDEX]), data_base, data_size, priv);
-  init_data_seg(&(pr->ldt[LDT_FS_INDEX]), data_base, data_size, priv);
-  init_data_seg(&(pr->ldt[LDT_GS_INDEX]), data_base, data_size, priv);
+  init_code_seg(&(pr->ldt[LDT_CS_INDEX]), code_base, code_vaddr+code_size, priv);
+  init_data_seg(&(pr->ldt[LDT_DS_INDEX]), data_base, data_vaddr+data_size+bss_size, priv);
+  init_data_seg(&(pr->ldt[LDT_ES_INDEX]), data_base, data_vaddr+data_size+bss_size, priv);
+  init_data_seg(&(pr->ldt[LDT_FS_INDEX]), data_base, data_vaddr+data_size+bss_size, priv);
+  init_data_seg(&(pr->ldt[LDT_GS_INDEX]), data_base, data_vaddr+data_size+bss_size, priv);
   init_data_seg(&(pr->ldt[LDT_SS_INDEX]), stack_base, stack_size, priv);
 
   /* Affecte les registres de segments */
@@ -268,9 +275,15 @@ PUBLIC void task_init(struct proc* pr,
   pr->context.ss = LDT_SS_SELECTOR | priv;
 
   /* Copie le code au bon endroit */
-  phys_copy(code_entry_point, code_base, code_size);
-  phys_copy(data_entry_point, data_base, data_size);
+  phys_copy(code_entry_point, code_base+code_vaddr, code_size);
+  phys_copy(data_entry_point, data_base+data_vaddr, data_size);
 
+  /* Met a zero la zone BSS */
+  for(p=(u8_t*)(data_base+data_size+data_vaddr),i=0;i<bss_size;p++,i++)
+    {
+      *p=0;
+    }
+  
   /* Positionne les registres nécessaires */
   pr->context.esp = stack_size;  /* La pile */ 
   pr->context.eip = 0;           /* Pointeur d instructions */
@@ -388,15 +401,19 @@ PUBLIC void task_elf(u32_t* addr,u8_t flags)
   /* On va agir différemment suivant l argument flags */
   switch(flags)
     {
+    /* Memory Manager */
     case PROC_MM_FLAG:
       {
 	task_init(&proc_table[PROC_MM_INDEX],
 		  PROC_MM_INDEX,
 		  PROC_MM_LOAD,
 		  cheader->p_filesz,
+		  cheader->p_vaddr,
 		  PROC_MM_LOAD+cheader->p_filesz,
 		  dheader->p_filesz,
-		  PROC_MM_LOAD+cheader->p_filesz+dheader->p_filesz,
+		  dheader->p_vaddr,
+		  dheader->p_memsz-dheader->p_filesz,
+		  PROC_MM_LOAD+cheader->p_filesz+dheader->p_memsz+dheader->p_vaddr,
 		  PROC_STACK,
 		  PROC_MM_PRIV,
 		  (u32_t)addr+cheader->p_offset,
