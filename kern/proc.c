@@ -390,18 +390,18 @@ PUBLIC void task_elf(u32_t* addr,u8_t flags)
     {
     case PROC_MM_FLAG:
       {
-	/*task_init(&proc_table[PROC_MM_INDEX],
+	task_init(&proc_table[PROC_MM_INDEX],
 		  PROC_MM_INDEX,
 		  PROC_MM_LOAD,
 		  cheader->p_filesz,
-		  PROC_MM_LOAD,
-		  cheader->p_filesz+dheader->p_filesz,
-		  PROC_MM_LOAD+cheader->p_memsz+dheader->p_memsz,
+		  PROC_MM_LOAD+cheader->p_filesz,
+		  dheader->p_filesz,
+		  PROC_MM_LOAD+cheader->p_filesz+dheader->p_filesz,
 		  PROC_STACK,
 		  PROC_MM_PRIV,
 		  (u32_t)addr+cheader->p_offset,
 		  (u32_t)addr+dheader->p_offset,
-		  PROC_MM_TICKETS);*/
+		  PROC_MM_TICKETS);
       }
       break;
 
