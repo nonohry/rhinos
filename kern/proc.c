@@ -16,6 +16,7 @@
 PRIVATE void sched_insert(struct skip_list* list, struct skip_node* node);
 PRIVATE void sched_delete(struct skip_list* list, u32_t key);
 PRIVATE void sched_search(struct skip_list* list, u32_t key, u32_t* index);
+PRIVATE void task_index(u32_t* index);
 
 /**************************************
  * Initialisation de l ordonnancement
@@ -211,7 +212,7 @@ PUBLIC void task_schedule()
  * Choix d un index
  ********************/
 
-PUBLIC void task_index(u32_t* index)
+PRIVATE void task_index(u32_t* index)
 {
   u32_t i;
 
