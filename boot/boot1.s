@@ -31,7 +31,7 @@ boot_info:
 	
 	KLOADOFF	equ	0xC00	; Offset de chargement du noyau
 	KSEGMENT	equ	0x0	; Segment de chargment du noyau
-	KSIZE		equ	15	; Taille du noyau (KSIZE*512o)
+	KSIZE		equ	17	; Taille du noyau (KSIZE*512o)
 	KSECTOR		equ	3	; Numero de secteur
 	
 	;;
@@ -41,7 +41,7 @@ boot_info:
 	MMLOADOFF	equ	0x0	; Offset de chargement du mm
 	MMSEGMENT	equ	0x3000 	; Segemnt de chargement du mm (pour obtenir 0x30000)
 	MMSIZE		equ	10	; Taille du mm (MMSIZE*512o)
-	MMSECTOR	equ	18	; Numero de secteur
+	MMSECTOR	equ	20	; Numero de secteur
 	
 	;;
 	;; Autres

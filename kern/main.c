@@ -37,7 +37,17 @@ PUBLIC void main()
   bochs_print("Lottery Scheduling initialized\n");
 
   /* Idle Task */
-  task_init(&proc_table[PROC_IDLE_INDEX], PROC_IDLE_INDEX, bootinfo.idle_offset, PROC_IDLE_CODE_SIZE, bootinfo.idle_offset+PROC_IDLE_CODE_SIZE,PROC_IDLE_DATA_SIZE,bootinfo.idle_offset+PROC_IDLE_CODE_SIZE+PROC_IDLE_DATA_SIZE,PROC_IDLE_DATA_SIZE,RING0, (u32_t)&idle_task,PROC_IDLE_TICKETS);
+  task_init(&proc_table[PROC_IDLE_INDEX], 
+	    PROC_IDLE_INDEX, 
+	    bootinfo.idle_offset, 
+	    PROC_IDLE_CODE_SIZE, 
+	    bootinfo.idle_offset+PROC_IDLE_CODE_SIZE,
+	    PROC_IDLE_DATA_SIZE,
+	    bootinfo.idle_offset+PROC_IDLE_CODE_SIZE+PROC_IDLE_DATA_SIZE,
+	    PROC_IDLE_DATA_SIZE,PROC_IDLE_PRIV, 
+	    (u32_t)&idle_task,
+	    (u32_t)&idle_task,
+	    PROC_IDLE_TICKETS);
 
   /* Chargement du Memory Manager */
   task_elf((u32_t*)bootinfo.mm_offset,PROC_MM_FLAG);

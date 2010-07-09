@@ -16,7 +16,7 @@ MM	=	servers/mm/mm
 
 BOOTSEEK	=	1
 KERNSEEK	=	3
-MMSEEK		=	18
+MMSEEK		=	20
 
 sub:
 	@for dir in $(SUBDIRS) ; do \

@@ -237,7 +237,18 @@ PRIVATE void task_index(u32_t* index)
  * Creation d une tache 
  ***************************/
 
-PUBLIC void task_init(struct proc* pr, u32_t index, u32_t code_base, u32_t code_size, u32_t data_base, u32_t data_size, u32_t stack_base, u32_t stack_size, u8_t priv, u32_t entry_point, u32_t tickets)
+PUBLIC void task_init(struct proc* pr, 
+		      u32_t index, 
+		      u32_t code_base, 
+		      u32_t code_size, 
+		      u32_t data_base, 
+		      u32_t data_size, 
+		      u32_t stack_base, 
+		      u32_t stack_size, 
+		      u8_t priv, 
+		      u32_t code_entry_point,
+		      u32_t data_entry_point,
+		      u32_t tickets)
 {
 
   /* Cree les segments */
@@ -257,8 +268,9 @@ PUBLIC void task_init(struct proc* pr, u32_t index, u32_t code_base, u32_t code_
   pr->context.ss = LDT_SS_SELECTOR | priv;
 
   /* Copie le code au bon endroit */
-  phys_copy(entry_point, code_base, code_size);
-  
+  phys_copy(code_entry_point, code_base, code_size);
+  phys_copy(data_entry_point, data_base, data_size);
+
   /* Positionne les registres nécessaires */
   pr->context.esp = stack_size;  /* La pile */ 
   pr->context.eip = 0;           /* Pointeur d instructions */
@@ -294,7 +306,9 @@ PUBLIC void task_init(struct proc* pr, u32_t index, u32_t code_base, u32_t code_
 PUBLIC void task_elf(u32_t* addr,u8_t flags)
 {
   struct elf_header* header;
-  struct prog_header* pheader;
+  struct prog_header* pheader;  /* Program Header */
+  struct prog_header* cheader;  /* Program Header - Code */
+  struct prog_header* dheader;  /* Program Header - Data */
   u16_t i;
 
   /* Recupere le header */
@@ -357,17 +371,42 @@ PUBLIC void task_elf(u32_t* addr,u8_t flags)
 	  /* Segment de code */
 	  if ((pheader->p_flags & PF_R) && (pheader->p_flags & PF_X))
 	    {
-	     
+	      /* Sauvegarde le segment de code */
+	      cheader = pheader;
 	    }
 
 	  /* Segment de donnees */
 	    if ((pheader->p_flags & PF_R) && (pheader->p_flags & PF_W))
 	    {
-	     
+	      /* Sauvegarde le segment de donnees */
+	      dheader = pheader;
 	    }
 	  
 	}
+    }
+ 
+  /* On va agir différemment suivant l argument flags */
+  switch(flags)
+    {
+    case PROC_MM_FLAG:
+      {
+	/*task_init(&proc_table[PROC_MM_INDEX],
+		  PROC_MM_INDEX,
+		  PROC_MM_LOAD,
+		  cheader->p_filesz,
+		  PROC_MM_LOAD,
+		  cheader->p_filesz+dheader->p_filesz,
+		  PROC_MM_LOAD+cheader->p_memsz+dheader->p_memsz,
+		  PROC_STACK,
+		  PROC_MM_PRIV,
+		  (u32_t)addr+cheader->p_offset,
+		  (u32_t)addr+dheader->p_offset,
+		  PROC_MM_TICKETS);*/
+      }
+      break;
 
+    default:
+      break;
     }
 
   return;

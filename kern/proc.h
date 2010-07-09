@@ -10,8 +10,9 @@
 
 #define LDT_SIZE      6
 #define PROC_NAME_LEN 32
-#define PROC_NUM_MAX  500-LDT_INDEX  /* Toute la GDT disponible */
+#define PROC_NUM_MAX  500-LDT_INDEX   /* 500 processus*/
 #define PROC_IF       0x200           /* 1000000000b */
+#define PROC_STACK    4096            /* Taille de la pile d un processus */
 
 /* Selecteur de segments de la LDT  
  *  Le RPL n'apparait pas ici !
@@ -55,11 +56,14 @@
 #define PROC_IDLE_CODE_SIZE     10
 #define PROC_IDLE_DATA_SIZE     1
 #define PROC_IDLE_TICKETS       1
+#define PROC_IDLE_PRIV          0
 
 /* Memory Manager */
 
 #define PROC_MM_FLAG            1
 #define PROC_MM_INDEX           1
+#define PROC_MM_TICKETS         1000
+#define PROC_MM_PRIV            1
 #define PROC_MM_LOAD            0x100000
 
 /***************
@@ -136,7 +140,7 @@ PUBLIC struct skip_list proc_ready;           /* Skip list des processus executa
 PUBLIC struct skip_node* NIL;                 /* Element NIL de la skip list */
 
 PUBLIC void sched_init(struct skip_list* list);
-PUBLIC void task_init(struct proc* pr, u32_t index, u32_t code_base, u32_t code_size, u32_t data_base, u32_t data_size, u32_t stack_base, u32_t stack_size, u8_t priv, u32_t entry_point, u32_t tickets);
+PUBLIC void task_init(struct proc* pr, u32_t index, u32_t code_base, u32_t code_size, u32_t data_base, u32_t data_size, u32_t stack_base, u32_t stack_size, u8_t priv, u32_t code_entry_point, u32_t data_entry_point, u32_t tickets);
 PUBLIC void task_schedule();
 PUBLIC void task_elf(u32_t* addr, u8_t flags);
 
