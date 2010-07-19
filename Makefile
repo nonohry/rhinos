@@ -10,7 +10,6 @@ SIZE	=	2880 # secteurs de 512
 BOOT0	=	boot/boot0
 BOOT1	= 	boot/boot1
 KERN	=	kern/kern
-MM	=	servers/mm/mm
 
 # Offset en secteurs des differents modules
 
@@ -31,7 +30,6 @@ img:	sub
 	cat $(BOOT0) | $(DD) of=$(IMG) bs=512 conv=notrunc
 	cat $(BOOT1) | $(DD) of=$(IMG) seek=$(BOOTSEEK) bs=512 conv=notrunc
 	cat $(KERN)  | $(DD) of=$(IMG) seek=$(KERNSEEK) bs=512 conv=notrunc
-	cat $(MM)    | $(DD) of=$(IMG) seek=$(MMSEEK) bs=512 conv=notrunc
 
 clean:
 	@for dir in $(SUBDIRS) ; do \
