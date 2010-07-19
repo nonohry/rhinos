@@ -16,7 +16,6 @@
 PRIVATE void sched_insert(struct skip_list* list, struct skip_node* node);
 PRIVATE void sched_delete(struct skip_list* list, u32_t key);
 PRIVATE void sched_search(struct skip_list* list, u32_t key, u32_t* index);
-PRIVATE void task_index(u32_t* index);
 
 /**************************************
  * Initialisation de l ordonnancement
@@ -208,110 +207,6 @@ PUBLIC void task_schedule()
 }
 
 
-/********************
- * Choix d un index
- ********************/
-
-PRIVATE void task_index(u32_t* index)
-{
-  u32_t i;
-
-  i=0;
-  while( (proc_table[i].state != PROC_TERMINATED) && (i<MAX_INDEX) )
-    {
-      i++;
-    }
-
-  if (i >= MAX_INDEX)
-    {
-      bochs_print("process table full !\n");
-    }
-
-  *index = i;
-
-  return;
-}
-
-
-/***************************
- * Creation d une tache 
- ***************************/
-
-PUBLIC void task_init(struct proc* pr, 
-		      u32_t index, 
-		      u32_t code_base, 
-		      u32_t code_size,
-		      u32_t code_vaddr,
-		      u32_t data_base, 
-		      u32_t data_size,
-		      u32_t data_vaddr,
-		      u32_t bss_size,
-		      u32_t stack_base, 
-		      u32_t stack_size, 
-		      u8_t priv, 
-		      u32_t code_entry_point,
-		      u32_t data_entry_point,
-		      u32_t tickets)
-{
-
-  /* Variables */
-  u8_t* p;
-  int i;
-
-  /* Cree les segments */
-  init_code_seg(&(pr->ldt[LDT_CS_INDEX]), code_base, code_vaddr+code_size, priv);
-  init_data_seg(&(pr->ldt[LDT_DS_INDEX]), data_base, data_vaddr+data_size+bss_size, priv);
-  init_data_seg(&(pr->ldt[LDT_ES_INDEX]), data_base, data_vaddr+data_size+bss_size, priv);
-  init_data_seg(&(pr->ldt[LDT_FS_INDEX]), data_base, data_vaddr+data_size+bss_size, priv);
-  init_data_seg(&(pr->ldt[LDT_GS_INDEX]), data_base, data_vaddr+data_size+bss_size, priv);
-  init_data_seg(&(pr->ldt[LDT_SS_INDEX]), stack_base, stack_size, priv);
-
-  /* Affecte les registres de segments */
-  pr->context.cs = LDT_CS_SELECTOR | priv;
-  pr->context.ds = LDT_DS_SELECTOR | priv;
-  pr->context.es = LDT_ES_SELECTOR | priv;
-  pr->context.fs = LDT_FS_SELECTOR | priv;
-  pr->context.gs = LDT_GS_SELECTOR | priv;
-  pr->context.ss = LDT_SS_SELECTOR | priv;
-
-  /* Copie le code au bon endroit */
-  phys_copy(code_entry_point, code_base+code_vaddr, code_size);
-  phys_copy(data_entry_point, data_base+data_vaddr, data_size);
-
-  /* Met a zero la zone BSS */
-  for(p=(u8_t*)(data_base+data_size+data_vaddr),i=0;i<bss_size;p++,i++)
-    {
-      *p=0;
-    }
-  
-  /* Positionne les registres nécessaires */
-  pr->context.esp = stack_size;  /* La pile */ 
-  pr->context.eip = 0;           /* Pointeur d instructions */
-  pr->context.eflags = PROC_IF;  /* Interrupt Enable Flag */
-
-  /* Affecte son quantum */
-  pr->quantum = PROC_QUANTUM;
-
-  /* Indique l'etat */
-  pr->state = PROC_READY;
-
-  /* Affecte les tickets  */
-  pr->node.tickets = tickets;
-
-  /* Le selecteur de la LDT */
-  init_ldt_seg(&gdt[LDT_INDEX+index],(u32_t) &(pr->ldt[0]), sizeof(pr->ldt), 0);
-  pr->ldt_selector = (LDT_INDEX+index) << SHIFT_SELECTOR;
-
-  /* Index de la tache */
-  pr->node.index = index;
-
-  /* Insert la tache dans la skip list */
-  sched_insert(&proc_ready,&(pr->node));
-
-  return;
-}
-
-
 /******************************
  * Chargement d un format ELF 
  ******************************/
@@ -396,34 +291,6 @@ PUBLIC void task_elf(u32_t* addr,u8_t flags)
 	    }
 	  
 	}
-    }
- 
-  /* On va agir différemment suivant l argument flags */
-  switch(flags)
-    {
-    /* Memory Manager */
-    case PROC_MM_FLAG:
-      {
-	task_init(&proc_table[PROC_MM_INDEX],
-		  PROC_MM_INDEX,
-		  PROC_MM_LOAD,
-		  cheader->p_filesz,
-		  cheader->p_vaddr,
-		  PROC_MM_LOAD+cheader->p_filesz,
-		  dheader->p_filesz,
-		  dheader->p_vaddr,
-		  dheader->p_memsz-dheader->p_filesz,
-		  PROC_MM_LOAD+cheader->p_filesz+dheader->p_memsz+dheader->p_vaddr,
-		  PROC_STACK,
-		  PROC_MM_PRIV,
-		  (u32_t)addr+cheader->p_offset,
-		  (u32_t)addr+dheader->p_offset,
-		  PROC_MM_TICKETS);
-      }
-      break;
-
-    default:
-      break;
     }
 
   return;

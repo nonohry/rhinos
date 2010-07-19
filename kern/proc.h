@@ -50,24 +50,6 @@
 
 #define PROC_QUANTUM       2     /* 20 ms de quantum d execution (on est a 100Hz, 2 = 20ms) */
 
-/* Processus Idle */
-
-#define PROC_IDLE_INDEX         0
-#define PROC_IDLE_CODE_SIZE     10
-#define PROC_IDLE_VADDR         0
-#define PROC_IDLE_DATA_SIZE     1
-#define PROC_IDLE_BSS_SIZE      0
-#define PROC_IDLE_TICKETS       1
-#define PROC_IDLE_PRIV          0
-
-/* Memory Manager */
-
-#define PROC_MM_FLAG            1
-#define PROC_MM_INDEX           1
-#define PROC_MM_TICKETS         1000
-#define PROC_MM_PRIV            1
-#define PROC_MM_LOAD            0x100000
-
 /***************
  * Structures
  ***************/
@@ -142,21 +124,6 @@ PUBLIC struct skip_list proc_ready;           /* Skip list des processus executa
 PUBLIC struct skip_node* NIL;                 /* Element NIL de la skip list */
 
 PUBLIC void sched_init(struct skip_list* list);
-PUBLIC void task_init(struct proc* pr, 
-		      u32_t index, 
-		      u32_t code_base, 
-		      u32_t code_size,
-		      u32_t code_vaddr,
-		      u32_t data_base, 
-		      u32_t data_size,
-		      u32_t data_vaddr,
-		      u32_t bss_size, 
-		      u32_t stack_base, 
-		      u32_t stack_size, 
-		      u8_t priv, 
-		      u32_t code_entry_point,
-		      u32_t data_entry_point, 
-		      u32_t tickets);
 PUBLIC void task_schedule();
 PUBLIC void task_elf(u32_t* addr, u8_t flags);
 

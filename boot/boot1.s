@@ -13,8 +13,6 @@ jmp 	start
 boot_info:	
 	mem_lower	dw	0
 	mem_upper	dw	0
-	idle_offset	dd	0x20000
-	mm_offset	dd	0x30000	
 	
 	;; 
 	;; Segment Selector
@@ -33,15 +31,6 @@ boot_info:
 	KSEGMENT	equ	0x0	; Segment de chargment du noyau
 	KSIZE		equ	17	; Taille du noyau (KSIZE*512o)
 	KSECTOR		equ	3	; Numero de secteur
-	
-	;;
-	;; Chargement du Memory Manager
-	;; 
-
-	MMLOADOFF	equ	0x0	; Offset de chargement du mm
-	MMSEGMENT	equ	0x3000 	; Segemnt de chargement du mm (pour obtenir 0x30000)
-	MMSIZE		equ	10	; Taille du mm (MMSIZE*512o)
-	MMSECTOR	equ	20	; Numero de secteur
 	
 	;;
 	;; Autres
@@ -129,17 +118,6 @@ get_mem_e801_end:
 	mov	ax,KSEGMENT		; Le segment dans AX
 	mov	byte [drv_size],KSIZE	; La taille dans [drv_size]
 	mov	word [drv_sect],KSECTOR	; Le numero de secteur dans [drv_sect]
-	call	load_sect	; Appelle la fonction de chargement
-
-	;; 
-	;; Chargement du Memory Manager 
-	;;
-
- 	mov	dl,[bootdrv]	; Le boot drive dans DL
-	mov	bx,MMLOADOFF	; L'offset dans BX
-	mov	ax,MMSEGMENT		; Le segment dans AX
-	mov	byte [drv_size],MMSIZE		; La taille dans [drv_size]
-	mov	word [drv_sect],MMSECTOR	; Le numero de secteur dans [drv_sect]
 	call	load_sect	; Appelle la fonction de chargement
 	
 	;;
