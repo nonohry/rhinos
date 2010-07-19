@@ -2,7 +2,7 @@
 #
 
 MAKE	=	make
-SUBDIRS	=	mm
+SUBDIRS	=	
 
 # Cibles
 

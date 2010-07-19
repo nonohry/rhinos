@@ -20,12 +20,12 @@
 #define ES_INDEX       3
 #define SS_INDEX       4
 #define TSS_INDEX      5
-#define LDT_INDEX      6     /* Index de la premiere LDT */
-#define MAX_INDEX      8192  /* Nombre maximum d index d une GDT */
+#define LDT_INDEX      6            /* Index de la premiere LDT */
+#define MAX_INDEX      LDT_INDEX    /* Nombre maximum d index d une GDT */
 
 /* Taille de la GDT & IDT */
 
-#define GDT_SIZE       MAX_INDEX-1  /* Debute a 0 */
+#define GDT_SIZE       MAX_INDEX+1  /* Debute a 0 */
 #define IDT_SIZE       255
 
 /* Selecteurs de segment */

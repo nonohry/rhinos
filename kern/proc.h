@@ -10,7 +10,7 @@
 
 #define LDT_SIZE      6
 #define PROC_NAME_LEN 32
-#define PROC_NUM_MAX  500-LDT_INDEX   /* 500 processus*/
+#define PROC_NUM_MAX  50              /* 50 processus pour le moment */
 #define PROC_IF       0x200           /* 1000000000b */
 #define PROC_STACK    4096            /* Taille de la pile d un processus */
 
