@@ -190,7 +190,7 @@ fast_ok:
 	jmp	next		; Vide les caches processeur en sautant
 
 next:
-	
+
 	mov     ax,DS_SELECTOR
 	mov     ds,ax  	 	; Reinitialisation
 	mov     ax,ES_SELECTOR	;
