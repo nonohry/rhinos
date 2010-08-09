@@ -125,6 +125,5 @@ PUBLIC struct skip_node* NIL;                 /* Element NIL de la skip list */
 
 PUBLIC void sched_init(struct skip_list* list);
 PUBLIC void task_schedule();
-PUBLIC void task_elf(u32_t* addr, u8_t flags);
 
 #endif
