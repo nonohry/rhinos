@@ -7,7 +7,6 @@
 #include "klib.h"
 #include "prot.h"
 #include "proc.h"
-#include "elf.h"
 
 /************************************
  * Declaration PRIVATE
