@@ -10,7 +10,9 @@ jmp 	start
 	memerrmsg	db	'Failed to get memory size',13,10,0
 	bootdrv		db	0
 
-boot_info:	
+boot_info:
+	kern_start	dd	0
+	kern_end	dd	0
 	mem_lower	dw	0
 	mem_upper	dw	0
 	

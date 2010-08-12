@@ -10,8 +10,11 @@ extern	irq_active		; Tableau des ISR actives en C
 extern	excep_handle		; Handlers pour les exceptions en C
 extern	tss			; TSS defini en C
 extern	proc_current		; Pointeur sur le processus a executer
-extern  main			; RhinOS Main en C
-
+extern  main			; RhinOS Main en C	
+extern	kernel_end		; Fin du Noyau (issu de l edition des liens)
+	
+global _start			; Point d'entree pour le lien
+	
 global	hwint_00		; ISR visibles pour le C
 global	hwint_01
 global	hwint_02
@@ -48,8 +51,10 @@ global	excep_17
 global	excep_18
 
 global	task_mgmt		; Gestion des taches
-	
-start:
+
+_start:
+	mov	dword [ecx], KLOADOFF 		; Champs kern_start de boot_info
+	mov	dword [ecx+4], kernel_end 	; Champs kern_end de boot_info
 	push	ecx		; Empile l adresse de boot_info
 	push	pmodemsg	; Empile le message
 	call	bochs_print	; Affiche dans Bochs
@@ -61,8 +66,7 @@ start:
     	lidt	[idt_desc]	; Charge l IDT
 	jmp	next		; Vide les caches processeurs
 	
-next:	
-
+next:
 	mov     ax,DS_SELECTOR
 	mov     ds,ax  	 	; Reinitialisation
 	mov     ax,ES_SELECTOR	;
@@ -336,6 +340,13 @@ excep_err_next:
 	pmodemsg 	db	'Protected Mode enabled !',13,10,0
 	excep_code	dd	0 ; Code Erreur des exceptions
 	excep_num	dd	0 ; Vecteur de l exception
+
+	;;
+	;; Offset du Noyau
+	;; 
+
+	KLOADOFF	equ	0xC00
+	
 	;; 
 	;; Segment Selector
 	;;

@@ -6,7 +6,7 @@
 AS	=	nasm -f elf
 CC	=	gcc -Wall -c
 RM	=	rm -f
-LD	=	ld -s --oformat binary -Ttext 0xC00
+LD	=	ld -s -T link.ld
 CFLAGS	=	-I../include
 
 # Regle de Suffixes
