@@ -1,25 +1,44 @@
 OUTPUT_FORMAT("binary")
-ENTRY(_start)
 offset = 0xC00;
+ENTRY(_start)
 SECTIONS
-{
-  .text offset : AT(offset) {
-    code = .;
-    *(.text)
-    *(.rodata)
-    . = ALIGN(4096);
-  }
-  .data : AT(offset + (data - code))
-  {
-    data = .;
-    *(.data)
-    . = ALIGN(4096);
-  }
-  .bss : AT(offset + (bss - code))
-  {
-    bss = .;
-    *(.bss)
-    . = ALIGN(4096);
-  }
-  kernel_end = .;
+{	
+	/* Noyau Charge a 0xC00 */
+	. = offset;
+
+	/* Fournit les adresses de debut */
+	PROVIDE(kernel_start = .);
+	PROVIDE(_kernel_start = .);
+	
+	/* La section de code et de donnees read-only */
+	.text : 
+	{
+		*(.text)
+    		*(.rodata)
+		PROVIDE(text_end = .);
+		PROVIDE(_text_end = .);
+		. = ALIGN(4096);
+      	}
+
+	/* La section de donnees initialisees */
+	.data offset + SIZEOF(.text) :
+  	{
+		*(.data)
+		PROVIDE(data_end = .);
+		PROVIDE(_data_end = .);
+		. = ALIGN(4096);
+ 	}
+
+	/* La section de donnees non initialisees */
+  	.bss offset + SIZEOF(.text) + SIZEOF(.data) :
+  	{
+		*(.bss)
+		PROVIDE(bss_end = .);
+		PROVIDE(_bss_end = .);
+		. = ALIGN(4096);
+	}
+
+	/* Fournit l adresse de fin du noyau */
+	PROVIDE(kernel_end = .);
+	PROVIDE(_kernel_end = .);
 }
