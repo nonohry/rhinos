@@ -13,7 +13,6 @@ global idle_task
 
 ASCII_OFFSET0	equ	48
 ASCII_OFFSETA	equ	55	
-BASE		dw	0
 	
 bochs_print:
 	push 	ebp         	; Sauvegarde de EBP
@@ -44,7 +43,7 @@ bochs_base10:
 	jmp	bochs_next	; Saute a la decomposition
 bochs_base16:
 	cmp	al,'x'		; Regarde si c est un 'd'
-	jne	bochs_base16	; Si non, on saute
+	jne	bochs_loop	; Si non, on saute
 	mov	[BASE],dword 16 ; Base hexadecimale
 bochs_next:	
 	push	eax	 	; Sauvegarde EAX
@@ -86,8 +85,8 @@ bochs_end:
 	pop	esi		; Restaure ESI
 	mov	esp,ebp		; Restaure la pile
 	pop	ebp		; Restaure EBP
-	ret
-
+	ret	
+	
 	;;
 	;; outb(u16_t,u8_t)
 	;;
@@ -175,7 +174,7 @@ random_end:
 	pop	ebp		; Restaure EBP	
 	ret			; Retourne (le resultat est dans EAX)
 
-	seed	dd	1	; Debut de l alea
+	
 
 	;;
 	;; void idle_task()
@@ -184,3 +183,7 @@ random_end:
 idle_task:
 	;; hlt	Commente pour ne pas polluer la sortie de bochs
 	jmp	idle_task
+
+
+BASE	dd	0		; Base de decomposition
+seed	dd	1		; Debut de l alea

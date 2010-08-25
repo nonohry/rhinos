@@ -13,7 +13,7 @@
 #include "klib.h"
 #include "i82C54.h"
 #include "proc.h"
-
+#include "bootmem.h"
 
 /**********
  * EXTERN

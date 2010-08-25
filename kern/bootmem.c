@@ -35,6 +35,8 @@ PUBLIC void* bootmem_alloc(u32_t size)
       /* On se contente de mettre à jour les variables globales */
       addr = (phys_bitmap_last_page*PAGE_SIZE) + phys_bitmap_last_offset;
       phys_bitmap_last_offset += size;
+      /* Marque la page comme allouée (cas de la premiere allocation) */
+      SET_PAGE_USED(phys_bitmap_last_page);
       /* Retourne l'adresse */
       return (void*)addr;
     }
