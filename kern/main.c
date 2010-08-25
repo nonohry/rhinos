@@ -27,7 +27,10 @@ EXTERN void task_mgmt();
 
 PUBLIC void main()
 {
- 
+  /* Initialisation de la memoire physique */
+  bootmem_init();
+  bochs_print("Boot Memory Manager initialized\n");
+
   /* Initialisation Horloge */
   clock_init();
   bochs_print("Clock initialized (100Hz)\n");
@@ -41,7 +44,7 @@ PUBLIC void main()
 
   /* Gestion des taches */
   /* task_mgmt(); */
-
+ 
   /* On ne doit plus arriver ici (sauf DEBUG) */
   while(1)
     {

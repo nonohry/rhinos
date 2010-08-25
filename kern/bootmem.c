@@ -5,6 +5,7 @@
 
 #include <types.h>
 #include "klib.h"
+#include "start.h"
 #include "bootmem.h"
 
 /* Bitmap & Co */
@@ -127,3 +128,30 @@ PUBLIC void bootmem_free(void* addr, u32_t size)
   return;
 }
 
+
+/*****************
+ * Initialisation
+ *****************/
+
+PUBLIC void bootmem_init()
+{
+  u32_t i;
+
+  /* Marque les adresses basses comme allouees */
+  for(i=0; i<bootinfo.kern_end/PAGE_SIZE; i++)
+    {
+      SET_PAGE_USED(i);
+    }
+  
+  /* Ajuste les variables globales */
+  phys_bitmap_last_page = i;
+  phys_bitmap_last_offset = PAGE_SIZE;
+
+  /* Marque les adresses hautes comme allouees */
+  for(i=BIOS_ROM_START/PAGE_SIZE; i<BOOTMEM_END/PAGE_SIZE; i++)
+    {
+      SET_PAGE_USED(i);
+    }
+
+  return;
+}
