@@ -27,7 +27,7 @@ jmp 	start
 	;; Chargement du Noyau
 	;; 
 	
-	KLOADOFF	equ	0xC00	; Offset de chargement du noyau
+	KLOADOFF	equ	0xD00	; Offset de chargement du noyau
 	KSEGMENT	equ	0x0	; Segment de chargment du noyau
 	KSIZE		equ	17	; Taille du noyau (KSIZE*512o)
 	KSECTOR		equ	3	; Numero de secteur
@@ -134,7 +134,7 @@ a20_ok:
 	mov	si,gdtmsg	; Affiche le chargement
 	call	print_message	; de la GDT
 
-	mov	dx,ds		; Segement = DS
+	mov	dx,ds		; Segment = DS
 	mov	ax,boot_info	; Offset = boot_info
 	call	real2phys	; Calcule l'adresse physique de boot_info
 	mov	cx, ax		; Sauve l adresse de la structure

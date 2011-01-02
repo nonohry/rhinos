@@ -1,9 +1,9 @@
 OUTPUT_FORMAT("binary")
-offset = 0xC00;
+offset = 0xD00;
 ENTRY(_start)
 SECTIONS
 {	
-	/* Noyau Charge a 0xC00 */
+	/* Noyau Charge a 0xD00 */
 	. = offset;
 
 	/* Fournit les adresses de debut */

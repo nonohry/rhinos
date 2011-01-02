@@ -10,6 +10,8 @@
 boot_info:
 	kern_start	dd	0
 	kern_end	dd	0
+	mem_addr	dd	0
+	mem_entry	dw	0
 	mem_lower	dw	0
 	mem_upper	dw	0
 
@@ -28,14 +30,47 @@ real2phys:			; Arg: DX=Segment, AX=Offset
 	xor 	dh,dh		; Vide DH
 	ret			; DH-AX contient l'adresse physique sur 20bits
 
+
+
 	;;
 	;;	Taille memoire selon int 0x15 (AX=0xE801)
 	;;
-
+	
 	MEM_SUCCESS	equ	0x01
 	MEM_FAIL	equ	0x00
+	MEM_ADDR	equ	0xC00
 	
-get_mem_size:	
+get_mem_size:
+	push	es		; Sauve ES
+	xor	bp,bp		; Compteur d'entrees a 0
+	mov	edx,0x534D4150	; EDX='SMAP'
+	xor	ax,ax		; Reset AX
+	mov	es,ax		; met ES a 0
+	mov	di,MEM_ADDR	; Adresse du buffer
+	xor	ebx,ebx		; Reset EBX a 0
+get_mem_e820_loop:
+	mov	eax,0x000E820	; Argument
+	mov	ecx,0x14	; Taille des entrees
+	int	0x15		; Interruprion
+	jc	get_mem_e820_eloop ; Erreur ou fin du listing
+	mov	edx,0x534D4150	; EDX peut etre resete
+	cmp	eax,edx		; EAX doit etre a 'SMART'
+	jne	get_mem_e820_eloop ; Erreur
+	cmp	ecx, 0x14	; Test la taille de l entrees lue
+	jb	get_mem_e820_eloop ; Erreur si la taille est inferieur a 20
+	inc	bp		; Incremente le compteur
+	cmp	ebx,0		; Teste la valeur de l'increment
+	jne	get_mem_e820_loop  ; Entree suivante
+get_mem_e820_eloop:
+	mov	[mem_entry],bp	; Recupere le nombre d'entree
+	mov	dword [mem_addr],MEM_ADDR ; Recupere l'adresse du map
+	pop	es		; Restaure ES
+	
+	;;
+	;;	Taille memoire selon int 0x15 (AX=0xE801)
+	;;
+	
+get_mem_size_e801:	
 	mov	ax,0xE801	; Argument de l interruption
 	int	0x15		; Interruption
 	jc	get_mem_e801_err; Erreur si CF
@@ -49,7 +84,7 @@ get_mem_e801_err:
 	mov	ax, MEM_FAIL	; Valeur de retour
 get_mem_e801_end:
 	ret			; Retour
-
+	
 	;;
 	;; A20 Gate
 	;;
