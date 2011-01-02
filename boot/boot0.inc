@@ -37,7 +37,6 @@ cpu_type:
         ret                     ; On retourne
 cpu_86:				; On a un 8086/8088
 cpu_286:			; On a un 30286
-cpu_end:
         popf                    ; Restaure FLAGS
 	xor	ax,ax		; Reset AX
 	mov	ax, CPU_FAIL	; Valeur de retour
