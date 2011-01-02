@@ -1,20 +1,18 @@
+	;;
+	;; Boot1.s
+	;; Second programme de boot
+	;; Passage en mode reel
+	;; 
+
 [BITS 16]
 	
 jmp 	start
 
-	fastmsg         db      'Checking BIOS fast A20 support ...',13,10,0
-	fastokmsg       db      'BIOS fast A20 support found !',13,10,0
+	fastokmsg       db     	'A20 Gate enabled',13,10,0
 	nofastmsg       db      'Failed to enable A20 or no BIOS fast A20 support found',13,10,0
-	a20msg          db      'A20 Gate enabled',13,10,0
-	gdtmsg		db	'GDT Loaded',13,10,0
+	gdtmsg		db	'Boot GDT Loaded',13,10,0
 	memerrmsg	db	'Failed to get memory size',13,10,0
 	bootdrv		db	0
-
-boot_info:
-	kern_start	dd	0
-	kern_end	dd	0
-	mem_lower	dw	0
-	mem_upper	dw	0
 	
 	;; 
 	;; Segment Selector
@@ -64,19 +62,9 @@ ss_desc:
 	;;
 	;; Fonction Utiles
 	;;
-	%include "boot.inc"
-
-real2phys:			; Arg: DX=Segment, AX=Offset
 	
-	mov 	cl,0x04		; Nb de decalage
-	mov 	ch,dh		; Sauvegarde de DH
-	shr 	ch,cl		; Ne garde que le 2nd octet de DH ds CH
-	shl 	dx,cl		; Decale DX (Multiplie par 16)
-	add 	ax,dx		; Addition avec AX
-	adc 	ch,0x00		; Addition de la retenue (si elle existe)
-	mov 	dl,ch		; Met le resultat dans DL
-	xor 	dh,dh		; Vide DH
-	ret			; DH-AX contient l'adresse physique sur 20bits
+	%include "boot.inc"
+	%include "boot1.inc"
 
 	;; 
 	;; Point d'entree
@@ -90,21 +78,15 @@ start:
 	mov	[bootdrv],dl	; Recupere le bootdrive (sauvegarde par boot0)
 	
 	;;
-	;;	Taille memoire selon int 0x15 (AX=0xE801)
+	;; Recupere la taille de la memoire
 	;; 
+	call	get_mem_size
+	cmp  	ax, MEM_SUCCESS
+	je   	mem_ok
+	mov	si,memerrmsg
+	call	print_message	
+mem_ok:	
 	
-	mov	ax,0xE801	; Argument de l interruption
-	int	0x15		; Interruption
-	jc	get_mem_e801_err; Erreur si CF
-	mov	[mem_upper],dx	; DX= memoire haute en nombre de blocs de 64K 
-	mov	[mem_lower],cx	; CX = taille memoire basse en K
-	jmp	get_mem_e801_end; Saut a la fin
-get_mem_e801_err:
-	mov	si,memerrmsg	; Charge le message d'erreur
-	call    print_message	; Affiche le message
-	call	reboot		; Reboot
-get_mem_e801_end:
-
 	;;
 	;; Geometrie du disque
 	;;
@@ -124,45 +106,18 @@ get_mem_e801_end:
 	
 	;;
 	;; Mise en place de la ligne A20
-	;; 
+	;;
 	
-	cli			; On coupe les interruptions
-	mov	si,fastmsg	; Charge le message de Fast A20
+	call	set_a20		; Appel de la fonction
+	cmp	ax, A20_SUCCESS	; Test du retour
+	je	a20_ok		; On continue si tout est bon
+	mov	si, nofastmsg	; Sinon on charge le message
+	call	print_message	; et on l'affiche
+	call	reboot		; puis on reboot
+a20_ok:	
+	mov	si, fastokmsg	; Charge la bonne nouvelle
 	call	print_message	; et l'affiche
-	mov 	ax,0x2403	; Interroge le BIOS
-	int	0x15		; pour le support du Fast A20 Gate
-	jc	no_fast		; Si CF=1, echec de l'interruption
-	cmp	ah,0		; Si AH<>0
-	jne	no_fast		; alors pas de support par le BIOS
-	and	bx,2		; BX contient le type du support
-	jz	no_fast		; Si 2eme bit de BX n'est pas mis, pas de fast A20
-	mov	si,fastokmsg	; Sinon, le support est present
-	call	print_message	; On l'affiche
-
-	mov 	ax,0x2402	; Appel du BIOS
-	int	0x15		; pour determiner l'etat A20 Gate
-	jc	no_fast		; Si CF=1, echec de l'interruption
-	cmp	ah,0		; Si AH<>0
-	jne	no_fast		; alors echec de l'interrogation
-	cmp	al,0		; Si A20 Gate est deja activee
-	jne	fast_ok		; on saute au message
-	mov 	ax,0x2401	; Sinon, on appelle le BIOS
-	int	0x15		; pour activer A20 Gate
-	jc	no_fast		; Si CF=1, echec de l'interruption
-	cmp	ah,0		; Si AH=0
-	je	fast_ok		; alors reussite de l'activation
-
-no_fast:	
-	sti			; Restaure les interruptions
-	mov 	si,nofastmsg	; Affiche que le support du fast A20
-	call 	print_message	; n'est pas present
-	call	reboot		; Reboot
-
-fast_ok:
-	sti			; Restaure les interruptions
-	mov	si,a20msg	; Sinon, l'activation a reussi
-	call	print_message	; On l'affiche
-
+	
 	;;
 	;; Mise en place de la GDT
 	;;

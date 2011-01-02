@@ -1,4 +1,5 @@
-	;; 
+	;;
+	;; Boot.inc
 	;; Fonction Utiles (mode reel)
 	;;
 

@@ -63,6 +63,10 @@ start:
 	mov	si,bootmsg	; Charge le message de boot
 	call	print_message	; et l'affiche
 
+	;; 
+	;; S'assure du bon CPU
+	;; 
+	
 	call	cpu_type	; Detecte le type de CPU
 	cmp	ax, CPU_SUCCESS	; Teste la valeur de retour
 	je	cpu_ok		; Si la valeur est bonne on continue
@@ -74,6 +78,10 @@ cpu_ok:
 	mov	si,i80386msg	; Message pour le CPU trouve
 	call	print_message	; et l'affiche
 
+	;;
+	;; Charge le second programme de boot
+	;; 
+	
 	mov	dl,[bootdrv]	; Le boot drive dans DL
 	call	get_geometry	; Recupere la geometrie du disque de boot
 	
