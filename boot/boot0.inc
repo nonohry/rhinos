@@ -1,5 +1,16 @@
+	;;
+	;; Boot0.inc
+	;; Utilitaires pour Boot0.s
+	;; 
 
 
+	;;
+	;; Detection du CPU (methode Intel)
+	;;
+
+	CPU_SUCCESS	equ 	0x01
+	CPU_FAIL	equ	0x00
+	
 cpu_type:
         pushf                   ; Sauve FLAGS sur la pile
         xor     ax,ax           ; Vide AX
@@ -20,14 +31,14 @@ cpu_type:
         and     ax,0x0F000      ; presence d un
         jz      cpu_286         ; 80286
 
-        mov     si,i80386msg    ; Sinon on a un 80386
         popf                    ; Restaure FLAGS
-        call    print_message   ; On l'affiche
+	xor	ax,ax		; Reset AX
+	mov	ax, CPU_SUCCESS	; Valeur de retour
         ret                     ; On retourne
 cpu_86:				; On a un 8086/8088
 cpu_286:			; On a un 30286
-        mov     si,noi80386msg  ; Message d erreur
 cpu_end:
         popf                    ; Restaure FLAGS
-        call    print_message   ; Affiche le CPU non 386
-        call    reboot          ; Reboot
+	xor	ax,ax		; Reset AX
+	mov	ax, CPU_FAIL	; Valeur de retour
+	ret			; Retourne

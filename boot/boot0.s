@@ -1,3 +1,8 @@
+	;;
+	;; Boot0.s
+	;; RhinOS Bootsector
+	;;
+	
 [BITS 16]
 
 	;; 
@@ -20,7 +25,6 @@
 	;;
 
 	bootmsg		db	'Booting RhinOS ...',13,10,0
-	cpumsg		db	'Checking CPU type ...',13,10,0
 	noi80386msg	db	'No 80386 CPU found',13,10,0
 	i80386msg	db	'80386 CPU found !', 13,10,0
 	bootdrv		db	0
@@ -59,10 +63,16 @@ start:
 	mov	si,bootmsg	; Charge le message de boot
 	call	print_message	; et l'affiche
 
-	mov	si,cpumsg	; Charge le message de CPU
-	call	print_message	; et l'affiche
 	call	cpu_type	; Detecte le type de CPU
+	cmp	ax, CPU_SUCCESS	; Teste la valeur de retour
+	je	cpu_ok		; Si la valeur est bonne on continue
+	mov	si,noi80386msg	; Message pour le CPU non trouve
+	call	print_message	; et l'affiche
+	call	reboot		; pui on reboot
 
+cpu_ok:
+	mov	si,i80386msg	; Message pour le CPU trouve
+	call	print_message	; et l'affiche
 
 	mov	dl,[bootdrv]	; Le boot drive dans DL
 	call	get_geometry	; Recupere la geometrie du disque de boot
