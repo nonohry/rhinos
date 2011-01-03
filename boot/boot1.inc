@@ -39,6 +39,7 @@ real2phys:			; Arg: DX=Segment, AX=Offset
 	MEM_SUCCESS	equ	0x01
 	MEM_FAIL	equ	0x00
 	MEM_ADDR	equ	0xC00
+	MEM_ENTRY_SIZE	equ	0x14
 	
 get_mem_size:
 	push	es		; Sauve ES
@@ -50,22 +51,23 @@ get_mem_size:
 	xor	ebx,ebx		; Reset EBX a 0
 get_mem_e820_loop:
 	mov	eax,0x000E820	; Argument
-	mov	ecx,0x14	; Taille des entrees
-	int	0x15		; Interruprion
+	mov	ecx,MEM_ENTRY_SIZE ; Taille des entrees
+	int	0x15		; Interruption
 	jc	get_mem_e820_eloop ; Erreur ou fin du listing
 	mov	edx,0x534D4150	; EDX peut etre resete
 	cmp	eax,edx		; EAX doit etre a 'SMART'
 	jne	get_mem_e820_eloop ; Erreur
-	cmp	ecx, 0x14	; Test la taille de l entrees lue
+	cmp	ecx, MEM_ENTRY_SIZE; Test la taille de l entrees lue
 	jb	get_mem_e820_eloop ; Erreur si la taille est inferieur a 20
 	inc	bp		; Incremente le compteur
+	add	di,MEM_ENTRY_SIZE  ; Incremente l'adresse du buffer 
 	cmp	ebx,0		; Teste la valeur de l'increment
 	jne	get_mem_e820_loop  ; Entree suivante
 get_mem_e820_eloop:
 	mov	[mem_entry],bp	; Recupere le nombre d'entree
 	mov	dword [mem_addr],MEM_ADDR ; Recupere l'adresse du map
 	pop	es		; Restaure ES
-	
+
 	;;
 	;;	Taille memoire selon int 0x15 (AX=0xE801)
 	;;

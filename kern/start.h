@@ -28,10 +28,8 @@ PUBLIC struct boot_info
 
 PUBLIC struct boot_memmap_entry
 {
-  u32_t base_addr_low;  /* Addresse de la zone - 32 premiers bits */
-  u32_t base_addr_up;   /* Addresse de la zone - 32 derniers bits */
-  u32_t size_low;       /* Taille de la zone - 32 permiers bits */
-  u32_t size_up;        /* Taille de la zone - 32 permiers bits */
+  u64_t addr;           /* Adresse de la zone */
+  u64_t size;           /* Taille de la zone */
   u32_t type;           /* Type de memoire */
 } __attribute__ ((packed));
 
