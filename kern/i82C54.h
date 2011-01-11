@@ -2,7 +2,7 @@
 #define I82C54_H
 
 #include <types.h>
-#include "prot.h"
+#include "tables.h"
 
 /* Constantes */
 

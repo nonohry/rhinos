@@ -9,7 +9,7 @@
  * Includes 
  *************/
 
-#include "prot.h"
+#include "tables.h"
 #include "start.h"
 
 

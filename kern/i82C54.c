@@ -5,7 +5,7 @@
 
 #include <types.h>
 #include "klib.h"
-#include "prot.h"
+#include "tables.h"
 #include "proc.h"
 #include "i8259.h"
 #include "i82C54.h"
