@@ -22,8 +22,8 @@ PUBLIC void cstart(struct boot_info* binfo)
   /* Recopie les informations de demarrage */
   bootinfo = *binfo;
 
-  /* Initialise le mode protege (gdt, interruptions ...) */
-  pmode_init();
+  /* Initialise les tables du mode protege */
+  tables_init();
 
   return;
 
