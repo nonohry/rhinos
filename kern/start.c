@@ -9,8 +9,6 @@
  * Includes 
  *************/
 
-#include <types.h>
-#include "klib.h"
 #include "prot.h"
 #include "start.h"
 
@@ -21,9 +19,6 @@
 
 PUBLIC void cstart(struct boot_info* binfo)
 { 
-  u32_t i;
-  struct boot_memmap_entry* entry;
-
   /* Recopie les informations de demarrage */
   bootinfo = *binfo;
 
