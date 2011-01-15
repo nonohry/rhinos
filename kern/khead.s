@@ -8,8 +8,6 @@ extern  idt_desc		; Descripteur de l'IDT en C
 extern	irq_handle		; Handlers pour les IRQ en C
 extern	irq_active		; Tableau des ISR actives en C
 extern	excep_handle		; Handlers pour les exceptions en C
-extern	tss			; TSS defini en C
-extern	proc_current		; Pointeur sur le processus a executer
 extern  main			; RhinOS Main en C
 extern	kernel_start		; Debut du Noyau (issu de l edition des liens)	
 extern	kernel_end		; Fin du Noyau (issu de l edition des liens)
@@ -51,8 +49,6 @@ global	excep_16
 global	excep_17
 global	excep_18
 
-global	task_mgmt		; Gestion des taches
-
 _start:
 	mov	dword [ecx], kernel_start 	; Champs kern_start de boot_info
 	mov	dword [ecx+4], kernel_end 	; Champs kern_end de boot_info
@@ -65,8 +61,9 @@ _start:
 	
 	lgdt	[gdt_desc]	; Charge la nouvelle GDT
     	lidt	[idt_desc]	; Charge l IDT
-	jmp	next		; Vide les caches processeurs
 	
+	jmp	next		; Vide les caches processeurs
+
 next:
 	mov     ax,DS_SELECTOR
 	mov     ds,ax  	 	; Reinitialisation
@@ -75,9 +72,6 @@ next:
 	mov     ax,SS_SELECTOR	;
 	mov     ss,ax   	; de segments (ESP invariable)
  	sti			; Restaure les interruptions
-
-	mov	ax,TSS_SELECTOR	; Index du TSS
-	ltr	ax		; Charge le task register
 
 	jmp	CS_SELECTOR:main
 
@@ -199,24 +193,13 @@ hwint_save:
 	mov	ds,dx
 	mov	dx,ES_SELECTOR
 	mov	es,dx		; note: FS & GS ne sont pas utilises par le noyau
- 	push	task_mgmt	; Empile l'adresse de task_mgmt comme adresse de retour
+ 	push	hwint_ret	; Empile l'adresse de task_mgmt comme adresse de retour
 	jmp	[eax+32]	; 32 = 8 registres (pusad) => jmp a l'adresse empilee par call
 
 kinterrupt:
 	push	hwint_ret	; Pas d ordonancement si le noyau a ete interrompu
 	jmp	[eax+32]	; Saute au retour
 
-	;;
-	;; Gestion des taches (s'acheve avec *_ret)
-	;; 
-
-task_mgmt:
-	mov	esp,[proc_current] ; La pile pointe sur le contexte
- 	lldt	[esp+PROC_LDT_SEL] ; Charge la LDT du processus courant
- 	lea	eax,[esp+PROC_FRAME_END] ; Recupere l'adresse de la fin du stack_frame
- 	mov	[tss+TSS_ESP0],eax ; Fait pointer ESP0 sur la fin du stack_frame
-				   ; de ce fait, hwint_save, en pushant les registres, va en meme temps
-				   ; les sauver dans le stack_frame du process
 	;; 
 	;; Restauration du contexte pour les IRQ et les exceptions
 	;; 
@@ -350,7 +333,6 @@ excep_err_next:
 	DS_SELECTOR	equ	16 ; DS  = 00000010  0  00   = (byte) 16
 	ES_SELECTOR	equ	24 ; ES  = 00000011  0  00   = (byte) 24
 	SS_SELECTOR	equ	32 ; SS  = 00000100  0  00   = (byte) 32
-	TSS_SELECTOR    equ     40 ; TSS = 00000101  0  00   = (byte) 40
 	
 	;;
 	;; IRQ Magic Numbers
@@ -382,18 +364,6 @@ excep_err_next:
 	MFAULT_VECTOR	equ	16
 	ALIGN_VECTOR	equ	17
 	MACHINE_VECTOR	equ	18
-
-	;;
-	;; Offset dans la structure proc
-	;;
-
-	PROC_LDT_SEL	equ	64 ; Position, en octet, du selecteur
-	PROC_FRAME_END	equ	64 ; Position, en octet, du dernier element de la stack_frame (SS)
-	;;
-	;; Offset dans le TSS
-	;;
-
-	TSS_ESP0	equ	4 ; Position, en octet, de ESP0
 
 	;;
 	;; Donnees de la pile noyau

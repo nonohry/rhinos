@@ -175,7 +175,6 @@ EXTERN void excep_18(void);
 
 PUBLIC struct seg_desc gdt[GDT_SIZE];  /* GDT */
 PUBLIC struct gate_desc idt[IDT_SIZE]; /* IDT */
-PUBLIC struct tss tss;                 /* TSS */
 PUBLIC struct table_desc gdt_desc;     /* Descripteur de la GDT */
 PUBLIC struct table_desc idt_desc;     /* Descripteur de l'IDT */
 PUBLIC struct irq_chaine* irq_handlers[IRQ_VECTORS];  /* Tableau des irq handlers */

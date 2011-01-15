@@ -56,7 +56,7 @@ PUBLIC void clock_init()
 PRIVATE u8_t clock_handler()
 {
   
-  /* task_schedule(); En attendant .... */
+  bochs_print("tick !");
   
   return TRUE;
 }

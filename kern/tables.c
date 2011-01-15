@@ -25,11 +25,6 @@ PUBLIC void gdt_init()
   
   bochs_print("Creating the new GDT...\n");
 
-  /* Initialisation du TSS */
-
-  tss.ss0 = SS_SELECTOR;
-  tss.esp0 = 0xC0000;
-
   /* Descripteur de GDT */
 
   gdt_desc.limit = sizeof(gdt) - 1;  /* la GDT commence a 0, d'ou le -1 */
@@ -41,7 +36,6 @@ PUBLIC void gdt_init()
   init_data_seg(&gdt[DS_INDEX],(u32_t) 0, KERN_LIMIT, 0);
   init_data_seg(&gdt[ES_INDEX],(u32_t) 0, KERN_LIMIT, 0);
   init_data_seg(&gdt[SS_INDEX],(u32_t) 0, KERN_LIMIT, 0);
-  init_tss_seg(&gdt[TSS_INDEX],(u32_t) &tss, sizeof(tss), 0);
 
   return;
 }
