@@ -54,7 +54,6 @@ PUBLIC void tables_init()
   idt_desc.limit = sizeof(idt) - 1;  /* l IDT commence a 0, d'ou le -1 */
   idt_desc.base = (u32_t) idt;       /* Adresse de idt dans l espace lineaire */
 
-
   /* Initialisation de l IDT - Exceptions */
 
   init_int_gate(&idt[0], CS_SELECTOR, (u32_t)excep_00, SEG_PRESENT | SEG_DPL_0);
