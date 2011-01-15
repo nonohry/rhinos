@@ -182,7 +182,7 @@ PUBLIC struct irq_chaine* irq_handlers[IRQ_VECTORS];  /* Tableau des irq handler
 PUBLIC u32_t  irq_active[IRQ_VECTORS];                /* Tableau des bitmaps d'irq actives */
 
 
-PUBLIC void tables_init();
-
+PUBLIC void gdt_init();
+PUBLIC void idt_init();
 
 #endif

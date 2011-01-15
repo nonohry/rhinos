@@ -16,11 +16,11 @@
 #include "tables.h"
 
 
-/***********************
- * Fonction principale 
- ***********************/
+/***************************
+ * Initialisation de la GDT 
+ ***************************/
  
-PUBLIC void tables_init()
+PUBLIC void gdt_init()
 {
   
   bochs_print("Creating the new GDT...\n");
@@ -43,6 +43,16 @@ PUBLIC void tables_init()
   init_data_seg(&gdt[SS_INDEX],(u32_t) 0, KERN_LIMIT, 0);
   init_tss_seg(&gdt[TSS_INDEX],(u32_t) &tss, sizeof(tss), 0);
 
+  return;
+}
+
+/**************************
+ * Initialisation de l IDT 
+ **************************/
+
+PUBLIC void idt_init()
+{
+
   /* Initialisation du PIC i8259 */
   i8259_init();
   bochs_print("PIC i8259 initialized\n");
@@ -56,16 +66,16 @@ PUBLIC void tables_init()
 
   /* Initialisation de l IDT - Exceptions */
 
-  init_int_gate(&idt[0], CS_SELECTOR, (u32_t)excep_00, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[1], CS_SELECTOR, (u32_t)excep_01, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[2], CS_SELECTOR, (u32_t)excep_02, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[3], CS_SELECTOR, (u32_t)excep_03, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[4], CS_SELECTOR, (u32_t)excep_04, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[5], CS_SELECTOR, (u32_t)excep_05, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[6], CS_SELECTOR, (u32_t)excep_06, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[7], CS_SELECTOR, (u32_t)excep_07, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[8], CS_SELECTOR, (u32_t)excep_08, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[9], CS_SELECTOR, (u32_t)excep_09, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[0] , CS_SELECTOR, (u32_t)excep_00, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[1] , CS_SELECTOR, (u32_t)excep_01, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[2] , CS_SELECTOR, (u32_t)excep_02, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[3] , CS_SELECTOR, (u32_t)excep_03, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[4] , CS_SELECTOR, (u32_t)excep_04, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[5] , CS_SELECTOR, (u32_t)excep_05, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[6] , CS_SELECTOR, (u32_t)excep_06, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[7] , CS_SELECTOR, (u32_t)excep_07, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[8] , CS_SELECTOR, (u32_t)excep_08, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[9] , CS_SELECTOR, (u32_t)excep_09, SEG_PRESENT | SEG_DPL_0);
   init_int_gate(&idt[10], CS_SELECTOR, (u32_t)excep_10, SEG_PRESENT | SEG_DPL_0);
   init_int_gate(&idt[11], CS_SELECTOR, (u32_t)excep_11, SEG_PRESENT | SEG_DPL_0);
   init_int_gate(&idt[12], CS_SELECTOR, (u32_t)excep_12, SEG_PRESENT | SEG_DPL_0);

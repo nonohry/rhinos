@@ -23,7 +23,8 @@ PUBLIC void cstart(struct boot_info* binfo)
   bootinfo = *binfo;
 
   /* Initialise les tables du mode protege */
-  tables_init();
+  gdt_init();
+  idt_init();
 
   return;
 
