@@ -8,6 +8,14 @@
 	
 jmp 	start
 
+	;;
+	;; Fonction Utiles
+	;;
+	
+	%include "boot1.inc"
+	%include "boot.inc"
+
+	
 	fastokmsg       db     	'A20 Gate enabled',13,10,0
 	nofastmsg       db      'Failed to enable A20 or no BIOS fast A20 support found',13,10,0
 	gdtmsg		db	'Boot GDT Loaded',13,10,0
@@ -58,13 +66,7 @@ es_desc:
 	db 	0xFF,0xFF,0x00,0x00,0x00,0x92,0xCF,0x00
 ss_desc:
 	db 	0xFF,0xFF,0x00,0x00,0x00,0x92,0xCF,0x00
-
-	;;
-	;; Fonction Utiles
-	;;
 	
-	%include "boot.inc"
-	%include "boot1.inc"
 
 	;; 
 	;; Point d'entree
@@ -134,11 +136,6 @@ a20_ok:
 	mov	si,gdtmsg	; Affiche le chargement
 	call	print_message	; de la GDT
 
-	mov	dx,ds		; Segment = DS
-	mov	ax,boot_info	; Offset = boot_info
-	call	real2phys	; Calcule l'adresse physique de boot_info
-	mov	cx, ax		; Sauve l adresse de la structure
-	
 	cli                     ; Inhibe les interruptions
 	mov     eax,cr0		; Passe en mode protege
 	or      ax,0x1		; via les registres de controle

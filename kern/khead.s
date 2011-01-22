@@ -50,14 +50,12 @@ global	excep_17
 global	excep_18
 
 _start:
-	mov	dword [ecx], kernel_start 	; Champs kern_start de boot_info
-	mov	dword [ecx+4], kernel_end 	; Champs kern_end de boot_info
-	push	ecx		; Empile l adresse de boot_info
+	mov	dword [BOOTINFO_ADDR], kernel_start 	; Champs kern_start de boot_info
+	mov	dword [BOOTINFO_ADDR+4], kernel_end 	; Champs kern_end de boot_info
 	push	pmodemsg	; Empile le message
 	call	bochs_print	; Affiche dans Bochs
 	add	esp,4		; Depile le message
-	call	cstart		; Appelle cstart avec les 2 memoires en argument
-	add	esp,4		; Depile l argument de cstart
+	call	cstart		; Appelle cstart 
 	
 	lgdt	[gdt_desc]	; Charge la nouvelle GDT
     	lidt	[idt_desc]	; Charge l IDT
@@ -324,6 +322,12 @@ excep_err_next:
 	pmodemsg 	db	'Protected Mode enabled !',13,10,0
 	excep_code	dd	0 ; Code Erreur des exceptions
 	excep_num	dd	0 ; Vecteur de l exception
+
+	;;
+	;; Adresse du bootinfo
+	;;
+
+	BOOTINFO_ADDR	equ	0x803
 	
 	;; 
 	;; Segment Selector

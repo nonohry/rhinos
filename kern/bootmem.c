@@ -138,7 +138,7 @@ PUBLIC void bootmem_init()
   u32_t i;
 
   /* Marque les adresses basses comme allouees */
-  for(i=0; i<bootinfo.kern_end/PAGE_SIZE; i++)
+  for(i=0; i<bootinfo->kern_end/PAGE_SIZE; i++)
     {
       SET_PAGE_USED(i);
     }

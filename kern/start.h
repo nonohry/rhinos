@@ -8,6 +8,14 @@
 
 #include <types.h>
 
+
+/**************
+ * Constantes
+ **************/
+
+#define BOOTINFO_ADDR     0x803
+
+
 /********************** 
  * Structure boot_info
  **********************/
@@ -38,6 +46,6 @@ PUBLIC struct boot_memmap_entry
  * Prototypes
  *************/
 
-PUBLIC struct boot_info bootinfo;
+PUBLIC struct boot_info* bootinfo;
 
 #endif

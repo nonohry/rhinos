@@ -17,10 +17,10 @@
  * Fonction cstart
  *******************/
 
-PUBLIC void cstart(struct boot_info* binfo)
+PUBLIC void cstart()
 { 
   /* Recopie les informations de demarrage */
-  bootinfo = *binfo;
+  bootinfo = (struct boot_info*)BOOTINFO_ADDR;
 
   /* Initialise les tables du mode protege */
   gdt_init();
