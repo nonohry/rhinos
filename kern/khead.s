@@ -1,6 +1,10 @@
 [BITS 32]
 
+	;;;;;;;;;;;;;;;;;;;;;;;;
+	;; Portee des Fonctions
+	;;;;;;;;;;;;;;;;;;;;;;;;
 
+	
 extern	bochs_print
 extern	cstart			; Fonction d'initialisation en C
 extern  gdt_desc		; Descripteur de la GDT en C
@@ -49,6 +53,12 @@ global	excep_16
 global	excep_17
 global	excep_18
 
+
+	;;;;;;;;;
+	;; Code
+	;;;;;;;;;
+
+	
 _start:
 	mov	dword [BOOTINFO_ADDR], kernel_start 	; Champs kern_start de boot_info
 	mov	dword [BOOTINFO_ADDR+4], kernel_end 	; Champs kern_end de boot_info
@@ -79,6 +89,7 @@ next:
 	
 %macro	hwint_generic0	1
    	call	hwint_save	; Sauvegarde des registres
+	call	hwint_reg	; Mise en place des registres noyau
 	push	%1		; Empile l'IRQ
    	call	irq_handle	; Appel les handles C
 	add	esp,4		; Depile l'IRQ
@@ -91,8 +102,8 @@ next:
 	out	IRQ_MASTER+1,al	; Envoie OCW1
 %%noactive0:
 	mov	al,IRQ_EOI	; Envoi la fin d interruption
-	out	IRQ_MASTER,al	; au PIC Maitre
-	ret			; Retourne a hwint_ret !
+	out	IRQ_MASTER,al	; au PIC Maitre	
+	call	hwint_rest	; Restaure les registres
 %endmacro
 
 	;;
@@ -101,6 +112,7 @@ next:
 
 %macro	hwint_generic1	1
 	call	hwint_save	; Sauvegarde des registres
+	call	hwint_reg	; Mise en place des registres noyau
 	push	%1		; Empile l'IRQ 
 	call	irq_handle	; Appel les handles C
 	add	esp,4		; Depile l'IRQ
@@ -115,7 +127,7 @@ next:
 	mov	al,IRQ_EOI	; Envoi la fin d interruption
 	out	IRQ_SLAVE,al	; au PIC Esclave
 	out	IRQ_MASTER,al	; puis au Maitre
-	ret			; Retourne a hwint_ret !
+	call	hwint_rest	; Restaure les registres
 %endmacro
 	
 	;;
@@ -177,40 +189,36 @@ hwint_15:
 excep_save:	
 hwint_save:
 	cld		        ; Positionne le sens d empilement
+	pop	ebp		; Depile l'adresse de retour
 	pushad			; Sauve les registres generaux 32bits
-	mov	eax,esp		; Sauve la position de ESP pour le retour
 	o16 push	ds	; Sauve les registres de segments (empile en 16bits)
 	o16 push	es
 	o16 push	fs
 	o16 push	gs
-	mov	ebx,ds		; Prepare DS pour la comparaison
-	cmp	ebx,DS_SELECTOR	; Compare DS au selecteur du noyau
-	jz	kinterrupt	; Si c est le meme, le noyau a ete interrompu
-	mov	esp,kstack_top 	; Positionne la pile noyau
-	mov	dx,DS_SELECTOR	; Ajuste les segments noyau (CS & SS sont deja positionnes)
-	mov	ds,dx
-	mov	dx,ES_SELECTOR
-	mov	es,dx		; note: FS & GS ne sont pas utilises par le noyau
- 	push	hwint_ret	; Empile l'adresse de hwint_ret comme adresse de retour
-	jmp	[eax+32]	; 32 = 8 registres (pusad) => jmp a l'adresse empilee par call
+	jmp	ebp		; Retour a l'adresse depilee
 
-kinterrupt:
-	push	hwint_ret	; Pas d ordonancement si le noyau a ete interrompu
-	jmp	[eax+32]	; Saute au retour
-
+	
+excep_reg:
+hwint_reg:	
+	mov	ax,DS_SELECTOR	; Ajuste les segments noyau (CS & SS sont deja positionnes)
+	mov	ds,ax
+	mov	ax,ES_SELECTOR
+	mov	es,ax		; note: FS & GS ne sont pas utilises par le noyau
+	ret
+	
 	;; 
 	;; Restauration du contexte pour les IRQ et les exceptions
 	;; 
 
-excep_ret:	
-hwint_ret:
+excep_rest:	
+hwint_rest:
+	pop	ebp		; Depile l adresse de retour
 	o16 pop gs		; Restaure les registres
 	o16 pop fs		; sauves par hwint_save
 	o16 pop	es		; en 16bits
 	o16 pop	ds
 	popad
-	add	esp,4		; Ignore l'adresse empilee par le call de hwint_generic
-	iretd			; Retour d'interruption
+	iretd
 
 
 	;;
@@ -309,15 +317,21 @@ excep_err:
 	pop	dword [excep_code]	; Recupere le code d erreur (empile par le proc)	
 excep_err_next:	
 	call	excep_save	; Sauve le contexte
+	call	excep_reg	; Met en place les registres noyau
 	push	dword [excep_code]	; Argument 2 de excep_handle
 	push	dword [excep_num]	; Argument 1 de excep_handle
 	call	excep_handle	; Gestion de l exception en C
 	add	esp,2*4		; Depile les arguments
-	ret			; Retourne a excep_ret !
+	call	excep_rest	; Restaure les registres
+
+
+
 	
-	;;
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	;; Declaration des Donnees
-	;;
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 
 	pmodemsg 	db	'Protected Mode enabled !',13,10,0
 	excep_code	dd	0 ; Code Erreur des exceptions
