@@ -191,7 +191,7 @@ hwint_save:
 	mov	ds,dx
 	mov	dx,ES_SELECTOR
 	mov	es,dx		; note: FS & GS ne sont pas utilises par le noyau
- 	push	hwint_ret	; Empile l'adresse de task_mgmt comme adresse de retour
+ 	push	hwint_ret	; Empile l'adresse de hwint_ret comme adresse de retour
 	jmp	[eax+32]	; 32 = 8 registres (pusad) => jmp a l'adresse empilee par call
 
 kinterrupt:
