@@ -17,11 +17,9 @@
 
 #define NULL_INDEX     0
 #define CS_INDEX       1
-#define DS_INDEX       2
-#define ES_INDEX       3
-#define SS_INDEX       4
-#define TSS_INDEX      5
-#define LDT_INDEX      6            /* Index de la premiere LDT */
+#define XS_INDEX       2            /* DS,ES,FS,SS */
+#define TSS_INDEX      3
+#define LDT_INDEX      4            /* Index de la premiere LDT */
 #define MAX_INDEX      LDT_INDEX    /* Nombre maximum d index d une GDT */
 
 /* Taille de la GDT & IDT */
@@ -33,9 +31,9 @@
 
 #define CS_SELECTOR	8    /*  CS = 0000000000001  0  00   =  8  */
 #define	DS_SELECTOR     16   /*  DS = 0000000000010  0  00   =  16 */
-#define	ES_SELECTOR	24   /*  ES = 0000000000011  0  00   =  24 */
-#define	SS_SELECTOR	32   /*  SS = 0000000000100  0  00   =  32 */
-#define TSS_SELECTOR    40   /* TSS = 0000000000101  0  00   =  40 */
+#define	ES_SELECTOR	16   /*  ES = 0000000000010  0  00   =  16 */
+#define	SS_SELECTOR	16   /*  SS = 0000000000010  0  00   =  16 */
+#define TSS_SELECTOR    24   /* TSS = 0000000000011  0  00   =  24 */
 
 #define SHIFT_SELECTOR  3    /* INDEX << SHIFT_SELECTOR = SELECTOR */
 
@@ -46,16 +44,10 @@
 #define RING2   2
 #define RING3   3
 
-/* RPL pour les selecteurs de segments */
-
-#define RPL_1   1
-#define RPL_2   2
-#define RPL_3   3
-
-
 /* Limite des segments  */
 
-#define KERN_LIMIT        0x0        /* Limite de l'espace Noyau */
+#define KERN_BASE         0x0        /* Adresse de base du noyau */
+#define KERN_LIMIT_4G     0x0        /* Limite de l'espace Noyau (4G) */
 #define KERN_TOP_STACK    0x7C00     /* ESP Noyau au boot */
 
 /* IRQs */

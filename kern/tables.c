@@ -32,10 +32,8 @@ PUBLIC void gdt_init()
 
   /* Initialisation de la GDT */
   
-  init_code_seg(&gdt[CS_INDEX],(u32_t) 0, KERN_LIMIT, 0);
-  init_data_seg(&gdt[DS_INDEX],(u32_t) 0, KERN_LIMIT, 0);
-  init_data_seg(&gdt[ES_INDEX],(u32_t) 0, KERN_LIMIT, 0);
-  init_data_seg(&gdt[SS_INDEX],(u32_t) 0, KERN_LIMIT, 0);
+  init_code_seg(&gdt[CS_INDEX],(u32_t) KERN_BASE, KERN_LIMIT_4G, RING0);
+  init_data_seg(&gdt[XS_INDEX],(u32_t) KERN_BASE, KERN_LIMIT_4G, RING0);
 
   return;
 }
