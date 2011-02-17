@@ -16,7 +16,7 @@ CFLAGS	=	-I../include
 .s.o:
 	$(AS) $<
 
-.c.o: 
+.c.o: $(HEADER)
 	$(CC) $(CFLAGS) $<
 
 # Fichiers source et de sortie

@@ -9,6 +9,7 @@
  *************/
 
 #include <types.h>
+#include <llist.h>
 #include "start.h"
 #include "klib.h"
 #include "i82C54.h"
@@ -28,7 +29,7 @@ PUBLIC void main()
   /* Initialisation Horloge */
   clock_init();
   bochs_print("Clock initialized (100Hz)\n");
- 
+
   /* On ne doit plus arriver ici (sauf DEBUG) */
   while(1)
     {
