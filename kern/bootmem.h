@@ -17,7 +17,7 @@
 #define    BIOS_ROM_START    0x9FC00
 
 #define    PAGE_SIZE         4096
-#define    BOOTMEM_PAGES     (BOOTMEM_END-BOOTMEM_START)/PAGE_SIZE
+#define    BOOTMEM_PAGES     (BOOTMEM_END-BOOTMEM_START)/PAGE_SIZE+1
 
 /*************
  * Prototypes
