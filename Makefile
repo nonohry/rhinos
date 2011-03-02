@@ -2,7 +2,7 @@
 #
 
 MAKE	=	make
-SUBDIRS	=	boot kern servers
+SUBDIRS	=	boot kern 
 DD	=	dd
 RM	=	rm -f
 IMG	=	disk.img
@@ -21,6 +21,7 @@ sub:
 	@for dir in $(SUBDIRS) ; do \
 	cd $$dir; \
 	echo "Entering $$dir"; \
+	$(MAKE) depend; \
 	$(MAKE); \
 	cd ..; \
 	done

@@ -12,7 +12,7 @@
 #include <llist.h>
 #include "start.h"
 #include "klib.h"
-#include "i82C54.h"
+#include "pit.h"
 #include "bootmem.h"
 
 

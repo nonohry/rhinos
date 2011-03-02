@@ -20,7 +20,7 @@ CFLAGS	=	-I../include
 
 ASM_SRC	=	khead.s klib.s
 ASM_OUT	=	${ASM_SRC:.s=.o}
-C_SRC	=	start.c seg.c tables.c i8259.c i82C54.c exceptions.c bootmem.c main.c 
+C_SRC	=	start.c seg.c tables.c pic.c pit.c exceptions.c bootmem.c main.c 
 C_OUT	=	${C_SRC:.c=.o}
 OBJ	=	$(ASM_OUT) $(C_OUT)
 
@@ -42,10 +42,10 @@ clean:
 
 start.o: tables.h ../include/types.h seg.h start.h
 seg.o: ../include/types.h seg.h
-tables.o: ../include/types.h klib.h i8259.h tables.h seg.h
-i8259.o: ../include/types.h klib.h tables.h seg.h i8259.h
-i82C54.o: ../include/types.h klib.h tables.h seg.h i8259.h i82C54.h
+tables.o: ../include/types.h klib.h pic.h tables.h seg.h
+pic.o: ../include/types.h klib.h tables.h seg.h pic.h
+pit.o: ../include/types.h klib.h tables.h seg.h pic.h pit.h
 exceptions.o: ../include/types.h klib.h exceptions.h
 bootmem.o: ../include/types.h klib.h start.h bootmem.h
-main.o: ../include/types.h ../include/llist.h start.h klib.h i82C54.h
-main.o: tables.h seg.h bootmem.h
+main.o: ../include/types.h ../include/llist.h start.h klib.h pit.h tables.h
+main.o: seg.h bootmem.h

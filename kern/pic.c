@@ -11,7 +11,7 @@
 #include <types.h>
 #include "klib.h"
 #include "tables.h"
-#include "i8259.h"
+#include "pic.h"
 
 
 /*******************************

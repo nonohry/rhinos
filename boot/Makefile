@@ -22,6 +22,9 @@ ASM_INC = 	boot.inc boot0.inc boot1.inc
 
 boot:	$(ASM_OUT) $(ASM_INC)
 
+depend:
+	makedepend -- -- $(ASM_SRC)
 clean:
 	$(RM) *~
 	$(RM) $(ASM_OUT)
+# DO NOT DELETE

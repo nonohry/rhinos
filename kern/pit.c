@@ -6,8 +6,8 @@
 #include <types.h>
 #include "klib.h"
 #include "tables.h"
-#include "i8259.h"
-#include "i82C54.h"
+#include "pic.h"
+#include "pit.h"
 
 /************************ 
  * Declarations PRIVATE 
