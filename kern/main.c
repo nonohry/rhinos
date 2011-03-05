@@ -29,7 +29,7 @@ PUBLIC void main()
   /* Initialisation Horloge */
   clock_init();
   bochs_print("Clock initialized (100Hz)\n");
-	
+
   /* On ne doit plus arriver ici (sauf DEBUG) */
   while(1)
     {

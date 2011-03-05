@@ -13,13 +13,13 @@
 PRIVATE u8_t phys_bitmap[BOOTMEM_PAGES/sizeof(u8_t)];
 PRIVATE u32_t phys_bitmap_last_page;
 PRIVATE u32_t phys_bitmap_last_offset;
-
+PRIVATE int phys_region(u32_t size);
 
 /* Macros */
 
-#define SET_PAGE_USED(n)         phys_bitmap[n/sizeof(u8_t)] |= (1 << (n/PAGE_SIZE) % sizeof(u8_t))
-#define SET_PAGE_FREE(n)         phys_bitmap[n/sizeof(u8_t)] &= ~(1 << (n/PAGE_SIZE) % sizeof(u8_t))
-#define GET_PAGE_STATUS(n)       phys_bitmap[n/sizeof(u8_t)] & (1 << (n/PAGE_SIZE) % sizeof(u8_t))
+#define SET_PAGE_USED(n)      phys_bitmap[n/sizeof(u8_t)] |= (1 << (n/PAGE_SIZE) % sizeof(u8_t))
+#define SET_PAGE_FREE(n)      phys_bitmap[n/sizeof(u8_t)] &= ~(1 << (n/PAGE_SIZE) % sizeof(u8_t))
+#define GET_PAGE_STATUS(n)    phys_bitmap[n/sizeof(u8_t)] & (1 << (n/PAGE_SIZE) % sizeof(u8_t))
 
 
 /************** 
@@ -43,64 +43,42 @@ PUBLIC void* bootmem_alloc(u32_t size)
     }
   else
     {
-        u32_t n;
-	u32_t i,j,k;
+      u32_t n,j;
+      int i;
+      
+      /* Nombre de page, a calculer differemment selon les multiples */
+      n = (size%PAGE_SIZE==0?size/PAGE_SIZE:size/PAGE_SIZE+1);
+      
+      /* Recupere la premiere page d une region libre */
+      i = phys_region(n);
 
-	/* Nombre de page, a calculer differemment selon les multiples */
-	n = (size%PAGE_SIZE==0?size/PAGE_SIZE:size/PAGE_SIZE+1);
-
-	for(i=0;i<BOOTMEM_PAGES;i++)
-	  {
-	    
-	    /* Cherche une premiere page libre */
-	    if (~GET_PAGE_STATUS(i))
-	      {
-		/* Regarde si les n pages suivantes necessaires sont libres */
-		k=0;
-		while( ~GET_PAGE_STATUS(i+k)&&(k<n) )
-		  {
-		    k++;
-		  }
-		
-		/* Si on a trouve une suite de n pages libres */
-		if(k>=n)
-		  {
-		    /* Alors on les marque comme allouees */
-		    for(j=i;j<i+n;j++)
-		      {
-			SET_PAGE_USED(j);
-		      }
-
-		    /* Stocke l'adresse de base */
-		    addr = i*PAGE_SIZE;
-		    /* Met à jour les variables globales */
-		    phys_bitmap_last_page = i+n-1;
-		    /* Offset: 0 signifie PAGE_SIZE */
-		    phys_bitmap_last_offset = (size%PAGE_SIZE==0?PAGE_SIZE:size%PAGE_SIZE);
-		    /* Sort de la boucle */
-		    break;
-		  }
-		
-	      }
-	    
-	  }
-
-	if(i>=BOOTMEM_PAGES)
-	  {
-	    /* Si on arrive la, il n y a pas assez de memoire */
-	    bochs_print("Could not allocate %d bytes\n",size);
-	    return (void*)0;
-	  }
-	else
-	  {
-	    /* Renvoie l'adresse de base */
-	    return (void*)addr;
-	  }
-
+      /* Adresse de la region libre */
+      if(i>=0)
+	{
+	  /* Marque la region comme occupee */
+	  for(j=i;j<i+n;j++)
+	    {
+	      SET_PAGE_USED(j);
+	    }
+	  
+	  /* Stocke l'adresse de base */
+	  addr = i*PAGE_SIZE;
+	  /* Met à jour les variables globales */
+	  phys_bitmap_last_page = i+n-1;
+	  /* Offset: 0 signifie PAGE_SIZE */
+	  phys_bitmap_last_offset = (size%PAGE_SIZE==0?PAGE_SIZE:size%PAGE_SIZE);
+	  /* Renvoie l'adresse de base */
+	  return (void*)addr;
+	  
+	}	
+      else
+	{
+	  /* Si on arrive la, il n y a pas assez de memoire */
+	  bochs_print("Could not allocate %d bytes\n",size);
+	  return (void*)0;
+	}
     }
-
 }
-
 
 
 /************** 
@@ -128,6 +106,23 @@ PUBLIC void bootmem_free(void* addr, u32_t size)
   return;
 }
 
+
+/****************************************
+ * Trouve une region libre (brute force)
+ ****************************************/
+
+PRIVATE int phys_region(u32_t size)
+{
+  int i,j=0;
+  
+  for(i=0; (i<BOOTMEM_PAGES-size); i++)
+    {
+      for(j=0;j<size && ~GET_PAGE_STATUS(i+j);j++);
+      if (j>=size) break;
+    }
+
+  return ((j>=size) ?  i : -1);
+}
 
 /*****************
  * Initialisation
