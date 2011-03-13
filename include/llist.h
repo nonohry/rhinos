@@ -12,9 +12,13 @@
 /* Initialisation de la liste */
 #define LLIST_HEAD(e) \
 { \
-  (e)->next = e; \
-  (e)->prev = e; \
+  (e)->next = e;				\
+  (e)->prev = e;				\
 }
+
+/* Tete de liste initialisee */
+#define LLIST_ISHEAD(e) \
+  ( ((e)->next == e) && ((e)->prev == e) )	\
 
 /* Ajout a la liste */
 #define LLIST_ADD(l,e) \
