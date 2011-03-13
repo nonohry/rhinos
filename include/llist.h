@@ -10,13 +10,21 @@
 
 
 /* Initialisation de la liste */
+#define LLIST_INIT(e) \
+  (e) = (void*)0;
+
+/* Initialisee ? */
+#define LLIST_ISINIT(e) \
+  ( (e)==(void*)0 )
+
+/* Tete de la liste */
 #define LLIST_HEAD(e) \
 { \
   (e)->next = e;				\
   (e)->prev = e;				\
 }
 
-/* Tete de liste initialisee */
+/* Tete de liste ? */
 #define LLIST_ISHEAD(e) \
   ( ((e)->next == e) && ((e)->prev == e) )	\
 
