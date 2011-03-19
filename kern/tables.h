@@ -7,6 +7,7 @@
 
 #include <types.h>
 #include "seg.h"
+#include "irq.h"
 
 /**************
  * Constantes
@@ -49,10 +50,6 @@
 #define KERN_BASE         0x0        /* Adresse de base du noyau */
 #define KERN_LIMIT_4G     0x0        /* Limite de l'espace Noyau (4G) */
 #define KERN_TOP_STACK    0x7C00     /* ESP Noyau au boot */
-
-/* IRQs */
-
-#define IRQ_VECTORS     16
 
 
 /* Descripteur de Table (GDT & LDT) */

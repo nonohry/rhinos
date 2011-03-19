@@ -55,7 +55,7 @@ PUBLIC void clock_init()
 PRIVATE u8_t clock_handler()
 {
   
-  // bochs_print("tick ! ");
+  bochs_print("tick ! ");
   
   return TRUE;
 }
