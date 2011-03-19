@@ -29,14 +29,13 @@
 
 /* Liste singleton */
 #define LLIST_ISSINGLE(l)			\
-  ( ((l)->next == l)&&((l)->prev == l)		
+  ( ((l)->next == l)&&((l)->prev == l) )		
 
 
 /* Comparaison a la tete */
 #define LLIST_ISHEAD(l,e)			\
-  {						\
-    ( (e)==(l) );				\
-  }
+  ( (e)==(l) )
+
 
 
 /* Ajout a la liste */
@@ -54,9 +53,9 @@
   {						\
     ((e)->prev)->next = (e)->next;		\
     ((e)->next)->prev = (e)->prev;		\
-    if LLIST_ISHEAD(l,e)			\
+    if (LLIST_ISHEAD(l,e))			\
     {						\
-      if LLIST_ISSINGLE(l)			\
+      if (LLIST_ISSINGLE(l))			\
 	{					\
 	  LLIST_NULLIFY(l);			\
 	}					\

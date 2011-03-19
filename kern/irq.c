@@ -77,6 +77,49 @@ PUBLIC void irq_boot_add_flih(u8_t irq, irq_flih_t func)
 	{
 	  LLIST_ADD(irq_flih[irq],node);
 	}     
+      
+      irq_enable(irq);
+    }
+
+  return;
+}
+
+
+/***********************************************
+ * Retrait d un handler - fonction pour le boot
+ ***********************************************/
+
+PUBLIC void irq_boot_remove_flih(u8_t irq, irq_flih_t func)
+{
+  if (irq < IRQ_VECTORS)
+    {
+      
+      if (!LLIST_ISNULL(irq_flih[irq]))
+	{
+	  /* Noeud de parcours */
+	  struct irq_node* node;
+	  node=irq_flih[irq];
+
+	  do
+	    {
+	      /* Cherche le flih correspondant */
+	      if (node->flih == func)
+		{
+		  /* Enleve l element de la liste */
+		  LLIST_REMOVE(irq_flih[irq],node);
+		  
+		  /* Libere la zone memoire */
+		  bootmem_free(node,sizeof(struct irq_node));
+		  
+		  /* Retourne */
+		  return;  
+		}
+
+	      /* Suite du parcours */
+	      node=LLIST_NEXT(irq_flih[irq],node);
+
+	    }while(!LLIST_ISHEAD(irq_flih[irq],node));
+	}
     }
 
   return;
