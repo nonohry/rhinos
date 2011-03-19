@@ -26,15 +26,18 @@
     (e)->prev = e;				\
   }
 
+
 /* Liste singleton */
 #define LLIST_ISSINGLE(l)			\
   ( ((l)->next == l)&&((l)->prev == l)		
+
 
 /* Comparaison a la tete */
 #define LLIST_ISHEAD(l,e)			\
   {						\
     ( (e)==(l) );				\
   }
+
 
 /* Ajout a la liste */
 #define LLIST_ADD(l,e)				\
@@ -44,6 +47,7 @@
     ((l)->next)->prev = (e);			\
     (l)->next = (e);				\
 }
+
 
 /* Suppression */
 #define LLIST_REMOVE(l,e)			\
@@ -67,6 +71,7 @@
 /* Next */
 #define LLIST_NEXT(l,e)				\
   (e)->next;
+
 
 /* Previous */
 #define LLIST_PREV(l,e)				\

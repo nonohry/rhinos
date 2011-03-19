@@ -46,7 +46,7 @@ PUBLIC void idt_init()
 {
 
   /* Initialisation du PIC i8259 */
-  i8259_init();
+  pic_init();
   bochs_print("PIC i8259 initialized\n");
 
   bochs_print("Creating the IDT...\n");

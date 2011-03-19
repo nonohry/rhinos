@@ -31,9 +31,9 @@
  * Prototypes
  ***************/
 
-PUBLIC void i8259_init();
-PUBLIC void irq_enable(u8_t n);
-PUBLIC void irq_disable(u8_t n);
+PUBLIC void pic_init();
+PUBLIC void pic_enable_irq(u8_t n);
+PUBLIC void pic_disable_irq(u8_t n);
 PUBLIC void irq_handle(u8_t n);
 PUBLIC void irq_add_handler(u8_t n, irq_handler_t handler,struct irq_chaine* chaine);
 PUBLIC void irq_rm_handler(struct irq_chaine* chaine);

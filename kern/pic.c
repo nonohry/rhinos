@@ -18,7 +18,7 @@
  * Initialisation du PIC i8259
  *******************************/
 
-PUBLIC void i8259_init()
+PUBLIC void pic_init()
 {
 
   /* Envoie ICW1 sue les ports maitre et esclave */
@@ -53,7 +53,7 @@ PUBLIC void i8259_init()
  * Activation d'une ligne IRQ
  *******************************/
 
-PUBLIC void irq_enable(u8_t n)
+PUBLIC void pic_enable_irq(u8_t n)
 {
   /* IRQ : 0 -> 15 */
   if (n < IRQ_VECTORS)
@@ -77,7 +77,7 @@ PUBLIC void irq_enable(u8_t n)
  * Desactivation d'une ligne IRQ
  *********************************/
 
-PUBLIC void irq_disable(u8_t n)
+PUBLIC void pic_disable_irq(u8_t n)
 {
   /* IRQ : 0 -> 15 */
   if (n < IRQ_VECTORS)
@@ -171,7 +171,7 @@ PUBLIC void irq_add_handler(u8_t n, irq_handler_t handler, struct irq_chaine* ch
       *p = chaine;
   
       /* Active l'IRQ au niveau des PICs */
-      irq_enable(n);
+      pic_enable_irq(n);
 
     }
  
