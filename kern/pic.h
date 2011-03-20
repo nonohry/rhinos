@@ -13,17 +13,17 @@
 
 /* Ports des PICs */
 
-#define IRQ_MASTER_PORT     0x20
-#define IRQ_SLAVE_PORT      0xA0
+#define PIC_MASTER_PORT     0x20
+#define PIC_SLAVE_PORT      0xA0
 
 /* ICWs */
 
-#define IRQ_ICW1            0x11
-#define IRQ_ICW2_MASTER     0x20
-#define IRQ_ICW2_SLAVE      0x28
-#define IRQ_ICW3_MASTER     0x04
-#define IRQ_ICW3_SLAVE      0x02
-#define IRQ_ICW4            0x01
+#define PIC_ICW1            0x11
+#define PIC_ICW2_MASTER     0x20
+#define PIC_ICW2_SLAVE      0x28
+#define PIC_ICW3_MASTER     0x04
+#define PIC_ICW3_SLAVE      0x02
+#define PIC_ICW4            0x01
 
 /* Vecteurs */
 
