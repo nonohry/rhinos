@@ -45,6 +45,7 @@ PUBLIC void irq_enable(u8_t irq);
 PUBLIC void irq_disable(u8_t irq);
 PUBLIC void irq_boot_add_flih(u8_t irq, irq_flih_t func);
 PUBLIC void irq_boot_remove_flih(u8_t irq, irq_flih_t func);
+PUBLIC void irq_handle_flih(u8_t irq);
 
 #endif
 

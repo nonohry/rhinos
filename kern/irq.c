@@ -5,6 +5,7 @@
 
 #include <types.h>
 #include <llist.h>
+#include "klib.h"
 #include "bootmem.h"
 #include "pic.h"
 #include "irq.h"
@@ -65,6 +66,11 @@ PUBLIC void irq_boot_add_flih(u8_t irq, irq_flih_t func)
       
       /* Creation et allocation de l irq_node */
       node = (struct irq_node*)bootmem_alloc(sizeof(struct irq_node));
+      if (node == NULL)
+	{
+	  bochs_print("Cannot allocate irq_node\n");
+	  return;
+	}
       node->flih = func;
 
       /* Ajout du noeud au tableau des flih */
@@ -119,6 +125,37 @@ PUBLIC void irq_boot_remove_flih(u8_t irq, irq_flih_t func)
 	      node=LLIST_NEXT(irq_flih[irq],node);
 
 	    }while(!LLIST_ISHEAD(irq_flih[irq],node));
+	}
+    }
+
+  return;
+}
+
+
+
+/*********************
+ * Execution des flih
+ *********************/
+
+PUBLIC void irq_handle_flih(u8_t irq)
+{
+  if (irq < IRQ_VECTORS)
+    {
+      if (!LLIST_ISNULL(irq_flih[irq]))
+	{
+	  /* Noeud de parcours */
+	   struct irq_node* node;
+
+	   node = irq_flih[irq];
+	   do
+	     {
+	       /* Execute le flih */
+	       node->flih();
+	       /* Suite du parcours */
+	       node = LLIST_NEXT(irq_flih[irq],node);
+
+	     }while(!LLIST_ISHEAD(irq_flih[irq],node));
+
 	}
     }
 

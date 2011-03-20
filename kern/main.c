@@ -14,7 +14,7 @@
 #include "klib.h"
 #include "pit.h"
 #include "bootmem.h"
-
+#include "irq.h"
 
 /***********************
  * Fonction principale 

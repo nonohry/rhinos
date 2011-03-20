@@ -45,8 +45,8 @@ seg.o: ../include/types.h seg.h
 tables.o: ../include/types.h klib.h pic.h tables.h seg.h irq.h
 pic.o: ../include/types.h klib.h tables.h seg.h irq.h pic.h
 pit.o: ../include/types.h klib.h tables.h seg.h irq.h pic.h pit.h
-irq.o: ../include/types.h ../include/llist.h bootmem.h pic.h tables.h seg.h
-irq.o: irq.h
+irq.o: ../include/types.h ../include/llist.h klib.h bootmem.h pic.h tables.h
+irq.o: seg.h irq.h
 exceptions.o: ../include/types.h klib.h exceptions.h
 bootmem.o: ../include/types.h klib.h start.h bootmem.h
 main.o: ../include/types.h ../include/llist.h start.h klib.h pit.h tables.h
