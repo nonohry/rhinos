@@ -6,14 +6,14 @@
 #include <types.h>
 #include "klib.h"
 #include "tables.h"
-#include "pic.h"
+#include "irq.h"
 #include "pit.h"
 
 /************************ 
  * Declarations PRIVATE 
  ************************/
 
-PRIVATE u8_t clock_handler();
+PRIVATE void clock_handler();
 
 /*******************************************
  * Initialise l'horloge avec une frequence
@@ -43,7 +43,7 @@ PUBLIC void clock_init()
       outb(CLOCK_COUNTER0,(u8_t)(ticks>>8));   /* MSB ensuite */
     }
 
-  irq_add_handler(0,&clock_handler,&clock_chaine);
+  irq_boot_add_flih(0,clock_handler);
 
   return;
 }
@@ -52,12 +52,12 @@ PUBLIC void clock_init()
  * Handler 
  *************/
 
-PRIVATE u8_t clock_handler()
+PRIVATE void clock_handler()
 {
   
-  //bochs_print("tick ! ");
+  bochs_print("tick ! ");
   
-  return TRUE;
+  return;
 }
 
 /*****************

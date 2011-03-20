@@ -10,7 +10,6 @@
 
 #include <types.h>
 #include "klib.h"
-#include "tables.h"
 #include "pic.h"
 
 
@@ -56,7 +55,7 @@ PUBLIC void pic_init()
 PUBLIC void pic_enable_irq(u8_t n)
 {
   /* IRQ : 0 -> 15 */
-  if (n < IRQ_VECTORS)
+  if (n < PIC_VECTORS)
     {
       u8_t read;
       u16_t port;
@@ -80,7 +79,7 @@ PUBLIC void pic_enable_irq(u8_t n)
 PUBLIC void pic_disable_irq(u8_t n)
 {
   /* IRQ : 0 -> 15 */
-  if (n < IRQ_VECTORS)
+  if (n < PIC_VECTORS)
     {
       u8_t read;
       u16_t port;
@@ -92,137 +91,6 @@ PUBLIC void pic_disable_irq(u8_t n)
       inb(port,&read);
       read |= (1<<n);
       outb(port,read);
-    }
-
-  return;
-}
-
-/*******************************
- * Execution des ISR d'une IRQ
- *******************************/
-
-PUBLIC void irq_handle(u8_t n)
-{
-  if (n < IRQ_VECTORS)
-    {
-      /* Debut de la chaine de handlers */
-      struct irq_chaine* p;
-
-      p = irq_handlers[n];
-      
-      /* Execution des handlers */
-      while (p != NULL)
-	{
-	  /* Indique que l ISR est active */
-	  irq_active[n] |= p->id;
-
-	  /* ISR fini ? */
-	  if (p->handler())
-	  {
-	    /* Indique que l ISR est inactive */
-	    irq_active[n] &= ~p->id;
-	  }
-
-	  /* Suit la liste chainee */
-	  p=p->next;
-	}
-
-    }
-
-  return;
-}
-
-/********************************
- * Ajout d'une ISR pour une IRQ
- ********************************/
-
-PUBLIC void irq_add_handler(u8_t n, irq_handler_t handler, struct irq_chaine* chaine)
-{
-
-  if (n < IRQ_VECTORS)
-    {
-      u32_t id;  /* ID de la nouvelle ISR */
-      struct irq_chaine** p;  /* Pointeur pour lier la nouvelle chaine */
-
-      p = &irq_handlers[n];
-      chaine->next = NULL;
-      chaine->handler = handler;
-      chaine->irq = n;
-   
-      /* Determine l id */
-      id=1;
-      while ( *p != NULL )
-	{
-	  id = id << 1;
-	  p = &(*p)->next;
-	}
-
-      /* Si id=0, on a trop shifte => plus de 32 ISR */
-      if (id == 0)
-	{
-	  bochs_print("Too much handlers for IRQ\n");
-	  return ;
-	}
-
-      /* Desormais on peut affecter l'id */
-      chaine->id = id;
-
-      /* On lie la nouvelle chaine */
-      *p = chaine;
-  
-      /* Active l'IRQ au niveau des PICs */
-      pic_enable_irq(n);
-
-    }
- 
-  return;
-}
-
-/********************************
- * Retrait d'une ISR pour une IRQ
- ********************************/
-
-PUBLIC void irq_rm_handler(struct irq_chaine* chaine)
-{
-  u8_t irq;  /* IRQ */
-
-  irq = chaine->irq;
-
-  if (irq < IRQ_VECTORS)
-    {
-      u32_t id;  /* ID de la chaine */
-      struct irq_chaine** p;  /* Pointeur pour le parcours de la chaine */
-
-      id = chaine->id;
-      p = &irq_handlers[irq];
-
-      /* Cherche la chaine voulue */
-      while ( *p != NULL )
-	{
-	  /* Si l id correspond */
-	  if ((*p)->id == id)
-	    {
-	      *p = (*p)->next;  /* place l element suivant a sa place */
-	      break; 
-	    }
-
-	  /* Poursuit la recherche */
-	  p = &(*p)->next;
-	}
-      
-      /* Mise a jour du champ id */
-      p = &irq_handlers[irq];
-      id=1;
-      while ( *p != NULL )
-	{
-	  (*p)->id = id;   /* Reaffecte le champs id */
-	  id = id << 1;    /* Shift */
-
-	  /* Poursuit le parcours */
-	  p = &(*p)->next;
-	}
-      
-
     }
 
   return;

@@ -12,9 +12,9 @@
 #include <llist.h>
 #include "start.h"
 #include "klib.h"
-#include "pit.h"
 #include "bootmem.h"
 #include "irq.h"
+#include "pit.h"
 
 /***********************
  * Fonction principale 
@@ -25,6 +25,9 @@ PUBLIC void main()
   /* Initialisation de la memoire physique */
   bootmem_init();
   bochs_print("Boot Memory Manager initialized\n");
+
+  /* Initialisation du gestionnaire des IRQ */
+  irq_init();
 
   /* Initialisation Horloge */
   clock_init();

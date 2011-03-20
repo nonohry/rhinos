@@ -6,7 +6,6 @@
  *************/
 
 #include <types.h>
-#include "tables.h"
 
 /***************
  * Constantes
@@ -26,6 +25,9 @@
 #define IRQ_ICW3_SLAVE      0x02
 #define IRQ_ICW4            0x01
 
+/* Vecteurs */
+
+#define PIC_VECTORS         16
 
 /***************
  * Prototypes
@@ -34,7 +36,5 @@
 PUBLIC void pic_init();
 PUBLIC void pic_enable_irq(u8_t n);
 PUBLIC void pic_disable_irq(u8_t n);
-PUBLIC void irq_handle(u8_t n);
-PUBLIC void irq_add_handler(u8_t n, irq_handler_t handler,struct irq_chaine* chaine);
-PUBLIC void irq_rm_handler(struct irq_chaine* chaine);
+
 #endif

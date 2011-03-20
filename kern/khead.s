@@ -9,8 +9,7 @@ extern	bochs_print
 extern	cstart			; Fonction d'initialisation en C
 extern  gdt_desc		; Descripteur de la GDT en C
 extern  idt_desc		; Descripteur de l'IDT en C
-extern	irq_handle		; Handlers pour les IRQ en C
-extern	irq_active		; Tableau des ISR actives en C
+extern	irq_handle_flih		; Handlers pour les IRQ en C
 extern	excep_handle		; Handlers pour les exceptions en C
 extern  main			; RhinOS Main en C
 extern	kernel_start		; Debut du Noyau (issu de l edition des liens)	
@@ -91,16 +90,8 @@ next:
    	call	hwint_save	; Sauvegarde des registres
 	call	hwint_reg	; Mise en place des registres noyau
 	push	%1		; Empile l'IRQ
-   	call	irq_handle	; Appel les handles C
+   	call	irq_handle_flih	; Appel les handles C
 	add	esp,4		; Depile l'IRQ
-	cmp	dword [irq_active+4*%1],0 ; Verifie qu'aucune ISR n est active
-	je	%%noactive0	; Saute a l EOI si pas d ISR active
-	in	al,IRQ_MASTER+1	; Lit OCW1
-	mov	bl,1		; Prepare le masque
-	shl	bl,%1		; %1 ieme bit mis a 1
-	or	al,bl		; L'IRQ %1 est masquee
-	out	IRQ_MASTER+1,al	; Envoie OCW1
-%%noactive0:
 	mov	al,IRQ_EOI	; Envoi la fin d interruption
 	out	IRQ_MASTER,al	; au PIC Maitre	
 	call	hwint_rest	; Restaure les registres
@@ -114,16 +105,8 @@ next:
 	call	hwint_save	; Sauvegarde des registres
 	call	hwint_reg	; Mise en place des registres noyau
 	push	%1		; Empile l'IRQ 
-	call	irq_handle	; Appel les handles C
+	call	irq_handle_flih	; Appel les handles C
 	add	esp,4		; Depile l'IRQ
-	cmp	dword [irq_active+4*%1],0 ; Verifie qu'aucune ISR n est active
-	je	%%noactive1	; Saute a l EOI si pas d ISR active
-	in	al,IRQ_SLAVE+1	; Lit OCW1
-	mov	bl,1		; Prepare le masque
-	shl	bl,%1		; %1 ieme bit mis a 1
-	or	al,bl		; L'IRQ %1 est masquee
-	out	IRQ_SLAVE+1,al	; Envoie OCW1
-%%noactive1:
 	mov	al,IRQ_EOI	; Envoi la fin d interruption
 	out	IRQ_SLAVE,al	; au PIC Esclave
 	out	IRQ_MASTER,al	; puis au Maitre
