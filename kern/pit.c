@@ -48,9 +48,10 @@ PUBLIC void clock_init()
   return;
 }
 
-/*************
- * Handler 
- *************/
+
+/*****************
+ * Handler (flih) 
+ *****************/
 
 PRIVATE void clock_handler()
 {

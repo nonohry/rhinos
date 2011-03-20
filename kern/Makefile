@@ -49,4 +49,4 @@ irq.o: ../include/types.h ../include/llist.h klib.h bootmem.h pic.h irq.h
 exceptions.o: ../include/types.h klib.h exceptions.h
 bootmem.o: ../include/types.h klib.h start.h bootmem.h
 main.o: ../include/types.h ../include/llist.h start.h klib.h bootmem.h irq.h
-main.o: pit.h tables.h seg.h
+main.o: pit.h

@@ -1,8 +1,7 @@
-#ifndef I82C54_H
-#define I82C54_H
+#ifndef PIT_H
+#define PIT_H
 
 #include <types.h>
-#include "tables.h"
 
 /* Constantes */
 
@@ -25,9 +24,6 @@
 
 #define CLOCK_LATCH        0x00   /* 00000000b Counter Latch pour le compteur 0 */
 
-/* chaine pour l ISR */
-
-PUBLIC struct irq_chaine clock_chaine;
 
 /* Prototypes */
 
