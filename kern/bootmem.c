@@ -17,24 +17,24 @@ PRIVATE int phys_region(u32_t size);
 
 /* Macros */
 
-#define SET_PAGE_USED(n)      phys_bitmap[n/sizeof(u8_t)] |= (1 << (n/PAGE_SIZE) % sizeof(u8_t))
-#define SET_PAGE_FREE(n)      phys_bitmap[n/sizeof(u8_t)] &= ~(1 << (n/PAGE_SIZE) % sizeof(u8_t))
-#define GET_PAGE_STATUS(n)    phys_bitmap[n/sizeof(u8_t)] & (1 << (n/PAGE_SIZE) % sizeof(u8_t))
+#define SET_PAGE_USED(n)      phys_bitmap[n/sizeof(u8_t)] |= (1 << (n/BOOT_PAGE_SIZE) % sizeof(u8_t))
+#define SET_PAGE_FREE(n)      phys_bitmap[n/sizeof(u8_t)] &= ~(1 << (n/BOOT_PAGE_SIZE) % sizeof(u8_t))
+#define GET_PAGE_STATUS(n)    phys_bitmap[n/sizeof(u8_t)] & (1 << (n/BOOT_PAGE_SIZE) % sizeof(u8_t))
 
 
 /************** 
  * Allocation 
  **************/
 
-PUBLIC void* bootmem_alloc(u32_t size)
+PUBLIC void* boot_alloc(u32_t size)
 {
   u32_t addr;
   
   /* Regarde si la taille nécessite plusieurs pages */
-  if ( (PAGE_SIZE - phys_bitmap_last_offset) >= size )
+  if ( (BOOT_PAGE_SIZE - phys_bitmap_last_offset) >= size )
     {
       /* On se contente de mettre à jour les variables globales */
-      addr = (phys_bitmap_last_page*PAGE_SIZE) + phys_bitmap_last_offset;
+      addr = (phys_bitmap_last_page*BOOT_PAGE_SIZE) + phys_bitmap_last_offset;
       phys_bitmap_last_offset += size;
       /* Marque la page comme allouée (cas de la premiere allocation) */
       SET_PAGE_USED(phys_bitmap_last_page);
@@ -47,7 +47,7 @@ PUBLIC void* bootmem_alloc(u32_t size)
       int i;
       
       /* Nombre de page, a calculer differemment selon les multiples */
-      n = (size%PAGE_SIZE==0?size/PAGE_SIZE:size/PAGE_SIZE+1);
+      n = (size%BOOT_PAGE_SIZE==0?size/BOOT_PAGE_SIZE:size/BOOT_PAGE_SIZE+1);
       
       /* Recupere la premiere page d une region libre */
       i = phys_region(n);
@@ -62,11 +62,11 @@ PUBLIC void* bootmem_alloc(u32_t size)
 	    }
 	  
 	  /* Stocke l'adresse de base */
-	  addr = i*PAGE_SIZE;
+	  addr = i*BOOT_PAGE_SIZE;
 	  /* Met à jour les variables globales */
 	  phys_bitmap_last_page = i+n-1;
-	  /* Offset: 0 signifie PAGE_SIZE */
-	  phys_bitmap_last_offset = (size%PAGE_SIZE==0?PAGE_SIZE:size%PAGE_SIZE);
+	  /* Offset: 0 signifie BOOT_PAGE_SIZE */
+	  phys_bitmap_last_offset = (size%BOOT_PAGE_SIZE==0?BOOT_PAGE_SIZE:size%BOOT_PAGE_SIZE);
 	  /* Renvoie l'adresse de base */
 	  return (void*)addr;
 	  
@@ -85,14 +85,14 @@ PUBLIC void* bootmem_alloc(u32_t size)
  * Liberation 
  **************/
 
-PUBLIC void bootmem_free(void* addr, u32_t size)
+PUBLIC void boot_free(void* addr, u32_t size)
 {
   u32_t pfn_start, pfn_end;
   u32_t i;
 
   /* Calcule les alignements des pages */
-  pfn_start = ((u32_t)addr + PAGE_SIZE - 1)/PAGE_SIZE;
-  pfn_end = ((u32_t)addr + size)/PAGE_SIZE;
+  pfn_start = ((u32_t)addr + BOOT_PAGE_SIZE - 1)/BOOT_PAGE_SIZE;
+  pfn_end = ((u32_t)addr + size)/BOOT_PAGE_SIZE;
 
   /* Libere uniquement les pages entieres */
   if (pfn_start < pfn_end)
@@ -133,17 +133,17 @@ PUBLIC void bootmem_init()
   u32_t i;
 
   /* Marque les adresses basses comme allouees */
-  for(i=0; i<bootinfo->kern_end/PAGE_SIZE+1; i++)
+  for(i=0; i<bootinfo->kern_end/BOOT_PAGE_SIZE+1; i++)
     {
       SET_PAGE_USED(i);
     }
   
   /* Ajuste les variables globales */
   phys_bitmap_last_page = i;
-  phys_bitmap_last_offset = PAGE_SIZE;
+  phys_bitmap_last_offset = BOOT_PAGE_SIZE;
 
   /* Marque les adresses hautes comme allouees */
-  for(i=BIOS_ROM_START/PAGE_SIZE; i<BOOTMEM_END/PAGE_SIZE+1; i++)
+  for(i=BIOS_ROM_START/BOOT_PAGE_SIZE; i<BOOTMEM_END/BOOT_PAGE_SIZE+1; i++)
     {
       SET_PAGE_USED(i);
     }

@@ -65,7 +65,7 @@ PUBLIC void irq_boot_add_flih(u8_t irq, irq_flih_t func)
       struct irq_node* node;
       
       /* Creation et allocation de l irq_node */
-      node = (struct irq_node*)bootmem_alloc(sizeof(struct irq_node));
+      node = (struct irq_node*)boot_alloc(sizeof(struct irq_node));
       if (node == NULL)
 	{
 	  bochs_print("Cannot allocate irq_node\n");
@@ -115,7 +115,7 @@ PUBLIC void irq_boot_remove_flih(u8_t irq, irq_flih_t func)
 		  LLIST_REMOVE(irq_flih[irq],node);
 		  
 		  /* Libere la zone memoire */
-		  bootmem_free(node,sizeof(struct irq_node));
+		  boot_free(node,sizeof(struct irq_node));
 		  
 		  /* Retourne */
 		  return;  
