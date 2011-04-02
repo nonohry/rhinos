@@ -1,6 +1,7 @@
 /*  
- * Gestion de la memoire physique 
- * 
+ * Gestion de la memoire physique au boot
+ * (pour initialiser le vrai gestionnaire par exemple)
+ *
  */
 
 #include <types.h>

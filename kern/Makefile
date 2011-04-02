@@ -20,7 +20,7 @@ CFLAGS	=	-I../include
 
 ASM_SRC	=	khead.s klib.s
 ASM_OUT	=	${ASM_SRC:.s=.o}
-C_SRC	=	start.c seg.c tables.c pic.c pit.c irq.c exceptions.c bootmem.c main.c 
+C_SRC	=	start.c seg.c tables.c pic.c pit.c irq.c exceptions.c bootmem.c physmem.c main.c 
 C_OUT	=	${C_SRC:.c=.o}
 OBJ	=	$(ASM_OUT) $(C_OUT)
 
@@ -48,5 +48,6 @@ pit.o: ../include/types.h klib.h tables.h seg.h irq.h pit.h
 irq.o: ../include/types.h ../include/llist.h klib.h bootmem.h pic.h irq.h
 exceptions.o: ../include/types.h klib.h exceptions.h
 bootmem.o: ../include/types.h klib.h start.h bootmem.h
-main.o: ../include/types.h ../include/llist.h start.h klib.h bootmem.h irq.h
-main.o: pit.h
+physmem.o: ../include/types.h ../include/llist.h klib.h bootmem.h physmem.h
+main.o: ../include/types.h ../include/llist.h start.h klib.h bootmem.h
+main.o: physmem.h irq.h pit.h

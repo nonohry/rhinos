@@ -13,8 +13,10 @@
 #include "start.h"
 #include "klib.h"
 #include "bootmem.h"
+#include "physmem.h"
 #include "irq.h"
 #include "pit.h"
+
 
 /***********************
  * Fonction principale 
@@ -25,6 +27,9 @@ PUBLIC void main()
   /* Initialisation de la memoire physique */
   bootmem_init();
   bochs_print("Boot Memory Manager initialized\n");
+  physmem_init();
+  bochs_print("Physical Memory Manager initialized\n");
+
 
   /* Initialisation du gestionnaire des IRQ */
   irq_init();
