@@ -14,6 +14,7 @@
  ************************/
 
 PRIVATE void clock_handler();
+PRIVATE struct irq_node pit_irq_node;
 
 /*******************************************
  * Initialise l'horloge avec une frequence
@@ -42,8 +43,10 @@ PUBLIC void clock_init()
       outb(CLOCK_COUNTER0,(u8_t)ticks);        /* LSB d abord */
       outb(CLOCK_COUNTER0,(u8_t)(ticks>>8));   /* MSB ensuite */
     }
-
-  irq_boot_add_flih(0,clock_handler);
+  
+  /* Cree le noeud irq */
+  pit_irq_node.flih = clock_handler;
+  irq_add_flih(0,&pit_irq_node);
 
   return;
 }

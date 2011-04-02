@@ -19,12 +19,16 @@
   ( (e)==(void*)0 )
 
 
-/* Tete de la liste */
-#define LLIST_HEAD(e)				\
+/* Tete de la liste (set) */
+#define LLIST_SETHEAD(e)				\
   {						\
     (e)->next = e;				\
     (e)->prev = e;				\
   }
+
+/* Tete de la liste (get) */
+#define LLIST_GETHEAD(l)				\
+  ( l )
 
 
 /* Liste singleton */
@@ -41,10 +45,18 @@
 /* Ajout a la liste */
 #define LLIST_ADD(l,e)				\
   {						\
-    (e)->next = (l)->next;			\
-    (e)->prev = (l);				\
-    ((l)->next)->prev = (e);			\
-    (l)->next = (e);				\
+    if (LLIST_ISNULL(l))			\
+      {						\
+	l=e;					\
+	LLIST_SETHEAD(l)				\
+      }						\
+    else					\
+      {						\
+	(e)->next = (l)->next;			\
+	(e)->prev = (l);			\
+	((l)->next)->prev = (e);		\
+	(l)->next = (e);			\
+      }						\
 }
 
 

@@ -58,31 +58,12 @@ PUBLIC void irq_disable(u8_t irq)
  * Ajout d un handler - fonction pour le boot
  *********************************************/
 
-PUBLIC void irq_boot_add_flih(u8_t irq, irq_flih_t func)
+PUBLIC void irq_add_flih(u8_t irq, struct irq_node* node)
 {
   if (irq < IRQ_VECTORS)
     {
-      struct irq_node* node;
-      
-      /* Creation et allocation de l irq_node */
-      node = (struct irq_node*)boot_alloc(sizeof(struct irq_node));
-      if (node == NULL)
-	{
-	  bochs_print("Cannot allocate irq_node\n");
-	  return;
-	}
-      node->flih = func;
-
       /* Ajout du noeud au tableau des flih */
-      if (LLIST_ISNULL(irq_flih[irq]))
-	{
-	  irq_flih[irq]=node;
-	  LLIST_HEAD(irq_flih[irq]);
-	}
-      else
-	{
-	  LLIST_ADD(irq_flih[irq],node);
-	}     
+      LLIST_ADD(irq_flih[irq],node);
       
       irq_enable(irq);
     }
@@ -95,39 +76,20 @@ PUBLIC void irq_boot_add_flih(u8_t irq, irq_flih_t func)
  * Retrait d un handler - fonction pour le boot
  ***********************************************/
 
-PUBLIC void irq_boot_remove_flih(u8_t irq, irq_flih_t func)
+PUBLIC void irq_remove_flih(u8_t irq, struct irq_node* node)
 {
   if (irq < IRQ_VECTORS)
     {
       
       if (!LLIST_ISNULL(irq_flih[irq]))
 	{
-	  /* Noeud de parcours */
-	  struct irq_node* node;
-	  node=irq_flih[irq];
-
-	  do
-	    {
-	      /* Cherche le flih correspondant */
-	      if (node->flih == func)
-		{
-		  /* Enleve l element de la liste */
-		  LLIST_REMOVE(irq_flih[irq],node);
-		  
-		  /* Libere la zone memoire */
-		  boot_free(node,sizeof(struct irq_node));
-		  
-		  /* Retourne */
-		  return;  
-		}
-
-	      /* Suite du parcours */
-	      node=LLIST_NEXT(irq_flih[irq],node);
-
-	    }while(!LLIST_ISHEAD(irq_flih[irq],node));
+	  /* Enleve l element de la liste */
+	  LLIST_REMOVE(irq_flih[irq],node);
+	  
+	  /* Retourne */
+	  return;  
 	}
     }
-
   return;
 }
 
