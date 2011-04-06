@@ -16,7 +16,8 @@
  ***********************/
 
 PRIVATE u8_t phys_powerof2(u32_t n);
-
+PRIVATE struct ppage_node* ppage_free[PPAGE_MAX_BUDDY];
+PRIVATE struct ppage_node* ppage_allocated;
 
 /*****************
  * Initialisation
@@ -65,6 +66,7 @@ PRIVATE u8_t phys_powerof2(u32_t n)
 }
 
 
+
 /***************
  * Allocation 
  ***************/
@@ -75,9 +77,12 @@ PUBLIC void* phys_alloc(u32_t size)
   u32_t i,j,k,ind;
   struct ppage_node* node;
   
+  /* Determine msb plafonne a PAGE_SHIFT */
   k = phys_powerof2(size);
+  /* En deduit l indice dans ppage_free */
   ind = k - PPAGE_SHIFT;
   
+  /* Si ppage_free[ind] est NULL, on cherche un niveau superieur disponible */
   for(i=ind;LLIST_ISNULL(ppage_free[i])&&(i<PPAGE_MAX_BUDDY);i++)
     {}
 
@@ -87,6 +92,7 @@ PUBLIC void* phys_alloc(u32_t size)
       return NULL;
     }
   
+  /* Scinde "recursivement" les niveaux superieurs */
   for(j=i;j>ind;j--)
     {
       struct ppage_node *n1;
@@ -98,21 +104,90 @@ PUBLIC void* phys_alloc(u32_t size)
 
       n1->start = node->start;
       n1->size = node->size/2;
-      n1->index = node->index/2;
+      n1->index = node->index-1;
 
       node->start = node->start + node->size/2;
       node->size = node->size/2;
-      node->index = node->index/2;
+      node->index = node->index-1;
 
       LLIST_ADD(ppage_free[j-1],n1);
       LLIST_ADD(ppage_free[j-1],node);
 
     }
 
+  /* Maintenant nous avons un noeud disponible au niveau voulu */
   node = LLIST_GETHEAD(ppage_free[ind]);
+  /* Met a jour les listes */
   LLIST_REMOVE(ppage_free[ind],node);
   LLIST_ADD(ppage_allocated,node);
   
   return (void*)node->start;
 }
 
+
+
+/***************
+ * Liberation
+ ***************/
+
+PUBLIC void phys_free(void* addr)
+{
+  struct ppage_node* node;
+
+  /* Recherche du node dans ppage_allocated */
+  node = LLIST_GETHEAD(ppage_allocated);
+
+  while(node->start != (u32_t)addr)
+    {
+      node = LLIST_NEXT(ppage_allocated, node);
+      if(LLIST_ISHEAD(ppage_allocated, node))
+	{
+	  /* Adresse non trouvee */
+	  return;
+	}
+    }
+
+  /* Adresse trouvee ici, on supprime le noeud de la liste allouee */
+  LLIST_REMOVE(ppage_allocated,node);
+
+  /* Insere "recursivement le noeud */
+  while((node->index < PPAGE_MAX_BUDDY)&&(!LLIST_ISNULL(ppage_free[node->index])))
+    {
+      struct ppage_node* buddy;
+      
+      /* Recherche d un budy */
+      buddy = LLIST_GETHEAD(ppage_free[node->index]);
+
+      while ( (node->start+node->size != buddy->start)
+	      && (buddy->start+buddy->size != node->start))
+	{
+	  buddy = LLIST_NEXT(ppage_free[node->index],buddy);
+	  if (LLIST_ISHEAD(ppage_free[node->index],buddy))
+	    {
+	      /* Pas de buddy, on insere */
+	      LLIST_ADD(ppage_free[node->index],node);
+	      return;
+	    }
+	}
+
+     
+      /* Buddy trouve ici */
+      node->start = (node->start<buddy->start?node->start:buddy->start);
+      node->size <<= 1;
+      node->index++;
+      LLIST_REMOVE(ppage_free[buddy->index],buddy);
+      boot_free(buddy,sizeof(struct ppage_node));
+
+    }
+  
+  /* Dernier niveau ou niveau vide */
+  /* Si c est le dernier niveau, on reajuste les champs */
+  if (node->index > PPAGE_MAX_BUDDY)
+    {
+      node->index--;
+      node->size >>= 1;
+    }
+  LLIST_ADD(ppage_free[node->index],node);
+
+  return;
+}

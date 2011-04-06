@@ -30,7 +30,6 @@ PUBLIC void main()
   physmem_init();
   bochs_print("Physical Memory Manager initialized\n");
 
-
   /* Initialisation du gestionnaire des IRQ */
   irq_init();
 

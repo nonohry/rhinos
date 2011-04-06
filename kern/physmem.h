@@ -1,5 +1,5 @@
 /*
- * Header de physmem.c
+ * Header de phymem.c
  *
  */
 
@@ -33,10 +33,8 @@ struct ppage_node
  * Prototypes 
  ***************/
 
-PUBLIC struct ppage_node* ppage_free[PPAGE_MAX_BUDDY];
-PUBLIC struct ppage_node* ppage_allocated;
-
 PUBLIC void physmem_init(void);
 PUBLIC void* phys_alloc(u32_t size);
+PUBLIC void phys_free(void* addr);
 
 #endif
