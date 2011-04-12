@@ -15,6 +15,13 @@
 
 #define BOOTINFO_ADDR     0x803
 
+/* Type pour boot_mmap_e820 */
+
+#define E820_AVAILABLE    0x1
+#define E820_RESERVED     0x2
+#define E820_ACPI         0x3
+#define E820_ACPI_NVS     0x4
+
 
 /********************** 
  * Structure boot_info
@@ -34,7 +41,7 @@ PUBLIC struct boot_info
  * Structure boot_memmap_entry
  ******************************/
 
-PUBLIC struct boot_memmap_entry
+PUBLIC struct boot_mmap_e820
 {
   u64_t addr;           /* Adresse de la zone */
   u64_t size;           /* Taille de la zone */

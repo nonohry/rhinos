@@ -6,7 +6,6 @@
 #include <types.h>
 #include <llist.h>
 #include "klib.h"
-#include "bootmem.h"
 #include "pic.h"
 #include "irq.h"
 

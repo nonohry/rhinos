@@ -12,7 +12,6 @@
 #include <llist.h>
 #include "start.h"
 #include "klib.h"
-#include "bootmem.h"
 #include "physmem.h"
 #include "irq.h"
 #include "pit.h"
@@ -25,8 +24,6 @@
 PUBLIC void main()
 {
   /* Initialisation de la memoire physique */
-  bootmem_init();
-  bochs_print("Boot Memory Manager initialized\n");
   physmem_init();
   bochs_print("Physical Memory Manager initialized\n");
 

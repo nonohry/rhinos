@@ -7,7 +7,7 @@
 #include <types.h>
 #include <llist.h>
 #include "klib.h"
-#include "bootmem.h"
+#include "start.h"
 #include "physmem.h"
 
 
@@ -17,7 +17,8 @@
 
 PRIVATE u8_t phys_powerof2(u32_t n);
 PRIVATE struct ppage_node* ppage_free[PPAGE_MAX_BUDDY];
-PRIVATE struct ppage_node* ppage_allocated;
+PRIVATE struct ppage_node* ppage_used;
+PRIVATE struct ppage_node* ppage_node_pool;
 
 /*****************
  * Initialisation
@@ -32,7 +33,8 @@ PUBLIC void physmem_init(void)
     {
       LLIST_NULLIFY(ppage_free[i]);
     }
-  LLIST_NULLIFY(ppage_allocated);
+  LLIST_NULLIFY(ppage_used);
+  LLIST_NULLIFY(ppage_node_pool);
 
   return;
 }
@@ -100,14 +102,15 @@ PUBLIC void* phys_alloc(u32_t size)
       node = LLIST_GETHEAD(ppage_free[j]);
       LLIST_REMOVE(ppage_free[j],node);
 
-      n1 = (struct ppage_node*)boot_alloc(sizeof(struct ppage_node));
+      n1 = LLIST_GETHEAD(ppage_node_pool);
+      LLIST_REMOVE(ppage_node_pool,n1);
 
       n1->start = node->start;
-      n1->size = node->size/2;
+      n1->size = (node->size >> 1);
       n1->index = node->index-1;
 
-      node->start = node->start + node->size/2;
-      node->size = node->size/2;
+      node->start = node->start + (node->size >> 1);
+      node->size = (node->size >> 1);
       node->index = node->index-1;
 
       LLIST_ADD(ppage_free[j-1],n1);
@@ -119,7 +122,7 @@ PUBLIC void* phys_alloc(u32_t size)
   node = LLIST_GETHEAD(ppage_free[ind]);
   /* Met a jour les listes */
   LLIST_REMOVE(ppage_free[ind],node);
-  LLIST_ADD(ppage_allocated,node);
+  LLIST_ADD(ppage_used,node);
   
   return (void*)node->start;
 }
@@ -134,13 +137,13 @@ PUBLIC void phys_free(void* addr)
 {
   struct ppage_node* node;
 
-  /* Recherche du node dans ppage_allocated */
-  node = LLIST_GETHEAD(ppage_allocated);
+  /* Recherche du node dans ppage_used */
+  node = LLIST_GETHEAD(ppage_used);
 
   while(node->start != (u32_t)addr)
     {
-      node = LLIST_NEXT(ppage_allocated, node);
-      if(LLIST_ISHEAD(ppage_allocated, node))
+      node = LLIST_NEXT(ppage_used, node);
+      if(LLIST_ISHEAD(ppage_used, node))
 	{
 	  /* Adresse non trouvee */
 	  return;
@@ -148,7 +151,7 @@ PUBLIC void phys_free(void* addr)
     }
 
   /* Adresse trouvee ici, on supprime le noeud de la liste allouee */
-  LLIST_REMOVE(ppage_allocated,node);
+  LLIST_REMOVE(ppage_used,node);
 
   /* Insere "recursivement le noeud */
   while((node->index < PPAGE_MAX_BUDDY)&&(!LLIST_ISNULL(ppage_free[node->index])))
@@ -176,7 +179,7 @@ PUBLIC void phys_free(void* addr)
       node->size <<= 1;
       node->index++;
       LLIST_REMOVE(ppage_free[buddy->index],buddy);
-      boot_free(buddy,sizeof(struct ppage_node));
+      LLIST_ADD(ppage_node_pool, buddy);
 
     }
   

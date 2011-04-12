@@ -59,7 +59,7 @@ PUBLIC void clock_init()
 PRIVATE void clock_handler()
 {
   
-  bochs_print("tick ! ");
+  //bochs_print("tick ! ");
   
   return;
 }
