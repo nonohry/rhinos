@@ -50,7 +50,7 @@ PUBLIC void physmem_init(void)
   else
     {
       /* Taille selon int 15/AX=E801 (limite a 4G) */
-      ram_size = (bootinfo->mem_lower + (bootinfo->mem_upper << SHIFT64))<<KILO_SHIFT;
+      ram_size = (bootinfo->mem_lower + (bootinfo->mem_upper << SHIFT64))<<SHIFT1024;
     }
 
   return;
