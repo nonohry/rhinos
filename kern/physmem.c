@@ -26,7 +26,8 @@ PRIVATE struct ppage_node* ppage_node_pool;
 
 PUBLIC void physmem_init(void)
 {
-  u8_t i;
+  u32_t i;
+  u64_t ram_size=0;
 
   /* Nullifie les structures de pages */  
   for(i=0; i<PPAGE_MAX_BUDDY; i++)
@@ -35,6 +36,22 @@ PUBLIC void physmem_init(void)
     }
   LLIST_NULLIFY(ppage_used);
   LLIST_NULLIFY(ppage_node_pool);
+
+  /* Recupere la taille de la mémoire */
+  if (bootinfo->mem_entry)
+    {
+      /* Taille selon int 15/AX=E820 */
+      struct boot_mmap_e820* entry;
+      for(entry=(struct boot_mmap_e820*)bootinfo->mem_addr,i=0;i<bootinfo->mem_entry;i++,entry++)
+	{
+	  ram_size += entry->size;
+	}
+    }
+  else
+    {
+      /* Taille selon int 15/AX=E801 (limite a 4G) */
+      ram_size = (bootinfo->mem_lower + (bootinfo->mem_upper << SHIFT64))<<KILO_SHIFT;
+    }
 
   return;
 }
