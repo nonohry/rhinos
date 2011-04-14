@@ -64,6 +64,7 @@ PUBLIC void irq_add_flih(u8_t irq, struct irq_node* node)
       /* Ajout du noeud au tableau des flih */
       LLIST_ADD(irq_flih[irq],node);
       
+      /* Active au besoins l irq */
       irq_enable(irq);
     }
 

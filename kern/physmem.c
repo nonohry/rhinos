@@ -16,6 +16,7 @@
  ***********************/
 
 PRIVATE u8_t phys_powerof2(u32_t n);
+PRIVATE u8_t phys_isInArea(struct ppage_node* node, struct ppage_area* area);
 PRIVATE struct ppage_node* ppage_free[PPAGE_MAX_BUDDY];
 PRIVATE struct ppage_node* ppage_used;
 PRIVATE struct ppage_node* ppage_node_pool;
@@ -27,7 +28,13 @@ PRIVATE struct ppage_node* ppage_node_pool;
 PUBLIC void physmem_init(void)
 {
   u32_t i;
-  u64_t ram_size=0;
+  u32_t ram_size=0;
+  u32_t ram_pages;
+  struct ppage_node* node;
+  struct ppage_area kern_area;
+  struct ppage_area pool_area;
+  struct ppage_area acpi_area;
+  struct ppage_area rom_area;
 
   /* Nullifie les structures de pages */  
   for(i=0; i<PPAGE_MAX_BUDDY; i++)
@@ -37,6 +44,7 @@ PUBLIC void physmem_init(void)
   LLIST_NULLIFY(ppage_used);
   LLIST_NULLIFY(ppage_node_pool);
 
+
   /* Recupere la taille de la mémoire */
   if (bootinfo->mem_entry)
     {
@@ -44,15 +52,62 @@ PUBLIC void physmem_init(void)
       struct boot_mmap_e820* entry;
       for(entry=(struct boot_mmap_e820*)bootinfo->mem_addr,i=0;i<bootinfo->mem_entry;i++,entry++)
 	{
-	  ram_size += entry->size;
+	  ram_size += (u32_t)entry->size;
 	}
     }
   else
     {
       /* Taille selon int 15/AX=E801 (limite a 4G) */
-      ram_size = (bootinfo->mem_lower + (bootinfo->mem_upper << SHIFT64))<<SHIFT1024;
+      ram_size = ((bootinfo->mem_lower + (bootinfo->mem_upper << SHIFT64))<<SHIFT1024);
     }
 
+  /* Nombre maximal de page */
+  ram_pages = (ram_size >> PPAGE_SHIFT);
+
+  /* Cree le pool de node */
+  for(i=0; i<ram_pages; i++)
+    {
+      node=(struct ppage_node*)(PPAGE_NODE_POOL_ADDR+i*sizeof(struct ppage_node));
+      node->start=(i<<PPAGE_SHIFT);
+      node->size=(1<<PPAGE_SHIFT);
+      /* Enfile dans a liste ppage_used */
+      LLIST_ADD(ppage_used,node);
+      
+    }
+
+ /* Identifie les regions */
+  kern_area.start = KERN_AREA_START;
+  kern_area.size = bootinfo->kern_end+1;
+  rom_area.start = ROM_AREA_START;
+  rom_area.size = ROM_AREA_SIZE;
+  pool_area.start = POOL_AREA_START;
+  pool_area.size = ram_pages << PPAGE_SHIFT;
+  acpi_area.start = ACPI_AREA_START;
+  acpi_area.size = ACPI_AREA_SIZE;
+
+  /* Libere les pages pour remplir naturellement le buddy system */
+  node = LLIST_GETHEAD(ppage_used);
+  for(i=0; (i<ram_pages)&&(node!=NULL); i++)
+    {
+      if ( phys_isInArea(node,&kern_area) ||
+	   phys_isInArea(node,&rom_area)  ||
+	   phys_isInArea(node,&pool_area) ||
+	   phys_isInArea(node,&acpi_area) )
+	{
+	  /* Node dans une region reservee */
+	  node = LLIST_NEXT(ppage_used,node);
+	}
+      else
+	{
+	  /* Recupere l'adresse de la page */
+	  u32_t addr = node->start;
+	  /* Prend le node suivant */
+	  node = LLIST_NEXT(ppage_used,node);
+	  /* Libere la page du node */
+	  phys_free((void*)addr);
+	}
+    }
+  
   return;
 }
 
@@ -85,6 +140,23 @@ PRIVATE u8_t phys_powerof2(u32_t n)
 }
 
 
+
+/************************
+ * Page dans une region 
+ ************************/
+
+PRIVATE u8_t phys_isInArea(struct ppage_node* node, struct ppage_area* area)
+{
+     u8_t case1,case2,case3,case4;
+     
+     case1 = ((node->start+node->size)<=(area->start+area->size))&&((node->start+node->size)>(area->start));
+     case2 = ((node->start)<(area->start+area->size))&&((node->start)>=(area->start));
+     case3 = ((node->start)>=(area->start))&&((node->start+node->size)<=(area->start+area->size));
+     case4 = ((node->start)<=(area->start))&&((node->start+node->size)>=(area->start+area->size));
+
+     return (case1 || case2 || case3 || case4);
+
+}
 
 /***************
  * Allocation 
@@ -171,7 +243,7 @@ PUBLIC void phys_free(void* addr)
   LLIST_REMOVE(ppage_used,node);
 
   /* Insere "recursivement le noeud */
-  while((node->index < PPAGE_MAX_BUDDY)&&(!LLIST_ISNULL(ppage_free[node->index])))
+  while((node->index < PPAGE_MAX_BUDDY-1)&&(!LLIST_ISNULL(ppage_free[node->index])))
     {
       struct ppage_node* buddy;
       
@@ -201,13 +273,9 @@ PUBLIC void phys_free(void* addr)
     }
   
   /* Dernier niveau ou niveau vide */
-  /* Si c est le dernier niveau, on reajuste les champs */
-  if (node->index > PPAGE_MAX_BUDDY)
-    {
-      node->index--;
-      node->size >>= 1;
-    }
   LLIST_ADD(ppage_free[node->index],node);
 
   return;
 }
+
+

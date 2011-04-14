@@ -90,7 +90,7 @@ next:
    	call	hwint_save	; Sauvegarde des registres
 	call	hwint_reg	; Mise en place des registres noyau
 	push	%1		; Empile l'IRQ
-   	call	irq_handle_flih	; Appel les handles C
+ 	call	irq_handle_flih	; Appel les handles C
 	add	esp,4		; Depile l'IRQ
 	mov	al,IRQ_EOI	; Envoi la fin d interruption
 	out	IRQ_MASTER,al	; au PIC Maitre	
@@ -104,7 +104,7 @@ next:
 %macro	hwint_generic1	1
 	call	hwint_save	; Sauvegarde des registres
 	call	hwint_reg	; Mise en place des registres noyau
-	push	%1		; Empile l'IRQ 
+	push	%1		; Empile l'IRQ
 	call	irq_handle_flih	; Appel les handles C
 	add	esp,4		; Depile l'IRQ
 	mov	al,IRQ_EOI	; Envoi la fin d interruption
@@ -118,7 +118,7 @@ next:
 	;; 
 
 hwint_00:
-	hwint_generic0	0
+	hwint_generic0	0	
 
 hwint_01:
 	hwint_generic0	1

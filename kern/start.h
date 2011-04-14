@@ -35,7 +35,7 @@ PUBLIC struct boot_info
   u16_t mem_entry;      /* Nombre d entree dans le memory map */
   u16_t mem_lower;      /* Memoire basse en Ko */
   u16_t mem_upper;      /* Memoire haute en 64Ko */
-};
+}__attribute__((packed));
 
 /******************************
  * Structure boot_memmap_entry
@@ -46,7 +46,7 @@ PUBLIC struct boot_mmap_e820
   u64_t addr;           /* Adresse de la zone */
   u64_t size;           /* Taille de la zone */
   u32_t type;           /* Type de memoire */
-} __attribute__ ((packed));
+}__attribute__((packed));
 
 
 /*************
