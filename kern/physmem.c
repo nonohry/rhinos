@@ -75,13 +75,13 @@ PUBLIC void physmem_init(void)
       
     }
 
- /* Identifie les regions */
+  /* Identifie les regions */
   kern_area.start = KERN_AREA_START;
   kern_area.size = bootinfo->kern_end+1;
   rom_area.start = ROM_AREA_START;
   rom_area.size = ROM_AREA_SIZE;
   pool_area.start = POOL_AREA_START;
-  pool_area.size = ram_pages << PPAGE_SHIFT;
+  pool_area.size = ram_pages*sizeof(struct ppage_node);
   acpi_area.start = ACPI_AREA_START;
   acpi_area.size = ACPI_AREA_SIZE;
 
@@ -107,7 +107,7 @@ PUBLIC void physmem_init(void)
 	  phys_free((void*)addr);
 	}
     }
-  
+
   return;
 }
 
@@ -277,5 +277,3 @@ PUBLIC void phys_free(void* addr)
 
   return;
 }
-
-

@@ -23,7 +23,7 @@
 #define ROM_AREA_SIZE         0x400
 #define POOL_AREA_START       PPAGE_NODE_POOL_ADDR
 #define ACPI_AREA_START       0xFEC00000
-#define ACPI_AREA_SIZE        0x1400000
+#define ACPI_AREA_SIZE        0x13FFFFF
 
 
 /***************

@@ -76,8 +76,11 @@ next:
 	mov     ds,ax  	 	; Reinitialisation
 	mov     ax,ES_SELECTOR	;
 	mov     es,ax   	; des registres
+	mov	fs,ax		;
+	mov	gs,ax		; de
 	mov     ax,SS_SELECTOR	;
-	mov     ss,ax   	; de segments (ESP invariable)
+	mov     ss,ax   	; segments
+	mov	esp,kstack_top	;
  	sti			; Restaure les interruptions
 
 	jmp	CS_SELECTOR:main
