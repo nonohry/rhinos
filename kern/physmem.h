@@ -39,11 +39,6 @@ struct ppage_node
   struct ppage_node* next;
 }__attribute__((packed));
 
-struct ppage_area
-{
-  u32_t start;
-  u32_t size;
-};
 
 /***************
  * Prototypes 
