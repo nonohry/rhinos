@@ -20,14 +20,14 @@
 
 
 /* Tete de la liste (set) */
-#define LLIST_SETHEAD(e)				\
+#define LLIST_SETHEAD(e)			\
   {						\
     (e)->next = e;				\
     (e)->prev = e;				\
   }
 
 /* Tete de la liste (get) */
-#define LLIST_GETHEAD(l)				\
+#define LLIST_GETHEAD(l)			\
   ( l )
 
 
@@ -48,7 +48,7 @@
     if (LLIST_ISNULL(l))			\
       {						\
 	l=e;					\
-	LLIST_SETHEAD(l)				\
+	LLIST_SETHEAD(l);			\
       }						\
     else					\
       {						\
