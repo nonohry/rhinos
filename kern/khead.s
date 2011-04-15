@@ -175,14 +175,13 @@ hwint_15:
 excep_save:	
 hwint_save:
 	cld		        ; Positionne le sens d empilement
-	pop	ebp		; Depile l'adresse de retour
 	pushad			; Sauve les registres generaux 32bits
+	mov eax,esp		; Repere pour le retour
 	o16 push	ds	; Sauve les registres de segments (empile en 16bits)
 	o16 push	es
 	o16 push	fs
 	o16 push	gs
-	jmp	ebp		; Retour a l'adresse depilee
-
+	jmp [eax+PUSHAD_SIZE]	; Retour a l'adresse reperee
 	
 excep_reg:
 hwint_reg:	
@@ -198,12 +197,13 @@ hwint_reg:
 
 excep_rest:	
 hwint_rest:
-	pop	ebp		; Depile l adresse de retour
+	add esp,4		; Depile l adresse de retour
 	o16 pop gs		; Restaure les registres
 	o16 pop fs		; sauves par hwint_save
 	o16 pop	es		; en 16bits
 	o16 pop	ds
-	popad
+	popad		    	; Restaure les registre generaux
+	add esp,4		; Depile l adresse de retour de hwint_save
 	iretd
 
 
@@ -346,6 +346,12 @@ excep_err_next:
 	IRQ_MASTER	equ	0x20
 	IRQ_SLAVE	equ	0xA0
 
+	;;
+	;; Taille des registres sauves par pushad
+	;;
+
+	PUSHAD_SIZE	equ	32
+	
 	;;
 	;; Vecteurs Exceptions
 	;;
