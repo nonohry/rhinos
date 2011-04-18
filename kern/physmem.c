@@ -16,7 +16,8 @@
  ***********************/
 
 PRIVATE u8_t phys_powerof2(u32_t n);
-PRIVATE u8_t phys_isInArea(struct ppage_node* node, u32_t start, u32_t size);
+PRIVATE u8_t phys_isInArea(struct ppage_node* node, u32_t start, u32_t size); 
+
 PRIVATE struct ppage_node* ppage_free[PPAGE_MAX_BUDDY];
 PRIVATE struct ppage_node* ppage_used;
 PRIVATE struct ppage_node* ppage_node_pool;
@@ -61,37 +62,25 @@ PUBLIC void physmem_init(void)
   /* Nombre maximal de page */
   ram_pages = (ram_size >> PPAGE_SHIFT);
 
-  /* Cree le pool de node */
+  /* Cree le pool de node et le buddy */
   for(i=0; i<ram_pages; i++)
     {
       node=(struct ppage_node*)(PPAGE_NODE_POOL_ADDR+i*sizeof(struct ppage_node));
       node->start=(i<<PPAGE_SHIFT);
       node->size=(1<<PPAGE_SHIFT);
       /* Enfile dans a liste ppage_used */
-      LLIST_ADD(ppage_used,node);      
-    }
-
-  /* Libere les pages pour remplir naturellement le buddy system */
-  node = LLIST_GETHEAD(ppage_used);
-  for(i=0; (i<ram_pages)&&(node!=NULL); i++)
-    {
-      if ( phys_isInArea(node,KERN_AREA_START,bootinfo->kern_end+1) ||
-	   phys_isInArea(node,ROM_AREA_START,ROM_AREA_SIZE)  ||
-	   phys_isInArea(node,POOL_AREA_START,ram_pages*sizeof(struct ppage_node)) ||
-	   phys_isInArea(node,ACPI_AREA_START,ACPI_AREA_SIZE) )
+      LLIST_ADD(ppage_used,node);  
+    
+      /* Construit le buddy en liberant les pages libres */
+      if ( !phys_isInArea(node,KERN_AREA_START,bootinfo->kern_end+1) &&
+	   !phys_isInArea(node,ROM_AREA_START,ROM_AREA_SIZE)  &&
+	   !phys_isInArea(node,POOL_AREA_START,ram_pages*sizeof(struct ppage_node)) &&
+	   !phys_isInArea(node,ACPI_AREA_START,ACPI_AREA_SIZE) )
 	{
-	  /* Node dans une region reservee */
-	  node = LLIST_NEXT(ppage_used,node);
-	}
-      else
-	{
-	  /* Recupere l'adresse de la page */
-	  u32_t addr = node->start;
-	  /* Prend le node suivant */
-	  node = LLIST_NEXT(ppage_used,node);
 	  /* Libere la page du node */
-	  phys_free((void*)addr);
+	  phys_free((void*)node->start);
 	}
+
     }
 
   return;
