@@ -15,8 +15,8 @@
  * Declaration Private
  ***********************/
 
-PRIVATE u8_t phys_powerof2(u32_t n);
 PRIVATE u8_t phys_isInArea(struct ppage_node* node, u32_t start, u32_t size); 
+PRIVATE void phys_print(struct ppage_node* l);
 
 PRIVATE struct ppage_node* ppage_free[PPAGE_MAX_BUDDY];
 PRIVATE struct ppage_node* ppage_used;
@@ -83,55 +83,14 @@ PUBLIC void physmem_init(void)
 
     }
 
+  for(i=1;i<=PPAGE_MAX_BUDDY;i++)
+    {
+      phys_print(ppage_free[PPAGE_MAX_BUDDY-i]);
+    }
+
   return;
 }
 
-
-/*****************************************
- *  La puissance de 2 superieure ou egale 
- *  et plancher a 12 (2^12 = 4096)
- *****************************************/
-
-PRIVATE u8_t phys_powerof2(u32_t n)
-{
-  int i;
-  u32_t m;
-
-  i=-1;
-  m=n;
-
-  /* Shift a droite pour obtenir le msb */
-  while(m!=0)
-    {
-      m>>=1;
-      i++;
-    }
-
-  /* si n==2^msb alors on renvoie msb sinon msb+1 */
-  i=i+(n==(1<<i)?0:1);
-  
-  /* Plancher a PPAGE_SHIFT */
-  return (i<PPAGE_SHIFT?PPAGE_SHIFT:i);
-}
-
-
-
-/************************
- * Page dans une region 
- ************************/
-
-PRIVATE u8_t phys_isInArea(struct ppage_node* node, u32_t start, u32_t size)
-{
-     u8_t case1,case2,case3,case4;
-     
-     case1 = ((node->start+node->size)<=(start+size))&&((node->start+node->size)>(start));
-     case2 = ((node->start)<(start+size))&&((node->start)>=(start));
-     case3 = ((node->start)>=(start))&&((node->start+node->size)<=(start+size));
-     case4 = ((node->start)<=(start))&&((node->start+node->size)>=(start+size));
-
-     return (case1 || case2 || case3 || case4);
-
-}
 
 /***************
  * Allocation 
@@ -140,13 +99,29 @@ PRIVATE u8_t phys_isInArea(struct ppage_node* node, u32_t start, u32_t size)
 PUBLIC void* phys_alloc(u32_t size)
 {
 
-  u32_t i,j,k,ind;
+  u32_t i,j;
+  int ind;
   struct ppage_node* node;
   
-  /* Determine msb plafonne a PAGE_SHIFT */
-  k = phys_powerof2(size);
-  /* En deduit l indice dans ppage_free */
-  ind = k - PPAGE_SHIFT;
+  /* trouve la puissance de 2 superieure */
+  size = size - 1;
+  size = size | (size >> 1);
+  size = size | (size >> 2);
+  size = size | (size >> 4);
+  size = size | (size >> 8);
+  size = size | (size >> 16);
+  size = size + 1;
+ 
+  /* Trouve le msb de la puissance */
+  ind=-1;
+  while(size!=0)
+    {
+      size>>=1;
+      ind++;
+    }
+  
+  /* En deduit l indice */
+  ind -= PPAGE_SHIFT;
   
   /* Si ppage_free[ind] est NULL, on cherche un niveau superieur disponible */
   for(i=ind;LLIST_ISNULL(ppage_free[i])&&(i<PPAGE_MAX_BUDDY);i++)
@@ -250,4 +225,46 @@ PUBLIC void phys_free(void* addr)
   LLIST_ADD(ppage_free[node->index],node);
 
   return;
+}
+
+
+/************************
+ * Page dans une region 
+ ************************/
+
+PRIVATE u8_t phys_isInArea(struct ppage_node* node, u32_t start, u32_t size)
+{
+     u8_t case1,case2,case3,case4;
+     
+     case1 = ((node->start+node->size)<=(start+size))&&((node->start+node->size)>(start));
+     case2 = ((node->start)<(start+size))&&((node->start)>=(start));
+     case3 = ((node->start)>=(start))&&((node->start+node->size)<=(start+size));
+     case4 = ((node->start)<=(start))&&((node->start+node->size)>=(start+size));
+
+     return (case1 || case2 || case3 || case4);
+
+}
+
+
+PRIVATE void phys_print(struct ppage_node* l)
+{
+  if (LLIST_ISNULL(l))
+    {
+      bochs_print("~");
+    }
+  else
+    {
+      struct ppage_node* node;
+      node = LLIST_GETHEAD(l);
+      do
+	{
+	  bochs_print("[%d (%d)] ",node->start,node->size);
+	  node = LLIST_NEXT(l,node);
+	}while(!LLIST_ISHEAD(l,node));
+
+    }
+
+  bochs_print("\n");
+  return;
+
 }
