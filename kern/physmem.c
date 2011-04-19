@@ -16,7 +16,6 @@
  ***********************/
 
 PRIVATE u8_t phys_isInArea(struct ppage_node* node, u32_t start, u32_t size); 
-PRIVATE void phys_print(struct ppage_node* l);
 
 PRIVATE struct ppage_node* ppage_free[PPAGE_MAX_BUDDY];
 PRIVATE struct ppage_node* ppage_used;
@@ -81,11 +80,6 @@ PUBLIC void physmem_init(void)
 	  phys_free((void*)node->start);
 	}
 
-    }
-
-  for(i=1;i<=PPAGE_MAX_BUDDY;i++)
-    {
-      phys_print(ppage_free[PPAGE_MAX_BUDDY-i]);
     }
 
   return;
@@ -242,29 +236,5 @@ PRIVATE u8_t phys_isInArea(struct ppage_node* node, u32_t start, u32_t size)
      case4 = ((node->start)<=(start))&&((node->start+node->size)>=(start+size));
 
      return (case1 || case2 || case3 || case4);
-
-}
-
-
-PRIVATE void phys_print(struct ppage_node* l)
-{
-  if (LLIST_ISNULL(l))
-    {
-      bochs_print("~");
-    }
-  else
-    {
-      struct ppage_node* node;
-      node = LLIST_GETHEAD(l);
-      do
-	{
-	  bochs_print("[%d (%d)] ",node->start,node->size);
-	  node = LLIST_NEXT(l,node);
-	}while(!LLIST_ISHEAD(l,node));
-
-    }
-
-  bochs_print("\n");
-  return;
 
 }
