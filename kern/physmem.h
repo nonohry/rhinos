@@ -11,7 +11,7 @@
  * Constantes 
  **************/
 
-#define PPAGE_MAX_BUDDY      20        /* 32 - 12 = 20 */
+#define PPAGE_MAX_BUDDY      21        /* 32 - 12 + 1 = 21 */
 #define PPAGE_SHIFT          12        /* 2^12=4096    */
 #define PPAGE_NODE_POOL_ADDR 0x100000  /* Adresse de base du pool de ppage nodes */
 
