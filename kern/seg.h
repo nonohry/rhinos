@@ -87,11 +87,11 @@ PUBLIC struct gate_desc
  * Prototypes
  *************/
 
-PUBLIC void init_code_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dpl);
-PUBLIC void init_data_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dpl);
+PUBLIC void init_code_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl);
+PUBLIC void init_data_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl);
 PUBLIC void init_int_gate(struct gate_desc* gate, u16_t seg, u32_t off,u8_t flags);
 PUBLIC void init_trap_gate(struct gate_desc* gate, u16_t seg, u32_t off,u8_t flags);
-PUBLIC void init_tss_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dpl);
-PUBLIC void init_ldt_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dpl);
+PUBLIC void init_tss_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl);
+PUBLIC void init_ldt_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl);
 
 #endif

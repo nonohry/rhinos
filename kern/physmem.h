@@ -32,7 +32,7 @@
 
 struct ppage_node 
 {
-  u32_t start;
+  physaddr_t start;
   u32_t size;
   u8_t  index;
   struct ppage_node* prev;

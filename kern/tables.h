@@ -57,7 +57,7 @@
 PUBLIC struct table_desc
 {
   u16_t limit;
-  u32_t base;
+  lineaddr_t base;
 } __attribute__ ((packed));
 
 /* TSS */
@@ -104,19 +104,6 @@ PUBLIC struct tss
   u16_t iomap;
 } __attribute__ ((packed));
 
-/* Liste chainee des handlers d'IRQs */
-
-PUBLIC struct irq_chaine
-{
-  u8_t irq;                  /* IRQ */
-  struct irq_chaine* next;   /* Chaine */
-  u8_t (*handler)(void);     /* ISR */
-  u32_t id;                  /* ID  */
-} __attribute__ ((packed));
-
-/* Alias pour le pointeur d'ISR */
-
-typedef u8_t (*irq_handler_t)();
 
 /******************
  * ISR assembleur
@@ -166,9 +153,6 @@ PUBLIC struct seg_desc gdt[GDT_SIZE];  /* GDT */
 PUBLIC struct gate_desc idt[IDT_SIZE]; /* IDT */
 PUBLIC struct table_desc gdt_desc;     /* Descripteur de la GDT */
 PUBLIC struct table_desc idt_desc;     /* Descripteur de l'IDT */
-PUBLIC struct irq_chaine* irq_handlers[IRQ_VECTORS];  /* Tableau des irq handlers */
-PUBLIC u32_t  irq_active[IRQ_VECTORS];                /* Tableau des bitmaps d'irq actives */
-
 
 PUBLIC void gdt_init();
 PUBLIC void idt_init();

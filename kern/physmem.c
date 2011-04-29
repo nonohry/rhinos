@@ -15,7 +15,7 @@
  * Declaration Private
  ***********************/
 
-PRIVATE u8_t phys_isInArea(struct ppage_node* node, u32_t start, u32_t size); 
+PRIVATE u8_t phys_isInArea(struct ppage_node* node, physaddr_t start, u32_t size); 
 
 PRIVATE struct ppage_node* ppage_free[PPAGE_MAX_BUDDY];
 PRIVATE struct ppage_node* ppage_used;
@@ -172,7 +172,7 @@ PUBLIC void phys_free(void* addr)
   /* Recherche du node dans ppage_used */
   node = LLIST_GETHEAD(ppage_used);
 
-  while(node->start != (u32_t)addr)
+  while(node->start != (physaddr_t)addr)
     {
       node = LLIST_NEXT(ppage_used, node);
       if(LLIST_ISHEAD(ppage_used, node))
@@ -226,7 +226,7 @@ PUBLIC void phys_free(void* addr)
  * Page dans une region 
  ************************/
 
-PRIVATE u8_t phys_isInArea(struct ppage_node* node, u32_t start, u32_t size)
+PRIVATE u8_t phys_isInArea(struct ppage_node* node, physaddr_t start, u32_t size)
 {
      u8_t case1,case2,case3,case4;
      

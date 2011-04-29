@@ -23,5 +23,11 @@ typedef unsigned short u16_t;
 typedef unsigned int   u32_t;
 typedef unsigned long long int u64_t;
 
+/* Adresses */
+
+typedef unsigned int   physaddr_t;
+typedef unsigned int   lineaddr_t;
+typedef unsigned int   virtaddr_t;
+
 
 #endif

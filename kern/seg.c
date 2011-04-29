@@ -9,7 +9,7 @@
  * Declaration PRIVATE
  **********************/
 
-PRIVATE void init_seg_desc(struct seg_desc *desc, u32_t base, u32_t size);
+PRIVATE void init_seg_desc(struct seg_desc *desc, lineaddr_t base, u32_t size);
 PRIVATE void init_gate_desc(struct gate_desc* gate, u16_t seg, u32_t off);
 
 
@@ -17,7 +17,7 @@ PRIVATE void init_gate_desc(struct gate_desc* gate, u16_t seg, u32_t off);
  * Initialisation de segments de code et de donnees
  ****************************************************/
 
-PUBLIC void init_code_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dpl)
+PUBLIC void init_code_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl)
 {
 
   /* Initialisation generique */
@@ -34,7 +34,7 @@ PUBLIC void init_code_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dp
 }
 
 
-PUBLIC void init_data_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dpl)
+PUBLIC void init_data_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl)
 {
 
   /* Initialisation generique */
@@ -86,7 +86,7 @@ PUBLIC void init_trap_gate(struct gate_desc* gate, u16_t seg, u32_t off,u8_t fla
  * Initialisation des TSS
  ***************************/
 
-PUBLIC void init_tss_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dpl)
+PUBLIC void init_tss_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl)
 {
 
   /* Initialisation generique */
@@ -104,7 +104,7 @@ PUBLIC void init_tss_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dpl
  * Initialisation des LDT
  ***************************/
 
-PUBLIC void init_ldt_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dpl)
+PUBLIC void init_ldt_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl)
 {
 
   /* Initialisation generique */
@@ -122,7 +122,7 @@ PUBLIC void init_ldt_seg(struct seg_desc *desc, u32_t base, u32_t size, u8_t dpl
  * Initialisations Generiques - Segments
  ****************************************/
 
-PRIVATE void init_seg_desc(struct seg_desc *desc, u32_t base, u32_t size)
+PRIVATE void init_seg_desc(struct seg_desc *desc, lineaddr_t base, u32_t size)
 {
 
   /* Définit l'adresse de base */
