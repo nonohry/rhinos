@@ -6,7 +6,20 @@
 #ifndef PAGING_H
 #define PAGING_H
 
+/***********
+ * Includes
+ ***********/
+
 #include <types.h>
+
+
+/*************
+ * Constantes
+ *************/
+
+#define PAGING_DIRSHIFT     22
+#define PAGING_TBLSHIFT     12
+#define PAGING_TBLMASK      0x3FF
 
 
 /*************
@@ -47,5 +60,26 @@ struct pte
   u32_t available :3  ;
   u32_t baseaddr  :20 ;
 }__attribute__ ((packed));
+
+
+/**********
+ * Macros
+ **********/
+
+#define GET_DIR(addr)				\
+  ( addr >> PAGING_DIRSHIFT );
+
+#define GET_TBL(addr)				\
+  ( (addr >> PAGING_TBLSHIFT)&PAGING_TBLMASK );
+
+
+/**********
+ * typedef
+ **********/
+
+typedef struct pde pagedir_t[1024];
+typedef struct pte tabledir_t[1024];
+
+
 
 #endif
