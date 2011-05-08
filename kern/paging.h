@@ -21,6 +21,8 @@
 #define PAGING_TBLSHIFT     12
 #define PAGING_TBLMASK      0x3FF
 
+#define PAGING_SELFMAP      0x3FF
+
 #define PAGE_SHIFT          12
 
 /*************
@@ -67,17 +69,30 @@ struct pte
  * Macros
  **********/
 
+/* Directory d'une adresse virtuelle */
 #define PAGING_GET_DIR(addr)				\
   ( addr >> PAGING_DIRSHIFT )
 
+/* Table d'une adresse virtuelle */
 #define PAGING_GET_TBL(addr)				\
   ( (addr >> PAGING_TBLSHIFT)&PAGING_TBLMASK )
 
+/* Alignement inferieur sur 4096 */
 #define PAGING_ALIGN_INF(addr)			\
   ( (addr >> PAGE_SHIFT) << PAGE_SHIFT )
 
-#define PAGING_ALIGN_SUP(addr)			\
+/* Alignement superieur sur 4096 */
+#define PAGING_ALIGN_SUP(addr)						\
   ( ((addr&0xFFFFF000) == addr)?(addr >> PAGE_SHIFT) << PAGE_SHIFT:((addr >> PAGE_SHIFT)+1) << PAGE_SHIFT )
+
+/* Self Mapping: Page Directory courant */
+#define PAGING_GET_PD							\
+  ( PAGING_SELFMAP<<PAGING_DIR_SHIFT + PAGING_SELFMAP<<PAGING_TBL_DIR )
+
+/* Self Mapping: Page Table i du PD courant */
+#define PAGING_GET_PT(i)						\
+  ( PAGING_SELFMAP<<PAGING_DIR_SHIFT + i<<PAGING_TBL_DIR )
+
 
 
 /**********
