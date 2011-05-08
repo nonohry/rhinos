@@ -24,6 +24,7 @@
 #define PAGING_SELFMAP      0x3FF
 
 #define PAGE_SHIFT          12
+#define PAGE_SIZE           4096
 
 /*************
  * Structures
@@ -70,11 +71,11 @@ struct pte
  **********/
 
 /* Directory d'une adresse virtuelle */
-#define PAGING_GET_DIR(addr)				\
+#define PAGING_GET_PDE(addr)				\
   ( addr >> PAGING_DIRSHIFT )
 
 /* Table d'une adresse virtuelle */
-#define PAGING_GET_TBL(addr)				\
+#define PAGING_GET_PTE(addr)				\
   ( (addr >> PAGING_TBLSHIFT)&PAGING_TBLMASK )
 
 /* Alignement inferieur sur 4096 */
@@ -103,5 +104,13 @@ typedef struct pde pagedir_t[1024];
 typedef struct pte tabledir_t[1024];
 
 
+/*************
+ * Prototypes
+ *************/
+
+/* PD Noyau */
+PUBLIC pagedir_t* kern_PD;
+
+PUBLIC void paging_init(void);
 
 #endif
