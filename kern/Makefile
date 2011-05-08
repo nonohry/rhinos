@@ -49,5 +49,5 @@ irq.o: ../include/types.h ../include/llist.h klib.h pic.h irq.h
 exceptions.o: ../include/types.h klib.h exceptions.h
 physmem.o: ../include/types.h ../include/llist.h klib.h start.h physmem.h
 paging.o: ../include/types.h paging.h
-main.o: ../include/types.h ../include/llist.h start.h klib.h physmem.h irq.h
-main.o: pit.h
+main.o: ../include/types.h ../include/llist.h start.h klib.h physmem.h
+main.o: paging.h irq.h pit.h

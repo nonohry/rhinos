@@ -13,6 +13,7 @@
 #include "start.h"
 #include "klib.h"
 #include "physmem.h"
+#include "paging.h"
 #include "irq.h"
 #include "pit.h"
 

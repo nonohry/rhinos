@@ -21,6 +21,7 @@
 #define PAGING_TBLSHIFT     12
 #define PAGING_TBLMASK      0x3FF
 
+#define PAGE_SHIFT          12
 
 /*************
  * Structures
@@ -66,11 +67,17 @@ struct pte
  * Macros
  **********/
 
-#define GET_DIR(addr)				\
-  ( addr >> PAGING_DIRSHIFT );
+#define PAGING_GET_DIR(addr)				\
+  ( addr >> PAGING_DIRSHIFT )
 
-#define GET_TBL(addr)				\
-  ( (addr >> PAGING_TBLSHIFT)&PAGING_TBLMASK );
+#define PAGING_GET_TBL(addr)				\
+  ( (addr >> PAGING_TBLSHIFT)&PAGING_TBLMASK )
+
+#define PAGING_ALIGN_INF(addr)			\
+  ( (addr >> PAGE_SHIFT) << PAGE_SHIFT )
+
+#define PAGING_ALIGN_SUP(addr)			\
+  ( ((addr&0xFFFFF000) == addr)?(addr >> PAGE_SHIFT) << PAGE_SHIFT:((addr >> PAGE_SHIFT)+1) << PAGE_SHIFT )
 
 
 /**********
