@@ -3,6 +3,7 @@
 global bochs_print
 global outb
 global inb
+global load_CR3	
 global phys_copy
 global random
 global idle_task
@@ -124,6 +125,25 @@ inb:
 	pop	ebp		; Restaure EBP
 	ret
 
+
+	;;
+	;; load_CR3(u32_t cr3)
+	;;
+
+load_CR3:
+	push 	ebp         	; Sauvegarde de EBP
+	mov  	ebp,esp 	; Mise en place de la base
+	push	esi		; Sauvegarde ESI (Requis par GCC)
+	push	edi		; Sauvegarde EDI (Requis par GCC)
+	mov  	eax,[ebp+8]	; Recupere la valeur dans eax	
+	mov	cr3,eax		; Charge CR3
+	pop	edi		; Restaure EDI
+	pop	esi		; Restaure ESI
+	mov	esp,ebp		; Restaure la pile
+	pop	ebp		; Restaure EBP
+	ret	
+
+	
 	;;
 	;; phys_copy(u32_t src, u32_t dest, u32_t len)
 	;;
