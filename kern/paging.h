@@ -17,9 +17,11 @@
  * Constantes
  *************/
 
+#define PAGING_ENTRIES      1024
 #define PAGING_DIRSHIFT     22
 #define PAGING_TBLSHIFT     12
 #define PAGING_TBLMASK      0x3FF
+#define PAGING_BASESHIFT    12
 
 #define PAGING_SELFMAP      0x3FF
 
@@ -95,21 +97,12 @@ struct pte
   ( PAGING_SELFMAP<<PAGING_DIR_SHIFT + i<<PAGING_TBL_DIR )
 
 
-
-/**********
- * typedef
- **********/
-
-typedef struct pde pagedir_t[1024];
-typedef struct pte tabledir_t[1024];
-
-
 /*************
  * Prototypes
  *************/
 
 /* PD Noyau */
-PUBLIC pagedir_t* kern_PD;
+PUBLIC struct pde* kern_PD;
 
 PUBLIC void paging_init(void);
 

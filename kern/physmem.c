@@ -60,6 +60,8 @@ PUBLIC void physmem_init(void)
 
   /* Nombre maximal de page */
   ram_pages = (ram_size >> PPAGE_SHIFT);
+  /* Sauve le nombre dans bootinfo */
+  bootinfo->mem_ram_pages = ram_pages;
 
   /* Cree le pool de node et le buddy */
   for(i=0; i<ram_pages; i++)

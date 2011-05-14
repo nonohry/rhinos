@@ -28,12 +28,16 @@ PUBLIC void main()
   physmem_init();
   bochs_print("Physical Memory Manager initialized\n");
 
+  /* Initialisation de la pagination */
+  paging_init();
+  bochs_print("Paging enabled\n");
+
   /* Initialisation du gestionnaire des IRQ */
   irq_init();
 
   /* Initialisation Horloge */
-  clock_init();
-  bochs_print("Clock initialized (100Hz)\n");
+  //clock_init();
+  //bochs_print("Clock initialized (100Hz)\n");
 
   /* On ne doit plus arriver ici (sauf DEBUG) */
   while(1)

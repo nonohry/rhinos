@@ -35,6 +35,7 @@ PUBLIC struct boot_info
   u16_t mem_entry;      /* Nombre d entree dans le memory map */
   u16_t mem_lower;      /* Memoire basse en Ko */
   u16_t mem_upper;      /* Memoire haute en 64Ko */
+  u32_t mem_ram_pages;  /* Nombre de pages memoire max */
 }__attribute__((packed));
 
 /******************************

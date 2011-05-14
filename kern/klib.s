@@ -3,7 +3,8 @@
 global bochs_print
 global outb
 global inb
-global load_CR3	
+global load_CR3
+global set_pg_cr0	
 global phys_copy
 global random
 global idle_task
@@ -142,6 +143,25 @@ load_CR3:
 	mov	esp,ebp		; Restaure la pile
 	pop	ebp		; Restaure EBP
 	ret	
+
+	;;
+	;; set_pg_cr0(void)
+	;;
+
+set_pg_cr0:
+	push 	ebp         	; Sauvegarde de EBP
+	mov  	ebp,esp 	; Mise en place de la base
+	push	esi		; Sauvegarde ESI (Requis par GCC)
+	push	edi
+	mov	eax,cr0		; Recupere CR0
+	or	eax, 0x80000000	; Flag le bit PG (pagination)
+	mov	cr0,eax		; Active la pagination
+	pop	edi		; Restaure EDI
+	pop	esi		; Restaure ESI
+	mov	esp,ebp		; Restaure la pile
+	pop	ebp		; Restaure EBP
+	ret
+
 
 	
 	;;
