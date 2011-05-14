@@ -32,6 +32,7 @@ PUBLIC void main()
   paging_init();
   bochs_print("Paging enabled\n");
 
+
   /* Initialisation du gestionnaire des IRQ */
   irq_init();
 

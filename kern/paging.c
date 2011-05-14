@@ -25,6 +25,15 @@ PUBLIC void paging_init(void)
 {
   /* PD Noyau */
   kern_PD = (struct pde*)phys_alloc(PAGING_ENTRIES*sizeof(struct pde));
+  /* Validite de l allocation */
+  if (kern_PD == NULL)
+    {
+      bochs_print("Cannot allocate Kernel PD\n");
+      return;
+    }
+
+  /* Nullifie la page */
+  mem_set(0,(u32_t)kern_PD,PAGING_ENTRIES*sizeof(struct pde));
 
   /* Self Mapping */
   kern_PD[PAGING_SELFMAP].present = 1;
@@ -70,6 +79,16 @@ PRIVATE void paging_identityMapping(physaddr_t start, physaddr_t end)
 	{
 	  /* La table vers laquelle pointer */
 	  table = (struct pte*)phys_alloc(PAGING_ENTRIES*sizeof(struct pte));
+	  /* Validite de l allocation */
+	  if (table == NULL)
+	    {
+	      bochs_print("Unable to allocate Page Table\n");
+	      return;
+	    }
+
+	  /* Nullifie la page */
+	  mem_set(0,(u32_t)table,PAGING_ENTRIES*sizeof(struct pte));
+
 	  /* Attributs du PDE */
 	  kern_PD[pde].baseaddr = (((u32_t)table)>>PAGING_BASESHIFT);
 	  kern_PD[pde].present = 1;
