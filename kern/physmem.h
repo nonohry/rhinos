@@ -34,7 +34,6 @@ struct ppage_node
 {
   physaddr_t start;
   u32_t size;
-  u32_t map;
   u8_t  index;
   struct ppage_node* prev;
   struct ppage_node* next;

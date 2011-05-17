@@ -69,8 +69,6 @@ PUBLIC void physmem_init(void)
       node=(struct ppage_node*)(PPAGE_NODE_POOL_ADDR+i*sizeof(struct ppage_node));
       node->start=(i<<PPAGE_SHIFT);
       node->size=(1<<PPAGE_SHIFT);
-      /* Simule une page mappee, ie utilisee */
-      node->map=1;
       /* Enfile dans a liste ppage_used */
       LLIST_ADD(ppage_used,node);  
     
@@ -157,7 +155,6 @@ PUBLIC void* phys_alloc(u32_t size)
 
   /* Maintenant nous avons un noeud disponible au niveau voulu */
   node = LLIST_GETHEAD(ppage_free[ind]);
-  node->map = 1;
   /* Met a jour les listes */
   LLIST_REMOVE(ppage_free[ind],node);
   LLIST_ADD(ppage_used,node);
@@ -187,48 +184,42 @@ PUBLIC void phys_free(void* addr)
 	}
     }
 
-  /* Adresse trouvee ici, on decremente sonn nombre de mappage */
-  node->map = node->map - 1;
-
-  /* Si le nombre de mappage est nul, on libere */
-  if (!(node->map))
-    {
-      LLIST_REMOVE(ppage_used,node);
-      
-      /* Insere "recursivement le noeud */
-      while((node->index < PPAGE_MAX_BUDDY-1)&&(!LLIST_ISNULL(ppage_free[node->index])))
-	{
-	  struct ppage_node* buddy;
-	  
-	  /* Recherche d un budy */
-	  buddy = LLIST_GETHEAD(ppage_free[node->index]);
-	  
-	  while ( (node->start+node->size != buddy->start)
-		  && (buddy->start+buddy->size != node->start))
-	    {
-	      buddy = LLIST_NEXT(ppage_free[node->index],buddy);
-	      if (LLIST_ISHEAD(ppage_free[node->index],buddy))
-		{
-		  /* Pas de buddy, on insere */
-		  LLIST_ADD(ppage_free[node->index],node);
-		  return;
-		}
-	    }
-	  
-     
-	  /* Buddy trouve ici */
-	  node->start = (node->start<buddy->start?node->start:buddy->start);
-	  node->size <<= 1;
-	  node->index++;
-	  LLIST_REMOVE(ppage_free[buddy->index],buddy);
-	  LLIST_ADD(ppage_node_pool, buddy);
-	  
-	}
+  /* Adresse trouvee ici, on libere */
+ 
+  LLIST_REMOVE(ppage_used,node);
   
-      /* Dernier niveau ou niveau vide */
-      LLIST_ADD(ppage_free[node->index],node);
+  /* Insere "recursivement le noeud */
+  while((node->index < PPAGE_MAX_BUDDY-1)&&(!LLIST_ISNULL(ppage_free[node->index])))
+    {
+      struct ppage_node* buddy;
+      
+      /* Recherche d un budy */
+      buddy = LLIST_GETHEAD(ppage_free[node->index]);
+      
+      while ( (node->start+node->size != buddy->start)
+	      && (buddy->start+buddy->size != node->start))
+	{
+	  buddy = LLIST_NEXT(ppage_free[node->index],buddy);
+	  if (LLIST_ISHEAD(ppage_free[node->index],buddy))
+	    {
+	      /* Pas de buddy, on insere */
+	      LLIST_ADD(ppage_free[node->index],node);
+	      return;
+	    }
+	}
+      
+      /* Buddy trouve ici */
+      node->start = (node->start<buddy->start?node->start:buddy->start);
+      node->size <<= 1;
+      node->index++;
+      LLIST_REMOVE(ppage_free[buddy->index],buddy);
+      LLIST_ADD(ppage_node_pool, buddy);
+      
     }
-
+  
+  /* Dernier niveau ou niveau vide */
+  LLIST_ADD(ppage_free[node->index],node);
+  
   return;
 }
 
