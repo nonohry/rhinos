@@ -6,6 +6,7 @@ global inb
 global load_CR3
 global set_pg_cr0	
 global mem_set
+global mem_copy	
 global random
 global idle_task
 	
@@ -187,6 +188,30 @@ mem_set:
 	pop	ebp		; Restaure EBP
 	ret
 
+	;;
+	;; mem_copy(u32_t src, u32_t dest, u32_t len)
+	;;
+	
+mem_copy:
+	push 	ebp         	; Sauvegarde de EBP
+	mov  	ebp,esp 	; Mise en place de la base
+	push	esi		; Sauvegarde ESI (Requis par GCC)
+	push	edi		; Sauvegarde EDI (Requis par GCC)
+	push	ecx		; Sauvegarde ECX
+	cld			; Fixe le sens du decompte
+	mov  	esi,[ebp+8]	; Recupere l addresse source
+	mov	edi,[ebp+12]	; Recupere l addresse de destination
+	mov	ecx,[ebp+16] 	; Recupere la taille
+	shr	ecx,0x2		; Divise la taille par 4
+	rep movsd		; Copie !
+	pop	ecx		; Restaure ECX
+	pop	edi		; Restaure EDI
+	pop	esi		; Restaure ESI
+	mov	esp,ebp		; Restaure la pile
+	pop	ebp		; Restaure EBP
+	ret
+
+	
 	;;
 	;; u32_t random(void)
 	;;
