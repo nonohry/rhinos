@@ -12,6 +12,11 @@
 #define   TRUE     1
 #define   FALSE    0
 
+/* SUCCESS & FAILURE */
+
+#define   EXIT_SUCCESS   1
+#define   EXIT_FAILURE   0
+
 /* NULL */
 
 #define   NULL     ((void*)0)

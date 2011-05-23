@@ -90,11 +90,11 @@ struct pte
 
 /* Self Mapping: Page Directory courant */
 #define PAGING_GET_PD							\
-  ( PAGING_SELFMAP<<PAGING_DIRSHIFT + PAGING_SELFMAP<<PAGING_TBLSHIFT )
+  ( (virtaddr_t)(PAGING_SELFMAP<<PAGING_DIRSHIFT) + (virtaddr_t)(PAGING_SELFMAP<<PAGING_TBLSHIFT) )
 
 /* Self Mapping: Page Table i du PD courant */
 #define PAGING_GET_PT(i)						\
-  ( PAGING_SELFMAP<<PAGING_DIRSHIFT + i<<PAGING_TBLSHIFT )
+  ( (virtaddr_t)(PAGING_SELFMAP<<PAGING_DIRSHIFT) + (virtaddr_t)(i<<PAGING_TBLSHIFT) )
 
 
 /*************
@@ -105,5 +105,6 @@ struct pte
 PUBLIC struct pde* kern_PD;
 
 PUBLIC void paging_init(void);
+PUBLIC u8_t paging_map(struct pde* pd, virtaddr_t vaddr, physaddr_t paddr, u8_t super);
 
 #endif

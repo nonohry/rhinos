@@ -22,7 +22,7 @@
  * Fonction principale 
  ***********************/
 
-PUBLIC void main()
+PUBLIC int main()
 {
   /* Initialisation de la memoire physique */
   physmem_init();
@@ -31,6 +31,12 @@ PUBLIC void main()
   /* Initialisation de la pagination */
   paging_init();
   bochs_print("Paging enabled\n");
+
+  /* Tentative de mappage */
+  u8_t* page=(u8_t*)phys_alloc(4096);
+  virtaddr_t virt = 0;
+  bochs_print("Tentative de mappage de %x sur %x\n",virt,(physaddr_t)page);
+  paging_map((struct pde*)PAGING_GET_PD, virt, (physaddr_t)page,TRUE);
 
 
   /* Initialisation du gestionnaire des IRQ */
@@ -45,5 +51,5 @@ PUBLIC void main()
     {
     }
 
-  return;
+  return EXIT_SUCCESS;
 }
