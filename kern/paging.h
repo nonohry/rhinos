@@ -90,11 +90,11 @@ struct pte
 
 /* Self Mapping: Page Directory courant */
 #define PAGING_GET_PD							\
-  ( PAGING_SELFMAP<<PAGING_DIR_SHIFT + PAGING_SELFMAP<<PAGING_TBL_DIR )
+  ( PAGING_SELFMAP<<PAGING_DIRSHIFT + PAGING_SELFMAP<<PAGING_TBLSHIFT )
 
 /* Self Mapping: Page Table i du PD courant */
 #define PAGING_GET_PT(i)						\
-  ( PAGING_SELFMAP<<PAGING_DIR_SHIFT + i<<PAGING_TBL_DIR )
+  ( PAGING_SELFMAP<<PAGING_DIRSHIFT + i<<PAGING_TBLSHIFT )
 
 
 /*************
