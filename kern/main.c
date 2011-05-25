@@ -32,11 +32,24 @@ PUBLIC int main()
   paging_init();
   bochs_print("Paging enabled\n");
 
-  /* Tentative de mappage */
-  u8_t* page=(u8_t*)phys_alloc(4096);
-  virtaddr_t virt = 0;
-  bochs_print("Tentative de mappage de %x sur %x\n",virt,(physaddr_t)page);
-  paging_map((struct pde*)PAGING_GET_PD, virt, (physaddr_t)page,TRUE);
+
+
+  /* Tentative de mappage a chaud de main() */
+
+  u8_t* new_ppage =(u8_t*)phys_alloc(4096); 
+  virtaddr_t tmp_vaddr=0x7000;
+  virtaddr_t main_vaddr=PAGING_ALIGN_INF((virtaddr_t)main);
+
+  /* Map la page physique avec l adresse temporaire */
+  paging_map(tmp_vaddr,(physaddr_t)new_ppage,TRUE);
+  /* Copie (en virtuelle) les donnees des pages */
+  mem_copy(main_vaddr,tmp_vaddr,4096);
+  /* Map la page de main sur la nouvelle page physique */
+  paging_map(main_vaddr,(physaddr_t)new_ppage, TRUE);
+  /* vide le tlb */
+  load_CR3((physaddr_t)kern_PD);
+
+
 
 
   /* Initialisation du gestionnaire des IRQ */

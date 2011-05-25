@@ -59,20 +59,16 @@ PUBLIC void paging_init(void)
  * Mapping
  **********/
 
-PUBLIC u8_t paging_map(struct pde* pd, virtaddr_t vaddr, physaddr_t paddr, u8_t super)
+PUBLIC u8_t paging_map(virtaddr_t vaddr, physaddr_t paddr, u8_t super)
 {
+  struct pde* pd;
   struct pte* table;
   u16_t pde,pte;
 
-  // DEBUG
-  bochs_print("pd: 0x%x\n",(u32_t)pd);
-
-  /* Recupere le pde et pte associe */
+  /* Recupere le pd, pde et pte associe */
   pde = PAGING_GET_PDE(vaddr);
   pte = PAGING_GET_PTE(vaddr);
-
-  // DEBUG
-  bochs_print("pde: %d, pte=%d\n",pde,pte);
+  pd = (struct pde*)PAGING_GET_PD();
 
   /* Interdit le pde du self map */
   if (pde == PAGING_SELFMAP)
@@ -84,9 +80,6 @@ PUBLIC u8_t paging_map(struct pde* pd, virtaddr_t vaddr, physaddr_t paddr, u8_t 
   /* Si le pde n'existe pas, on le cree */
   if (!(pd[pde].present))
     {
-      // DEBUG
-      bochs_print("pd[pde].present=0\n");
-
       /* Alloue une page physique */
       table = (struct pte*)phys_alloc(PAGING_ENTRIES*sizeof(struct pte));
       if (table == NULL)
@@ -94,11 +87,6 @@ PUBLIC u8_t paging_map(struct pde* pd, virtaddr_t vaddr, physaddr_t paddr, u8_t 
 	  bochs_print("Unable to allocate %d bytes\n",PAGING_ENTRIES*sizeof(struct pte));
 	  return EXIT_FAILURE;
 	}
-      
-
-      // DEBUG
-      bochs_print("new table:0x%x\n",(u32_t)table);
-
 
       /* Fait pointer le pde sur la nouvelle page */
       pd[pde].present = 1;
@@ -106,25 +94,14 @@ PUBLIC u8_t paging_map(struct pde* pd, virtaddr_t vaddr, physaddr_t paddr, u8_t 
       pd[pde].user = (super?0:1);
       pd[pde].baseaddr = (((physaddr_t)table)>>PAGING_BASESHIFT);
 
-      // DEBUG
-      bochs_print("pd[pde].baseaddr=0x%x\n",((physaddr_t)table) >> PAGING_BASESHIFT);
-
-
     }
 
   /* Ici, la table existe forcement */
-  table = (struct pte*)(pd[pde].baseaddr << PAGING_BASESHIFT);
-
-  // DEBUG
-  bochs_print("table:0x%x\n",(u32_t)table);
+  table = (struct pte*)(PAGING_GET_PT(pde));
 
   /* Si le pte est present, l adresse est deja mappee */
   if (table[pte].present)
     {
-
-      // DEBUG
-      bochs_print("table[pte].present=1\n");
-
       /* Libere la page precedemment allouee */
       phys_free( (physaddr_t*)(table[pte].baseaddr<<PAGING_BASESHIFT) );
     }
@@ -134,10 +111,6 @@ PUBLIC u8_t paging_map(struct pde* pd, virtaddr_t vaddr, physaddr_t paddr, u8_t 
   table[pte].rw = 1;
   table[pte].user = (super?0:1);
   table[pte].baseaddr = paddr >> PAGING_BASESHIFT;
-
-  // DEBUG
-  bochs_print("table[pte].baseaddr=0x%x\n",paddr >> PAGING_BASESHIFT);
-
 
   return EXIT_SUCCESS;
 }
