@@ -48,5 +48,7 @@ struct ppage_node
 PUBLIC void physmem_init(void);
 PUBLIC void* phys_alloc(u32_t size);
 PUBLIC void phys_free(void* addr);
+PUBLIC void phys_map(void* addr);
+PUBLIC void phys_unmap(void* addr);
 
 #endif

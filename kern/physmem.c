@@ -16,6 +16,8 @@
  ***********************/
 
 PRIVATE u8_t phys_isInArea(struct ppage_node* node, physaddr_t start, u32_t size); 
+PRIVATE struct ppage_node* phys_find_used(physaddr_t paddr);
+PRIVATE void phys_free_buddy(struct ppage_node* node);
 
 PRIVATE struct ppage_node* ppage_free[PPAGE_MAX_BUDDY];
 PRIVATE struct ppage_node* ppage_used;
@@ -69,8 +71,7 @@ PUBLIC void physmem_init(void)
       node=(struct ppage_node*)(PPAGE_NODE_POOL_ADDR+i*sizeof(struct ppage_node));
       node->start=(i<<PPAGE_SHIFT);
       node->size=(1<<PPAGE_SHIFT);
-      /* Considere la page comme mappee */
-      node->maps=1;
+
       /* Enfile dans a liste ppage_used */
       LLIST_ADD(ppage_used,node);  
     
@@ -157,8 +158,6 @@ PUBLIC void* phys_alloc(u32_t size)
 
   /* Maintenant nous avons un noeud disponible au niveau voulu */
   node = LLIST_GETHEAD(ppage_free[ind]);
-  /* Incremente le nombre de mapping */
-  node->maps++;
   /* Met a jour les listes */
   LLIST_REMOVE(ppage_free[ind],node);
   LLIST_ADD(ppage_used,node);
@@ -175,63 +174,140 @@ PUBLIC void phys_free(void* addr)
 {
   struct ppage_node* node;
 
+  /* Cherche le noeud associe a l adresse */
+  node = phys_find_used((physaddr_t)addr);
+
+  /* Si un noeud est trouve, on libere */
+  if (node != NULL) 
+    {
+      phys_free_buddy(node);
+    }
+  return;
+}
+
+
+
+/*******************************************
+ * Indique un mappage sur une ppage allouee
+ *******************************************/
+
+PUBLIC void phys_map(void* addr)
+{
+  struct ppage_node* node;
+  
+  /* Cherche le noeud associe a l adresse */
+  node = phys_find_used((physaddr_t)addr);
+
+  if (node != NULL)
+    {
+      /* Incremente le nombre de mappages */
+      node->maps++;
+    }
+
+  return;
+}
+
+
+/*********************************************
+ * Supprime un mappage sur une ppage allouee
+ *********************************************/
+
+PUBLIC void phys_unmap(void* addr)
+{
+  struct ppage_node* node;
+  
+  /* Cherche le noeud associe a l adresse */
+  node = phys_find_used((physaddr_t)addr);
+
+  if ((node!=NULL)&&(node->maps))
+    {
+      /* Decremente le nombre de mappages */
+      node->maps--;
+      /* Plus de mappage ? */
+      if (!(node->maps))
+	{
+	  /* On libere */
+	  phys_free_buddy(node);
+	}
+    }
+
+  return;
+}
+
+
+/***********************************
+ * La fonction reelle de liberation
+ ***********************************/
+
+PRIVATE void phys_free_buddy(struct ppage_node* node)
+{
+  /* Enleve le noeud de la liste des noeuds alloues */
+  LLIST_REMOVE(ppage_used,node);
+  
+  /* Insere "recursivement" le noeud */
+  while((node->index < PPAGE_MAX_BUDDY-1)&&(!LLIST_ISNULL(ppage_free[node->index])))
+    {
+      struct ppage_node* buddy;
+      
+      /* Recherche d un buddy */
+      buddy = LLIST_GETHEAD(ppage_free[node->index]);
+      
+      while ( (node->start+node->size != buddy->start)
+	      && (buddy->start+buddy->size != node->start))
+	{
+	  buddy = LLIST_NEXT(ppage_free[node->index],buddy);
+	  if (LLIST_ISHEAD(ppage_free[node->index],buddy))
+	    {
+	      /* Pas de buddy, on insere */
+	      LLIST_ADD(ppage_free[node->index],node);
+	      return;
+	    }
+	}
+      
+      /* Buddy trouve ici */
+      node->start = (node->start<buddy->start?node->start:buddy->start);
+      node->size <<= 1;
+      node->index++;
+      LLIST_REMOVE(ppage_free[buddy->index],buddy);
+      LLIST_ADD(ppage_node_pool, buddy);
+      
+    }
+  
+  /* Dernier niveau ou niveau vide */
+  LLIST_ADD(ppage_free[node->index],node);
+  
+  
+  return;
+}
+
+
+
+/********************************************
+ * Trouve le noeud correspondant a l adresse
+ ********************************************/
+
+PRIVATE struct ppage_node* phys_find_used(physaddr_t paddr)
+{
+  struct ppage_node* node;
+  
   /* Recherche du node dans ppage_used */
   node = LLIST_GETHEAD(ppage_used);
 
-  while(node->start != (physaddr_t)addr)
+  while(node->start != paddr)
     {
       node = LLIST_NEXT(ppage_used, node);
       if(LLIST_ISHEAD(ppage_used, node))
 	{
 	  /* Adresse non trouvee */
-	  return;
+	  return NULL;
 	}
     }
 
-  /* Adresse trouvee ici, on decremente le nombre de mapping */
-  node->maps--;
+  /* Adresse trouvee */
+  return node;
 
-  /* S il n y a plus de mapping, on libere */
-  if (node->maps <= 0) 
-    {
-      /* Enleve le noeud de la liste des noeuds alloues */
-      LLIST_REMOVE(ppage_used,node);
-      
-      /* Insere "recursivement" le noeud */
-      while((node->index < PPAGE_MAX_BUDDY-1)&&(!LLIST_ISNULL(ppage_free[node->index])))
-	{
-	  struct ppage_node* buddy;
-	  
-	  /* Recherche d un buddy */
-	  buddy = LLIST_GETHEAD(ppage_free[node->index]);
-	  
-	  while ( (node->start+node->size != buddy->start)
-		  && (buddy->start+buddy->size != node->start))
-	    {
-	      buddy = LLIST_NEXT(ppage_free[node->index],buddy);
-	      if (LLIST_ISHEAD(ppage_free[node->index],buddy))
-		{
-		  /* Pas de buddy, on insere */
-		  LLIST_ADD(ppage_free[node->index],node);
-		  return;
-		}
-	    }
-	  
-	  /* Buddy trouve ici */
-	  node->start = (node->start<buddy->start?node->start:buddy->start);
-	  node->size <<= 1;
-	  node->index++;
-	  LLIST_REMOVE(ppage_free[buddy->index],buddy);
-	  LLIST_ADD(ppage_node_pool, buddy);
-	  
-	}
-      
-      /* Dernier niveau ou niveau vide */
-      LLIST_ADD(ppage_free[node->index],node);
-    }
-
-  return;
 }
+
 
 
 /************************

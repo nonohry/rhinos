@@ -102,8 +102,8 @@ PUBLIC u8_t paging_map(virtaddr_t vaddr, physaddr_t paddr, u8_t super)
   /* Si le pte est present, l adresse est deja mappee */
   if (table[pte].present)
     {
-      /* Libere la page precedemment allouee */
-      phys_free( (physaddr_t*)(table[pte].baseaddr<<PAGING_BASESHIFT) );
+      /* Unmap/Libere la page precedemment allouee */
+      phys_unmap( (physaddr_t*)(table[pte].baseaddr<<PAGING_BASESHIFT) );
     }
 
   /* Fait pointer le pte sur la page physique */
@@ -112,8 +112,63 @@ PUBLIC u8_t paging_map(virtaddr_t vaddr, physaddr_t paddr, u8_t super)
   table[pte].user = (super?0:1);
   table[pte].baseaddr = paddr >> PAGING_BASESHIFT;
 
+  /* Indique un mappage de notre adresse physique */
+  phys_map((void*)paddr);
+
   return EXIT_SUCCESS;
 }
+
+
+/*************
+ * Unmapping
+ ************/
+
+PUBLIC void paging_unmap(virtaddr_t vaddr)
+{
+  struct pde* pd;
+  struct pte* table;
+  u16_t pde,pte;
+
+  /* Recupere le pd, pde et pte associe */
+  pde = PAGING_GET_PDE(vaddr);
+  pte = PAGING_GET_PTE(vaddr);
+  pd = (struct pde*)PAGING_GET_PD();
+
+  /* Interdit le pde du self map */
+  if (pde == PAGING_SELFMAP)
+    {
+      bochs_print("Cannot unmap virtual address (self map)\n");
+      return;
+    }
+
+  /* Si le pde n'existe pas, on retourne */
+  if (!(pd[pde].present))
+    {
+      return;
+    }
+
+  /* Recupere la table */
+  table = (struct pte*)(PAGING_GET_PT(pde));
+
+  /* Si le pte n'existe pas, on retourne */
+  if (!(table[pte].present))
+    {
+      return;
+    }
+
+  /* Demap/Libere la page physique */
+  phys_unmap((physaddr_t*)(table[pte].baseaddr<<PAGING_BASESHIFT));
+
+  /* Nullifie la structure */
+  table[pte].present=0;
+  table[pte].rw=0;
+  table[pte].user=0;
+  table[pte].baseaddr=0;
+
+  return;
+	   
+}
+  
 
 
 /******************************

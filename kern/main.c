@@ -42,10 +42,13 @@ PUBLIC int main()
 
   /* Map la page physique avec l adresse temporaire */
   paging_map(tmp_vaddr,(physaddr_t)new_ppage,TRUE);
-  /* Copie (en virtuelle) les donnees des pages */
-  mem_copy(main_vaddr,tmp_vaddr,4096);
+  /* Copie (en virtuel) les donnees des pages */
+  mem_copy(main_vaddr,tmp_vaddr,PAGE_SIZE);
   /* Map la page de main sur la nouvelle page physique */
   paging_map(main_vaddr,(physaddr_t)new_ppage, TRUE);
+  /* Unmap l adresse temporaire */
+  paging_unmap(tmp_vaddr);
+  
   /* vide le tlb */
   load_CR3((physaddr_t)kern_PD);
 
