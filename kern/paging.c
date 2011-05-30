@@ -64,6 +64,7 @@ PUBLIC u8_t paging_map(virtaddr_t vaddr, physaddr_t paddr, u8_t super)
   struct pde* pd;
   struct pte* table;
   u16_t pde,pte;
+  u8_t evermap=0;
 
   /* Recupere le pd, pde et pte associe */
   pde = PAGING_GET_PDE(vaddr);
@@ -94,6 +95,9 @@ PUBLIC u8_t paging_map(virtaddr_t vaddr, physaddr_t paddr, u8_t super)
       pd[pde].user = (super?0:1);
       pd[pde].baseaddr = (((physaddr_t)table)>>PAGING_BASESHIFT);
 
+      /* Nullifie le page table */
+      mem_set(0,PAGING_GET_PT(pde),PAGING_ENTRIES*sizeof(struct pte));
+
     }
 
   /* Ici, la table existe forcement */
@@ -104,6 +108,7 @@ PUBLIC u8_t paging_map(virtaddr_t vaddr, physaddr_t paddr, u8_t super)
     {
       /* Unmap/Libere la page precedemment allouee */
       phys_unmap( (physaddr_t*)(table[pte].baseaddr<<PAGING_BASESHIFT) );
+      evermap=1;
     }
 
   /* Fait pointer le pte sur la page physique */
@@ -114,6 +119,12 @@ PUBLIC u8_t paging_map(virtaddr_t vaddr, physaddr_t paddr, u8_t super)
 
   /* Indique un mappage de notre adresse physique */
   phys_map((void*)paddr);
+
+  /* Indique un mappage dans la page table si un tel mappage n'existait pas deja */
+  if (!evermap)
+    {
+      phys_map((physaddr_t*)(pd[pde].baseaddr << PAGING_BASESHIFT));
+    }
 
   return EXIT_SUCCESS;
 }
@@ -165,6 +176,17 @@ PUBLIC void paging_unmap(virtaddr_t vaddr)
   table[pte].user=0;
   table[pte].baseaddr=0;
 
+  /* Decremente le compteur de maps de la table */
+  if (phys_unmap((physaddr_t*)(pd[pde].baseaddr << PAGING_BASESHIFT)) == PHYS_UNMAP_FREE)
+    {
+      /* Si la page de la table est liberee, on nullifie le pd[pde] */
+      pd[pde].present = 0;
+      pd[pde].rw=0;
+      pd[pde].user=0;
+      pd[pde].baseaddr=0;
+
+    }
+  
   return;
 	   
 }
@@ -217,8 +239,15 @@ PRIVATE void paging_identityMapping(physaddr_t start, physaddr_t end)
       table[pte].present = 1;
       table[pte].rw = 1;
       table[pte].user = 0;
-      table[pte].baseaddr = (p>>PAGING_BASESHIFT);    
+      table[pte].baseaddr = (p>>PAGING_BASESHIFT);
 
+      /* Indique le mappage de notre adresse physique */
+      phys_map((physaddr_t*)p);
+      bochs_print("Mappage de l'adresse 0x%x\n",p);
+
+      /* Indique un mappage present sur la page de la table */
+      phys_map((physaddr_t*)(kern_PD[pde].baseaddr<<PAGING_BASESHIFT));
+      bochs_print("Mappage du pde %d \n",pde);
     }
 
   return;

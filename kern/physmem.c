@@ -212,7 +212,7 @@ PUBLIC void phys_map(void* addr)
  * Supprime un mappage sur une ppage allouee
  *********************************************/
 
-PUBLIC void phys_unmap(void* addr)
+PUBLIC u8_t phys_unmap(void* addr)
 {
   struct ppage_node* node;
   
@@ -228,10 +228,15 @@ PUBLIC void phys_unmap(void* addr)
 	{
 	  /* On libere */
 	  phys_free_buddy(node);
+	  return PHYS_UNMAP_FREE;
+	}
+      else
+	{
+	  return PHYS_UNMAP_UNMAP;
 	}
     }
 
-  return;
+  return PHYS_UNMAP_NONE;
 }
 
 

@@ -26,6 +26,11 @@
 #define ACPI_AREA_SIZE        0x13FFFFF
 
 
+#define PHYS_UNMAP_NONE       0
+#define PHYS_UNMAP_UNMAP      1
+#define PHYS_UNMAP_FREE       2
+
+
 /***************
  * Structures 
  ***************/
@@ -49,6 +54,6 @@ PUBLIC void physmem_init(void);
 PUBLIC void* phys_alloc(u32_t size);
 PUBLIC void phys_free(void* addr);
 PUBLIC void phys_map(void* addr);
-PUBLIC void phys_unmap(void* addr);
+PUBLIC u8_t phys_unmap(void* addr);
 
 #endif
