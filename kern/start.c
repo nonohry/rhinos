@@ -20,7 +20,7 @@
 PUBLIC void cstart()
 { 
   /* Recopie les informations de demarrage */
-  bootinfo = (struct boot_info*)BOOTINFO_ADDR;
+  bootinfo = (struct boot_info*)START_BOOTINFO_ADDR;
 
   /* Initialise les tables du mode protege */
   gdt_init();

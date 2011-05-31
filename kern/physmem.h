@@ -11,19 +11,19 @@
  * Constantes 
  **************/
 
-#define PPAGE_MAX_BUDDY      21        /* 32 - 12 + 1 = 21 */
-#define PPAGE_SHIFT          12        /* 2^12=4096    */
-#define PPAGE_NODE_POOL_ADDR 0x100000  /* Adresse de base du pool de ppage nodes */
+#define PHYS_PAGE_MAX_BUDDY      21        /* 32 - 12 + 1 = 21 */
+#define PHYS_PAGE_SHIFT          12        /* 2^12=4096    */
+#define PHYS_PAGE_NODE_POOL_ADDR 0x100000  /* Adresse de base du pool de ppage nodes */
 
-#define SHIFT1024            10        /* 2^10 = 1024  */
-#define SHIFT64               6        /* 2^6 = 64    */
+#define PHYS_SHIFT1024            10        /* 2^10 = 1024  */
+#define PHYS_SHIFT64               6        /* 2^6 = 64    */
 
-#define KERN_AREA_START       0
-#define ROM_AREA_START        0x9FC00
-#define ROM_AREA_SIZE         0x603FF
-#define POOL_AREA_START       PPAGE_NODE_POOL_ADDR
-#define ACPI_AREA_START       0xFEC00000
-#define ACPI_AREA_SIZE        0x13FFFFF
+#define PHYS_KERN_AREA_START       0
+#define PHYS_ROM_AREA_START        0x9FC00
+#define PHYS_ROM_AREA_SIZE         0x603FF
+#define PHYS_POOL_AREA_START       PHYS_PAGE_NODE_POOL_ADDR
+#define PHYS_ACPI_AREA_START       0xFEC00000
+#define PHYS_ACPI_AREA_SIZE        0x13FFFFF
 
 
 #define PHYS_UNMAP_NONE       0

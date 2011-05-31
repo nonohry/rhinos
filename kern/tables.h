@@ -16,40 +16,40 @@
 
 /* Indexes de la GDT */
 
-#define NULL_INDEX     0
-#define CS_INDEX       1
-#define XS_INDEX       2            /* DS,ES,FS,SS */
-#define TSS_INDEX      3
-#define LDT_INDEX      4            /* Index de la premiere LDT */
-#define MAX_INDEX      LDT_INDEX    /* Nombre maximum d index d une GDT */
+#define TABLES_NULL_INDEX     0
+#define TABLES_CS_INDEX       1
+#define TABLES_XS_INDEX       2                  /* DS,ES,FS,SS */
+#define TABLES_TSS_INDEX      3
+#define TABLES_LDT_INDEX      4                  /* Index de la premiere LDT */
+#define TABLES_MAX_INDEX      TABLES_LDT_INDEX   /* Nombre maximum d index d une GDT */
 
 /* Taille de la GDT & IDT */
 
-#define GDT_SIZE       MAX_INDEX+1  /* Debute a 0 */
-#define IDT_SIZE       255
+#define TABLES_GDT_SIZE       TABLES_MAX_INDEX+1  /* Debute a 0 */
+#define TABLES_IDT_SIZE       255
 
 /* Selecteurs de segment */
 
-#define CS_SELECTOR	8    /*  CS = 0000000000001  0  00   =  8  */
-#define	DS_SELECTOR     16   /*  DS = 0000000000010  0  00   =  16 */
-#define	ES_SELECTOR	16   /*  ES = 0000000000010  0  00   =  16 */
-#define	SS_SELECTOR	16   /*  SS = 0000000000010  0  00   =  16 */
-#define TSS_SELECTOR    24   /* TSS = 0000000000011  0  00   =  24 */
+#define TABLES_CS_SELECTOR	8    /*  CS = 0000000000001  0  00   =  8  */
+#define	TABLES_DS_SELECTOR      16   /*  DS = 0000000000010  0  00   =  16 */
+#define	TABLES_ES_SELECTOR	16   /*  ES = 0000000000010  0  00   =  16 */
+#define	TABLES_SS_SELECTOR	16   /*  SS = 0000000000010  0  00   =  16 */
+#define TABLES_TSS_SELECTOR     24   /* TSS = 0000000000011  0  00   =  24 */
 
-#define SHIFT_SELECTOR  3    /* INDEX << SHIFT_SELECTOR = SELECTOR */
+#define TABLES_SHIFT_SELECTOR  3    /* INDEX << SHIFT_SELECTOR = SELECTOR */
 
 /* Rings */
 
-#define RING0   0
-#define RING1   1
-#define RING2   2
-#define RING3   3
+#define TABLES_RING0   0
+#define TABLES_RING1   1
+#define TABLES_RING2   2
+#define TABLES_RING3   3
 
 /* Limite des segments  */
 
-#define KERN_BASE         0x0        /* Adresse de base du noyau */
-#define KERN_LIMIT_4G     0x0        /* Limite de l'espace Noyau (4G) */
-#define KERN_TOP_STACK    0x7C00     /* ESP Noyau au boot */
+#define TABLES_KERN_BASE         0x0        /* Adresse de base du noyau */
+#define TABLES_KERN_LIMIT_4G     0x0        /* Limite de l'espace Noyau (4G) */
+#define TABLES_KERN_TOP_STACK    0x7C00     /* ESP Noyau au boot */
 
 
 /* Descripteur de Table (GDT & LDT) */
@@ -149,8 +149,8 @@ EXTERN void excep_18(void);
  * Prototypes 
  **************/
 
-PUBLIC struct seg_desc gdt[GDT_SIZE];  /* GDT */
-PUBLIC struct gate_desc idt[IDT_SIZE]; /* IDT */
+PUBLIC struct seg_desc gdt[TABLES_GDT_SIZE];  /* GDT */
+PUBLIC struct gate_desc idt[TABLES_IDT_SIZE]; /* IDT */
 PUBLIC struct table_desc gdt_desc;     /* Descripteur de la GDT */
 PUBLIC struct table_desc idt_desc;     /* Descripteur de l'IDT */
 

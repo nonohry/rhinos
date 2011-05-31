@@ -43,7 +43,7 @@ PUBLIC void paging_init(void)
   
   /* Identity Mapping */
   paging_identityMapping(0,bootinfo->kern_end);
-  paging_identityMapping(0x9FC00,PPAGE_NODE_POOL_ADDR+bootinfo->mem_ram_pages*sizeof(struct ppage_node));
+  paging_identityMapping(0x9FC00,PHYS_PAGE_NODE_POOL_ADDR+bootinfo->mem_ram_pages*sizeof(struct ppage_node));
 
   /* Charge le Kernel  Page Directory */
   load_CR3((physaddr_t)kern_PD);
@@ -243,11 +243,9 @@ PRIVATE void paging_identityMapping(physaddr_t start, physaddr_t end)
 
       /* Indique le mappage de notre adresse physique */
       phys_map((physaddr_t*)p);
-      bochs_print("Mappage de l'adresse 0x%x\n",p);
 
       /* Indique un mappage present sur la page de la table */
       phys_map((physaddr_t*)(kern_PD[pde].baseaddr<<PAGING_BASESHIFT));
-      bochs_print("Mappage du pde %d \n",pde);
     }
 
   return;

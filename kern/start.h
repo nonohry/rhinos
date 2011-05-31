@@ -13,14 +13,14 @@
  * Constantes
  **************/
 
-#define BOOTINFO_ADDR     0x803
+#define START_BOOTINFO_ADDR     0x803
 
 /* Type pour boot_mmap_e820 */
 
-#define E820_AVAILABLE    0x1
-#define E820_RESERVED     0x2
-#define E820_ACPI         0x3
-#define E820_ACPI_NVS     0x4
+#define START_E820_AVAILABLE    0x1
+#define START_E820_RESERVED     0x2
+#define START_E820_ACPI         0x3
+#define START_E820_ACPI_NVS     0x4
 
 
 /********************** 

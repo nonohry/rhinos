@@ -50,7 +50,7 @@
 #define SEG_B           0x40 /* 01000000b = 0x40 */
 #define SEG_GRANULAR    0x80 /* 10000000b = 0x40 */
 
-#define GRANULAR_LIMIT    0xFFFFFL   /* Pas de granularite au dessous (L pour Long) */
+#define SEG_GRANULAR_LIMIT    0xFFFFFL   /* Pas de granularite au dessous (L pour Long) */
 
 
 /*****************************

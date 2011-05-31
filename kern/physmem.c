@@ -19,7 +19,7 @@ PRIVATE u8_t phys_isInArea(struct ppage_node* node, physaddr_t start, u32_t size
 PRIVATE struct ppage_node* phys_find_used(physaddr_t paddr);
 PRIVATE void phys_free_buddy(struct ppage_node* node);
 
-PRIVATE struct ppage_node* ppage_free[PPAGE_MAX_BUDDY];
+PRIVATE struct ppage_node* ppage_free[PHYS_PAGE_MAX_BUDDY];
 PRIVATE struct ppage_node* ppage_used;
 PRIVATE struct ppage_node* ppage_node_pool;
 
@@ -36,7 +36,7 @@ PUBLIC void physmem_init(void)
   struct ppage_node* node;
 
   /* Nullifie les structures de pages */  
-  for(i=0; i<PPAGE_MAX_BUDDY; i++)
+  for(i=0; i<PHYS_PAGE_MAX_BUDDY; i++)
     {
       LLIST_NULLIFY(ppage_free[i]);
     }
@@ -57,29 +57,29 @@ PUBLIC void physmem_init(void)
   else
     {
       /* Taille selon int 15/AX=E801 (limite a 4G) */
-      ram_size = ((bootinfo->mem_lower + (bootinfo->mem_upper << SHIFT64))<<SHIFT1024);
+      ram_size = ((bootinfo->mem_lower + (bootinfo->mem_upper << PHYS_SHIFT64))<<PHYS_SHIFT1024);
     }
 
   /* Nombre maximal de page */
-  ram_pages = (ram_size >> PPAGE_SHIFT);
+  ram_pages = (ram_size >> PHYS_PAGE_SHIFT);
   /* Sauve le nombre dans bootinfo */
   bootinfo->mem_ram_pages = ram_pages;
 
   /* Cree le pool de node et le buddy */
   for(i=0; i<ram_pages; i++)
     {
-      node=(struct ppage_node*)(PPAGE_NODE_POOL_ADDR+i*sizeof(struct ppage_node));
-      node->start=(i<<PPAGE_SHIFT);
-      node->size=(1<<PPAGE_SHIFT);
+      node=(struct ppage_node*)(PHYS_PAGE_NODE_POOL_ADDR+i*sizeof(struct ppage_node));
+      node->start=(i<<PHYS_PAGE_SHIFT);
+      node->size=(1<<PHYS_PAGE_SHIFT);
 
       /* Enfile dans a liste ppage_used */
       LLIST_ADD(ppage_used,node);  
     
       /* Construit le buddy en liberant les pages libres */
-      if ( !phys_isInArea(node,KERN_AREA_START,bootinfo->kern_end+1) &&
-	   !phys_isInArea(node,ROM_AREA_START,ROM_AREA_SIZE)  &&
-	   !phys_isInArea(node,POOL_AREA_START,ram_pages*sizeof(struct ppage_node)) &&
-	   !phys_isInArea(node,ACPI_AREA_START,ACPI_AREA_SIZE) )
+      if ( !phys_isInArea(node,PHYS_KERN_AREA_START,bootinfo->kern_end+1) &&
+	   !phys_isInArea(node,PHYS_ROM_AREA_START,PHYS_ROM_AREA_SIZE)  &&
+	   !phys_isInArea(node,PHYS_POOL_AREA_START,ram_pages*sizeof(struct ppage_node)) &&
+	   !phys_isInArea(node,PHYS_ACPI_AREA_START,PHYS_ACPI_AREA_SIZE) )
 	{
 	  /* Libere la page du node */
 	  phys_free((void*)node->start);
@@ -120,13 +120,13 @@ PUBLIC void* phys_alloc(u32_t size)
     }
   
   /* En deduit l indice */
-  ind -= PPAGE_SHIFT;
+  ind -= PHYS_PAGE_SHIFT;
   
   /* Si ppage_free[ind] est NULL, on cherche un niveau superieur disponible */
-  for(i=ind;LLIST_ISNULL(ppage_free[i])&&(i<PPAGE_MAX_BUDDY);i++)
+  for(i=ind;LLIST_ISNULL(ppage_free[i])&&(i<PHYS_PAGE_MAX_BUDDY);i++)
     {}
 
-  if (i>=PPAGE_MAX_BUDDY)
+  if (i>=PHYS_PAGE_MAX_BUDDY)
     {
       bochs_print("Can't allocate %d bytes !\n",size);
       return NULL;
@@ -250,7 +250,7 @@ PRIVATE void phys_free_buddy(struct ppage_node* node)
   LLIST_REMOVE(ppage_used,node);
   
   /* Insere "recursivement" le noeud */
-  while((node->index < PPAGE_MAX_BUDDY-1)&&(!LLIST_ISNULL(ppage_free[node->index])))
+  while((node->index < PHYS_PAGE_MAX_BUDDY-1)&&(!LLIST_ISNULL(ppage_free[node->index])))
     {
       struct ppage_node* buddy;
       
