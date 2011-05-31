@@ -27,7 +27,7 @@
 
 /* Prototypes */
 
-PUBLIC void clock_init();
-PUBLIC u16_t clock_read();
+PUBLIC void pit_init();
+PUBLIC u16_t pit_read();
 
 #endif

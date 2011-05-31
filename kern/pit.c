@@ -13,14 +13,14 @@
  * Declarations PRIVATE 
  ************************/
 
-PRIVATE void clock_handler();
+PRIVATE void pit_handler();
 PRIVATE struct irq_node pit_irq_node;
 
 /*******************************************
  * Initialise l'horloge avec une frequence
  *******************************************/
 
-PUBLIC void clock_init()
+PUBLIC void pit_init()
 {
   u32_t ticks;
 
@@ -45,7 +45,7 @@ PUBLIC void clock_init()
     }
   
   /* Cree le noeud irq */
-  pit_irq_node.flih = clock_handler;
+  pit_irq_node.flih = pit_handler;
   irq_add_flih(0,&pit_irq_node);
 
   return;
@@ -56,7 +56,7 @@ PUBLIC void clock_init()
  * Handler (flih) 
  *****************/
 
-PRIVATE void clock_handler()
+PRIVATE void pit_handler()
 {
   
    bochs_print("tick ! ");
@@ -68,7 +68,7 @@ PRIVATE void clock_handler()
  * Lit l horloge
  *****************/
 
-PUBLIC u16_t clock_read()
+PUBLIC u16_t pit_read()
 {
   u8_t r1,r2;
 
