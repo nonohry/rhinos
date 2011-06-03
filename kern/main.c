@@ -56,8 +56,6 @@ PUBLIC int main()
 
 
 
-
-
   /* Initialisation du gestionnaire des IRQ */
   irq_init();
 

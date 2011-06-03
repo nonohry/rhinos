@@ -107,7 +107,7 @@ PUBLIC u8_t paging_map(virtaddr_t vaddr, physaddr_t paddr, u8_t super)
   if (table[pte].present)
     {
       /* Unmap/Libere la page precedemment allouee */
-      phys_unmap( (physaddr_t*)(table[pte].baseaddr<<PAGING_BASESHIFT) );
+      phys_unmap(table[pte].baseaddr<<PAGING_BASESHIFT);
       evermap=1;
     }
 
@@ -118,12 +118,12 @@ PUBLIC u8_t paging_map(virtaddr_t vaddr, physaddr_t paddr, u8_t super)
   table[pte].baseaddr = paddr >> PAGING_BASESHIFT;
 
   /* Indique un mappage de notre adresse physique */
-  phys_map((void*)paddr);
+  phys_map(paddr);
 
   /* Indique un mappage dans la page table si un tel mappage n'existait pas deja */
   if (!evermap)
     {
-      phys_map((physaddr_t*)(pd[pde].baseaddr << PAGING_BASESHIFT));
+      phys_map(pd[pde].baseaddr << PAGING_BASESHIFT);
     }
 
   return EXIT_SUCCESS;
@@ -168,7 +168,7 @@ PUBLIC void paging_unmap(virtaddr_t vaddr)
     }
 
   /* Demap/Libere la page physique */
-  phys_unmap((physaddr_t*)(table[pte].baseaddr<<PAGING_BASESHIFT));
+  phys_unmap(table[pte].baseaddr<<PAGING_BASESHIFT);
 
   /* Nullifie la structure */
   table[pte].present=0;
@@ -177,7 +177,7 @@ PUBLIC void paging_unmap(virtaddr_t vaddr)
   table[pte].baseaddr=0;
 
   /* Decremente le compteur de maps de la table */
-  if (phys_unmap((physaddr_t*)(pd[pde].baseaddr << PAGING_BASESHIFT)) == PHYS_UNMAP_FREE)
+  if (phys_unmap(pd[pde].baseaddr << PAGING_BASESHIFT) == PHYS_UNMAP_FREE)
     {
       /* Si la page de la table est liberee, on nullifie le pd[pde] */
       pd[pde].present = 0;
@@ -242,10 +242,10 @@ PRIVATE void paging_identityMapping(physaddr_t start, physaddr_t end)
       table[pte].baseaddr = (p>>PAGING_BASESHIFT);
 
       /* Indique le mappage de notre adresse physique */
-      phys_map((physaddr_t*)p);
+      phys_map(p);
 
       /* Indique un mappage present sur la page de la table */
-      phys_map((physaddr_t*)(kern_PD[pde].baseaddr<<PAGING_BASESHIFT));
+      phys_map(kern_PD[pde].baseaddr<<PAGING_BASESHIFT);
     }
 
   return;

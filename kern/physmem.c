@@ -191,12 +191,12 @@ PUBLIC void phys_free(void* addr)
  * Indique un mappage sur une ppage allouee
  *******************************************/
 
-PUBLIC void phys_map(void* addr)
+PUBLIC void phys_map(physaddr_t addr)
 {
   struct ppage_node* node;
   
   /* Cherche le noeud associe a l adresse */
-  node = phys_find_used((physaddr_t)addr);
+  node = phys_find_used(addr);
 
   if (node != NULL)
     {
@@ -212,12 +212,12 @@ PUBLIC void phys_map(void* addr)
  * Supprime un mappage sur une ppage allouee
  *********************************************/
 
-PUBLIC u8_t phys_unmap(void* addr)
+PUBLIC u8_t phys_unmap(physaddr_t addr)
 {
   struct ppage_node* node;
   
   /* Cherche le noeud associe a l adresse */
-  node = phys_find_used((physaddr_t)addr);
+  node = phys_find_used(addr);
 
   if ((node!=NULL)&&(node->maps))
     {
