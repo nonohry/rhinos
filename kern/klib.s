@@ -4,7 +4,8 @@ global bochs_print
 global outb
 global inb
 global load_CR3
-global set_pg_cr0	
+global set_pg_cr0
+global flush_tlb
 global mem_set
 global mem_copy	
 global random
@@ -153,7 +154,8 @@ set_pg_cr0:
 	push 	ebp         	; Sauvegarde de EBP
 	mov  	ebp,esp 	; Mise en place de la base
 	push	esi		; Sauvegarde ESI (Requis par GCC)
-	push	edi
+	push	edi		; Sauvegarde EDI (Requis par GCC)
+	xor	eax,eax		; Nullifie EAX
 	mov	eax,cr0		; Recupere CR0
 	or	eax, 0x80000000	; Flag le bit PG (pagination)
 	mov	cr0,eax		; Active la pagination
@@ -164,6 +166,24 @@ set_pg_cr0:
 	ret
 
 
+	;;
+	;; flush_tlb(void)
+	;;
+
+flush_tlb:
+	push 	ebp         	; Sauvegarde de EBP
+	mov  	ebp,esp 	; Mise en place de la base
+	push	esi		; Sauvegarde ESI (Requis par GCC)
+	push	edi		; Sauvegarde EDI (Requis par GCC)
+	xor	eax,eax		; Nullifie EAX
+	mov	eax,cr3		; Recupere CR3
+	mov	cr3,eax		; Recharge CR3
+	pop	edi		; Restaure EDI
+	pop	esi		; Restaure ESI
+	mov	esp,ebp		; Restaure la pile
+	pop	ebp		; Restaure EBP
+	ret
+	
 	
 	;;
 	;; mem_set(u32_t val, u32_t dest, u32_t len)

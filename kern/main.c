@@ -50,7 +50,7 @@ PUBLIC int main()
   paging_unmap(tmp_vaddr);
   
   /* vide le tlb */
-  load_CR3((physaddr_t)kern_PD);
+  flush_tlb();
 
 
 
