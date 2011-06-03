@@ -6,6 +6,7 @@ global inb
 global load_CR3
 global set_pg_cr0
 global flush_tlb
+global invlpg	
 global mem_set
 global mem_copy	
 global random
@@ -184,6 +185,24 @@ flush_tlb:
 	pop	ebp		; Restaure EBP
 	ret
 	
+
+	;;
+	;; invlpg(virtaddr_t)
+	;;
+
+invlpg:
+	push 	ebp         	; Sauvegarde de EBP
+	mov  	ebp,esp 	; Mise en place de la base
+	push	esi		; Sauvegarde ESI (Requis par GCC)
+	push	edi		; Sauvegarde EDI (Requis par GCC)
+	xor	eax,eax		; Nullifie EAX
+	mov  	eax,[ebp+8]	; Recupere le parametre
+	invlpg	[eax]		; Invalide le tlb
+	pop	edi		; Restaure EDI
+	pop	esi		; Restaure ESI
+	mov	esp,ebp		; Restaure la pile
+	pop	ebp		; Restaure EBP
+	ret
 	
 	;;
 	;; mem_set(u32_t val, u32_t dest, u32_t len)

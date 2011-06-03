@@ -50,7 +50,10 @@ PUBLIC int main()
   paging_unmap(tmp_vaddr);
   
   /* vide le tlb */
-  flush_tlb();
+  invlpg(tmp_vaddr);
+  invlpg(main_vaddr);  
+  /* flush_tlb(); */
+
 
 
 
