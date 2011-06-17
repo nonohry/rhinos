@@ -17,7 +17,7 @@
 
 /* Allocation */
 #define WMALLOC_ALLOC(wm,wmsize)			\
-  (void*)( (wm).offset < (wm).size ? ( ((wm).offset+=wmsize) ? ( (wm).offset <= (wm).size ? ((wm).base+(wm).offset-wmsize) : 0 ) : 0 ) : 0 ); 
+  (void*)( (wm).offset < (wm).size ? ( ((wm).offset+=(wmsize)) ? ( (wm).offset <= (wm).size ? ((wm).base+(wm).offset-(wmsize)) : 0 ) : 0 ) : 0 ); 
 
 /* Liberation */
 #define WMALLOC_FREE(wm,addr)			
