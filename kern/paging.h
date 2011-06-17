@@ -25,8 +25,8 @@
 
 #define PAGING_SELFMAP      0x3FF
 
-#define PAGE_SHIFT          12
-#define PAGE_SIZE           4096
+#define PAGING_PAGE_SHIFT          12
+#define PAGING_PAGE_SIZE           4096
 
 /*************
  * Structures
@@ -80,13 +80,13 @@ struct pte
 #define PAGING_GET_PTE(addr)				\
   ( (addr >> PAGING_TBLSHIFT)&PAGING_TBLMASK )
 
-/* Alignement inferieur sur 4096 */
+/* Alignement inferieur sur PAGING_PAGE_SIZE */
 #define PAGING_ALIGN_INF(addr)			\
-  ( (addr >> PAGE_SHIFT) << PAGE_SHIFT )
+  ( (addr >> PAGING_PAGE_SHIFT) << PAGING_PAGE_SHIFT )
 
-/* Alignement superieur sur 4096 */
+/* Alignement superieur sur PAGING_PAGE_SIZE */
 #define PAGING_ALIGN_SUP(addr)						\
-  ( ((addr&0xFFFFF000) == addr)?(addr >> PAGE_SHIFT) << PAGE_SHIFT:((addr >> PAGE_SHIFT)+1) << PAGE_SHIFT )
+  ( ((addr&0xFFFFF000) == addr)?(addr >> PAGING_PAGE_SHIFT) << PAGING_PAGE_SHIFT:((addr >> PAGING_PAGE_SHIFT)+1) << PAGING_PAGE_SHIFT )
 
 /* Self Mapping: Page Directory courant */
 #define PAGING_GET_PD()							\

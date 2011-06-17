@@ -30,6 +30,18 @@
 #define PHYS_UNMAP_UNMAP      1
 #define PHYS_UNMAP_FREE       2
 
+/**********
+ * Macros
+ **********/
+
+/* Alignement inferieur sur PPAGE_SIZE */
+#define PHYS_ALIGN_INF(addr)			\
+  ( (addr >> PHYS_PAGE_SHIFT) << PHYS_PAGE_SHIFT )
+
+/* Alignement superieur sur PPAGE_SIZE */
+#define PHYS_ALIGN_SUP(addr)						\
+  ( ((addr&0xFFFFF000) == addr)?(addr >> PHYS_PAGE_SHIFT) << PHYS_PAGE_SHIFT:((addr >> PHYS_PAGE_SHIFT)+1) << PHYS_PAGE_SHIFT )
+
 
 /***************
  * Structures 
@@ -50,7 +62,7 @@ struct ppage_node
  * Prototypes 
  ***************/
 
-PUBLIC void physmem_init(void);
+PUBLIC void phys_init(void);
 PUBLIC void* phys_alloc(u32_t size);
 PUBLIC void phys_free(void* addr);
 PUBLIC void phys_map(physaddr_t addr);

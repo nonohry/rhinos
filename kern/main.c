@@ -25,7 +25,7 @@
 PUBLIC int main()
 {
   /* Initialisation de la memoire physique */
-  physmem_init();
+  phys_init();
   bochs_print("Physical Memory Manager initialized\n");
 
   /* Initialisation de la pagination */
@@ -43,7 +43,7 @@ PUBLIC int main()
   /* Map la page physique avec l adresse temporaire */
   paging_map(tmp_vaddr,(physaddr_t)new_ppage,TRUE);
   /* Copie (en virtuel) les donnees des pages */
-  mem_copy(main_vaddr,tmp_vaddr,PAGE_SIZE);
+  mem_copy(main_vaddr,tmp_vaddr,PAGING_PAGE_SIZE);
   /* Map la page de main sur la nouvelle page physique */
   paging_map(main_vaddr,(physaddr_t)new_ppage, TRUE);
   /* Unmap l adresse temporaire */

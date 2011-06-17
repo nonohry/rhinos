@@ -16,6 +16,7 @@
  ***********************/
 
 PRIVATE u8_t phys_isInArea(struct ppage_node* node, physaddr_t start, u32_t size); 
+PRIVATE short phys_msb(u32_t n);
 PRIVATE struct ppage_node* phys_find_used(physaddr_t paddr);
 PRIVATE void phys_free_buddy(struct ppage_node* node);
 
@@ -28,7 +29,7 @@ PRIVATE struct ppage_node* ppage_node_pool;
  * Initialisation
  *****************/
 
-PUBLIC void physmem_init(void)
+PUBLIC void phys_init(void)
 {
   u32_t i;
   u32_t ram_size=0;
@@ -110,17 +111,9 @@ PUBLIC void* phys_alloc(u32_t size)
   size = size | (size >> 8);
   size = size | (size >> 16);
   size = size + 1;
- 
-  /* Trouve le msb de la puissance */
-  ind=-1;
-  while(size!=0)
-    {
-      size>>=1;
-      ind++;
-    }
   
   /* En deduit l indice */
-  ind -= PHYS_PAGE_SHIFT;
+  ind = phys_msb(size) - PHYS_PAGE_SHIFT;
   
   /* Si ppage_free[ind] est NULL, on cherche un niveau superieur disponible */
   for(i=ind;LLIST_ISNULL(ppage_free[i])&&(i<PHYS_PAGE_MAX_BUDDY);i++)
@@ -313,6 +306,24 @@ PRIVATE struct ppage_node* phys_find_used(physaddr_t paddr)
 
 }
 
+
+
+/***********************
+ * Most Significant Bit
+ ***********************/
+
+PRIVATE short phys_msb(u32_t n)
+{
+  short  msb=-1;
+
+  while(n!=0)
+    {
+      n>>=1;
+      msb++;
+    }
+
+  return msb;
+}
 
 
 /************************

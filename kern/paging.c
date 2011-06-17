@@ -202,8 +202,8 @@ PRIVATE void paging_identityMapping(physaddr_t start, physaddr_t end)
 
   physaddr_t p;
 
-  /* Parcours les adresses de PAGE_SIZE en PAGE_SIZE */
-  for(p=PAGING_ALIGN_INF(start);p<PAGING_ALIGN_SUP(end);p+=PAGE_SIZE)
+  /* Parcours les adresses de PAGING_PAGE_SIZE en PAGING_PAGE_SIZE */
+  for(p=PAGING_ALIGN_INF(start);p<PAGING_ALIGN_SUP(end);p+=PAGING_PAGE_SIZE)
     {
       struct pte* table;
 
