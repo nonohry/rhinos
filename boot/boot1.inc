@@ -14,7 +14,7 @@ boot_info:
 	mem_entry	dw	0
 	mem_lower	dw	0
 	mem_upper	dw	0
-	mem_ram_pages	dd	0
+	available01	dd	0
 
 	;;
 	;; Conversion adressage reel en physique
