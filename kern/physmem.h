@@ -11,6 +11,7 @@
  * Constantes 
  **************/
 
+#define PHYS_PAGE_SIZE           4096
 #define PHYS_PAGE_MAX_BUDDY      21        /* 32 - 12 + 1 = 21 */
 #define PHYS_PAGE_SHIFT          12        /* 2^12=4096    */
 #define PHYS_PAGE_NODE_POOL_ADDR 0x100000  /* Adresse de base du pool de ppage nodes */
@@ -36,16 +37,18 @@
 
 /* Alignement inferieur sur PPAGE_SIZE */
 #define PHYS_ALIGN_INF(addr)			\
-  ( (addr >> PHYS_PAGE_SHIFT) << PHYS_PAGE_SHIFT )
+  ( ((addr) >> PHYS_PAGE_SHIFT) << PHYS_PAGE_SHIFT )
 
 /* Alignement superieur sur PPAGE_SIZE */
 #define PHYS_ALIGN_SUP(addr)						\
-  ( ((addr&0xFFFFF000) == addr)?(addr >> PHYS_PAGE_SHIFT) << PHYS_PAGE_SHIFT:((addr >> PHYS_PAGE_SHIFT)+1) << PHYS_PAGE_SHIFT )
+  ( (((addr)&0xFFFFF000) == (addr))?((addr) >> PHYS_PAGE_SHIFT) << PHYS_PAGE_SHIFT:(((addr) >> PHYS_PAGE_SHIFT)+1) << PHYS_PAGE_SHIFT )
 
 
 /***************
  * Structures 
  ***************/
+
+/* Noeud des buddies */
 
 struct ppage_node 
 {
@@ -57,6 +60,15 @@ struct ppage_node
   struct ppage_node* next;
 }__attribute__((packed));
 
+
+/* Water Mark Allocator */
+
+struct phys_wm_alloc
+{
+  u32_t base;
+  u32_t size;
+  u32_t offset;
+};
 
 /***************
  * Prototypes 

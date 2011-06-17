@@ -38,6 +38,7 @@ PUBLIC struct boot_info
   u32_t mem_ram_pages;  /* Nombre de pages memoire max (available01)*/
 }__attribute__((packed));
 
+
 /******************************
  * Structure boot_memmap_entry
  ******************************/

@@ -28,6 +28,9 @@ PUBLIC int main()
   phys_init();
   bochs_print("Physical Memory Manager initialized\n");
 
+  
+
+
   /* Initialisation de la pagination */
   paging_init();
   bochs_print("Paging enabled\n");

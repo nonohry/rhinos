@@ -6,6 +6,7 @@
 
 #include <types.h>
 #include <llist.h>
+#include <wmalloc.h>
 #include "klib.h"
 #include "start.h"
 #include "physmem.h"
@@ -15,11 +16,12 @@
  * Declaration Private
  ***********************/
 
-PRIVATE u8_t phys_isInArea(struct ppage_node* node, physaddr_t start, u32_t size); 
 PRIVATE short phys_msb(u32_t n);
-PRIVATE struct ppage_node* phys_find_used(physaddr_t paddr);
+PRIVATE void phys_init_area(u32_t base, u32_t size);
 PRIVATE void phys_free_buddy(struct ppage_node* node);
+PRIVATE struct ppage_node* phys_find_used(physaddr_t paddr);
 
+PRIVATE struct phys_wm_alloc phys_wm;
 PRIVATE struct ppage_node* ppage_free[PHYS_PAGE_MAX_BUDDY];
 PRIVATE struct ppage_node* ppage_used;
 PRIVATE struct ppage_node* ppage_node_pool;
@@ -31,10 +33,9 @@ PRIVATE struct ppage_node* ppage_node_pool;
 
 PUBLIC void phys_init(void)
 {
-  u32_t i;
+  int i;
   u32_t ram_size=0;
-  u32_t ram_pages;
-  struct ppage_node* node;
+  u32_t ram_pages,pool_size;
 
   /* Nullifie les structures de pages */  
   for(i=0; i<PHYS_PAGE_MAX_BUDDY; i++)
@@ -65,28 +66,18 @@ PUBLIC void phys_init(void)
   ram_pages = (ram_size >> PHYS_PAGE_SHIFT);
   /* Sauve le nombre dans bootinfo */
   bootinfo->mem_ram_pages = ram_pages;
+  /* En deduit la taille maximale du pool */
+  pool_size = ram_pages*sizeof(struct ppage_node);
 
-  /* Cree le pool de node et le buddy */
-  for(i=0; i<ram_pages; i++)
-    {
-      node=(struct ppage_node*)(PHYS_PAGE_NODE_POOL_ADDR+i*sizeof(struct ppage_node));
-      node->start=(i<<PHYS_PAGE_SHIFT);
-      node->size=(1<<PHYS_PAGE_SHIFT);
+  /* Initialise le WaterMark Allocator */
+  WMALLOC_INIT(phys_wm,PHYS_PAGE_NODE_POOL_ADDR,pool_size);
 
-      /* Enfile dans a liste ppage_used */
-      LLIST_ADD(ppage_used,node);  
-    
-      /* Construit le buddy en liberant les pages libres */
-      if ( !phys_isInArea(node,PHYS_KERN_AREA_START,bootinfo->kern_end+1) &&
-	   !phys_isInArea(node,PHYS_ROM_AREA_START,PHYS_ROM_AREA_SIZE)  &&
-	   !phys_isInArea(node,PHYS_POOL_AREA_START,ram_pages*sizeof(struct ppage_node)) &&
-	   !phys_isInArea(node,PHYS_ACPI_AREA_START,PHYS_ACPI_AREA_SIZE) )
-	{
-	  /* Libere la page du node */
-	  phys_free((void*)node->start);
-	}
+  /* Initialise les zones libres dans le buddy */
+  phys_init_area(PHYS_ALIGN_SUP(bootinfo->kern_end),
+		 PHYS_ROM_AREA_START-PHYS_ALIGN_SUP(bootinfo->kern_end));
 
-    }
+  phys_init_area(PHYS_ALIGN_SUP(PHYS_PAGE_NODE_POOL_ADDR+pool_size),
+		 ram_size-PHYS_ALIGN_SUP(PHYS_PAGE_NODE_POOL_ADDR+pool_size));
 
   return;
 }
@@ -128,13 +119,29 @@ PUBLIC void* phys_alloc(u32_t size)
   /* Scinde "recursivement" les niveaux superieurs */
   for(j=i;j>ind;j--)
     {
-      struct ppage_node *n1;
+      struct ppage_node* n1;
      
       node = LLIST_GETHEAD(ppage_free[j]);
       LLIST_REMOVE(ppage_free[j],node);
 
+      /* Alloue a la volee un ppage_node dans le pool si besoins */
+      if (LLIST_ISNULL(ppage_node_pool))
+	{
+	  struct ppage_node* pnode;
+	  pnode = (struct ppage_node*)WMALLOC_ALLOC(phys_wm,sizeof(struct ppage_node));
+	  if (pnode==NULL)
+	    {
+	      bochs_print("Unable to water mark allocate ! \n");
+	      return NULL;
+	    }
+	  LLIST_ADD(ppage_node_pool,pnode);
+	}
+
+      /* Prend un node dans le pool */
       n1 = LLIST_GETHEAD(ppage_node_pool);
       LLIST_REMOVE(ppage_node_pool,n1);
+
+      /* Scinde le noeud en 2 noeuds */
 
       n1->start = node->start;
       n1->size = (node->size >> 1);
@@ -307,6 +314,59 @@ PRIVATE struct ppage_node* phys_find_used(physaddr_t paddr)
 }
 
 
+/********************************
+ * Initialise une zone en buddy
+ ********************************/
+
+PRIVATE void phys_init_area(u32_t base, u32_t size)
+{
+  u32_t power;
+  u8_t ind;
+  struct ppage_node* node;
+
+  while (size >= PHYS_PAGE_SIZE)
+    {
+      /* Puissance de 2 inferieure */     
+      power = size;
+      power = power | (power >> 1);
+      power = power | (power >> 2);
+      power = power | (power >> 4);
+      power = power | (power >> 8);
+      power = power | (power >> 16);
+      power = power - (power >> 1);
+
+      /* Indice dans le buddy */
+      ind = phys_msb(power) - PHYS_PAGE_SHIFT;
+
+      /* Alloue un node dans le pool a la volee si besoins */
+      if (LLIST_ISNULL(ppage_node_pool))
+	{
+	  node = (struct ppage_node*)WMALLOC_ALLOC(phys_wm,sizeof(struct ppage_node));
+	  if (node == NULL)
+	    {
+	      bochs_print("Unable to water mark allocate !\n");
+	      return;
+	    }
+	  LLIST_ADD(ppage_node_pool,node);
+	}
+
+      /* Prend un node dans le pool */
+      node = LLIST_GETHEAD(ppage_node_pool);
+      LLIST_REMOVE(ppage_node_pool,node);
+
+      /* Remplit le node */
+      node->start = base;
+      node->size = power;
+
+      /* Insere dans le buddy */
+      LLIST_ADD(ppage_free[ind],node);
+      
+      size -= power;
+      base += power;
+    }
+
+  return;
+}
 
 /***********************
  * Most Significant Bit
@@ -315,7 +375,8 @@ PRIVATE struct ppage_node* phys_find_used(physaddr_t paddr)
 PRIVATE short phys_msb(u32_t n)
 {
   short  msb=-1;
-
+  
+  /* Compte les bits */
   while(n!=0)
     {
       n>>=1;
@@ -323,22 +384,4 @@ PRIVATE short phys_msb(u32_t n)
     }
 
   return msb;
-}
-
-
-/************************
- * Page dans une region 
- ************************/
-
-PRIVATE u8_t phys_isInArea(struct ppage_node* node, physaddr_t start, u32_t size)
-{
-     u8_t case1,case2,case3,case4;
-     
-     case1 = ((node->start+node->size)<=(start+size))&&((node->start+node->size)>(start));
-     case2 = ((node->start)<(start+size))&&((node->start)>=(start));
-     case3 = ((node->start)>=(start))&&((node->start+node->size)<=(start+size));
-     case4 = ((node->start)<=(start))&&((node->start+node->size)>=(start+size));
-
-     return (case1 || case2 || case3 || case4);
-
 }

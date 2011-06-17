@@ -74,19 +74,19 @@ struct pte
 
 /* Directory d'une adresse virtuelle */
 #define PAGING_GET_PDE(addr)				\
-  ( addr >> PAGING_DIRSHIFT )
+  ( (addr) >> PAGING_DIRSHIFT )
 
 /* Table d'une adresse virtuelle */
 #define PAGING_GET_PTE(addr)				\
-  ( (addr >> PAGING_TBLSHIFT)&PAGING_TBLMASK )
+  ( ((addr) >> PAGING_TBLSHIFT)&PAGING_TBLMASK )
 
 /* Alignement inferieur sur PAGING_PAGE_SIZE */
 #define PAGING_ALIGN_INF(addr)			\
-  ( (addr >> PAGING_PAGE_SHIFT) << PAGING_PAGE_SHIFT )
+  ( ((addr) >> PAGING_PAGE_SHIFT) << PAGING_PAGE_SHIFT )
 
 /* Alignement superieur sur PAGING_PAGE_SIZE */
 #define PAGING_ALIGN_SUP(addr)						\
-  ( ((addr&0xFFFFF000) == addr)?(addr >> PAGING_PAGE_SHIFT) << PAGING_PAGE_SHIFT:((addr >> PAGING_PAGE_SHIFT)+1) << PAGING_PAGE_SHIFT )
+  ( (((addr)&0xFFFFF000) == (addr))?((addr) >> PAGING_PAGE_SHIFT) << PAGING_PAGE_SHIFT:(((addr) >> PAGING_PAGE_SHIFT)+1) << PAGING_PAGE_SHIFT )
 
 /* Self Mapping: Page Directory courant */
 #define PAGING_GET_PD()							\
@@ -94,7 +94,7 @@ struct pte
 
 /* Self Mapping: Page Table i du PD courant */
 #define PAGING_GET_PT(i)						\
-  ( (virtaddr_t)(PAGING_SELFMAP<<PAGING_DIRSHIFT) + (virtaddr_t)(i<<PAGING_TBLSHIFT) )
+  ( (virtaddr_t)(PAGING_SELFMAP<<PAGING_DIRSHIFT) + (virtaddr_t)((i)<<PAGING_TBLSHIFT) )
 
 
 /*************
