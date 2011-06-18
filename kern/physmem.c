@@ -357,6 +357,7 @@ PRIVATE void phys_init_area(u32_t base, u32_t size)
       /* Remplit le node */
       node->start = base;
       node->size = power;
+      node->index = ind;
 
       /* Insere dans le buddy */
       LLIST_ADD(ppage_free[ind],node);
