@@ -34,8 +34,8 @@ PRIVATE struct ppage_node* ppage_node_pool;
 PUBLIC void phys_init(void)
 {
   int i;
-  u32_t ram_size=0;
-  u32_t ram_pages,pool_size;
+  u32_t pool_size;
+  struct boot_mmap_e820* entry;
 
   /* Nullifie les structures de pages */  
   for(i=0; i<PHYS_PAGE_MAX_BUDDY; i++)
@@ -45,39 +45,43 @@ PUBLIC void phys_init(void)
   LLIST_NULLIFY(ppage_used);
   LLIST_NULLIFY(ppage_node_pool);
 
-
-  /* Recupere la taille de la mémoire */
-  if (bootinfo->mem_entry)
-    {
-      /* Taille selon int 15/AX=E820 */
-      struct boot_mmap_e820* entry;
-      for(entry=(struct boot_mmap_e820*)bootinfo->mem_addr,i=0;i<bootinfo->mem_entry;i++,entry++)
-	{
-	  ram_size += (u32_t)entry->size;
-	}
-    }
-  else
-    {
-      /* Taille selon int 15/AX=E801 (limite a 4G) */
-      ram_size = ((bootinfo->mem_lower + (bootinfo->mem_upper << PHYS_SHIFT64))<<PHYS_SHIFT1024);
-    }
-
-  /* Nombre maximal de page */
-  ram_pages = (ram_size >> PHYS_PAGE_SHIFT);
-  /* Sauve le nombre dans bootinfo */
-  bootinfo->mem_ram_pages = ram_pages;
-  /* En deduit la taille maximale du pool */
-  pool_size = ram_pages*sizeof(struct ppage_node);
+  /* Calcule la taille maximale du pool */
+  pool_size = ((bootinfo->mem_size) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_node);
 
   /* Initialise le WaterMark Allocator */
   WMALLOC_INIT(phys_wm,PHYS_PAGE_NODE_POOL_ADDR,pool_size);
 
-  /* Initialise les zones libres dans le buddy */
-  phys_init_area(PHYS_ALIGN_SUP(bootinfo->kern_end),
-		 PHYS_ROM_AREA_START-PHYS_ALIGN_SUP(bootinfo->kern_end));
+  /* Entre les zones libres du memory map dans le buddy */
+  for(entry=(struct boot_mmap_e820*)bootinfo->mem_addr,i=0;i<bootinfo->mem_entry;i++,entry++)
+    {
+      if (entry->type == START_E820_AVAILABLE)
+	{
+	  u32_t base = (u32_t)entry->addr;
+	  u32_t size = (u32_t)entry->size;
 
-  phys_init_area(PHYS_ALIGN_SUP(PHYS_PAGE_NODE_POOL_ADDR+pool_size),
-		 ram_size-PHYS_ALIGN_SUP(PHYS_PAGE_NODE_POOL_ADDR+pool_size));
+	  /* Si le noyau est dans la zone, alors sa fin devient le debut de la zone */
+	  if ( (bootinfo->kern_end >= base)&&
+	       (bootinfo->kern_end <= base+size) )
+	    {
+	      /* Reajuste la taille */
+	      size -= (bootinfo->kern_end - base);
+	      base = bootinfo->kern_end;
+	    }
+	  
+	  /* Si le pool est dans la zone, alors sa fin devient le debut de la zone */
+	  if ( (PHYS_PAGE_NODE_POOL_ADDR+pool_size >= base)&&
+	       (PHYS_PAGE_NODE_POOL_ADDR+pool_size <= base+size) )
+	    {
+	      /* Reajuste la taille */
+	      size -= (PHYS_PAGE_NODE_POOL_ADDR+pool_size - base);
+	      base = PHYS_PAGE_NODE_POOL_ADDR+pool_size;
+	      
+	    }
+	  
+	  /* Initialise la zone dans le buddy */
+	  phys_init_area(base,size);
+	}
+    }
 
   return;
 }
@@ -323,6 +327,8 @@ PRIVATE void phys_init_area(u32_t base, u32_t size)
   u32_t power;
   u8_t ind;
   struct ppage_node* node;
+
+  base = PHYS_ALIGN_SUP(base);
 
   while (size >= PHYS_PAGE_SIZE)
     {

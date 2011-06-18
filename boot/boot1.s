@@ -83,11 +83,6 @@ start:
 	;; Recupere la taille de la memoire
 	;; 
 	call	get_mem_size
-	cmp  	ax, MEM_SUCCESS
-	je   	mem_ok
-	mov	si,memerrmsg
-	call	print_message	
-mem_ok:	
 	
 	;;
 	;; Geometrie du disque

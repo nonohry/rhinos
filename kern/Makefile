@@ -40,7 +40,7 @@ clean:
 
 # DO NOT DELETE
 
-start.o: tables.h ../include/types.h seg.h irq.h start.h
+start.o: klib.h ../include/types.h tables.h seg.h irq.h start.h
 seg.o: ../include/types.h seg.h
 tables.o: ../include/types.h klib.h pic.h seg.h tables.h irq.h
 pic.o: ../include/types.h klib.h pic.h

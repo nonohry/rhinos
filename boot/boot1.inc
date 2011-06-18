@@ -12,10 +12,9 @@ boot_info:
 	kern_end	dd	0
 	mem_addr	dd	0
 	mem_entry	dw	0
-	mem_lower	dw	0
-	mem_upper	dw	0
 	available01	dd	0
 
+	
 	;;
 	;; Conversion adressage reel en physique
 	;;
@@ -68,25 +67,8 @@ get_mem_e820_eloop:
 	mov	[mem_entry],bp	; Recupere le nombre d'entree
 	mov	dword [mem_addr],MEM_ADDR ; Recupere l'adresse du map
 	pop	es		; Restaure ES
-
-	;;
-	;;	Taille memoire selon int 0x15 (AX=0xE801)
-	;;
-	
-get_mem_size_e801:	
-	mov	ax,0xE801	; Argument de l interruption
-	int	0x15		; Interruption
-	jc	get_mem_e801_err; Erreur si CF
-	mov	[mem_upper],dx	; DX= memoire haute en nombre de blocs de 64K 
-	mov	[mem_lower],cx	; CX = taille memoire basse en K
-	xor	ax,ax		; Reset AX
-	mov	ax, MEM_SUCCESS	; Valeur de retour
-	jmp	get_mem_e801_end; Saut a la fin
-get_mem_e801_err:
-	xor	ax,ax		; Reset AX
-	mov	ax, MEM_FAIL	; Valeur de retour
-get_mem_e801_end:
 	ret			; Retour
+
 	
 	;;
 	;; A20 Gate
