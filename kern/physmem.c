@@ -57,7 +57,7 @@ PUBLIC void phys_init(void)
       if (entry->type == START_E820_AVAILABLE)
 	{
 	  
-    physaddr_t base = (physaddr_t)entry->addr;
+	  physaddr_t base = (physaddr_t)entry->addr;
 	  u32_t size = (u32_t)entry->size;
 
 	  /* Si le noyau est dans la zone, alors sa fin devient le debut de la zone */
