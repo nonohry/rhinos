@@ -13,7 +13,7 @@
 
 
 /***********************
- * Declaration Private
+ * Declarations Private
  ***********************/
 
 PRIVATE short phys_msb(u32_t n);
