@@ -33,7 +33,7 @@
 #define WMALLOC_SET_BASE(wm, wmbase)		\
   (wm).base = wmbase;
 
-#define WMALLOC_GET_SIZE(wm, wmsize)		\
+#define WMALLOC_SET_SIZE(wm, wmsize)		\
   (wm).size = wmsize;
 			
 

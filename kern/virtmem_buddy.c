@@ -7,6 +7,7 @@
 
 #include <types.h>
 #include <wmalloc.h>
+#include "klib.h"
 #include "start.h"
 #include "physmem.h"
 #include "paging.h"
@@ -36,10 +37,36 @@ PUBLIC void  virtmem_buddy_init()
  * Allocation
  **************/
 
-PUBLIC void* virtmem_buddy_alloc(u32_t size)
+PUBLIC void* virtmem_buddy_alloc(u32_t size, u8_t flags)
 {
-  /* DEBUG: Allcoation via WaterMark */
-  return (void*)WMALLOC_ALLOC(virt_wm,size);
+  virtaddr_t vaddr,vaddr2;
+
+  /* DEBUG: Allocation via WaterMark */
+  vaddr = vaddr2 = (virtaddr_t)WMALLOC_ALLOC(virt_wm,size);
+
+  /* Mappage sur pages physiques */
+  if (flags & VIRT_BUDDY_MAP)
+    {
+      u32_t i,n;
+  
+      /* Nombre de pages */
+      n = ((size&0xFFFFF000) == size)?(size >> PAGING_PAGE_SHIFT) :((size >> PAGING_PAGE_SHIFT)+1);
+      
+      /* Mapping */
+      for(i=0;i<n;i++)
+	{
+	  physaddr_t paddr;
+
+	  paddr = (u32_t)phys_alloc(PAGING_PAGE_SIZE);
+	  paging_map(vaddr2,paddr,TRUE);
+	  vaddr2+=PAGING_PAGE_SIZE;
+
+	}
+      
+    }
+
+  return (void*)vaddr;
+
 }
 
 
