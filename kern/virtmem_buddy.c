@@ -18,6 +18,7 @@
  * Declarations PRIVATE
  ***********************/
 
+/* DEBUG: WaterMArk Allocator */
 PRIVATE struct virt_buddy_wm_alloc virt_wm;
 
 
@@ -44,15 +45,15 @@ PUBLIC void* virtmem_buddy_alloc(u32_t size, u8_t flags)
   /* DEBUG: Allocation via WaterMark */
   vaddr = vaddr2 = (virtaddr_t)WMALLOC_ALLOC(virt_wm,size);
 
-  /* Mappage sur pages physiques */
+  /* DEBUG: Mappage sur pages physiques */
   if (flags & VIRT_BUDDY_MAP)
     {
       u32_t i,n;
   
-      /* Nombre de pages */
+      /* DEBUG: Nombre de pages */
       n = ((size&0xFFFFF000) == size)?(size >> PAGING_PAGE_SHIFT) :((size >> PAGING_PAGE_SHIFT)+1);
       
-      /* Mapping */
+      /* DEBUG: Mapping */
       for(i=0;i<n;i++)
 	{
 	  physaddr_t paddr;
