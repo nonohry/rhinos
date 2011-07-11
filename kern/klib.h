@@ -6,6 +6,7 @@
 EXTERN void bochs_print(char*,...);
 EXTERN void outb(u16_t,u8_t);
 EXTERN void inb(u16_t,u8_t*);
+EXTERN u32_t msb(u32_t);
 EXTERN void load_CR3(physaddr_t);
 EXTERN void set_pg_cr0(void);
 EXTERN void flush_tlb(void);

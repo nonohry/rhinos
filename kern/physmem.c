@@ -12,11 +12,10 @@
 #include "physmem.h"
 
 
-/***********************
+/***********************			
  * Declarations Private
  ***********************/
 
-PRIVATE short phys_msb(u32_t n);
 PRIVATE void phys_init_area(u32_t base, u32_t size);
 PRIVATE void phys_free_buddy(struct ppage_node* node);
 PRIVATE struct ppage_node* phys_find_used(physaddr_t paddr);
@@ -109,7 +108,7 @@ PUBLIC void* phys_alloc(u32_t size)
   size = size + 1;
   
   /* En deduit l indice */
-  ind = phys_msb(size) - PHYS_PAGE_SHIFT;
+  ind = msb(size) - PHYS_PAGE_SHIFT;
   
   /* Si ppage_free[ind] est NULL, on cherche un niveau superieur disponible */
   for(i=ind;LLIST_ISNULL(ppage_free[i])&&(i<PHYS_PAGE_MAX_BUDDY);i++)
@@ -343,7 +342,7 @@ PRIVATE void phys_init_area(u32_t base, u32_t size)
       power = power - (power >> 1);
 
       /* Indice dans le buddy */
-      ind = phys_msb(power) - PHYS_PAGE_SHIFT;
+      ind = msb(power) - PHYS_PAGE_SHIFT;
 
       /* Alloue un node dans le pool a la volee si besoins */
       if (LLIST_ISNULL(ppage_node_pool))
@@ -376,20 +375,3 @@ PRIVATE void phys_init_area(u32_t base, u32_t size)
   return;
 }
 
-/***********************
- * Most Significant Bit
- ***********************/
-
-PRIVATE short phys_msb(u32_t n)
-{
-  short  msb=-1;
-  
-  /* Compte les bits */
-  while(n!=0)
-    {
-      n>>=1;
-      msb++;
-    }
-
-  return msb;
-}

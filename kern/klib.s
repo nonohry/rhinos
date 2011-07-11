@@ -3,6 +3,7 @@
 global bochs_print
 global outb
 global inb
+global msb
 global load_CR3
 global set_pg_cr0
 global flush_tlb
@@ -129,6 +130,23 @@ inb:
 	pop	ebp		; Restaure EBP
 	ret
 
+	
+	;;
+	;; u32_t msb(u32_t)
+	;;
+
+msb:
+	push 	ebp         	; Sauvegarde de EBP
+	mov  	ebp,esp 	; Mise en place de la base
+	push	esi		; Sauvegarde ESI (Requis par GCC)
+	push	edi		; Sauvegarde EDI (Requis par GCC)
+	mov  	edx,[ebp+8]	; Recupere le nombre dans edx
+	bsr     eax,edx		; Instruction bsr
+	pop	edi		; Restaure EDI
+	pop	esi		; Restaure ESI
+	mov	esp,ebp		; Restaure la pile
+	pop	ebp		; Restaure EBP
+	ret
 
 	;;
 	;; load_CR3(u32_t cr3)
