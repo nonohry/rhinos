@@ -192,6 +192,45 @@ PUBLIC void paging_unmap(virtaddr_t vaddr)
 }
   
 
+/*************************************
+ * Conversion Virtuelle vers Physique
+ *************************************/
+
+PUBLIC physaddr_t paging_virt2phys(virtaddr_t vaddr)
+{
+  struct pde* pd;
+  struct pte* table;
+  u16_t pde,pte;
+  u32_t offset;
+
+  /* Recupere le pd, pde et pte associe */
+  pde = PAGING_GET_PDE(vaddr);
+  pte = PAGING_GET_PTE(vaddr);
+  pd = (struct pde*)PAGING_GET_PD();
+
+  /* Offset dans le page physique */
+  offset = vaddr & PAGING_OFFMASK;
+
+  /* Si le pde n'existe pas, on retourne */
+  if (!(pd[pde].present))
+    {
+      return 0;
+    }
+
+  /* Recupere la table */
+  table = (struct pte*)(PAGING_GET_PT(pde));
+
+  /* Si le pte n'existe pas, on retourne */
+  if (!(table[pte].present))
+    {
+      return 0;
+    }
+
+
+  /* Retourne l'adresse physique */
+  return (((table[pte].baseaddr)<<PAGING_BASESHIFT)+offset);
+
+}
 
 /******************************
  * Identity Mapping d une zone
