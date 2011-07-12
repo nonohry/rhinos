@@ -126,11 +126,10 @@ PUBLIC void* phys_alloc(u32_t size)
 
       /* Scinde le noeud en 2 noeuds */
 
-      n1->start = node->start;
+      n1->start = node->start+ (node->size >> 1);
       n1->size = (node->size >> 1);
       n1->index = node->index-1;
 
-      node->start = node->start + (node->size >> 1);
       node->size = (node->size >> 1);
       node->index = node->index-1;
 
