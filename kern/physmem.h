@@ -50,14 +50,14 @@
 
 /* Noeud des buddies */
 
-struct ppage_node 
+struct ppage_desc 
 {
   physaddr_t start;
   u32_t size;
   u16_t maps;
   u8_t  index;
-  struct ppage_node* prev;
-  struct ppage_node* next;
+  struct ppage_desc* prev;
+  struct ppage_desc* next;
 }__attribute__((packed));
 
 

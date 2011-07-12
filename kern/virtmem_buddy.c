@@ -29,7 +29,7 @@ PRIVATE struct virt_buddy_wm_alloc virt_wm;
 PUBLIC void  virtmem_buddy_init()
 {
   /* DEBUG: Initialise le WaterMark */
-  WMALLOC_INIT(virt_wm,PAGING_ALIGN_SUP(PHYS_PAGE_NODE_POOL_ADDR+((bootinfo->mem_size) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_node)),(1<<31));
+  WMALLOC_INIT(virt_wm,PAGING_ALIGN_SUP(PHYS_PAGE_NODE_POOL_ADDR+((bootinfo->mem_size) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc)),(1<<31));
   return;
 }
 

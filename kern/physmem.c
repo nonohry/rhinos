@@ -17,13 +17,13 @@
  ***********************/
 
 PRIVATE void phys_init_area(u32_t base, u32_t size);
-PRIVATE void phys_free_buddy(struct ppage_node* node);
-PRIVATE struct ppage_node* phys_find_used(physaddr_t paddr);
+PRIVATE void phys_free_buddy(struct ppage_desc* node);
+PRIVATE struct ppage_desc* phys_find_used(physaddr_t paddr);
 
 PRIVATE struct phys_wm_alloc phys_wm;
-PRIVATE struct ppage_node* ppage_free[PHYS_PAGE_MAX_BUDDY];
-PRIVATE struct ppage_node* ppage_used;
-PRIVATE struct ppage_node* ppage_node_pool;
+PRIVATE struct ppage_desc* ppage_free[PHYS_PAGE_MAX_BUDDY];
+PRIVATE struct ppage_desc* ppage_used;
+PRIVATE struct ppage_desc* ppage_node_pool;
 
 
 /*****************
@@ -45,7 +45,7 @@ PUBLIC void phys_init(void)
   LLIST_NULLIFY(ppage_node_pool);
 
   /* Calcule la taille maximale du pool */
-  pool_size = ((bootinfo->mem_size) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_node);
+  pool_size = ((bootinfo->mem_size) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc);
 
   /* Initialise le WaterMark Allocator */
   WMALLOC_INIT(phys_wm,PHYS_PAGE_NODE_POOL_ADDR,pool_size);
@@ -96,7 +96,7 @@ PUBLIC void* phys_alloc(u32_t size)
 
   u32_t i,j;
   int ind;
-  struct ppage_node* node;
+  struct ppage_desc* node;
   
   /* trouve la puissance de 2 superieure */
   size = size - 1;
@@ -123,7 +123,7 @@ PUBLIC void* phys_alloc(u32_t size)
   /* Scinde "recursivement" les niveaux superieurs */
   for(j=i;j>ind;j--)
     {
-      struct ppage_node* n1;
+      struct ppage_desc* n1;
      
       node = LLIST_GETHEAD(ppage_free[j]);
       LLIST_REMOVE(ppage_free[j],node);
@@ -131,8 +131,8 @@ PUBLIC void* phys_alloc(u32_t size)
       /* Alloue a la volee un ppage_node dans le pool si besoins */
       if (LLIST_ISNULL(ppage_node_pool))
 	{
-	  struct ppage_node* pnode;
-	  pnode = (struct ppage_node*)WMALLOC_ALLOC(phys_wm,sizeof(struct ppage_node));
+	  struct ppage_desc* pnode;
+	  pnode = (struct ppage_desc*)WMALLOC_ALLOC(phys_wm,sizeof(struct ppage_desc));
 	  if (pnode==NULL)
 	    {
 	      bochs_print("Unable to water mark allocate ! \n");
@@ -176,7 +176,7 @@ PUBLIC void* phys_alloc(u32_t size)
 
 PUBLIC void phys_free(void* addr)
 {
-  struct ppage_node* node;
+  struct ppage_desc* node;
 
   /* Cherche le noeud associe a l adresse */
   node = phys_find_used((physaddr_t)addr);
@@ -197,7 +197,7 @@ PUBLIC void phys_free(void* addr)
 
 PUBLIC void phys_map(physaddr_t addr)
 {
-  struct ppage_node* node;
+  struct ppage_desc* node;
   
   /* Cherche le noeud associe a l adresse */
   node = phys_find_used(addr);
@@ -218,7 +218,7 @@ PUBLIC void phys_map(physaddr_t addr)
 
 PUBLIC u8_t phys_unmap(physaddr_t addr)
 {
-  struct ppage_node* node;
+  struct ppage_desc* node;
   
   /* Cherche le noeud associe a l adresse */
   node = phys_find_used(addr);
@@ -248,7 +248,7 @@ PUBLIC u8_t phys_unmap(physaddr_t addr)
  * La fonction reelle de liberation
  ***********************************/
 
-PRIVATE void phys_free_buddy(struct ppage_node* node)
+PRIVATE void phys_free_buddy(struct ppage_desc* node)
 {
   /* Enleve le noeud de la liste des noeuds alloues */
   LLIST_REMOVE(ppage_used,node);
@@ -256,7 +256,7 @@ PRIVATE void phys_free_buddy(struct ppage_node* node)
   /* Insere "recursivement" le noeud */
   while((node->index < PHYS_PAGE_MAX_BUDDY-1)&&(!LLIST_ISNULL(ppage_free[node->index])))
     {
-      struct ppage_node* buddy;
+      struct ppage_desc* buddy;
       
       /* Recherche d un buddy */
       buddy = LLIST_GETHEAD(ppage_free[node->index]);
@@ -295,9 +295,9 @@ PRIVATE void phys_free_buddy(struct ppage_node* node)
  * Trouve le noeud correspondant a l adresse
  ********************************************/
 
-PRIVATE struct ppage_node* phys_find_used(physaddr_t paddr)
+PRIVATE struct ppage_desc* phys_find_used(physaddr_t paddr)
 {
-  struct ppage_node* node;
+  struct ppage_desc* node;
   
   /* Recherche du node dans ppage_used */
   node = LLIST_GETHEAD(ppage_used);
@@ -326,7 +326,7 @@ PRIVATE void phys_init_area(u32_t base, u32_t size)
 {
   u32_t power;
   u8_t ind;
-  struct ppage_node* node;
+  struct ppage_desc* node;
 
   base = PHYS_ALIGN_SUP(base);
 
@@ -347,7 +347,7 @@ PRIVATE void phys_init_area(u32_t base, u32_t size)
       /* Alloue un node dans le pool a la volee si besoins */
       if (LLIST_ISNULL(ppage_node_pool))
 	{
-	  node = (struct ppage_node*)WMALLOC_ALLOC(phys_wm,sizeof(struct ppage_node));
+	  node = (struct ppage_desc*)WMALLOC_ALLOC(phys_wm,sizeof(struct ppage_desc));
 	  if (node == NULL)
 	    {
 	      bochs_print("Unable to water mark allocate !\n");
