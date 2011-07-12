@@ -6,7 +6,6 @@
 
 #include <types.h>
 #include <llist.h>
-#include <wmalloc.h>
 #include "klib.h"
 #include "start.h"
 #include "physmem.h"
@@ -20,10 +19,8 @@ PRIVATE void phys_init_area(u32_t base, u32_t size);
 PRIVATE void phys_free_buddy(struct ppage_desc* node);
 PRIVATE struct ppage_desc* phys_find_used(physaddr_t paddr);
 
-PRIVATE struct phys_wm_alloc phys_wm;
 PRIVATE struct ppage_desc* ppage_free[PHYS_PAGE_MAX_BUDDY];
-PRIVATE struct ppage_desc* ppage_used;
-PRIVATE struct ppage_desc* ppage_node_pool;
+PRIVATE struct ppage_desc* ppage_used;;
 
 
 /*****************
@@ -42,13 +39,9 @@ PUBLIC void phys_init(void)
       LLIST_NULLIFY(ppage_free[i]);
     }
   LLIST_NULLIFY(ppage_used);
-  LLIST_NULLIFY(ppage_node_pool);
 
   /* Calcule la taille maximale du pool */
   pool_size = ((bootinfo->mem_size) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc);
-
-  /* Initialise le WaterMark Allocator */
-  WMALLOC_INIT(phys_wm,PHYS_PAGE_NODE_POOL_ADDR,pool_size);
 
   /* Entre les zones libres du memory map dans le buddy */
   for(entry=(struct boot_mmap_e820*)bootinfo->mem_addr,i=0;i<bootinfo->mem_entry;i++,entry++)
@@ -128,22 +121,8 @@ PUBLIC void* phys_alloc(u32_t size)
       node = LLIST_GETHEAD(ppage_free[j]);
       LLIST_REMOVE(ppage_free[j],node);
 
-      /* Alloue a la volee un ppage_node dans le pool si besoins */
-      if (LLIST_ISNULL(ppage_node_pool))
-	{
-	  struct ppage_desc* pnode;
-	  pnode = (struct ppage_desc*)WMALLOC_ALLOC(phys_wm,sizeof(struct ppage_desc));
-	  if (pnode==NULL)
-	    {
-	      bochs_print("Unable to water mark allocate ! \n");
-	      return NULL;
-	    }
-	  LLIST_ADD(ppage_node_pool,pnode);
-	}
-
       /* Prend un node dans le pool */
-      n1 = LLIST_GETHEAD(ppage_node_pool);
-      LLIST_REMOVE(ppage_node_pool,n1);
+      n1 = PHYS_GET_DESC(node->start + (node->size >> 1));
 
       /* Scinde le noeud en 2 noeuds */
 
@@ -273,13 +252,15 @@ PRIVATE void phys_free_buddy(struct ppage_desc* node)
 	    }
 	}
       
-      /* Buddy trouve ici */
+      /* Buddy trouve ici: fusion */
       node->start = (node->start<buddy->start?node->start:buddy->start);
       node->size <<= 1;
       node->index++;
+      /* Enleve le buddy du buddy */
       LLIST_REMOVE(ppage_free[buddy->index],buddy);
-      LLIST_ADD(ppage_node_pool, buddy);
-      
+      /* Nullifie le noeud buddy */
+      PHYS_SET_DESC(buddy,0,0);
+
     }
   
   /* Dernier niveau ou niveau vide */
@@ -344,21 +325,8 @@ PRIVATE void phys_init_area(u32_t base, u32_t size)
       /* Indice dans le buddy */
       ind = msb(power) - PHYS_PAGE_SHIFT;
 
-      /* Alloue un node dans le pool a la volee si besoins */
-      if (LLIST_ISNULL(ppage_node_pool))
-	{
-	  node = (struct ppage_desc*)WMALLOC_ALLOC(phys_wm,sizeof(struct ppage_desc));
-	  if (node == NULL)
-	    {
-	      bochs_print("Unable to water mark allocate !\n");
-	      return;
-	    }
-	  LLIST_ADD(ppage_node_pool,node);
-	}
-
       /* Prend un node dans le pool */
-      node = LLIST_GETHEAD(ppage_node_pool);
-      LLIST_REMOVE(ppage_node_pool,node);
+      node = PHYS_GET_DESC(base);
 
       /* Remplit le node */
       node->start = base;

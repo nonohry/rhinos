@@ -7,6 +7,12 @@
 #define PHYSMEM_C
 
 
+/***********
+ * Includes 
+ ***********/
+
+#include <types.h>
+
 /**************
  * Constantes 
  **************/
@@ -43,6 +49,17 @@
 #define PHYS_ALIGN_SUP(addr)						\
   ( (((addr)&0xFFFFF000) == (addr))?((addr) >> PHYS_PAGE_SHIFT) << PHYS_PAGE_SHIFT:(((addr) >> PHYS_PAGE_SHIFT)+1) << PHYS_PAGE_SHIFT )
 
+/* Description de page d une adresse donnee */
+#define PHYS_GET_DESC(addr)			\
+  ( (struct ppage_desc*)(PHYS_POOL_AREA_START + ((addr) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc)) )
+
+/* Modification d un ppage_desc */
+#define PHYS_SET_DESC(desc, desc_start, desc_size)			\
+  {									\
+    (desc)->start=(desc_start);						\
+    (desc)->size=(desc_size);						\
+  }
+
 
 /***************
  * Structures 
@@ -60,15 +77,6 @@ struct ppage_desc
   struct ppage_desc* next;
 }__attribute__((packed));
 
-
-/* Water Mark Allocator */
-
-struct phys_wm_alloc
-{
-  u32_t base;
-  u32_t size;
-  u32_t offset;
-};
 
 /***************
  * Prototypes 

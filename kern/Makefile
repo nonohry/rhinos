@@ -47,8 +47,7 @@ pic.o: ../include/types.h klib.h pic.h
 pit.o: ../include/types.h klib.h tables.h seg.h irq.h pit.h
 irq.o: ../include/types.h ../include/llist.h klib.h pic.h irq.h
 exceptions.o: ../include/types.h klib.h exceptions.h
-physmem.o: ../include/types.h ../include/llist.h ../include/wmalloc.h klib.h
-physmem.o: start.h physmem.h
+physmem.o: ../include/types.h ../include/llist.h klib.h start.h physmem.h
 paging.o: ../include/types.h klib.h start.h physmem.h paging.h
 virtmem_buddy.o: ../include/types.h ../include/wmalloc.h klib.h start.h
 virtmem_buddy.o: physmem.h paging.h virtmem_buddy.h
