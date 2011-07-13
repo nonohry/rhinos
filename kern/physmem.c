@@ -16,7 +16,7 @@
  ***********************/
 
 PRIVATE void phys_init_area(u32_t base, u32_t size);
-PRIVATE void phys_free_buddy(struct ppage_desc* node);
+PRIVATE void phys_free_buddy(struct ppage_desc* pdesc);
 PRIVATE struct ppage_desc* phys_find_used(physaddr_t paddr);
 
 PRIVATE struct ppage_desc* ppage_free[PHYS_PAGE_MAX_BUDDY];
@@ -89,7 +89,7 @@ PUBLIC void* phys_alloc(u32_t size)
 
   u32_t i,j;
   int ind;
-  struct ppage_desc* node;
+  struct ppage_desc* pdesc;
   
   /* trouve la puissance de 2 superieure */
   size = size - 1;
@@ -116,35 +116,35 @@ PUBLIC void* phys_alloc(u32_t size)
   /* Scinde "recursivement" les niveaux superieurs */
   for(j=i;j>ind;j--)
     {
-      struct ppage_desc* n1;
+      struct ppage_desc* pd1;
      
-      node = LLIST_GETHEAD(ppage_free[j]);
-      LLIST_REMOVE(ppage_free[j],node);
+      pdesc = LLIST_GETHEAD(ppage_free[j]);
+      LLIST_REMOVE(ppage_free[j],pdesc);
 
-      /* Prend un node dans le pool */
-      n1 = PHYS_GET_DESC(node->start + (node->size >> 1));
+      /* Prend un pdesc dans le pool */
+      pd1 = PHYS_GET_DESC(pdesc->start + (pdesc->size >> 1));
 
       /* Scinde le noeud en 2 noeuds */
 
-      n1->start = node->start+ (node->size >> 1);
-      n1->size = (node->size >> 1);
-      n1->index = node->index-1;
+      pd1->start = pdesc->start+ (pdesc->size >> 1);
+      pd1->size = (pdesc->size >> 1);
+      pd1->index = pdesc->index-1;
 
-      node->size = (node->size >> 1);
-      node->index = node->index-1;
+      pdesc->size = (pdesc->size >> 1);
+      pdesc->index = pdesc->index-1;
 
-      LLIST_ADD(ppage_free[j-1],n1);
-      LLIST_ADD(ppage_free[j-1],node);
+      LLIST_ADD(ppage_free[j-1],pd1);
+      LLIST_ADD(ppage_free[j-1],pdesc);
 
     }
 
   /* Maintenant nous avons un noeud disponible au niveau voulu */
-  node = LLIST_GETHEAD(ppage_free[ind]);
+  pdesc = LLIST_GETHEAD(ppage_free[ind]);
   /* Met a jour les listes */
-  LLIST_REMOVE(ppage_free[ind],node);
-  LLIST_ADD(ppage_used,node);
+  LLIST_REMOVE(ppage_free[ind],pdesc);
+  LLIST_ADD(ppage_used,pdesc);
   
-  return (void*)(node->start);
+  return (void*)(pdesc->start);
 }
 
 
@@ -154,15 +154,15 @@ PUBLIC void* phys_alloc(u32_t size)
 
 PUBLIC void phys_free(void* addr)
 {
-  struct ppage_desc* node;
+  struct ppage_desc* pdesc;
 
   /* Cherche le noeud associe a l adresse */
-  node = phys_find_used((physaddr_t)addr);
+  pdesc = phys_find_used((physaddr_t)addr);
 
   /* Si un noeud est trouve, on libere */
-  if (node != NULL) 
+  if (pdesc != NULL) 
     {
-      phys_free_buddy(node);
+      phys_free_buddy(pdesc);
     }
   return;
 }
@@ -175,15 +175,15 @@ PUBLIC void phys_free(void* addr)
 
 PUBLIC void phys_map(physaddr_t addr)
 {
-  struct ppage_desc* node;
+  struct ppage_desc* pdesc;
   
   /* Cherche le noeud associe a l adresse */
-  node = phys_find_used(addr);
+  pdesc = phys_find_used(addr);
 
-  if (node != NULL)
+  if (pdesc != NULL)
     {
       /* Incremente le nombre de mappages */
-      node->maps++;
+      pdesc->maps++;
     }
 
   return;
@@ -196,20 +196,20 @@ PUBLIC void phys_map(physaddr_t addr)
 
 PUBLIC u8_t phys_unmap(physaddr_t addr)
 {
-  struct ppage_desc* node;
+  struct ppage_desc* pdesc;
   
   /* Cherche le noeud associe a l adresse */
-  node = phys_find_used(addr);
+  pdesc = phys_find_used(addr);
 
-  if ((node!=NULL)&&(node->maps))
+  if ((pdesc!=NULL)&&(pdesc->maps))
     {
       /* Decremente le nombre de mappages */
-      node->maps--;
+      pdesc->maps--;
       /* Plus de mappage ? */
-      if (!(node->maps))
+      if (!(pdesc->maps))
 	{
 	  /* On libere */
-	  phys_free_buddy(node);
+	  phys_free_buddy(pdesc);
 	  return PHYS_UNMAP_FREE;
 	}
       else
@@ -226,35 +226,35 @@ PUBLIC u8_t phys_unmap(physaddr_t addr)
  * La fonction reelle de liberation
  ***********************************/
 
-PRIVATE void phys_free_buddy(struct ppage_desc* node)
+PRIVATE void phys_free_buddy(struct ppage_desc* pdesc)
 {
   /* Enleve le noeud de la liste des noeuds alloues */
-  LLIST_REMOVE(ppage_used,node);
+  LLIST_REMOVE(ppage_used,pdesc);
   
   /* Insere "recursivement" le noeud */
-  while((node->index < PHYS_PAGE_MAX_BUDDY-1)&&(!LLIST_ISNULL(ppage_free[node->index])))
+  while((pdesc->index < PHYS_PAGE_MAX_BUDDY-1)&&(!LLIST_ISNULL(ppage_free[pdesc->index])))
     {
       struct ppage_desc* buddy;
       
       /* Recherche d un buddy */
-      buddy = LLIST_GETHEAD(ppage_free[node->index]);
+      buddy = LLIST_GETHEAD(ppage_free[pdesc->index]);
       
-      while ( (node->start+node->size != buddy->start)
-	      && (buddy->start+buddy->size != node->start))
+      while ( (pdesc->start+pdesc->size != buddy->start)
+	      && (buddy->start+buddy->size != pdesc->start))
 	{
-	  buddy = LLIST_NEXT(ppage_free[node->index],buddy);
-	  if (LLIST_ISHEAD(ppage_free[node->index],buddy))
+	  buddy = LLIST_NEXT(ppage_free[pdesc->index],buddy);
+	  if (LLIST_ISHEAD(ppage_free[pdesc->index],buddy))
 	    {
 	      /* Pas de buddy, on insere */
-	      LLIST_ADD(ppage_free[node->index],node);
+	      LLIST_ADD(ppage_free[pdesc->index],pdesc);
 	      return;
 	    }
 	}
       
       /* Buddy trouve ici: fusion */
-      node->start = (node->start<buddy->start?node->start:buddy->start);
-      node->size <<= 1;
-      node->index++;
+      pdesc->start = (pdesc->start<buddy->start?pdesc->start:buddy->start);
+      pdesc->size <<= 1;
+      pdesc->index++;
       /* Enleve le buddy du buddy */
       LLIST_REMOVE(ppage_free[buddy->index],buddy);
       /* Nullifie le noeud buddy */
@@ -263,7 +263,7 @@ PRIVATE void phys_free_buddy(struct ppage_desc* node)
     }
   
   /* Dernier niveau ou niveau vide */
-  LLIST_ADD(ppage_free[node->index],node);
+  LLIST_ADD(ppage_free[pdesc->index],pdesc);
   
   
   return;
@@ -277,15 +277,15 @@ PRIVATE void phys_free_buddy(struct ppage_desc* node)
 
 PRIVATE struct ppage_desc* phys_find_used(physaddr_t paddr)
 {
-  struct ppage_desc* node;
+  struct ppage_desc* pdesc;
   
-  /* Recherche du node dans ppage_used */
-  node = LLIST_GETHEAD(ppage_used);
+  /* Recherche du pdesc dans ppage_used */
+  pdesc = LLIST_GETHEAD(ppage_used);
 
-  while(node->start != paddr)
+  while(pdesc->start != paddr)
     {
-      node = LLIST_NEXT(ppage_used, node);
-      if(LLIST_ISHEAD(ppage_used, node))
+      pdesc = LLIST_NEXT(ppage_used, pdesc);
+      if(LLIST_ISHEAD(ppage_used, pdesc))
 	{
 	  /* Adresse non trouvee */
 	  return NULL;
@@ -293,7 +293,7 @@ PRIVATE struct ppage_desc* phys_find_used(physaddr_t paddr)
     }
 
   /* Adresse trouvee */
-  return node;
+  return pdesc;
 
 }
 
@@ -306,7 +306,7 @@ PRIVATE void phys_init_area(u32_t base, u32_t size)
 {
   u32_t power;
   u8_t ind;
-  struct ppage_desc* node;
+  struct ppage_desc* pdesc;
 
   base = PHYS_ALIGN_SUP(base);
 
@@ -324,16 +324,16 @@ PRIVATE void phys_init_area(u32_t base, u32_t size)
       /* Indice dans le buddy */
       ind = msb(power) - PHYS_PAGE_SHIFT;
 
-      /* Prend un node dans le pool */
-      node = PHYS_GET_DESC(base);
+      /* Prend un pdesc dans le pool */
+      pdesc = PHYS_GET_DESC(base);
 
-      /* Remplit le node */
-      node->start = base;
-      node->size = power;
-      node->index = ind;
+      /* Remplit le pdesc */
+      pdesc->start = base;
+      pdesc->size = power;
+      pdesc->index = ind;
 
       /* Insere dans le buddy */
-      LLIST_ADD(ppage_free[ind],node);
+      LLIST_ADD(ppage_free[ind],pdesc);
       
       size -= power;
       base += power;
