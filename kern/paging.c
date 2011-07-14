@@ -226,11 +226,11 @@ PUBLIC physaddr_t paging_virt2phys(virtaddr_t vaddr)
       return 0;
     }
 
-
   /* Retourne l'adresse physique */
   return (((table[pte].baseaddr)<<PAGING_BASESHIFT)+offset);
 
 }
+
 
 /******************************
  * Identity Mapping d une zone

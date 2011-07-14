@@ -50,14 +50,18 @@
   ( (((addr)&0xFFFFF000) == (addr))?((addr) >> PHYS_PAGE_SHIFT) << PHYS_PAGE_SHIFT:(((addr) >> PHYS_PAGE_SHIFT)+1) << PHYS_PAGE_SHIFT )
 
 /* Description de page d une adresse donnee */
-#define PHYS_GET_DESC(addr)			\
+#define PHYS_GET_DESC(addr)						\
   ( (struct ppage_desc*)(PHYS_POOL_AREA_START + ((addr) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc)) )
 
 /* Modification d un ppage_desc */
-#define PHYS_SET_DESC(desc, desc_start, desc_size)			\
-  {									\
-    (desc)->start=(desc_start);						\
-    (desc)->size=(desc_size);						\
+#define PHYS_RELEASE_DESC(desc)			\
+  {						\
+    (desc)->start = 0;				\
+    (desc)->size = 0;				\
+    (desc)->maps = 0;				\
+    (desc)->index = 0;				\
+    (desc)->prev = NULL;			\
+    (desc)->next = NULL;			\
   }
 
 
@@ -87,5 +91,8 @@ PUBLIC void* phys_alloc(u32_t size);
 PUBLIC void phys_free(void* addr);
 PUBLIC void phys_map(physaddr_t addr);
 PUBLIC u8_t phys_unmap(physaddr_t addr);
+
+/* DEBUG */
+PUBLIC void phys_print_buddy(void);
 
 #endif

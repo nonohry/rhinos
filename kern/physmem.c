@@ -16,11 +16,8 @@
  ***********************/
 
 PRIVATE void phys_init_area(u32_t base, u32_t size);
-PRIVATE void phys_free_buddy(struct ppage_desc* pdesc);
-PRIVATE struct ppage_desc* phys_find_used(physaddr_t paddr);
 
 PRIVATE struct ppage_desc* ppage_free[PHYS_PAGE_MAX_BUDDY];
-PRIVATE struct ppage_desc* ppage_used;;
 
 
 /*****************
@@ -38,7 +35,6 @@ PUBLIC void phys_init(void)
     {
       LLIST_NULLIFY(ppage_free[i]);
     }
-  LLIST_NULLIFY(ppage_used);
 
   /* Calcule la taille maximale du pool */
   pool_size = ((bootinfo->mem_size) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc);
@@ -142,95 +138,28 @@ PUBLIC void* phys_alloc(u32_t size)
   pdesc = LLIST_GETHEAD(ppage_free[ind]);
   /* Met a jour les listes */
   LLIST_REMOVE(ppage_free[ind],pdesc);
-  LLIST_ADD(ppage_used,pdesc);
   
   return (void*)(pdesc->start);
 }
 
 
-/***************
+/**************
  * Liberation
- ***************/
+ **************/
 
 PUBLIC void phys_free(void* addr)
 {
   struct ppage_desc* pdesc;
 
-  /* Cherche le noeud associe a l adresse */
-  pdesc = phys_find_used((physaddr_t)addr);
+  /* Cherche la description associee a l adresse */
+  pdesc = PHYS_GET_DESC((physaddr_t)addr);
 
-  /* Si un noeud est trouve, on libere */
-  if (pdesc != NULL) 
+  /* Si la taille est nulle, on sort */
+  if (!pdesc->size)
     {
-      phys_free_buddy(pdesc);
-    }
-  return;
-}
-
-
-
-/*******************************************
- * Indique un mappage sur une ppage allouee
- *******************************************/
-
-PUBLIC void phys_map(physaddr_t addr)
-{
-  struct ppage_desc* pdesc;
-  
-  /* Cherche le noeud associe a l adresse */
-  pdesc = phys_find_used(addr);
-
-  if (pdesc != NULL)
-    {
-      /* Incremente le nombre de mappages */
-      pdesc->maps++;
+      return;
     }
 
-  return;
-}
-
-
-/*********************************************
- * Supprime un mappage sur une ppage allouee
- *********************************************/
-
-PUBLIC u8_t phys_unmap(physaddr_t addr)
-{
-  struct ppage_desc* pdesc;
-  
-  /* Cherche le noeud associe a l adresse */
-  pdesc = phys_find_used(addr);
-
-  if ((pdesc!=NULL)&&(pdesc->maps))
-    {
-      /* Decremente le nombre de mappages */
-      pdesc->maps--;
-      /* Plus de mappage ? */
-      if (!(pdesc->maps))
-	{
-	  /* On libere */
-	  phys_free_buddy(pdesc);
-	  return PHYS_UNMAP_FREE;
-	}
-      else
-	{
-	  return PHYS_UNMAP_UNMAP;
-	}
-    }
-
-  return PHYS_UNMAP_NONE;
-}
-
-
-/***********************************
- * La fonction reelle de liberation
- ***********************************/
-
-PRIVATE void phys_free_buddy(struct ppage_desc* pdesc)
-{
-  /* Enleve le noeud de la liste des noeuds alloues */
-  LLIST_REMOVE(ppage_used,pdesc);
-  
   /* Insere "recursivement" le noeud */
   while((pdesc->index < PHYS_PAGE_MAX_BUDDY-1)&&(!LLIST_ISNULL(ppage_free[pdesc->index])))
     {
@@ -257,8 +186,8 @@ PRIVATE void phys_free_buddy(struct ppage_desc* pdesc)
       pdesc->index++;
       /* Enleve le buddy du buddy */
       LLIST_REMOVE(ppage_free[buddy->index],buddy);
-      /* Nullifie le noeud buddy */
-      PHYS_SET_DESC(buddy,0,0);
+      /* Libere le buddy */
+      PHYS_RELEASE_DESC(buddy);
 
     }
   
@@ -271,30 +200,56 @@ PRIVATE void phys_free_buddy(struct ppage_desc* pdesc)
 
 
 
-/********************************************
- * Trouve le noeud correspondant a l adresse
- ********************************************/
+/*******************************************
+ * Indique un mappage sur une ppage allouee
+ *******************************************/
 
-PRIVATE struct ppage_desc* phys_find_used(physaddr_t paddr)
+PUBLIC void phys_map(physaddr_t addr)
 {
   struct ppage_desc* pdesc;
   
-  /* Recherche du pdesc dans ppage_used */
-  pdesc = LLIST_GETHEAD(ppage_used);
+  /* Cherche la description associee a l adresse */
+  pdesc = PHYS_GET_DESC(addr);
 
-  while(pdesc->start != paddr)
+  if (pdesc->size)
     {
-      pdesc = LLIST_NEXT(ppage_used, pdesc);
-      if(LLIST_ISHEAD(ppage_used, pdesc))
+      /* Incremente le nombre de mappages */
+      pdesc->maps++;
+    }
+
+  return;
+}
+
+
+/*********************************************
+ * Supprime un mappage sur une ppage allouee
+ *********************************************/
+
+PUBLIC u8_t phys_unmap(physaddr_t addr)
+{
+  struct ppage_desc* pdesc;
+  
+  /* Cherche la description associee a l adresse */
+  pdesc = PHYS_GET_DESC(addr);
+
+  if ((pdesc->size)&&(pdesc->maps))
+    {
+      /* Decremente le nombre de mappages */
+      pdesc->maps--;
+      /* Plus de mappage ? */
+      if (!(pdesc->maps))
 	{
-	  /* Adresse non trouvee */
-	  return NULL;
+	  /* On libere */
+	  phys_free((void*)addr);
+	  return PHYS_UNMAP_FREE;
+	}
+      else
+	{
+	  return PHYS_UNMAP_UNMAP;
 	}
     }
 
-  /* Adresse trouvee */
-  return pdesc;
-
+  return PHYS_UNMAP_NONE;
 }
 
 
@@ -342,3 +297,35 @@ PRIVATE void phys_init_area(u32_t base, u32_t size)
   return;
 }
 
+
+/**************************
+ * DEBUG: Affiche le buddy
+ **************************/
+
+PUBLIC void phys_print_buddy(void)
+{
+  short i;
+   bochs_print("-= Buddy =-\n");
+  for(i=PHYS_PAGE_MAX_BUDDY-1;i>=0;i--)
+    {
+      if (LLIST_ISNULL(ppage_free[i]))
+	{
+	  bochs_print("   ~");
+	}
+      else
+	{
+	  struct ppage_desc* pdesc;
+	  pdesc = LLIST_GETHEAD(ppage_free[i]);
+	  bochs_print("   ");
+	  do
+	    {
+	      bochs_print("[%d (%d)] ",pdesc->start,pdesc->size);
+	      pdesc=LLIST_NEXT(ppage_free[i],pdesc);
+	    }while(!LLIST_ISHEAD(ppage_free[i],pdesc));
+	}
+
+      bochs_print("\n");
+    }
+
+  return;
+}
