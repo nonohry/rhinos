@@ -34,7 +34,7 @@ struct vmem_bufctl
   struct vmem_slab* slab;
   struct vmem_bufctl* next;
   struct vmem_bufctl* prev;
-};
+} __attribute__ ((packed));
 
 
 /* Slab */
@@ -45,7 +45,7 @@ struct vmem_slab
   struct vmem_cache* cache;
   struct vmem_slab* next;
   struct vmem_slab* prev;
-};
+} __attribute__ ((packed));
 
 
 /* Cache */
@@ -61,7 +61,16 @@ struct vmem_cache
   struct vmem_slab* slabs_full;
   struct vmem_cache* next;
   struct vmem_cache* prev;
-};
+} __attribute__ ((packed));
+
+
+
+/**************
+ * Prototypes
+ **************/
+
+PUBLIC void virtmem_cache_init(void);
+
 
 
 #endif

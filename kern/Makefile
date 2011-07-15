@@ -51,5 +51,8 @@ physmem.o: ../include/types.h ../include/llist.h klib.h start.h physmem.h
 paging.o: ../include/types.h klib.h start.h physmem.h paging.h
 virtmem_buddy.o: ../include/types.h ../include/wmalloc.h klib.h start.h
 virtmem_buddy.o: physmem.h paging.h virtmem_buddy.h
+virtmem_slab.o: ../include/types.h ../include/llist.h klib.h paging.h
+virtmem_slab.o: virtmem_buddy.h ../include/wmalloc.h virtmem_slab.h
 main.o: ../include/types.h ../include/llist.h start.h klib.h physmem.h
 main.o: paging.h irq.h pit.h virtmem_buddy.h ../include/wmalloc.h
+main.o: virtmem_slab.h

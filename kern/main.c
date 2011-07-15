@@ -17,6 +17,7 @@
 #include "irq.h"
 #include "pit.h"
 #include "virtmem_buddy.h"
+#include "virtmem_slab.h"
 
 
 /***********************
@@ -36,6 +37,8 @@ PUBLIC int main()
   /* Initialisation du buddy de memoire virtuelle */
   virtmem_buddy_init();
   bochs_print("Virtual Memory (buddy) initialized\n");
+
+  virtmem_cache_init();
 
   /* Initialisation du gestionnaire des IRQ */
   irq_init();
