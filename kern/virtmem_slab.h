@@ -40,7 +40,7 @@ struct vmem_bufctl
 /* Slab */
 struct vmem_slab
 {
-  u32_t count;
+  u16_t count;
   struct vmem_bufctl* free_buf;
   struct vmem_cache* cache;
   struct vmem_slab* next;
@@ -52,8 +52,8 @@ struct vmem_slab
 struct vmem_cache
 {
   char name[VIRT_CACHE_NAMELEN];
-  u32_t size;
-  u32_t align;
+  u16_t size;
+  u16_t align;
   void (*constructor)(void*,u32_t);
   void (*destructor)(void*,u32_t);
   struct vmem_slab* slabs_free;

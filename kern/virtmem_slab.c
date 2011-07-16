@@ -23,7 +23,7 @@
 
 PRIVATE void virtmem_cache_grow_little(struct vmem_cache* cache); 
 
-PRIVATE void virtmem_print_cache(struct vmem_cache* cache);
+PRIVATE void virtmem_print_caches(struct vmem_cache* cache);
 PRIVATE void virtmem_print_slabs(struct vmem_slab* slab);
 PRIVATE void virtmem_print_bufctls(struct vmem_bufctl* bufctl);
 
@@ -54,9 +54,13 @@ static struct vmem_cache cache_cache =
 
 PUBLIC void virtmem_cache_init(void)
 {
-  virtmem_print_cache(&cache_cache);
+
+  LLIST_SETHEAD(&cache_cache);
+
+  virtmem_print_caches(&cache_cache);
   virtmem_cache_grow_little(&cache_cache);
-  virtmem_print_cache(&cache_cache);
+  virtmem_cache_grow_little(&cache_cache);
+  virtmem_print_caches(&cache_cache);
 
   return;
 }
@@ -122,13 +126,17 @@ PRIVATE void virtmem_print_bufctls(struct vmem_bufctl* bufctl)
     }
   else
     {
+      u16_t n=0;
       bc = LLIST_GETHEAD(bufctl);
       do
 	{
-	  bochs_print(" %d ",bc->base);
+	  n++;
+	  //bochs_print(" %d ",bc->base);
 	  bc = LLIST_NEXT(bufctl,bc);
 	  
 	}while(!LLIST_ISHEAD(bufctl,bc));
+
+      bochs_print(" %d free (Ox%x-0x%x) ",n,(u32_t)(bufctl->base),(u32_t)(bufctl->prev->base));
       
     }
 
@@ -152,7 +160,7 @@ PRIVATE void virtmem_print_slabs(struct vmem_slab* slab)
       sl = LLIST_GETHEAD(slab);
       do
 	{
-	  bochs_print(" slab [ ");
+	  bochs_print(" slab [ objects:  %d used / ",slab->count);
 	  virtmem_print_bufctls(sl->free_buf);
 	  bochs_print(" ] ");
 	  sl = LLIST_NEXT(slab,sl);
@@ -168,23 +176,39 @@ PRIVATE void virtmem_print_slabs(struct vmem_slab* slab)
  * DEBUG: Affichage des caches
  ******************************/
 
-PRIVATE void virtmem_print_cache(struct vmem_cache* cache)
+PRIVATE void virtmem_print_caches(struct vmem_cache* cache)
 {
+  struct vmem_cache* c;
 
-  bochs_print(" name: %s\n",cache->name);
-  bochs_print("   size: %d\n",cache->size);
-  
-  bochs_print("   slabs_free: ");
-  virtmem_print_slabs(cache->slabs_free);
-  bochs_print("\n");
-  
-  bochs_print("   slabs_partial: ");
-  virtmem_print_slabs(cache->slabs_partial);
-  bochs_print("\n");
+  if (LLIST_ISNULL(cache))
+    {
+      bochs_print(" ~ ");
+    }
+  else
+    {
+      c = LLIST_GETHEAD(cache);
+      do
+	{
 
-  bochs_print("   slabs_full: ");
-  virtmem_print_slabs(cache->slabs_full);
-  bochs_print("\n");
+	  bochs_print(" name: %s\n",c->name);
+	  bochs_print("   size: %d\n",c->size);
+	  
+	  bochs_print("   slabs_free: ");
+	  virtmem_print_slabs(c->slabs_free);
+	  bochs_print("\n");
+	  
+	  bochs_print("   slabs_partial: ");
+	  virtmem_print_slabs(c->slabs_partial);
+	  bochs_print("\n");
+
+	  bochs_print("   slabs_full: ");
+	  virtmem_print_slabs(c->slabs_full);
+	  bochs_print("\n");
+
+	  c = LLIST_NEXT(cache,c);
+
+	}while(!LLIST_ISHEAD(cache,c));
+    }
 
   return;
 };
