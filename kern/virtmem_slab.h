@@ -41,6 +41,7 @@ struct vmem_bufctl
 struct vmem_slab
 {
   u16_t count;
+  u16_t max_objects;
   struct vmem_bufctl* free_buf;
   struct vmem_cache* cache;
   struct vmem_slab* next;

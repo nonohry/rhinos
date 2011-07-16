@@ -91,6 +91,9 @@ PRIVATE void virtmem_cache_grow_little(struct vmem_cache* cache)
   /* Taille du bufctl et du buffer associe */
   buf_size = sizeof(struct vmem_bufctl) + cache->size;
 
+  /* Calcul le nombre maximal d objets */
+  slab->max_objects = (PAGING_PAGE_SIZE - sizeof(struct vmem_slab)) / buf_size;
+
   /* Cree les bufctl et les buffers dans la page */
   for(buf = (page+sizeof(struct vmem_slab));
       buf < (page+PAGING_PAGE_SIZE-buf_size);
@@ -110,6 +113,12 @@ PRIVATE void virtmem_cache_grow_little(struct vmem_cache* cache)
 
   return;
 }
+
+
+
+
+/*========================================================================*/
+
 
 
 /*******************************
@@ -143,6 +152,8 @@ PRIVATE void virtmem_print_bufctls(struct vmem_bufctl* bufctl)
   return;
 }
 
+
+
 /*****************************
  * DEBUG: Affichage des slabs
  *****************************/
@@ -160,7 +171,7 @@ PRIVATE void virtmem_print_slabs(struct vmem_slab* slab)
       sl = LLIST_GETHEAD(slab);
       do
 	{
-	  bochs_print(" slab [ objects:  %d used / ",slab->count);
+	  bochs_print(" slab [ %d objects:  %d used / ",slab->max_objects, slab->count);
 	  virtmem_print_bufctls(sl->free_buf);
 	  bochs_print(" ] ");
 	  sl = LLIST_NEXT(slab,sl);
