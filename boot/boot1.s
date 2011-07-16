@@ -37,7 +37,7 @@ jmp 	start
 	
 	KLOADOFF	equ	0xD00	; Offset de chargement du noyau
 	KSEGMENT	equ	0x0	; Segment de chargment du noyau
-	KSIZE		equ	30	; Taille du noyau (KSIZE*512o)
+	KSIZE		equ	55	; Taille du noyau en secteurs (KSIZE*512o)
 	KSECTOR		equ	3	; Numero de secteur
 	
 	;;

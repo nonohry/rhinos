@@ -83,7 +83,8 @@ load_sect:
 	;; LBA to CHS
 	push 	ax		; Sauvegarde les registres essentiels
 	push	cx
-	push	dx	
+	push	dx
+	push	bx
 	xor	ax,ax		; Vide les registres
 	xor	cx,cx
 	xor	dx,dx
@@ -100,13 +101,16 @@ load_sect:
 	mov	byte [drv_head],dl ; Tete = Reste
 	
 
+	pop	bx
 	pop	dx		; Restaure les registres
 	pop	cx
 	pop	ax
-	
+
+	push	bx
 	push	ax		; Sauvegarde les registres essentiels
 	call	load_one_sect	; Appelle le chargement un par un 
 	pop	ax		; Restaure les registres
+	pop	bx
 	inc	word [drv_sect]	; Incremente le numero de secteur LBA
 	add	bx,0x200	; Incremente de 512o la destination	
 	dec	byte [drv_size]	; Decrement la taille
@@ -126,7 +130,7 @@ load_retry:
 	mov	al,0x01		; Taille a charger (dans CH)
 	mov	cl,byte [drv_one_sect] 	; Secteur
 	mov	ch,byte [drv_cyl]	; Cylindre 
-	mov	dh,byte [drv_head]	; Tete 
+	mov	dh,byte [drv_head]	; Tete
 	int	0x13		; INT 13
 	jnb	load_ok		; Interruption reussie
 	dec	di		; Decremente DI sinon

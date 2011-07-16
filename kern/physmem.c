@@ -119,6 +119,7 @@ PUBLIC void* phys_alloc(u32_t size)
 
       /* Prend un pdesc dans le pool */
       pd1 = PHYS_GET_DESC(pdesc->start + (pdesc->size >> 1));
+      PHYS_NULLIFY_DESC(pd1);
 
       /* Scinde le noeud en 2 noeuds */
 
@@ -187,13 +188,12 @@ PUBLIC void phys_free(void* addr)
       /* Enleve le buddy du buddy */
       LLIST_REMOVE(ppage_free[buddy->index],buddy);
       /* Libere le buddy */
-      PHYS_RELEASE_DESC(buddy);
+      PHYS_NULLIFY_DESC(buddy);
 
     }
   
   /* Dernier niveau ou niveau vide */
   LLIST_ADD(ppage_free[pdesc->index],pdesc);
-  
   
   return;
 }
@@ -281,7 +281,8 @@ PRIVATE void phys_init_area(u32_t base, u32_t size)
 
       /* Prend un pdesc dans le pool */
       pdesc = PHYS_GET_DESC(base);
-
+      PHYS_NULLIFY_DESC(pdesc);
+ 
       /* Remplit le pdesc */
       pdesc->start = base;
       pdesc->size = power;

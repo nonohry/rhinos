@@ -12,6 +12,7 @@
 #include <types.h>
 #include <llist.h>
 #include "klib.h"
+#include "physmem.h"
 #include "paging.h"
 #include "virtmem_buddy.h"
 #include "virtmem_slab.h"
@@ -22,19 +23,21 @@
  ***********************/
 
 PRIVATE void virtmem_cache_grow_little(struct vmem_cache* cache); 
+PRIVATE void* virtmem_cache_special_alloc(struct vmem_cache* cache);
+
 
 PRIVATE void virtmem_print_caches(struct vmem_cache* cache);
 PRIVATE void virtmem_print_slabs(struct vmem_slab* slab);
 PRIVATE void virtmem_print_bufctls(struct vmem_bufctl* bufctl);
 
 
-/*****************
- * Cache Statique
- *****************/
+/*******************
+ * Caches Statiques
+ *******************/
 
 static struct vmem_cache cache_cache =
   {
-  name: "vmem_cache",
+  name: "cache_cache",
   size: sizeof(struct vmem_cache),
   align: 0,
   constructor: NULL,
@@ -46,6 +49,35 @@ static struct vmem_cache cache_cache =
   prev: NULL
   };
 
+static struct vmem_cache slab_cache =
+  {
+  name: "slab_cache",
+  size: sizeof(struct vmem_slab),
+  align: 0,
+  constructor: NULL,
+  destructor: NULL,
+  slabs_free: NULL,
+  slabs_partial: NULL,
+  slabs_full: NULL,
+  next: NULL,
+  prev: NULL
+  };
+
+static struct vmem_cache bufctl_cache =
+  {
+  name: "bufctl_cache",
+  size: sizeof(struct vmem_bufctl),
+  align: 0,
+  constructor: NULL,
+  destructor: NULL,
+  slabs_free: NULL,
+  slabs_partial: NULL,
+  slabs_full: NULL,
+  next: NULL,
+  prev: NULL
+  };
+
+
 
 /*********************************
  * Initialisation de l allocateur
@@ -54,13 +86,21 @@ static struct vmem_cache cache_cache =
 
 PUBLIC void virtmem_cache_init(void)
 {
-
+  /* Initilise la liste des caches */
   LLIST_SETHEAD(&cache_cache);
+  LLIST_SETHEAD(&slab_cache);
+  LLIST_SETHEAD(&bufctl_cache);
+
+  virtmem_cache_special_alloc(&cache_cache);
+  virtmem_cache_special_alloc(&cache_cache);
+
+  virtmem_cache_special_alloc(&slab_cache);
+
+  virtmem_cache_special_alloc(&cache_cache);
 
   virtmem_print_caches(&cache_cache);
-  virtmem_cache_grow_little(&cache_cache);
-  virtmem_cache_grow_little(&cache_cache);
-  virtmem_print_caches(&cache_cache);
+  virtmem_print_caches(&slab_cache);
+  virtmem_print_caches(&bufctl_cache);
 
   return;
 }
@@ -115,6 +155,69 @@ PRIVATE void virtmem_cache_grow_little(struct vmem_cache* cache)
 }
 
 
+/***********************************
+ * Allocation dans un cache special
+ ***********************************/
+
+PRIVATE void* virtmem_cache_special_alloc(struct vmem_cache* cache)
+{
+  struct vmem_slab* slabs_list;
+  struct vmem_slab* slab;
+  struct vmem_bufctl* bufctl;
+  struct ppage_desc* pdesc;
+
+  /* Seulement les caches de base */
+  if ( (cache != &cache_cache) &&
+       (cache != &slab_cache)  &&
+       (cache != &bufctl_cache) )
+    {
+      return NULL;
+    }
+
+  /* Agrandit le cache s il faut */
+  if ( (LLIST_ISNULL(cache->slabs_free)) && (LLIST_ISNULL(cache->slabs_partial)) )
+    {
+      /* Appel de la fonction (non recursive) */
+      virtmem_cache_grow_little(cache);
+    }
+
+  /* Trouve la liste de slabs de travail */
+  slabs_list = (LLIST_ISNULL(cache->slabs_partial)?cache->slabs_free:cache->slabs_partial);
+
+  /* Prend l element de tete */
+  slab = LLIST_GETHEAD(slabs_list);
+
+  /* Recupere un bufctl */
+  bufctl = LLIST_GETHEAD(slab->free_buf);
+  LLIST_REMOVE(slab->free_buf,bufctl);
+
+  /* Lie le bufctl a sa page physique */
+  pdesc = PHYS_GET_DESC( paging_virt2phys(bufctl->base)  );
+  LLIST_ADD(pdesc->bufctl,bufctl);
+  
+  /* Actualise le compte du slab */
+  slab->count++;
+
+  /* Change le slab de liste au besoins */
+  if (slabs_list == cache->slabs_free)
+    {
+      LLIST_REMOVE(cache->slabs_free,slab);
+      LLIST_ADD(cache->slabs_partial,slab);
+    }
+  else
+    {
+      /* Change de partial vers full si besoins */
+      if (slab->count == slab->max_objects)
+	{
+	  LLIST_REMOVE(cache->slabs_partial,slab);
+	  LLIST_ADD(cache->slabs_full,slab);
+	}
+    }
+  
+  /* Retourne l'adresse du buffer */
+  return (void*)(bufctl->base);
+
+}
 
 
 /*========================================================================*/
@@ -201,7 +304,9 @@ PRIVATE void virtmem_print_caches(struct vmem_cache* cache)
       do
 	{
 
-	  bochs_print(" name: %s\n",c->name);
+	  bochs_print(" name: ");
+	  bochs_print(c->name);
+	  bochs_print("\n");
 	  bochs_print("   size: %d\n",c->size);
 	  
 	  bochs_print("   slabs_free: ");

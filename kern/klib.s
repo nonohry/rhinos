@@ -48,7 +48,7 @@ bochs_base10:
 	mov	[BASE],dword 10 ; Base decimale
 	jmp	bochs_next	; Saute a la decomposition
 bochs_base16:
-	cmp	al,'x'		; Regarde si c est un 'd'
+	cmp	al,'x'		; Regarde si c est un 'x'
 	jne	bochs_loop	; Si non, on saute
 	mov	[BASE],dword 16 ; Base hexadecimale
 bochs_next:	

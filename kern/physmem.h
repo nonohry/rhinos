@@ -12,6 +12,7 @@
  ***********/
 
 #include <types.h>
+#include "virtmem_slab.h"
 
 /**************
  * Constantes 
@@ -53,13 +54,14 @@
 #define PHYS_GET_DESC(addr)						\
   ( (struct ppage_desc*)(PHYS_POOL_AREA_START + ((addr) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc)) )
 
-/* Modification d un ppage_desc */
-#define PHYS_RELEASE_DESC(desc)			\
+/* Zeroing d un ppage_desc */
+#define PHYS_NULLIFY_DESC(desc)			\
   {						\
     (desc)->start = 0;				\
     (desc)->size = 0;				\
     (desc)->maps = 0;				\
     (desc)->index = 0;				\
+    (desc)->bufctl = NULL;			\
     (desc)->prev = NULL;			\
     (desc)->next = NULL;			\
   }
@@ -77,6 +79,7 @@ struct ppage_desc
   u32_t size;
   u16_t maps;
   u8_t  index;
+  struct vmem_bufctl* bufctl;
   struct ppage_desc* prev;
   struct ppage_desc* next;
 }__attribute__((packed));
