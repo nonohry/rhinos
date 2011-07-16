@@ -22,7 +22,10 @@
  ***********************/
 
 PRIVATE void virtmem_cache_grow_little(struct vmem_cache* cache); 
+
 PRIVATE void virtmem_print_cache(struct vmem_cache* cache);
+PRIVATE void virtmem_print_slabs(struct vmem_slab* slab);
+PRIVATE void virtmem_print_bufctls(struct vmem_bufctl* bufctl);
 
 
 /*****************
@@ -57,90 +60,6 @@ PUBLIC void virtmem_cache_init(void)
 
   return;
 }
-
-
-/**************************
- * DEBUG: Affiche un cache
- **************************/
-
-PRIVATE void virtmem_print_cache(struct vmem_cache* cache)
-{
-  struct vmem_slab* slab;
-  struct vmem_bufctl* bufctl;
-
-  bochs_print(" name: %s\n",cache->name);
-  bochs_print("   size: %d\n",cache->size);
-  
-  bochs_print("   slabs_free: ");
-  if (LLIST_ISNULL(cache->slabs_free))
-    {
-      bochs_print("~");
-    }
-  else
-    {
-      slab = LLIST_GETHEAD(cache->slabs_free);
-      do
-	{
-	  bochs_print("slab [");
-	  
-	  if (LLIST_ISNULL(slab->free_buf))
-	    {
-	      bochs_print("~ ");
-	    }
-	  else
-	    {
-	      bufctl = LLIST_GETHEAD(slab->free_buf);
-	      do
-		{
-		  bochs_print(" %d ",bufctl->base);
-		  bufctl = LLIST_NEXT(slab->free_buf,bufctl);
-
-		}while(!LLIST_ISHEAD(slab->free_buf,bufctl));
-
-	    }
-
-	  bochs_print("]");
-	  slab = LLIST_NEXT(cache->slabs_free,slab);
-	}while(!LLIST_ISHEAD(cache->slabs_free,slab));
-    }
-  bochs_print("\n");
-  
-  bochs_print("   slabs_partial: ");
-  if (LLIST_ISNULL(cache->slabs_partial))
-    {
-      bochs_print("~");
-    }
-  else
-    {
-      slab = LLIST_GETHEAD(cache->slabs_partial);
-      do
-	{
-	  bochs_print("slab [");
-	  bochs_print("]");
-	  slab = LLIST_NEXT(cache->slabs_partial,slab);
-	}while(!LLIST_ISHEAD(cache->slabs_partial,slab));
-    }
-  bochs_print("\n");
-
-  bochs_print("   slabs_full: ");
-  if (LLIST_ISNULL(cache->slabs_full))
-    {
-      bochs_print("~");
-    }
-  else
-    {
-      slab = LLIST_GETHEAD(cache->slabs_full);
-      do
-	{
-	  bochs_print("slab [");
-	  bochs_print("]");
-	  slab = LLIST_NEXT(cache->slabs_full,slab);
-	}while(!LLIST_ISHEAD(cache->slabs_full,slab));
-    }
-  bochs_print("\n");
-
-  return;
-};
 
 
 
@@ -187,3 +106,85 @@ PRIVATE void virtmem_cache_grow_little(struct vmem_cache* cache)
 
   return;
 }
+
+
+/*******************************
+ * DEBUG: Affichage des bufctls
+ *******************************/
+
+PRIVATE void virtmem_print_bufctls(struct vmem_bufctl* bufctl)
+{
+  struct vmem_bufctl* bc;
+  
+  if (LLIST_ISNULL(bufctl))
+    {
+      bochs_print("~ ");
+    }
+  else
+    {
+      bc = LLIST_GETHEAD(bufctl);
+      do
+	{
+	  bochs_print(" %d ",bc->base);
+	  bc = LLIST_NEXT(bufctl,bc);
+	  
+	}while(!LLIST_ISHEAD(bufctl,bc));
+      
+    }
+
+  return;
+}
+
+/*****************************
+ * DEBUG: Affichage des slabs
+ *****************************/
+
+PRIVATE void virtmem_print_slabs(struct vmem_slab* slab)
+{
+  struct vmem_slab* sl;
+
+  if (LLIST_ISNULL(slab))
+    {
+      bochs_print("~ ");
+    }
+  else
+    {
+      sl = LLIST_GETHEAD(slab);
+      do
+	{
+	  bochs_print(" slab [ ");
+	  virtmem_print_bufctls(sl->free_buf);
+	  bochs_print(" ] ");
+	  sl = LLIST_NEXT(slab,sl);
+	  
+	}while(!LLIST_ISHEAD(slab,sl));
+      
+    }
+
+  return;
+}
+
+/******************************
+ * DEBUG: Affichage des caches
+ ******************************/
+
+PRIVATE void virtmem_print_cache(struct vmem_cache* cache)
+{
+
+  bochs_print(" name: %s\n",cache->name);
+  bochs_print("   size: %d\n",cache->size);
+  
+  bochs_print("   slabs_free: ");
+  virtmem_print_slabs(cache->slabs_free);
+  bochs_print("\n");
+  
+  bochs_print("   slabs_partial: ");
+  virtmem_print_slabs(cache->slabs_partial);
+  bochs_print("\n");
+
+  bochs_print("   slabs_full: ");
+  virtmem_print_slabs(cache->slabs_full);
+  bochs_print("\n");
+
+  return;
+};
