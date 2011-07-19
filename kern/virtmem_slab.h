@@ -21,6 +21,7 @@
 
 #define VIRT_CACHE_NAMELEN     32
 
+#define VIRT_CACHE_GROWSHIFT   3   /* 2^3 = 8 */
 
 /**************
  * Structures

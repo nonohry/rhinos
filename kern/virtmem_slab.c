@@ -22,6 +22,8 @@
  * Declarations PRIVATE
  ***********************/
 
+PRIVATE void virtmem_cache_grow(struct vmem_cache* cache);
+PRIVATE void virtmem_cache_grow_big(struct vmem_cache* cache);
 PRIVATE void virtmem_cache_grow_little(struct vmem_cache* cache); 
 PRIVATE void* virtmem_cache_special_alloc(struct vmem_cache* cache);
 
@@ -78,6 +80,19 @@ static struct vmem_cache bufctl_cache =
   };
 
 
+static struct vmem_cache test_cache =
+  {
+  name: "test_cache",
+  size: 1024,
+  align: 0,
+  constructor: NULL,
+  destructor: NULL,
+  slabs_free: NULL,
+  slabs_partial: NULL,
+  slabs_full: NULL,
+  next: NULL,
+  prev: NULL
+  };
 
 /*********************************
  * Initialisation de l allocateur
@@ -90,21 +105,42 @@ PUBLIC void virtmem_cache_init(void)
   LLIST_SETHEAD(&cache_cache);
   LLIST_SETHEAD(&slab_cache);
   LLIST_SETHEAD(&bufctl_cache);
+  LLIST_SETHEAD(&test_cache);
 
-  virtmem_cache_special_alloc(&cache_cache);
-  virtmem_cache_special_alloc(&cache_cache);
-
-  virtmem_cache_special_alloc(&slab_cache);
-
-  virtmem_cache_special_alloc(&cache_cache);
+  virtmem_cache_grow(&test_cache);
 
   virtmem_print_caches(&cache_cache);
   virtmem_print_caches(&slab_cache);
   virtmem_print_caches(&bufctl_cache);
+  virtmem_print_caches(&test_cache);
 
   return;
 }
 
+
+
+/*************************
+ * Croissance du cache
+ * (fonction principale)
+ *************************/
+
+
+PRIVATE void virtmem_cache_grow(struct vmem_cache* cache)
+{
+  /* Redirige sur les 2 fonction de croissance en fonction de la taille */
+  if ( cache->size > (PAGING_PAGE_SIZE >> VIRT_CACHE_GROWSHIFT) )
+    {
+      /* Gros objets */
+      virtmem_cache_grow_big(cache);
+    }
+  else
+    {
+      /* Petits objets */
+      virtmem_cache_grow_little(cache);
+    }
+
+  return;
+}
 
 
 /*****************************************
@@ -153,6 +189,51 @@ PRIVATE void virtmem_cache_grow_little(struct vmem_cache* cache)
 
   return;
 }
+
+
+/*******************************************
+ * Croissance du cache pour les gros objets
+ * (slabs off page)
+ *******************************************/
+
+PRIVATE void virtmem_cache_grow_big(struct vmem_cache* cache)
+{
+  struct vmem_slab* slab;
+  struct vmem_bufctl* bc;
+  virtaddr_t page;
+  u16_t i;
+
+  /* Obtention d une page virtuelle mappee */
+  page = (virtaddr_t)virtmem_buddy_alloc(PAGING_PAGE_SIZE, VIRT_BUDDY_MAP);
+
+  /* Obtention d un slab */
+  slab = (struct vmem_slab*)virtmem_cache_special_alloc(&slab_cache);
+
+  /* Initialisation du slab */
+  slab->count = 0;
+  slab->max_objects = PAGING_PAGE_SIZE/cache->size;
+  slab->cache = cache;
+  LLIST_NULLIFY(slab->free_buf);
+
+  /* Cree les bufctls et les fait pointer sur la page */
+  for(i=0; i<slab->max_objects; i++)
+    {
+      bc = (struct vmem_bufctl*)virtmem_cache_special_alloc(&bufctl_cache);
+      
+      /* Initialise le bufctl */
+      bc->base = page + i*cache->size;
+      bc->slab = slab;
+      /* Ajout a la liste du slab */
+      LLIST_ADD(slab->free_buf,bc);
+
+    }
+
+  /* Relie le nouveau slab au cache */
+  LLIST_ADD(cache->slabs_free,slab);
+
+  return;
+}
+
 
 
 /***********************************
