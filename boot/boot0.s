@@ -33,7 +33,7 @@
 	LOADSEG		equ	0x0	; Segment du second programme de boot
 	LOADSIZE	equ	2	; Taille (en secteur de 512o)
 	CUROFF		equ	0x60 	; Offset Courant
-	STACKPTR	equ	0x1C00 	; Offset SP
+	STACKPTR	equ	0xFFFF	; Offset SP
 	STACKOFF	equ	0x600 	; Base de la pile
 	
 	;;

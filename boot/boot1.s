@@ -37,7 +37,7 @@ jmp 	start
 	
 	KLOADOFF	equ	0xD00	; Offset de chargement du noyau
 	KSEGMENT	equ	0x0	; Segment de chargment du noyau
-	KSIZE		equ	55	; Taille du noyau en secteurs (KSIZE*512o)
+	KSIZE		equ	80	; Taille du noyau en secteurs (KSIZE*512o)
 	KSECTOR		equ	3	; Numero de secteur
 	
 	;;
@@ -45,7 +45,7 @@ jmp 	start
 	;; 
 
 	CUROFF		equ	0x80	; Offset courant
-	STACKPTR	equ	0x7C00	; Pointeur de pile
+	STACKPTR	equ	0x9FBFF	; Pointeur de pile
 	
 	;;
 	;; GDT  
