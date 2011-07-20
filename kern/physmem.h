@@ -79,6 +79,7 @@ struct ppage_desc
   u32_t size;
   u16_t maps;
   u8_t  index;
+  struct vmem_cache* cache;
   struct vmem_bufctl* bufctl;
   struct ppage_desc* prev;
   struct ppage_desc* next;
