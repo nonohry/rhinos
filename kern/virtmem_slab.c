@@ -106,12 +106,6 @@ PUBLIC void virtmem_cache_init(void)
   struct test* toto;
 
   toto = (struct test*)virtmem_cache_alloc(test_cache);
-  /*
-  tata = (u32_t)virtmem_cache_alloc(test_cache);
-  tutu = (u32_t)virtmem_cache_alloc(test_cache);
-  titi = (u32_t)virtmem_cache_alloc(test_cache);
-  toto = (u32_t)virtmem_cache_alloc(test_cache);
-  */
 
   bochs_print("a:%d b:%d c:%d\n",toto->a,toto->b,toto->c);
 
