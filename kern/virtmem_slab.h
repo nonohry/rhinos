@@ -43,6 +43,8 @@ struct vmem_slab
 {
   u16_t count;
   u16_t max_objects;
+  u8_t  n_pages;
+  virtaddr_t start;
   struct vmem_bufctl* free_buf;
   struct vmem_cache* cache;
   struct vmem_slab* next;
@@ -73,7 +75,7 @@ struct vmem_cache
 
 PUBLIC void virtmem_cache_init(void);
 PUBLIC void* virtmem_cache_alloc(struct vmem_cache* cache);
-PUBLIC void virtmem_cache_free(struct vmem_cache* cache, void* buf);
+PUBLIC u8_t virtmem_cache_free(struct vmem_cache* cache, void* buf);
 PUBLIC struct vmem_cache* virtmem_cache_create(const char* name, u16_t size, u16_t align, void (*ctor)(void*,u32_t), void (*dtor)(void*,u32_t));
 
 #endif

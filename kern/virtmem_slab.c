@@ -55,6 +55,38 @@ static struct vmem_cache cache_cache =
   };
 
 
+/*******
+ * TEST
+ *******/
+
+struct test 
+{
+  int a;
+  int b;
+  int c;
+  char name[9000];
+};
+
+void test_ctor(void* buf, u32_t size)
+{
+  struct test* test = (struct test*)buf;
+  test->a=9;
+  test->b=8;
+  test->c=89;
+  return;
+  
+}
+
+void test_dtor(void* buf, u32_t size)
+{
+  struct test* test = (struct test*)buf;
+  test->a=0;
+  test->b=0;
+  test->c=100;
+  return;
+  
+}
+
 /*********************************
  * Initialisation de l allocateur
  *********************************/
@@ -69,17 +101,24 @@ PUBLIC void virtmem_cache_init(void)
   slab_cache = virtmem_cache_create("slab_cache",sizeof(struct vmem_slab),0,NULL,NULL);
   bufctl_cache = virtmem_cache_create("bufctl_cache",sizeof(struct vmem_bufctl),0,NULL,NULL);
 
-  struct vmem_cache* test_cache = virtmem_cache_create("test_cache",1024,0,NULL,NULL);
+  struct vmem_cache* test_cache = virtmem_cache_create("test_cache",sizeof(struct test),0,test_ctor,test_dtor);
 
-  u32_t toto,tata,titi,tutu;
+  struct test* toto;
 
-  toto = (u32_t)virtmem_cache_alloc(test_cache);
+  toto = (struct test*)virtmem_cache_alloc(test_cache);
+  /*
   tata = (u32_t)virtmem_cache_alloc(test_cache);
   tutu = (u32_t)virtmem_cache_alloc(test_cache);
   titi = (u32_t)virtmem_cache_alloc(test_cache);
   toto = (u32_t)virtmem_cache_alloc(test_cache);
+  */
+
+  bochs_print("a:%d b:%d c:%d\n",toto->a,toto->b,toto->c);
 
   virtmem_cache_free(test_cache,(void*)toto);
+
+  bochs_print("a:%d b:%d c:%d\n",toto->a,toto->b,toto->c);
+
 
   virtmem_print_caches(cache_list);
 
@@ -114,7 +153,7 @@ PUBLIC struct vmem_cache* virtmem_cache_create(const char* name, u16_t size, u16
 
   /* Remplissage des champs */
   cache->size = size;
-  cache->align = 0;
+  cache->align = align;
   cache->constructor = ctor;
   cache->destructor = dtor;
   cache->slabs_free = NULL;
@@ -134,7 +173,7 @@ PUBLIC struct vmem_cache* virtmem_cache_create(const char* name, u16_t size, u16
  * Liberation dans un cache
  ***************************/
 
-PUBLIC void virtmem_cache_free(struct vmem_cache* cache, void* buf)
+PUBLIC u8_t virtmem_cache_free(struct vmem_cache* cache, void* buf)
 {
   struct ppage_desc* pdesc;
   struct vmem_bufctl* bc;
@@ -144,13 +183,13 @@ PUBLIC void virtmem_cache_free(struct vmem_cache* cache, void* buf)
   pdesc = PHYS_GET_DESC( paging_virt2phys((virtaddr_t)buf) );
   if (pdesc == NULL)
     {
-      return;
+      return EXIT_FAILURE;
     }
 
   /* Cherche le bufctl dans la page */
   if (LLIST_ISNULL(pdesc->bufctl))
     {
-      return;
+      return EXIT_FAILURE;
     }
   else
     {
@@ -162,7 +201,7 @@ PUBLIC void virtmem_cache_free(struct vmem_cache* cache, void* buf)
 	  /* Retour si on ne trouve pas le bufctl */
 	  if (LLIST_ISHEAD(pdesc->bufctl,bc))
 	    {
-	      return;
+	      return EXIT_FAILURE;
 	    }
 	}
     }
@@ -181,8 +220,14 @@ PUBLIC void virtmem_cache_free(struct vmem_cache* cache, void* buf)
     {
       /* Passage de full vers partial */
       LLIST_REMOVE(cache->slabs_full,slab);
-      LLIST_ADD(cache->slabs_partial,slab);
-
+      if (slab->count)
+	{
+	  LLIST_ADD(cache->slabs_partial,slab);
+	}
+      else
+	{
+	  LLIST_ADD(cache->slabs_free,slab);
+	}
     }
   else
     {
@@ -194,7 +239,13 @@ PUBLIC void virtmem_cache_free(struct vmem_cache* cache, void* buf)
 	}
     }
 
-  return;
+  /* Applique le destructeur */
+  if ( cache->destructor != NULL)
+    {
+      cache->destructor((void*)buf,cache->size);
+    }
+
+  return EXIT_SUCCESS;
 }
 
 
@@ -239,7 +290,14 @@ PUBLIC void* virtmem_cache_alloc(struct vmem_cache* cache)
   if (slabs_list == cache->slabs_free)
     {
       LLIST_REMOVE(cache->slabs_free,slab);
-      LLIST_ADD(cache->slabs_partial,slab);
+      if (slab->count == slab->max_objects)
+	{
+	  LLIST_ADD(cache->slabs_full,slab);
+	}
+      else
+	{
+	  LLIST_ADD(cache->slabs_partial,slab);
+	}
     }
   else
     {
@@ -250,7 +308,13 @@ PUBLIC void* virtmem_cache_alloc(struct vmem_cache* cache)
 	  LLIST_ADD(cache->slabs_full,slab);
 	}
     }
-  
+
+  /* Applique le constructeur */
+  if ( cache->constructor != NULL)
+    {
+      cache->constructor((void*)(bufctl->base),cache->size);
+    }
+
   /* Retourne l'adresse du buffer */
   return (void*)(bufctl->base);
 
@@ -293,21 +357,27 @@ PRIVATE void virtmem_cache_grow_little(struct vmem_cache* cache)
   virtaddr_t buf;
   virtaddr_t page;
   u16_t buf_size;
+  u8_t np;
+
+  /* Calcul du nombre de page */
+  np = (PAGING_ALIGN_SUP(cache->size)) >> PAGING_PAGE_SHIFT;
 
   /* Obtention d'un page virtuelle mappee */
-  page = (virtaddr_t)virtmem_buddy_alloc(PAGING_PAGE_SIZE, VIRT_BUDDY_MAP);
+  page = (virtaddr_t)virtmem_buddy_alloc(np*PAGING_PAGE_SIZE, VIRT_BUDDY_MAP);
 
   /* Initialisation du slab en tete de page */
   slab = (struct vmem_slab*)page;
   slab->count = 0;
   slab->cache = cache;
+  slab->n_pages = np;
+  slab->start = page+sizeof(struct vmem_slab);
   LLIST_NULLIFY(slab->free_buf);
 
   /* Taille du bufctl et du buffer associe */
   buf_size = sizeof(struct vmem_bufctl) + cache->size;
 
   /* Calcul le nombre maximal d objets */
-  slab->max_objects = (PAGING_PAGE_SIZE - sizeof(struct vmem_slab)) / buf_size;
+  slab->max_objects = (np*PAGING_PAGE_SIZE - sizeof(struct vmem_slab)) / buf_size;
 
   /* Cree les bufctl et les buffers dans la page */
   for(buf = (page+sizeof(struct vmem_slab));
@@ -341,17 +411,23 @@ PRIVATE void virtmem_cache_grow_big(struct vmem_cache* cache)
   struct vmem_bufctl* bc;
   virtaddr_t page;
   u16_t i;
+  u8_t np;
 
-  /* Obtention d une page virtuelle mappee */
-  page = (virtaddr_t)virtmem_buddy_alloc(PAGING_PAGE_SIZE, VIRT_BUDDY_MAP);
+  /* Calcul du nombre de pages */
+  np =  (PAGING_ALIGN_SUP(cache->size)) >> PAGING_PAGE_SHIFT;
+
+  /* Obtention de pages virtuelle mappee */
+  page = (virtaddr_t)virtmem_buddy_alloc(np*PAGING_PAGE_SIZE, VIRT_BUDDY_MAP);
 
   /* Obtention d un slab */
   slab = (struct vmem_slab*)virtmem_cache_alloc(slab_cache);
 
   /* Initialisation du slab */
   slab->count = 0;
-  slab->max_objects = PAGING_PAGE_SIZE/cache->size;
+  slab->max_objects = (np*PAGING_PAGE_SIZE)/cache->size;
   slab->cache = cache;
+  slab->n_pages = np;
+  slab->start = page;
   LLIST_NULLIFY(slab->free_buf);
 
   /* Cree les bufctls et les fait pointer sur la page */
@@ -429,7 +505,7 @@ PRIVATE void virtmem_print_slabs(struct vmem_slab* slab)
       sl = LLIST_GETHEAD(slab);
       do
 	{
-	  bochs_print(" slab [ %d objects:  %d used / ",slab->max_objects, slab->count);
+	  bochs_print(" slab (%d pages, start: 0x%x) [ %d objects:  %d used / ",slab->n_pages,slab->start,slab->max_objects, slab->count);
 	  virtmem_print_bufctls(sl->free_buf);
 	  bochs_print(" ] ");
 	  sl = LLIST_NEXT(slab,sl);
