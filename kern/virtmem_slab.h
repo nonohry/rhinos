@@ -58,6 +58,7 @@ struct vmem_cache
   char name[VIRT_CACHE_NAMELEN];
   u16_t size;
   u16_t align;
+  u16_t align_offset;
   void (*constructor)(void*,u32_t);
   void (*destructor)(void*,u32_t);
   struct vmem_slab* slabs_free;

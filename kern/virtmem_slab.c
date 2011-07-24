@@ -65,7 +65,7 @@ struct test
   int a;
   int b;
   int c;
-  char name[9000];
+  char name[900];
 };
 
 void test_ctor(void* buf, u32_t size)
@@ -102,20 +102,26 @@ PUBLIC void virtmem_cache_init(void)
   slab_cache = virtmem_cache_create("slab_cache",sizeof(struct vmem_slab),0,NULL,NULL);
   bufctl_cache = virtmem_cache_create("bufctl_cache",sizeof(struct vmem_bufctl),0,NULL,NULL);
 
-  struct vmem_cache* test_cache = virtmem_cache_create("test_cache",sizeof(struct test),0,test_ctor,test_dtor);
+  struct vmem_cache* test_cache = virtmem_cache_create("test_cache",sizeof(struct test),120,test_ctor,test_dtor);
 
-  struct test* toto;
+  //struct test* toto;
 
-  toto = (struct test*)virtmem_cache_alloc(test_cache);
+  //toto = (struct test*)virtmem_cache_alloc(test_cache);
 
-  bochs_print("a:%d b:%d c:%d\n",toto->a,toto->b,toto->c);
-virtmem_print_caches(cache_list);
+  //bochs_print("a:%d b:%d c:%d\n",toto->a,toto->b,toto->c);
+  //virtmem_print_caches(cache_list);
 
-  virtmem_cache_free(test_cache,(void*)toto);
-  virtmem_cache_destroy(test_cache);
+  //virtmem_cache_free(test_cache,(void*)toto);
+  //virtmem_cache_destroy(test_cache);
 
-  bochs_print("a:%d b:%d c:%d\n",toto->a,toto->b,toto->c);
+  //bochs_print("a:%d b:%d c:%d\n",toto->a,toto->b,toto->c);
 
+
+  virtmem_cache_grow(test_cache);
+  virtmem_cache_grow(test_cache);
+  virtmem_cache_grow(test_cache);
+  virtmem_cache_grow(test_cache);
+  virtmem_cache_grow(test_cache);
 
   virtmem_print_caches(cache_list);
 
@@ -151,6 +157,7 @@ PUBLIC struct vmem_cache* virtmem_cache_create(const char* name, u16_t size, u16
   /* Remplissage des champs */
   cache->size = size;
   cache->align = align;
+  cache->align_offset = 0;
   cache->constructor = ctor;
   cache->destructor = dtor;
   cache->slabs_free = NULL;
@@ -443,7 +450,7 @@ PRIVATE void virtmem_cache_grow_little(struct vmem_cache* cache)
   struct vmem_slab* slab;
   virtaddr_t buf;
   virtaddr_t page;
-  u16_t buf_size;
+  u16_t buf_size, wasted;
   u8_t np;
 
   /* Calcul du nombre de page */
@@ -465,6 +472,17 @@ PRIVATE void virtmem_cache_grow_little(struct vmem_cache* cache)
 
   /* Calcul le nombre maximal d objets */
   slab->max_objects = (np*PAGING_PAGE_SIZE - sizeof(struct vmem_slab)) / buf_size;
+
+  /* Calcul l alignement */
+  if (cache->align)
+    {
+      wasted = (np*PAGING_PAGE_SIZE)-(slab->max_objects*cache->size);
+      if (wasted)
+	{
+	  slab->start += cache->align_offset;
+	  cache->align_offset = (cache->align_offset+cache->align)%wasted;
+	}
+    }
 
   /* Cree les bufctl et les buffers dans la page */
   for(buf = slab->start;
@@ -502,7 +520,7 @@ PRIVATE void virtmem_cache_grow_big(struct vmem_cache* cache)
   struct vmem_slab* slab;
   struct vmem_bufctl* bc;
   virtaddr_t page;
-  u16_t i;
+  u16_t i, wasted;
   u8_t np;
 
   /* Calcul du nombre de pages */
@@ -522,13 +540,24 @@ PRIVATE void virtmem_cache_grow_big(struct vmem_cache* cache)
   slab->start = page;
   LLIST_NULLIFY(slab->free_buf);
 
+  /* Calcul l alignement */
+  if (cache->align)
+    {
+      wasted = (np*PAGING_PAGE_SIZE)-(slab->max_objects*cache->size);
+      if (wasted)
+	{
+	  slab->start += cache->align_offset;
+	  cache->align_offset = (cache->align_offset+cache->align)%wasted;
+	}
+    }
+
   /* Cree les bufctls et les fait pointer sur la page */
   for(i=0; i<slab->max_objects; i++)
     {
       bc = (struct vmem_bufctl*)virtmem_cache_alloc(bufctl_cache);
       
       /* Initialise le bufctl */
-      bc->base = page + i*cache->size;
+      bc->base = slab->start + i*cache->size;
       bc->slab = slab;
      /* Applique le constructeur */
       if ( cache->constructor != NULL)
@@ -602,7 +631,7 @@ PRIVATE void virtmem_print_slabs(struct vmem_slab* slab)
       sl = LLIST_GETHEAD(slab);
       do
 	{
-	  bochs_print(" slab (%d pages, start: 0x%x) [ %d objects:  %d used / ",slab->n_pages,slab->start,slab->max_objects, slab->count);
+	  bochs_print(" slab (%d pages, start: 0x%x) [ %d objects:  %d used / ",sl->n_pages,sl->start,sl->max_objects, sl->count);
 	  virtmem_print_bufctls(sl->free_buf);
 	  bochs_print(" ] ");
 	  sl = LLIST_NEXT(slab,sl);
