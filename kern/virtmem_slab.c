@@ -25,7 +25,8 @@
 PRIVATE void virtmem_cache_grow(struct vmem_cache* cache);
 PRIVATE void virtmem_cache_grow_big(struct vmem_cache* cache);
 PRIVATE void virtmem_cache_grow_little(struct vmem_cache* cache); 
-
+PRIVATE void virtmem_cache_destroy(struct vmem_cache* cache);
+PRIVATE void virtmem_slab_destroy(struct vmem_cache* cache,struct vmem_slab* slab);
 
 PRIVATE void virtmem_print_caches(struct vmem_cache* cache);
 PRIVATE void virtmem_print_slabs(struct vmem_slab* slab);
@@ -108,8 +109,10 @@ PUBLIC void virtmem_cache_init(void)
   toto = (struct test*)virtmem_cache_alloc(test_cache);
 
   bochs_print("a:%d b:%d c:%d\n",toto->a,toto->b,toto->c);
+virtmem_print_caches(cache_list);
 
   virtmem_cache_free(test_cache,(void*)toto);
+  virtmem_cache_destroy(test_cache);
 
   bochs_print("a:%d b:%d c:%d\n",toto->a,toto->b,toto->c);
 
@@ -303,6 +306,108 @@ PUBLIC void* virtmem_cache_alloc(struct vmem_cache* cache)
 }
 
 
+/*************************
+ * Destruction d un cache
+ *************************/
+
+PRIVATE void virtmem_cache_destroy(struct vmem_cache* cache)
+{
+  u8_t i;
+
+  /* Petit controle */
+  if ( (!LLIST_ISNULL(cache->slabs_partial)) ||
+       (!LLIST_ISNULL(cache->slabs_full)) )
+    {
+      bochs_print("Cannot destroy non empty cache !\n");
+      return;
+    }
+
+  /* Parcourt la liste des slabs */
+  while(!LLIST_ISNULL(cache->slabs_free))
+    {
+      struct vmem_slab* slab = LLIST_GETHEAD(cache->slabs_free);
+      /* Detruit le slab */
+      virtmem_slab_destroy(cache,slab);
+      /* Detruit le chainage */
+      LLIST_REMOVE(cache->slabs_free,slab);
+      /* Libere le slab au besoin */
+       if (cache->size > (PAGING_PAGE_SIZE >> VIRT_CACHE_GROWSHIFT))
+	{
+	  virtmem_cache_free(slab_cache,slab);
+	}
+    }
+  
+  /* Remise a zero */
+  for(i=0;i<VIRT_CACHE_NAMELEN;i++)
+    {
+      cache->name[i] = 0;
+    }
+  cache->size = 0;
+  cache->align = 0;
+  cache->constructor = NULL;
+  cache->destructor = NULL;
+  LLIST_REMOVE(cache_list,cache);
+
+  /* Liberation */
+  virtmem_cache_free(&cache_cache,cache);
+
+  return;
+}
+
+
+/************************
+ * Destruction d un slab
+ ************************/
+
+PRIVATE void virtmem_slab_destroy(struct vmem_cache* cache,struct vmem_slab* slab)
+{
+  virtaddr_t page;
+
+  /* Petit controle */
+  if (slab->count)
+    {
+      return;
+    }
+
+  /* Destruction des objets et des bufctl */
+  while(!LLIST_ISNULL(slab->free_buf))
+    {
+      struct vmem_bufctl* bc = LLIST_GETHEAD(slab->free_buf);
+      
+      /* Detruit l'objet si possible */
+      if (cache->destructor != NULL)
+	{
+	  cache->destructor((void*)(bc->base),cache->size);
+	}
+
+      /* Remise a zero */
+      bc->base = 0;
+      bc->slab = NULL;
+      LLIST_REMOVE(slab->free_buf,bc);
+
+      /* Libere le bufctl si off slab */
+      if (cache->size > (PAGING_PAGE_SIZE >> VIRT_CACHE_GROWSHIFT))
+	{
+	  virtmem_cache_free(bufctl_cache,bc);
+	}
+
+    }
+
+  /* Libere les pages virtuelles */
+  page = PAGING_ALIGN_INF((virtaddr_t)slab->start);
+  virtmem_buddy_free((void*)page);
+
+  /* Remise a zero */
+  slab->max_objects = 0;
+  slab->n_pages = 0;
+  slab->cache = NULL;
+  slab->start = 0;
+
+  return;
+}
+
+
+
 
 /*************************
  * Croissance du cache
@@ -362,7 +467,7 @@ PRIVATE void virtmem_cache_grow_little(struct vmem_cache* cache)
   slab->max_objects = (np*PAGING_PAGE_SIZE - sizeof(struct vmem_slab)) / buf_size;
 
   /* Cree les bufctl et les buffers dans la page */
-  for(buf = (page+sizeof(struct vmem_slab));
+  for(buf = slab->start;
       buf < (page+PAGING_PAGE_SIZE-buf_size);
       buf += buf_size)
     {
