@@ -233,12 +233,6 @@ PUBLIC u8_t virtmem_cache_free(struct vmem_cache* cache, void* buf)
 	}
     }
 
-  /* Applique le destructeur */
-  if ( cache->destructor != NULL)
-    {
-      cache->destructor((void*)buf,cache->size);
-    }
-
   return EXIT_SUCCESS;
 }
 
@@ -301,12 +295,6 @@ PUBLIC void* virtmem_cache_alloc(struct vmem_cache* cache)
 	  LLIST_REMOVE(cache->slabs_partial,slab);
 	  LLIST_ADD(cache->slabs_full,slab);
 	}
-    }
-
-  /* Applique le constructeur */
-  if ( cache->constructor != NULL)
-    {
-      cache->constructor((void*)(bufctl->base),cache->size);
     }
 
   /* Retourne l'adresse du buffer */
@@ -383,6 +371,11 @@ PRIVATE void virtmem_cache_grow_little(struct vmem_cache* cache)
       /* Initialise le bufctl */
       bc->base = buf+sizeof(struct vmem_bufctl);
       bc->slab = slab;
+      /* Applique le constructeur */
+      if ( cache->constructor != NULL)
+	{
+	  cache->constructor((void*)(bc->base),cache->size);
+	}
       /* Ajoute a la liste du slab */
       LLIST_ADD(slab->free_buf,bc);
     }
@@ -432,6 +425,11 @@ PRIVATE void virtmem_cache_grow_big(struct vmem_cache* cache)
       /* Initialise le bufctl */
       bc->base = page + i*cache->size;
       bc->slab = slab;
+     /* Applique le constructeur */
+      if ( cache->constructor != NULL)
+	{
+	  cache->constructor((void*)(bc->base),cache->size);
+	}
       /* Ajout a la liste du slab */
       LLIST_ADD(slab->free_buf,bc);
 
