@@ -5,9 +5,9 @@
  */
 
 
-/***********
+/*========================================================================
  * Includes
- ***********/
+ *========================================================================*/
 
 #include <types.h>
 #include <llist.h>
@@ -18,14 +18,13 @@
 #include "virtmem_slab.h"
 
 
-/***********************
+/*========================================================================
  * Declarations PRIVATE
- ***********************/
+ *========================================================================*/
 
 PRIVATE void virtmem_cache_grow(struct vmem_cache* cache);
 PRIVATE void virtmem_cache_grow_big(struct vmem_cache* cache);
 PRIVATE void virtmem_cache_grow_little(struct vmem_cache* cache); 
-PRIVATE void virtmem_cache_destroy(struct vmem_cache* cache);
 PRIVATE void virtmem_slab_destroy(struct vmem_cache* cache,struct vmem_slab* slab);
 
 PRIVATE void virtmem_print_caches(struct vmem_cache* cache);
@@ -37,9 +36,9 @@ PRIVATE struct vmem_cache* bufctl_cache;
 PRIVATE struct vmem_cache* cache_list;
 
 
-/*******************
+/*========================================================================
  * Caches Statiques
- *******************/
+ *========================================================================*/
 
 static struct vmem_cache cache_cache =
   {
@@ -56,9 +55,9 @@ static struct vmem_cache cache_cache =
   };
 
 
-/*******
+/*========================================================================
  * TEST
- *******/
+ *========================================================================*/
 
 struct test 
 {
@@ -88,9 +87,9 @@ void test_dtor(void* buf, u32_t size)
   
 }
 
-/*********************************
+/*========================================================================
  * Initialisation de l allocateur
- *********************************/
+ *========================================================================*/
 
 
 PUBLIC void virtmem_cache_init(void)
@@ -129,9 +128,9 @@ PUBLIC void virtmem_cache_init(void)
 }
 
 
-/**********************
+/*========================================================================
  * Creation d un cache
- **********************/
+ *========================================================================*/
 
 PUBLIC struct vmem_cache* virtmem_cache_create(const char* name, u16_t size, u16_t align, void (*ctor)(void*,u32_t), void (*dtor)(void*,u32_t))
 {
@@ -173,9 +172,9 @@ PUBLIC struct vmem_cache* virtmem_cache_create(const char* name, u16_t size, u16
 }
 
 
-/***************************
+/*========================================================================
  * Liberation dans un cache
- ***************************/
+ *========================================================================*/
 
 PUBLIC u8_t virtmem_cache_free(struct vmem_cache* cache, void* buf)
 {
@@ -247,9 +246,9 @@ PUBLIC u8_t virtmem_cache_free(struct vmem_cache* cache, void* buf)
 }
 
 
-/*****************************
+/*========================================================================
  * Allocation dans un cache
- *****************************/
+ *========================================================================*/
 
 PUBLIC void* virtmem_cache_alloc(struct vmem_cache* cache)
 {
@@ -313,11 +312,11 @@ PUBLIC void* virtmem_cache_alloc(struct vmem_cache* cache)
 }
 
 
-/*************************
+/*========================================================================
  * Destruction d un cache
- *************************/
+ *========================================================================*/
 
-PRIVATE void virtmem_cache_destroy(struct vmem_cache* cache)
+PUBLIC void virtmem_cache_destroy(struct vmem_cache* cache)
 {
   u8_t i;
 
@@ -362,9 +361,9 @@ PRIVATE void virtmem_cache_destroy(struct vmem_cache* cache)
 }
 
 
-/************************
+/*========================================================================
  * Destruction d un slab
- ************************/
+ *========================================================================*/
 
 PRIVATE void virtmem_slab_destroy(struct vmem_cache* cache,struct vmem_slab* slab)
 {
@@ -416,10 +415,10 @@ PRIVATE void virtmem_slab_destroy(struct vmem_cache* cache,struct vmem_slab* sla
 
 
 
-/*************************
+/*========================================================================
  * Croissance du cache
  * (fonction principale)
- *************************/
+ *========================================================================*/
 
 
 PRIVATE void virtmem_cache_grow(struct vmem_cache* cache)
@@ -440,10 +439,10 @@ PRIVATE void virtmem_cache_grow(struct vmem_cache* cache)
 }
 
 
-/*****************************************
+/*========================================================================
  * Croissance du cache pour petits objets 
  * (slab on page)
- *****************************************/
+ *========================================================================*/
 
 PRIVATE void virtmem_cache_grow_little(struct vmem_cache* cache)
 { 
@@ -510,10 +509,10 @@ PRIVATE void virtmem_cache_grow_little(struct vmem_cache* cache)
 }
 
 
-/*******************************************
+/*========================================================================
  * Croissance du cache pour les gros objets
  * (slab off page)
- *******************************************/
+ *========================================================================*/
 
 PRIVATE void virtmem_cache_grow_big(struct vmem_cache* cache)
 {
@@ -581,9 +580,9 @@ PRIVATE void virtmem_cache_grow_big(struct vmem_cache* cache)
 
 
 
-/*******************************
+/*========================================================================
  * DEBUG: Affichage des bufctls
- *******************************/
+ *========================================================================*/
 
 PRIVATE void virtmem_print_bufctls(struct vmem_bufctl* bufctl)
 {
@@ -614,9 +613,9 @@ PRIVATE void virtmem_print_bufctls(struct vmem_bufctl* bufctl)
 
 
 
-/*****************************
+/*========================================================================
  * DEBUG: Affichage des slabs
- *****************************/
+ *========================================================================*/
 
 PRIVATE void virtmem_print_slabs(struct vmem_slab* slab)
 {
@@ -643,9 +642,9 @@ PRIVATE void virtmem_print_slabs(struct vmem_slab* slab)
   return;
 }
 
-/******************************
+/*========================================================================
  * DEBUG: Affichage des caches
- ******************************/
+ *========================================================================*/
 
 PRIVATE void virtmem_print_caches(struct vmem_cache* cache)
 {

@@ -5,17 +5,17 @@
 #include <types.h>
 #include "seg.h"
 
-/**********************
+/*========================================================================
  * Declaration PRIVATE
- **********************/
+ *========================================================================*/
 
 PRIVATE void init_seg_desc(struct seg_desc *desc, lineaddr_t base, u32_t size);
 PRIVATE void init_gate_desc(struct gate_desc* gate, u16_t seg, u32_t off);
 
 
-/****************************************************
+/*========================================================================
  * Initialisation de segments de code et de donnees
- ****************************************************/
+ *========================================================================*/
 
 PUBLIC void init_code_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl)
 {
@@ -50,9 +50,9 @@ PUBLIC void init_data_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8
 
 }
 
-/**********************************************
+/*========================================================================
  * Initialisation des interrupt et trap gates
- **********************************************/
+ *========================================================================*/
 
 PUBLIC void init_int_gate(struct gate_desc* gate, u16_t seg, u32_t off,u8_t flags)
 {
@@ -82,9 +82,9 @@ PUBLIC void init_trap_gate(struct gate_desc* gate, u16_t seg, u32_t off,u8_t fla
 }
 
 
-/***************************
+/*========================================================================
  * Initialisation des TSS
- ***************************/
+ *========================================================================*/
 
 PUBLIC void init_tss_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl)
 {
@@ -100,9 +100,9 @@ PUBLIC void init_tss_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_
 }
 
 
-/***************************
+/*========================================================================
  * Initialisation des LDT
- ***************************/
+ *========================================================================*/
 
 PUBLIC void init_ldt_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl)
 {
@@ -118,9 +118,9 @@ PUBLIC void init_ldt_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_
 }
 
 
-/****************************************
+/*========================================================================
  * Initialisations Generiques - Segments
- ****************************************/
+ *========================================================================*/
 
 PRIVATE void init_seg_desc(struct seg_desc *desc, lineaddr_t base, u32_t size)
 {
@@ -149,9 +149,9 @@ PRIVATE void init_seg_desc(struct seg_desc *desc, lineaddr_t base, u32_t size)
 }
 
 
-/*************************************
+/*========================================================================
  * Initialisations Generiques - Gates
- *************************************/
+ *========================================================================*/
 
 PRIVATE void init_gate_desc(struct gate_desc* gate, u16_t seg, u32_t off)
 {

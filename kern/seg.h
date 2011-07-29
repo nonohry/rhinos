@@ -6,9 +6,9 @@
 #ifndef SEG_H
 #define SEG_H
 
-/***************
+/*========================================================================
  * Constantes
- **************/
+ *========================================================================*/
 
 /* Masques pour le champ attributes de seg_desc */
 
@@ -53,9 +53,9 @@
 #define SEG_GRANULAR_LIMIT    0xFFFFFL   /* Pas de granularite au dessous (L pour Long) */
 
 
-/*****************************
+/*========================================================================
  * Structures (cf Doc Intel)
- *****************************/
+ *========================================================================*/
 
 
 /* Descripteur de Segment */
@@ -83,9 +83,9 @@ PUBLIC struct gate_desc
 } __attribute__ ((packed));
 
 
-/*************
+/*========================================================================
  * Prototypes
- *************/
+ *========================================================================*/
 
 PUBLIC void init_code_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl);
 PUBLIC void init_data_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl);

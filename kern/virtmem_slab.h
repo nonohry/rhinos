@@ -8,24 +8,24 @@
 #define VIRTMEM_SLAB_H
 
 
-/************
+/*========================================================================
  * Includes
- ***********/
+ *========================================================================*/
 
 #include <types.h>
 
 
-/**************
+/*========================================================================
  * Constantes
- **************/
+ *========================================================================*/
 
 #define VIRT_CACHE_NAMELEN     32
 
 #define VIRT_CACHE_GROWSHIFT   3   /* 2^3 = 8 */
 
-/**************
+/*========================================================================
  * Structures
- **************/
+ *========================================================================*/
 
 
 /* Bufctl */
@@ -70,13 +70,14 @@ struct vmem_cache
 
 
 
-/**************
+/*========================================================================
  * Prototypes
- **************/
+ *========================================================================*/
 
 PUBLIC void virtmem_cache_init(void);
 PUBLIC void* virtmem_cache_alloc(struct vmem_cache* cache);
 PUBLIC u8_t virtmem_cache_free(struct vmem_cache* cache, void* buf);
 PUBLIC struct vmem_cache* virtmem_cache_create(const char* name, u16_t size, u16_t align, void (*ctor)(void*,u32_t), void (*dtor)(void*,u32_t));
+PUBLIC void virtmem_cache_destroy(struct vmem_cache* cache);
 
 #endif
