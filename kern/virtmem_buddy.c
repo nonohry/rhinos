@@ -79,5 +79,7 @@ PUBLIC void  virtmem_buddy_free(void* addr)
 {
   /* DEBUG: Liberation via WaterMark */
   WMALLOC_FREE(virt_wm,addr);
+  bochs_print("Liberation de 0x%x (buddy)\n",(u32_t)addr);
+
   return;
 }

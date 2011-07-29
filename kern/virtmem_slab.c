@@ -35,7 +35,6 @@ PRIVATE struct vmem_cache* slab_cache;
 PRIVATE struct vmem_cache* bufctl_cache;
 PRIVATE struct vmem_cache* cache_list;
 
-
 /*========================================================================
  * Caches Statiques
  *========================================================================*/
@@ -45,6 +44,7 @@ static struct vmem_cache cache_cache =
   name: "cache_cache",
   size: sizeof(struct vmem_cache),
   align: 0,
+  flags: VIRT_CACHE_NOREAP,
   constructor: NULL,
   destructor: NULL,
   slabs_free: NULL,
@@ -98,10 +98,10 @@ PUBLIC void virtmem_cache_init(void)
   LLIST_NULLIFY(cache_list);
 
   /* Les caches des structures de base */
-  slab_cache = virtmem_cache_create("slab_cache",sizeof(struct vmem_slab),0,NULL,NULL);
-  bufctl_cache = virtmem_cache_create("bufctl_cache",sizeof(struct vmem_bufctl),0,NULL,NULL);
+  slab_cache = virtmem_cache_create("slab_cache",sizeof(struct vmem_slab),0,VIRT_CACHE_NOREAP,NULL,NULL);
+  bufctl_cache = virtmem_cache_create("bufctl_cache",sizeof(struct vmem_bufctl),0,VIRT_CACHE_NOREAP,NULL,NULL);
 
-  struct vmem_cache* test_cache = virtmem_cache_create("test_cache",sizeof(struct test),120,test_ctor,test_dtor);
+  struct vmem_cache* test_cache = virtmem_cache_create("test_cache",sizeof(struct test),120,VIRT_CACHE_DEFAULT,test_ctor,test_dtor);
 
   //struct test* toto;
 
@@ -122,6 +122,8 @@ PUBLIC void virtmem_cache_init(void)
   virtmem_cache_grow(test_cache);
   virtmem_cache_grow(test_cache);
 
+  bochs_print("Liberees: %d\n",virtmem_cache_reap(VIRT_CACHE_DEFAULT));
+  bochs_print("Liberees: %d\n",virtmem_cache_reap(VIRT_CACHE_DEFAULT));
   virtmem_print_caches(cache_list);
 
   return;
@@ -132,7 +134,8 @@ PUBLIC void virtmem_cache_init(void)
  * Creation d un cache
  *========================================================================*/
 
-PUBLIC struct vmem_cache* virtmem_cache_create(const char* name, u16_t size, u16_t align, void (*ctor)(void*,u32_t), void (*dtor)(void*,u32_t))
+
+PUBLIC struct vmem_cache* virtmem_cache_create(const char* name, u16_t size, u16_t align, u8_t flags, void (*ctor)(void*,u32_t), void (*dtor)(void*,u32_t))
 {
   u8_t i;
   struct vmem_cache* cache;
@@ -157,6 +160,7 @@ PUBLIC struct vmem_cache* virtmem_cache_create(const char* name, u16_t size, u16
   cache->size = size;
   cache->align = align;
   cache->align_offset = 0;
+  cache->flags = flags;
   cache->constructor = ctor;
   cache->destructor = dtor;
   cache->slabs_free = NULL;
@@ -175,6 +179,7 @@ PUBLIC struct vmem_cache* virtmem_cache_create(const char* name, u16_t size, u16
 /*========================================================================
  * Liberation dans un cache
  *========================================================================*/
+
 
 PUBLIC u8_t virtmem_cache_free(struct vmem_cache* cache, void* buf)
 {
@@ -250,6 +255,7 @@ PUBLIC u8_t virtmem_cache_free(struct vmem_cache* cache, void* buf)
  * Allocation dans un cache
  *========================================================================*/
 
+
 PUBLIC void* virtmem_cache_alloc(struct vmem_cache* cache)
 {
   struct vmem_slab* slabs_list;
@@ -316,6 +322,7 @@ PUBLIC void* virtmem_cache_alloc(struct vmem_cache* cache)
  * Destruction d un cache
  *========================================================================*/
 
+
 PUBLIC void virtmem_cache_destroy(struct vmem_cache* cache)
 {
   u8_t i;
@@ -361,9 +368,107 @@ PUBLIC void virtmem_cache_destroy(struct vmem_cache* cache)
 }
 
 
+
+/*========================================================================
+ * Reaping de l allocateur
+ *========================================================================*/
+
+
+PUBLIC u32_t virtmem_cache_reap(u8_t flags)
+{
+  struct vmem_cache* cache;
+  struct vmem_cache* cache_reap;
+  struct vmem_slab* slab;
+  u32_t pages, max_pages,i;
+
+  /* Controle */
+  if (LLIST_ISNULL(cache_list))
+    {
+      return 0;
+    }
+
+  /* Initialise le parcours des caches */
+  cache = LLIST_GETHEAD(cache_list);
+  cache_reap = NULL;
+  i = 1;
+  max_pages = 0;
+
+  /* Parcours des caches */
+  do
+    {
+      pages = 0;
+
+      /* Controle des flags et des slabs libres */
+      if ( ( !(cache->flags & VIRT_CACHE_NOREAP)  || (flags & VIRT_CACHE_BRUTALREAP) ) &&
+	   ( !(cache->flags & VIRT_CACHE_JUSTGROWN) || (flags & VIRT_CACHE_FORCEREAP) || (flags & VIRT_CACHE_BRUTALREAP) ) &&
+	   !(LLIST_ISNULL(cache->slabs_free)) )
+	{
+	  /* Parcourt les slabs de slabs_free */
+	  slab = LLIST_GETHEAD(cache->slabs_free);
+	  do
+	    {
+	      /* Compte les pages susceptibles d etre liberee */
+	      pages += slab->n_pages;
+	      slab = LLIST_NEXT(cache->slabs_free,slab);
+	      
+	    }while(!LLIST_ISHEAD(cache->slabs_free,slab));
+
+	  /* Met a jour le maximum de page et le cache associe */
+	  if (pages > max_pages)
+	    {
+	      max_pages = pages;
+	      cache_reap = cache;
+	    }
+	}
+      
+      /* Met a jour le flag dans tous les cas */
+      cache->flags &= ~VIRT_CACHE_JUSTGROWN;
+      cache = LLIST_NEXT(cache_list,cache);
+      i++;
+
+    }while( (!LLIST_ISHEAD(cache_list,cache))&&(i<VIRT_CACHE_REAPLEN)  );
+
+  /* Deplace la tete de liste (cas VIRT_CACHE_REAPLEN, aucun effet sinon) */
+  cache_list = cache;
+
+  /* S'assure qu on libere des pages */
+  if (!max_pages)
+  {
+    /* Pas de liberation ce coup ci */
+    return 0;
+  }
+
+  /* Detruit les slabs du cache selectionne*/
+  while(!LLIST_ISNULL(cache_reap->slabs_free))
+    {
+      slab = LLIST_GETHEAD(cache_reap->slabs_free);
+
+      /* Detruit le slab */
+      virtmem_slab_destroy(cache_reap,slab);
+
+      /* Detruit le chainage */
+      LLIST_REMOVE(cache_reap->slabs_free,slab);
+
+      /* Libere le slab au besoin */
+       if (cache_reap->size > (PAGING_PAGE_SIZE >> VIRT_CACHE_GROWSHIFT))
+	{
+	  virtmem_cache_free(slab_cache,slab);
+	}
+
+    }
+
+  /* Retourne le nombre de pages liberees */
+  return max_pages;
+  
+}
+
+
+
+
 /*========================================================================
  * Destruction d un slab
  *========================================================================*/
+
 
 PRIVATE void virtmem_slab_destroy(struct vmem_cache* cache,struct vmem_slab* slab)
 {
@@ -435,6 +540,9 @@ PRIVATE void virtmem_cache_grow(struct vmem_cache* cache)
       virtmem_cache_grow_little(cache);
     }
 
+  /* Indique la croissance */
+  cache->flags |= VIRT_CACHE_JUSTGROWN;
+
   return;
 }
 
@@ -443,6 +551,7 @@ PRIVATE void virtmem_cache_grow(struct vmem_cache* cache)
  * Croissance du cache pour petits objets 
  * (slab on page)
  *========================================================================*/
+
 
 PRIVATE void virtmem_cache_grow_little(struct vmem_cache* cache)
 { 
@@ -457,7 +566,7 @@ PRIVATE void virtmem_cache_grow_little(struct vmem_cache* cache)
 
   /* Obtention d'un page virtuelle mappee */
   page = (virtaddr_t)virtmem_buddy_alloc(np*PAGING_PAGE_SIZE, VIRT_BUDDY_MAP);
-  if ( (void*)page == NULL)
+  if ( ((void*)page) == NULL)
     {
       return;
     }
@@ -513,10 +622,12 @@ PRIVATE void virtmem_cache_grow_little(struct vmem_cache* cache)
 }
 
 
+
 /*========================================================================
  * Croissance du cache pour les gros objets
  * (slab off page)
  *========================================================================*/
+
 
 PRIVATE void virtmem_cache_grow_big(struct vmem_cache* cache)
 {
@@ -531,7 +642,7 @@ PRIVATE void virtmem_cache_grow_big(struct vmem_cache* cache)
 
   /* Obtention de pages virtuelle mappee */
   page = (virtaddr_t)virtmem_buddy_alloc(np*PAGING_PAGE_SIZE, VIRT_BUDDY_MAP);
-  if ( (void*)page == NULL)
+  if ( ((void*)page) == NULL)
     {
       return;
     }
@@ -592,6 +703,7 @@ PRIVATE void virtmem_cache_grow_big(struct vmem_cache* cache)
  * DEBUG: Affichage des bufctls
  *========================================================================*/
 
+
 PRIVATE void virtmem_print_bufctls(struct vmem_bufctl* bufctl)
 {
   struct vmem_bufctl* bc;
@@ -625,6 +737,7 @@ PRIVATE void virtmem_print_bufctls(struct vmem_bufctl* bufctl)
  * DEBUG: Affichage des slabs
  *========================================================================*/
 
+
 PRIVATE void virtmem_print_slabs(struct vmem_slab* slab)
 {
   struct vmem_slab* sl;
@@ -650,9 +763,12 @@ PRIVATE void virtmem_print_slabs(struct vmem_slab* slab)
   return;
 }
 
+
+
 /*========================================================================
  * DEBUG: Affichage des caches
  *========================================================================*/
+
 
 PRIVATE void virtmem_print_caches(struct vmem_cache* cache)
 {
@@ -672,7 +788,8 @@ PRIVATE void virtmem_print_caches(struct vmem_cache* cache)
 	  bochs_print(c->name);
 	  bochs_print("\n");
 	  bochs_print("   size: %d\n",c->size);
-	  
+	  bochs_print("   flags: %d\n",c->flags);
+
 	  bochs_print("   slabs_free: ");
 	  virtmem_print_slabs(c->slabs_free);
 	  bochs_print("\n");
