@@ -457,6 +457,10 @@ PRIVATE void virtmem_cache_grow_little(struct vmem_cache* cache)
 
   /* Obtention d'un page virtuelle mappee */
   page = (virtaddr_t)virtmem_buddy_alloc(np*PAGING_PAGE_SIZE, VIRT_BUDDY_MAP);
+  if ( (void*)page == NULL)
+    {
+      return;
+    }
 
   /* Initialisation du slab en tete de page */
   slab = (struct vmem_slab*)page;
@@ -527,6 +531,10 @@ PRIVATE void virtmem_cache_grow_big(struct vmem_cache* cache)
 
   /* Obtention de pages virtuelle mappee */
   page = (virtaddr_t)virtmem_buddy_alloc(np*PAGING_PAGE_SIZE, VIRT_BUDDY_MAP);
+  if ( (void*)page == NULL)
+    {
+      return;
+    }
 
   /* Obtention d un slab */
   slab = (struct vmem_slab*)virtmem_cache_alloc(slab_cache);
