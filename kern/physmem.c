@@ -154,6 +154,10 @@ PUBLIC void phys_free(void* addr)
 
   /* Cherche la description associee a l adresse */
   pdesc = PHYS_GET_DESC((physaddr_t)addr);
+  if (PHYS_PDESC_ISNULL(pdesc))
+    {
+      return;
+    }
 
   /* Si la taille est nulle, on sort */
   if (!pdesc->size)
@@ -210,6 +214,10 @@ PUBLIC void phys_map(physaddr_t addr)
   
   /* Cherche la description associee a l adresse */
   pdesc = PHYS_GET_DESC(addr);
+  if (PHYS_PDESC_ISNULL(pdesc))
+    {
+      return;
+    }
 
   if (pdesc->size)
     {
@@ -231,6 +239,10 @@ PUBLIC u8_t phys_unmap(physaddr_t addr)
   
   /* Cherche la description associee a l adresse */
   pdesc = PHYS_GET_DESC(addr);
+  if (PHYS_PDESC_ISNULL(pdesc))
+    {
+      return PHYS_UNMAP_NONE;
+    }
 
   if ((pdesc->size)&&(pdesc->maps))
     {
@@ -281,6 +293,7 @@ PRIVATE void phys_init_area(u32_t base, u32_t size)
 
       /* Prend un pdesc dans le pool */
       pdesc = PHYS_GET_DESC(base);
+ 
       PHYS_NULLIFY_DESC(pdesc);
  
       /* Remplit le pdesc */
