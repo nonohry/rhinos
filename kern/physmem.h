@@ -54,6 +54,11 @@
 #define PHYS_GET_DESC(addr)						\
   ( (struct ppage_desc*)(PHYS_POOL_AREA_START + ((addr) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc)) )
 
+/* Existence d une page description */
+#define PHYS_PDESC_ISNULL(pdescaddr)		\
+  ( ((physaddr_t)(pdescaddr)) == PHYS_POOL_AREA_START )
+
+
 /* Zeroing d un ppage_desc */
 #define PHYS_NULLIFY_DESC(desc)			\
   {						\
