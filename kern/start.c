@@ -41,19 +41,12 @@ PUBLIC void cstart(struct boot_info* binfo)
   else
     {
       /* On arrete la si pas de memory map  */
-      bochs_print("Unable to get memory size !\n");
+      bochs_print("Unable to get memory size: no memory map !\n");
       while(1){}
     }
 
   /* Limite a 4G */
-  if (mem > START_MEM_LIMIT)
-    {
-      bootinfo->mem_total = (u32_t)START_MEM_LIMIT;
-    }
-  else
-    {
-      bootinfo->mem_total = (u32_t)mem;
-    }
+  bootinfo->mem_total = ( mem > START_MEM_LIMIT ? (u32_t)START_MEM_LIMIT : (u32_t)mem ); 
 
   /* Initialise les tables du mode protege */
   gdt_init();
