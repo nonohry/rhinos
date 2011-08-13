@@ -25,12 +25,6 @@ sub:
 	cd ..; \
 	done
 
-img:	sub
-	cat /dev/zero | $(DD) of=$(IMG) count=$(SIZE) bs=512 conv=notrunc
-	cat $(BOOT0) | $(DD) of=$(IMG) bs=512 conv=notrunc
-	cat $(BOOT1) | $(DD) of=$(IMG) seek=$(BOOTSEEK) bs=512 conv=notrunc
-	cat $(KERN)  | $(DD) of=$(IMG) seek=$(KERNSEEK) bs=512 conv=notrunc
-
 hd:	sub
 	echo yes | bximage -q -hd -mode=flat -size=$(SIZE) $(IMG) 
 	cat $(BOOT0) | $(DD) of=$(IMG) bs=512 conv=notrunc
