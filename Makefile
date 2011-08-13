@@ -32,7 +32,7 @@ hd:	sub
 	cat $(KERN)  | $(DD) of=$(IMG) bs=512 seek=$(KERNSEEK) conv=notrunc
 
 fd:	sub
-	echo yes | bximage -q -fd  -size=1.44 img 
+	echo yes | bximage -q -fd  -size=1.44 $(IMG) 
 	cat $(BOOT0) | $(DD) of=$(IMG) bs=512 conv=notrunc
 	cat $(BOOT1) | $(DD) of=$(IMG) bs=512 seek=$(BOOTSEEK) conv=notrunc
 	cat $(KERN)  | $(DD) of=$(IMG) bs=512 seek=$(KERNSEEK) conv=notrunc

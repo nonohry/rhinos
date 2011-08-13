@@ -13,7 +13,8 @@
  * Constantes
  *========================================================================*/
 
-#define START_BOOTINFO_ADDR     0x803
+
+#define START_MEM_LIMIT         4294967295UL
 
 /* Type pour boot_mmap_e820 */
 

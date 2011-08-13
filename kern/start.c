@@ -21,12 +21,12 @@
 PUBLIC void cstart(struct boot_info* binfo)
 { 
   u16_t i;
+  u64_t mem;
+
 
   /* Recopie les informations de demarrage */
   bootinfo = binfo;
-
-
-  bochs_print("count: %d\n",bootinfo->mem_map_count);
+  mem = 0;
 
   /* Calcul la taille de la memoire */
   if (bootinfo->mem_map_count)
@@ -35,14 +35,24 @@ PUBLIC void cstart(struct boot_info* binfo)
       struct boot_mmap_e820* entry;
       for(entry=(struct boot_mmap_e820*)bootinfo->mem_map_addr,i=0;i<bootinfo->mem_map_count;i++,entry++)
 	{
-	  bootinfo->mem_total += (u32_t)entry->size;
+	  mem += entry->size;
 	}
     }
   else
     {
-      /* On arrete la si la taille n est pas disponible */
+      /* On arrete la si pas de memory map  */
       bochs_print("Unable to get memory size !\n");
       while(1){}
+    }
+
+  /* Limite a 4G */
+  if (mem > START_MEM_LIMIT)
+    {
+      bootinfo->mem_total = (u32_t)START_MEM_LIMIT;
+    }
+  else
+    {
+      bootinfo->mem_total = (u32_t)mem;
     }
 
   /* Initialise les tables du mode protege */
