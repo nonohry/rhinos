@@ -59,12 +59,11 @@ global	excep_18
 
 	
 _start:
-	mov	dword [BOOTINFO_ADDR], kernel_start 	; Champs kern_start de boot_info
-	mov	dword [BOOTINFO_ADDR+4], kernel_end 	; Champs kern_end de boot_info
-	push	pmodemsg	; Empile le message
-	call	bochs_print	; Affiche dans Bochs
-	add	esp,4		; Depile le message
-	call	cstart		; Appelle cstart 
+	mov	dword [ebx], kernel_start 	; Champs kern_start de boot_info
+	mov	dword [ebx+4], kernel_end 	; Champs kern_end de boot_info
+	push	ebx
+	call	cstart		; Appelle cstart
+	add 	esp,4
 	
 	lgdt	[gdt_desc]	; Charge la nouvelle GDT
     	lidt	[idt_desc]	; Charge l IDT

@@ -18,22 +18,24 @@
  * Fonction cstart
  *========================================================================*/
 
-PUBLIC void cstart()
+PUBLIC void cstart(struct boot_info* binfo)
 { 
   u16_t i;
 
   /* Recopie les informations de demarrage */
-  bootinfo = (struct boot_info*)START_BOOTINFO_ADDR;
+  bootinfo = binfo;
 
+
+  bochs_print("count: %d\n",bootinfo->mem_map_count);
 
   /* Calcul la taille de la memoire */
-  if (bootinfo->mem_entry)
+  if (bootinfo->mem_map_count)
     {
       /* Taille selon int 15/AX=E820 */
       struct boot_mmap_e820* entry;
-      for(entry=(struct boot_mmap_e820*)bootinfo->mem_addr,i=0;i<bootinfo->mem_entry;i++,entry++)
+      for(entry=(struct boot_mmap_e820*)bootinfo->mem_map_addr,i=0;i<bootinfo->mem_map_count;i++,entry++)
 	{
-	  bootinfo->mem_size += (u32_t)entry->size;
+	  bootinfo->mem_total += (u32_t)entry->size;
 	}
     }
   else

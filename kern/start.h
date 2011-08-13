@@ -31,9 +31,17 @@ PUBLIC struct boot_info
 {
   physaddr_t kern_start;     /* Debut du noyau */
   physaddr_t kern_end;       /* Fin du noyau */
-  physaddr_t mem_addr;       /* Adresse du memory map */
-  u16_t mem_entry;           /* Nombre d entree dans le memory map */
-  u32_t mem_size;            /* Nombre de pages memoire max (available01)*/
+  u8_t drv_number;
+  u16_t drv_cylinders;
+  u8_t drv_heads;
+  u8_t drv_sectors;
+  u32_t mem_map_addr;
+  u16_t mem_map_count;
+  u16_t mem_upper;
+  u16_t mem_lower;
+  u16_t mem_0x0;
+  u16_t mem_0x100000;
+  u32_t mem_total;
 }__attribute__((packed));
 
 

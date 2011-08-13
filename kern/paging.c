@@ -43,7 +43,7 @@ PUBLIC void paging_init(void)
   
   /* Identity Mapping */
   paging_identityMapping(0,bootinfo->kern_end);
-  paging_identityMapping(0x9FC00,PHYS_PAGE_NODE_POOL_ADDR+((bootinfo->mem_size) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc));
+  paging_identityMapping(0x9FC00,PHYS_PAGE_NODE_POOL_ADDR+((bootinfo->mem_total) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc));
 
   /* Charge le Kernel  Page Directory */
   load_CR3((physaddr_t)kern_PD);

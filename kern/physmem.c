@@ -37,10 +37,10 @@ PUBLIC void phys_init(void)
     }
 
   /* Calcule la taille maximale du pool */
-  pool_size = ((bootinfo->mem_size) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc);
+  pool_size = ((bootinfo->mem_total) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc);
 
   /* Entre les zones libres du memory map dans le buddy */
-  for(entry=(struct boot_mmap_e820*)bootinfo->mem_addr,i=0;i<bootinfo->mem_entry;i++,entry++)
+  for(entry=(struct boot_mmap_e820*)bootinfo->mem_map_addr,i=0;i<bootinfo->mem_map_count;i++,entry++)
     {
       if (entry->type == START_E820_AVAILABLE)
 	{
