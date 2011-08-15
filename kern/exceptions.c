@@ -14,5 +14,7 @@
 PUBLIC void excep_handle(u32_t num, u32_t code)
 {
   bochs_print("Exception %d (%d) !\n",num,code);
+  while(1){}
+
   return;
 }

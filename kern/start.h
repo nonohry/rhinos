@@ -15,6 +15,7 @@
 
 
 #define START_MEM_LIMIT         4294967295UL
+#define START_MEM_SIZE_0        1048576
 
 /* Type pour boot_mmap_e820 */
 
@@ -22,6 +23,7 @@
 #define START_E820_RESERVED     0x2
 #define START_E820_ACPI         0x3
 #define START_E820_ACPI_NVS     0x4
+
 
 
 /*======================================================================== 
