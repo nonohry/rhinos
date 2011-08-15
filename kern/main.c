@@ -26,6 +26,9 @@
 
 PUBLIC int main()
 {
+
+
+
   /* Initialisation de la memoire physique */
   phys_init();
   bochs_print("Physical Memory Manager initialized\n");

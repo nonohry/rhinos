@@ -13,7 +13,7 @@
 	%assign KERN_LBA_START		3
 	%assign	KERN_SIZE		80
 	%assign KERN_LBA_END		(KERN_LBA_START+KERN_SIZE-1)
-	%assign	KERN_ABS_ADDR		0xD00
+	%assign	KERN_ABS_ADDR		0xE00
 
 	%assign	BOOT1_MMAP_ADDR		0xC00
 	%assign	BOOT1_MMAP_SIZE		0x14
@@ -211,11 +211,15 @@ chs_load:
 	jc 	read_error
 	
 	;; Increment de la boucle
+	push 	si
+	PRINT	BOOT1_LOAD_PROGRESS
+	pop	si
 	inc	si
 	add	di,0x200
 	cmp	si,KERN_LBA_END
 	jle	chs_load
-
+	PRINT	BOOT1_LOAD_OK
+	
 	
 	;;========================================================================
 	;; Suite: Decouverte de la memoire
@@ -229,6 +233,7 @@ next01:
 	mov	es,ebx
 	mov	di,BOOT1_MMAP_ADDR
 	mov	ecx,BOOT1_MMAP_SIZE
+	mov	dword [boot1_info+mem_map_addr],BOOT1_MMAP_ADDR
 mem_e820:	
 	mov	eax,0xE820
 	mov	edx,0x534D4150
@@ -242,7 +247,6 @@ mem_e820:
 	jne	mem_e820
 
 	;; Sauve les informations
-	mov	dword [boot1_info+mem_map_addr],BOOT1_MMAP_ADDR
 	mov	word [boot1_info+mem_map_count],si
 	jmp	next02
 
@@ -443,7 +447,8 @@ real2phys:			; Arg: DX=Segment, AX=Offset
 	BOOT1_READ_ERROR	db	"Read Error",13,10,0
 	BOOT1_MEM_ERROR		db	"Memory Error",13,10,0
 	BOOT1_A20_ERROR		db	"A20 Gate Error",13,10,0
-	
+	BOOT1_LOAD_PROGRESS	db	".",0
+	BOOT1_LOAD_OK		db	"OK",13,10,0
 
 	;;========================================================================
 	;;  GDT 
