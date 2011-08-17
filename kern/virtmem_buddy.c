@@ -23,18 +23,39 @@
 PRIVATE struct virt_buddy_wm_alloc virt_wm;
 PRIVATE struct vmem_cache* area_cache;
 
+
 /*========================================================================
  * Initialisation de l'allocateur
  *========================================================================*/
 
 PUBLIC void  virtmem_buddy_init()
 {
-  
-  area_cache = virtmem_cache_create("area_cache",sizeof(struct vmem_area),0,0,VIRT_CACHE_NOREAP,NULL,NULL);
-  virtmem_print_slaballoc();
+  virtaddr_t vaddr_init;
+  physaddr_t paddr_init;
+  u32_t i;
+
+  /* Cree le cache des noeuds du buddy */
+  area_cache = virtmem_cache_create("area_cache",sizeof(struct vmem_area),0,VIRT_BUDDY_MINSLABS,VIRT_CACHE_NOREAP,NULL,NULL);
+
+
+  for(i=0;i<VIRT_BUDDY_MINSLABS;i++)
+    {
+       /* Cree une adresse virtuelle mappee pour les initialisations */
+      vaddr_init = (i+1)*PAGING_PAGE_SIZE + PAGING_ALIGN_SUP( PHYS_PAGE_NODE_POOL_ADDR+((bootinfo->mem_total) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc) );
+      paddr_init = (physaddr_t)phys_alloc(PAGING_PAGE_SIZE);
+      paging_map(vaddr_init, paddr_init, TRUE);
+      /* Fait grossir cache_cache dans cette page */
+      virtmem_cache_grow(area_cache,vaddr_init);
+    }
+
 
   /* DEBUG: Initialise le WaterMark */
-  WMALLOC_INIT(virt_wm,PAGING_ALIGN_SUP(PHYS_PAGE_NODE_POOL_ADDR+((bootinfo->mem_total) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc)),(1<<31));
+  WMALLOC_INIT(virt_wm,20480+PAGING_ALIGN_SUP(PHYS_PAGE_NODE_POOL_ADDR+((bootinfo->mem_total) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc)),(1<<31));
+
+  virtmem_cache_alloc(area_cache);
+  virtmem_print_slaballoc();
+
+
   return;
 }
 

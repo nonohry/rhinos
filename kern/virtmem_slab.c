@@ -23,8 +23,7 @@
  * Declarations PRIVATE
  *========================================================================*/
 
-PRIVATE u8_t virtmem_cache_grow(struct vmem_cache* cache);
-PRIVATE u8_t virtmem_cache_grow_big(struct vmem_cache* cache);
+PRIVATE u8_t virtmem_cache_grow_big(struct vmem_cache* cache, virtaddr_t addr);
 PRIVATE u8_t virtmem_cache_grow_little(struct vmem_cache* cache, virtaddr_t addr); 
 PRIVATE void virtmem_slab_destroy(struct vmem_cache* cache,struct vmem_slab* slab);
 
@@ -77,7 +76,7 @@ PUBLIC void virtmem_cache_init(void)
   paddr_init = (physaddr_t)phys_alloc(PAGING_PAGE_SIZE);
   paging_map(vaddr_init, paddr_init, TRUE);
   /* Fait grossir cache_cache dans cette page */
-  virtmem_cache_grow_little(&cache_cache,vaddr_init);
+  virtmem_cache_grow(&cache_cache,vaddr_init);
 
   /* Les caches des structures de base */
   slab_cache = virtmem_cache_create("slab_cache",sizeof(struct vmem_slab),0,0,VIRT_CACHE_NOREAP,NULL,NULL);
@@ -225,12 +224,13 @@ PUBLIC void* virtmem_cache_alloc(struct vmem_cache* cache)
   struct vmem_slab* slab;
   struct vmem_bufctl* bufctl;
   struct ppage_desc* pdesc;
+  u32_t count;
 
   /* Agrandit le cache s il faut */
   if ( (LLIST_ISNULL(cache->slabs_free)) && (LLIST_ISNULL(cache->slabs_partial)) )
     {
       /* Appel de la fonction  */
-      if (virtmem_cache_grow(cache) == EXIT_FAILURE)
+      if (virtmem_cache_grow(cache, VIRT_CACHE_NOADDR) == EXIT_FAILURE)
 	{
 	  return NULL;
 	}
@@ -281,6 +281,32 @@ PUBLIC void* virtmem_cache_alloc(struct vmem_cache* cache)
 	  LLIST_ADD(cache->slabs_full,slab);
 	}
     }
+
+
+  /* Controle du min_slab_free */
+  if ( cache->min_slab_free )
+    {
+      /* Compte les slabs free */
+      count = 0;
+      if (!LLIST_ISNULL(cache->slabs_free))
+	{
+	  slab = LLIST_GETHEAD(cache->slabs_free);
+	  do
+	    {
+	      count++;
+	      slab = LLIST_NEXT(cache->slabs_free,slab);
+	    }while(!LLIST_ISHEAD(cache->slabs_free,slab));
+	}
+      
+      /* Grossit le cache autant que necessaire */
+      while (count < cache->min_slab_free )
+	{
+	  virtmem_cache_grow(cache, VIRT_CACHE_NOADDR);
+	  count++;
+	}
+    }
+  
+
 
   /* Retourne l'adresse du buffer */
   return (void*)(bufctl->base);
@@ -433,6 +459,37 @@ PUBLIC u32_t virtmem_cache_reap(u8_t flags)
 }
 
 
+/*========================================================================
+ * Croissance du cache
+ * (fonction principale)
+ *========================================================================*/
+
+
+PUBLIC u8_t virtmem_cache_grow(struct vmem_cache* cache, virtaddr_t addr)
+{
+  u8_t res;
+
+  /* Redirige sur les 2 fonction de croissance en fonction de la taille */
+  if ( cache->size > (PAGING_PAGE_SIZE >> VIRT_CACHE_GROWSHIFT) )
+    {
+      /* Gros objets */
+      res = virtmem_cache_grow_big(cache, addr);
+    }
+  else
+    {
+      /* Petits objets */
+      res = virtmem_cache_grow_little(cache, addr);
+    }
+
+  /* Indique la croissance */
+  if (res == EXIT_SUCCESS)
+    {
+      cache->flags |= VIRT_CACHE_JUSTGROWN;
+    }
+
+  return res;
+}
+
 
 
 /*========================================================================
@@ -489,39 +546,6 @@ PRIVATE void virtmem_slab_destroy(struct vmem_cache* cache,struct vmem_slab* sla
 
 
 
-
-/*========================================================================
- * Croissance du cache
- * (fonction principale)
- *========================================================================*/
-
-
-PRIVATE u8_t virtmem_cache_grow(struct vmem_cache* cache)
-{
-  u8_t res;
-
-  /* Redirige sur les 2 fonction de croissance en fonction de la taille */
-  if ( cache->size > (PAGING_PAGE_SIZE >> VIRT_CACHE_GROWSHIFT) )
-    {
-      /* Gros objets */
-      res = virtmem_cache_grow_big(cache);
-    }
-  else
-    {
-      /* Petits objets */
-      res = virtmem_cache_grow_little(cache,VIRT_CACHE_NOADDR);
-    }
-
-  /* Indique la croissance */
-  if (res == EXIT_SUCCESS)
-    {
-      cache->flags |= VIRT_CACHE_JUSTGROWN;
-    }
-
-  return res;
-}
-
-
 /*========================================================================
  * Croissance du cache pour petits objets 
  * (slab on page)
@@ -560,6 +584,7 @@ PRIVATE u8_t virtmem_cache_grow_little(struct vmem_cache* cache, virtaddr_t addr
   slab->n_pages = np;
   slab->start = page+sizeof(struct vmem_slab);
   LLIST_NULLIFY(slab->free_buf);
+
 
   /* Taille du bufctl et du buffer associe */
   buf_size = sizeof(struct vmem_bufctl) + cache->size;
@@ -611,7 +636,7 @@ PRIVATE u8_t virtmem_cache_grow_little(struct vmem_cache* cache, virtaddr_t addr
  *========================================================================*/
 
 
-PRIVATE u8_t virtmem_cache_grow_big(struct vmem_cache* cache)
+PRIVATE u8_t virtmem_cache_grow_big(struct vmem_cache* cache, virtaddr_t addr)
 {
   struct vmem_slab* slab;
   struct vmem_bufctl* bc;
@@ -623,12 +648,20 @@ PRIVATE u8_t virtmem_cache_grow_big(struct vmem_cache* cache)
   np =  (PAGING_ALIGN_SUP(cache->size)) >> PAGING_PAGE_SHIFT;
 
   /* Obtention de pages virtuelle mappee */
-  page = (virtaddr_t)virtmem_buddy_alloc(np*PAGING_PAGE_SIZE, VIRT_BUDDY_MAP);
-  if ( ((void*)page) == NULL)
+  if (addr == VIRT_CACHE_NOADDR)
     {
-      return EXIT_FAILURE;
+      page = (virtaddr_t)virtmem_buddy_alloc(np*PAGING_PAGE_SIZE, VIRT_BUDDY_MAP);
+      if ( ((void*)page) == NULL)
+	{
+	  return EXIT_FAILURE;
+   	}
     }
-
+  else
+    {
+      page = addr;
+    }
+  
+  
   /* Obtention d un slab */
   slab = (struct vmem_slab*)virtmem_cache_alloc(slab_cache);
   if (slab == NULL)
