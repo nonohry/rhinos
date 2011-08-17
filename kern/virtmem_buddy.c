@@ -37,7 +37,7 @@ PUBLIC void  virtmem_buddy_init()
   /* Cree le cache des noeuds du buddy */
   area_cache = virtmem_cache_create("area_cache",sizeof(struct vmem_area),0,VIRT_BUDDY_MINSLABS,VIRT_CACHE_NOREAP,NULL,NULL);
 
-
+  /* Initialisation manuelle */
   for(i=0;i<VIRT_BUDDY_MINSLABS;i++)
     {
        /* Cree une adresse virtuelle mappee pour les initialisations */
