@@ -574,9 +574,18 @@ PRIVATE u8_t virtmem_cache_grow_little(struct vmem_cache* cache, virtaddr_t addr
     }
   else
     {
-      page = addr;
+      /* Verifie que l adresse est bien mappee */
+      struct ppage_desc* pdesc = PHYS_GET_DESC( paging_virt2phys(addr)  );
+      if (PHYS_PDESC_ISNULL(pdesc))
+	{
+	  return EXIT_FAILURE;
+	}
+      else
+	{
+	  page = addr;
+	}
     }
-      
+  
   /* Initialisation du slab en tete de page */
   slab = (struct vmem_slab*)page;
   slab->count = 0;
@@ -658,7 +667,16 @@ PRIVATE u8_t virtmem_cache_grow_big(struct vmem_cache* cache, virtaddr_t addr)
     }
   else
     {
-      page = addr;
+      /* Verifie que l adresse est bien mappee */
+      struct ppage_desc* pdesc = PHYS_GET_DESC( paging_virt2phys(addr)  );
+      if (PHYS_PDESC_ISNULL(pdesc))
+	{
+	  return EXIT_FAILURE;
+	}
+      else
+	 {
+	   page = addr;
+	 }
     }
   
   
