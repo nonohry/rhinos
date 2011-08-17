@@ -44,6 +44,7 @@ static struct vmem_cache cache_cache =
   name: "cache_cache",
   size: sizeof(struct vmem_cache),
   align: 0,
+  min_slab_free: 0,
   flags: VIRT_CACHE_NOREAP,
   constructor: NULL,
   destructor: NULL,
@@ -98,8 +99,8 @@ PUBLIC void virtmem_cache_init(void)
   LLIST_NULLIFY(cache_list);
 
   /* Les caches des structures de base */
-  slab_cache = virtmem_cache_create("slab_cache",sizeof(struct vmem_slab),0,VIRT_CACHE_NOREAP,NULL,NULL);
-  bufctl_cache = virtmem_cache_create("bufctl_cache",sizeof(struct vmem_bufctl),0,VIRT_CACHE_NOREAP,NULL,NULL);
+  slab_cache = virtmem_cache_create("slab_cache",sizeof(struct vmem_slab),0,0,VIRT_CACHE_NOREAP,NULL,NULL);
+  bufctl_cache = virtmem_cache_create("bufctl_cache",sizeof(struct vmem_bufctl),0,0,VIRT_CACHE_NOREAP,NULL,NULL);
   if ((slab_cache==NULL)||(bufctl_cache==NULL))
     {
       bochs_print("Cannot initialize Slab Allocator\n");
@@ -107,7 +108,7 @@ PUBLIC void virtmem_cache_init(void)
     }
 
 
-  struct vmem_cache* test_cache = virtmem_cache_create("test_cache",sizeof(struct test),120,VIRT_CACHE_DEFAULT,test_ctor,test_dtor);
+  struct vmem_cache* test_cache = virtmem_cache_create("test_cache",sizeof(struct test),120,2,VIRT_CACHE_DEFAULT,test_ctor,test_dtor);
 
   //struct test* toto;
 
@@ -144,7 +145,7 @@ PUBLIC void virtmem_cache_init(void)
  *========================================================================*/
 
 
-PUBLIC struct vmem_cache* virtmem_cache_create(const char* name, u16_t size, u16_t align, u8_t flags, void (*ctor)(void*,u32_t), void (*dtor)(void*,u32_t))
+PUBLIC struct vmem_cache* virtmem_cache_create(const char* name, u16_t size, u16_t align, u16_t min_slab_free, u8_t flags, void (*ctor)(void*,u32_t), void (*dtor)(void*,u32_t))
 {
   u8_t i;
   struct vmem_cache* cache;
@@ -169,6 +170,7 @@ PUBLIC struct vmem_cache* virtmem_cache_create(const char* name, u16_t size, u16
   cache->size = size;
   cache->align = align;
   cache->align_offset = 0;
+  cache->min_slab_free = min_slab_free;
   cache->flags = flags;
   cache->constructor = ctor;
   cache->destructor = dtor;
@@ -817,6 +819,7 @@ PRIVATE void virtmem_print_caches(struct vmem_cache* cache)
 	  bochs_print(c->name);
 	  bochs_print("\n");
 	  bochs_print("   size: %d\n",c->size);
+	  bochs_print("   min_slab: %d\n",c->min_slab_free);
 	  bochs_print("   flags: %d\n",c->flags);
 
 	  bochs_print("   slabs_free: ");

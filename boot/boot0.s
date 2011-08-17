@@ -11,7 +11,8 @@
 	%assign BOOT0_RELOC_SRC		0x7C00
 	%assign BOOT0_RELOC_DST 	0x600
 	%assign BOOT0_RELOC_SEG		0x60
-	%assign	BOOT0_SP		0x90000
+	%assign	BOOT0_SP		0x400
+	%assign	BOOT0_SS		0x8FC0
 
 	%assign BOOT1_LBA_START		1
 	%assign	BOOT1_SIZE		2
@@ -82,6 +83,8 @@ start:
 	mov	ax,BOOT0_RELOC_SEG
 	mov	ds,ax
 	mov	es,ax
+	mov	ax,BOOT0_SS
+	mov	ss,ax
 	mov	sp,BOOT0_SP
 	sti
 	
@@ -130,7 +133,7 @@ lba_load:
 	jle	lba_load
 
 	;; Saut final
-	jmp	0x0:0x800
+	jmp	0x0:BOOT1_ABS_ADDR
 	
 chs_geometry:	
 	
@@ -200,7 +203,7 @@ chs_load:
 	jle	chs_load
 
 	;; Saut final
-	jmp	0x0:0x800
+	jmp	0x0:BOOT1_ABS_ADDR
 
 
 	;;========================================================================
