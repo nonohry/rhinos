@@ -11,6 +11,7 @@
 #include "start.h"
 #include "physmem.h"
 #include "paging.h"
+#include "virtmem_slab.h"
 #include "virtmem_buddy.h"
 
 
@@ -20,7 +21,7 @@
 
 /* DEBUG: WaterMArk Allocator */
 PRIVATE struct virt_buddy_wm_alloc virt_wm;
-
+PRIVATE struct vmem_cache* area_cache;
 
 /*========================================================================
  * Initialisation de l'allocateur
@@ -28,6 +29,10 @@ PRIVATE struct virt_buddy_wm_alloc virt_wm;
 
 PUBLIC void  virtmem_buddy_init()
 {
+  
+  area_cache = virtmem_cache_create("area_cache",sizeof(struct vmem_area),0,0,VIRT_CACHE_NOREAP,NULL,NULL);
+  virtmem_print_slaballoc();
+
   /* DEBUG: Initialise le WaterMark */
   WMALLOC_INIT(virt_wm,PAGING_ALIGN_SUP(PHYS_PAGE_NODE_POOL_ADDR+((bootinfo->mem_total) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc)),(1<<31));
   return;

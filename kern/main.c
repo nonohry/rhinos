@@ -37,11 +37,10 @@ PUBLIC int main()
   paging_init();
   bochs_print("Paging enabled\n");
 
-  /* Initialisation du buddy de memoire virtuelle */
-  virtmem_buddy_init();
-  bochs_print("Virtual Memory (buddy) initialized\n");
-
+  /* Initialisation de la memoire virtuelle */
   virtmem_cache_init();
+  virtmem_buddy_init();
+  bochs_print("Virtual Memory Manager initialized\n");
 
   /* Initialisation du gestionnaire des IRQ */
   irq_init();

@@ -12,6 +12,7 @@
 #include <types.h>
 #include <llist.h>
 #include "klib.h"
+#include "start.h"
 #include "physmem.h"
 #include "paging.h"
 #include "virtmem_buddy.h"
@@ -24,7 +25,7 @@
 
 PRIVATE u8_t virtmem_cache_grow(struct vmem_cache* cache);
 PRIVATE u8_t virtmem_cache_grow_big(struct vmem_cache* cache);
-PRIVATE u8_t virtmem_cache_grow_little(struct vmem_cache* cache); 
+PRIVATE u8_t virtmem_cache_grow_little(struct vmem_cache* cache, virtaddr_t addr); 
 PRIVATE void virtmem_slab_destroy(struct vmem_cache* cache,struct vmem_slab* slab);
 
 PRIVATE void virtmem_print_caches(struct vmem_cache* cache);
@@ -34,6 +35,7 @@ PRIVATE void virtmem_print_bufctls(struct vmem_bufctl* bufctl);
 PRIVATE struct vmem_cache* slab_cache;
 PRIVATE struct vmem_cache* bufctl_cache;
 PRIVATE struct vmem_cache* cache_list;
+
 
 /*========================================================================
  * Caches Statiques
@@ -56,37 +58,6 @@ static struct vmem_cache cache_cache =
   };
 
 
-/*========================================================================
- * TEST
- *========================================================================*/
-
-struct test 
-{
-  int a;
-  int b;
-  int c;
-  char name[900];
-};
-
-void test_ctor(void* buf, u32_t size)
-{
-  struct test* test = (struct test*)buf;
-  test->a=9;
-  test->b=8;
-  test->c=89;
-  return;
-  
-}
-
-void test_dtor(void* buf, u32_t size)
-{
-  struct test* test = (struct test*)buf;
-  test->a=0;
-  test->b=0;
-  test->c=100;
-  return;
-  
-}
 
 /*========================================================================
  * Initialisation de l allocateur
@@ -95,8 +66,18 @@ void test_dtor(void* buf, u32_t size)
 
 PUBLIC void virtmem_cache_init(void)
 {
-  /* Initilise la liste des caches */
+  virtaddr_t vaddr_init;
+  physaddr_t paddr_init;
+
+  /* Initialise la liste des caches */
   LLIST_NULLIFY(cache_list);
+
+  /* Cree une adresse virtuelle mappee pour les initialisations */
+  vaddr_init = PAGING_ALIGN_SUP( PHYS_PAGE_NODE_POOL_ADDR+((bootinfo->mem_total) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc) );
+  paddr_init = (physaddr_t)phys_alloc(PAGING_PAGE_SIZE);
+  paging_map(vaddr_init, paddr_init, TRUE);
+  /* Fait grossir cache_cache dans cette page */
+  virtmem_cache_grow_little(&cache_cache,vaddr_init);
 
   /* Les caches des structures de base */
   slab_cache = virtmem_cache_create("slab_cache",sizeof(struct vmem_slab),0,0,VIRT_CACHE_NOREAP,NULL,NULL);
@@ -106,35 +87,6 @@ PUBLIC void virtmem_cache_init(void)
       bochs_print("Cannot initialize Slab Allocator\n");
       return;
     }
-
-
-  struct vmem_cache* test_cache = virtmem_cache_create("test_cache",sizeof(struct test),120,2,VIRT_CACHE_DEFAULT,test_ctor,test_dtor);
-
-  //struct test* toto;
-
-  //toto = (struct test*)virtmem_cache_alloc(test_cache);
-
-  //bochs_print("a:%d b:%d c:%d\n",toto->a,toto->b,toto->c);
-  //virtmem_print_caches(cache_list);
-
-  //virtmem_cache_free(test_cache,(void*)toto);
-  //virtmem_cache_destroy(test_cache);
-
-  //bochs_print("a:%d b:%d c:%d\n",toto->a,toto->b,toto->c);
-
-
-  virtmem_cache_grow(test_cache);
-  virtmem_cache_grow(test_cache);
-  virtmem_cache_grow(test_cache);
-  virtmem_cache_grow(test_cache);
-  virtmem_cache_grow(test_cache);
-
-  bochs_print("Liberees: %d\n",virtmem_cache_reap(VIRT_CACHE_DEFAULT));
-  bochs_print("Liberees: %d\n",virtmem_cache_reap(VIRT_CACHE_DEFAULT));
-  virtmem_print_caches(cache_list);
-
-  bochs_print("Free: %d\n",virtmem_cache_free(test_cache,(void*)0x150000));
-
 
   return;
 }
@@ -557,7 +509,7 @@ PRIVATE u8_t virtmem_cache_grow(struct vmem_cache* cache)
   else
     {
       /* Petits objets */
-      res = virtmem_cache_grow_little(cache);
+      res = virtmem_cache_grow_little(cache,VIRT_CACHE_NOADDR);
     }
 
   /* Indique la croissance */
@@ -576,7 +528,7 @@ PRIVATE u8_t virtmem_cache_grow(struct vmem_cache* cache)
  *========================================================================*/
 
 
-PRIVATE u8_t virtmem_cache_grow_little(struct vmem_cache* cache)
+PRIVATE u8_t virtmem_cache_grow_little(struct vmem_cache* cache, virtaddr_t addr)
 { 
   struct vmem_slab* slab;
   virtaddr_t buf;
@@ -588,12 +540,19 @@ PRIVATE u8_t virtmem_cache_grow_little(struct vmem_cache* cache)
   np = (PAGING_ALIGN_SUP(cache->size)) >> PAGING_PAGE_SHIFT;
 
   /* Obtention d'un page virtuelle mappee */
-  page = (virtaddr_t)virtmem_buddy_alloc(np*PAGING_PAGE_SIZE, VIRT_BUDDY_MAP);
-  if ( ((void*)page) == NULL)
+  if (addr == VIRT_CACHE_NOADDR)
     {
-      return EXIT_FAILURE;
+      page = (virtaddr_t)virtmem_buddy_alloc(np*PAGING_PAGE_SIZE, VIRT_BUDDY_MAP);
+      if ( ((void*)page) == NULL)
+	{
+	  return EXIT_FAILURE;
+	}
     }
-
+  else
+    {
+      page = addr;
+    }
+      
   /* Initialisation du slab en tete de page */
   slab = (struct vmem_slab*)page;
   slab->count = 0;
@@ -841,3 +800,10 @@ PRIVATE void virtmem_print_caches(struct vmem_cache* cache)
 
   return;
 };
+
+
+PUBLIC void virtmem_print_slaballoc(void)
+{
+  virtmem_print_caches(cache_list);
+  return;
+}
