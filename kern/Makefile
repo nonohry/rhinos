@@ -50,8 +50,9 @@ exceptions.o: ../include/types.h klib.h exceptions.h
 physmem.o: ../include/types.h ../include/llist.h klib.h start.h physmem.h
 physmem.o: virtmem_slab.h
 paging.o: ../include/types.h klib.h start.h physmem.h virtmem_slab.h paging.h
-virtmem_buddy.o: ../include/types.h ../include/wmalloc.h klib.h start.h
-virtmem_buddy.o: physmem.h virtmem_slab.h paging.h virtmem_buddy.h
+virtmem_buddy.o: ../include/types.h ../include/llist.h ../include/wmalloc.h
+virtmem_buddy.o: klib.h start.h physmem.h virtmem_slab.h paging.h
+virtmem_buddy.o: virtmem_buddy.h
 virtmem_slab.o: ../include/types.h ../include/llist.h klib.h start.h
 virtmem_slab.o: physmem.h virtmem_slab.h paging.h virtmem_buddy.h
 virtmem_slab.o: ../include/wmalloc.h

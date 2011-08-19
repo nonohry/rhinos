@@ -20,10 +20,11 @@
  * Constantes
  *========================================================================*/
 
-#define VIRT_BUDDY_NOMAP     0
-#define VIRT_BUDDY_MAP       1
+#define VIRT_BUDDY_NOMAP       0
+#define VIRT_BUDDY_MAP         1
 
-#define VIRT_BUDDY_MINSLABS  2
+#define VIRT_BUDDY_STARTSLABS  3
+#define VIRT_BUDDY_MINSLABS    2
 
 /*========================================================================
  * Structures
