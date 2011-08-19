@@ -29,6 +29,7 @@ PRIVATE struct vmem_area* buddy_free[VIRT_BUDDY_MAX];
 PRIVATE struct vmem_area* buddy_used;
 
 PRIVATE struct vmem_area* virtmem_buddy_alloc_area(u32_t size);
+PRIVATE void virtmem_buddy_free_area(struct vmem_area* area);
 PRIVATE void virtmem_print_buddy_used(void);
 PRIVATE void virtmem_print_buddy_free(void);
 
@@ -90,8 +91,10 @@ PUBLIC void  virtmem_buddy_init()
   virtmem_print_slaballoc();
 
   /* DEBUG: test */
-  virtmem_buddy_alloc_area(PAGING_PAGE_SIZE);
-
+  area = virtmem_buddy_alloc_area(PAGING_PAGE_SIZE);
+  virtmem_print_buddy_free();
+  virtmem_print_buddy_used();
+  virtmem_buddy_free_area(area);
   virtmem_print_buddy_free();
   virtmem_print_buddy_used();
 
@@ -215,6 +218,50 @@ PUBLIC void  virtmem_buddy_free(void* addr)
   WMALLOC_FREE(virt_wm,addr);
   bochs_print("Liberation de 0x%x (buddy)\n",(u32_t)addr);
 
+  return;
+}
+
+
+/*========================================================================
+ * Liberation
+ *========================================================================*/
+
+PRIVATE void virtmem_buddy_free_area(struct vmem_area* area)
+{
+  /* Insere "recursivement" le noeud */
+  while((area->index < VIRT_BUDDY_MAX-1)&&(!LLIST_ISNULL(buddy_free[pdesc->index])))
+    {
+      struct vmem_area* buddy;
+      
+      /* Recherche d un buddy */
+      buddy = LLIST_GETHEAD(buddy_free[area->index]);
+      
+      while ( (area->base+area->size != buddy->base)
+	      && (buddy->base+buddy->size != area->base))
+	{
+	  buddy = LLIST_NEXT(buddy_free[area->index],buddy);
+	  if (LLIST_ISHEAD(buddy_free[area->index],buddy))
+	    {
+	      /* Pas de buddy, on insere */
+	      LLIST_ADD(buddy_free[area->index],area);
+	      return;
+	    }
+	}
+      
+      /* Buddy trouve ici: fusion */
+      area->base = (area->base<buddy->base?area->base:buddy->base);
+      area->size <<= 1;
+      area->index++;
+      /* Enleve le buddy du buddy system */
+      LLIST_REMOVE(buddy_free[buddy->index],buddy);
+      /* Libere le buddy */
+      virtmem_cache_free(area_cache,buddy);
+
+    }
+  
+  /* Dernier niveau ou niveau vide */
+  LLIST_ADD(buddy_free[pdesc->index],area);
+  
   return;
 }
 
