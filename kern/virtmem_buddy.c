@@ -22,10 +22,15 @@
 
 /* DEBUG: WaterMArk Allocator */
 PRIVATE struct virt_buddy_wm_alloc virt_wm;
+
 PRIVATE struct vmem_cache* area_cache;
+
+PRIVATE struct vmem_area* buddy_free[VIRT_BUDDY_MAX];
 PRIVATE struct vmem_area* buddy_used;
 
+PRIVATE void* virtmem_buddy_alloc_area(u32_t size);
 PRIVATE void virtmem_print_buddy_used(void);
+PRIVATE void virtmem_print_buddy_free(void);
 
 /*========================================================================
  * Initialisation de l'allocateur
@@ -39,6 +44,10 @@ PUBLIC void  virtmem_buddy_init()
   u32_t i;
 
   /* Initialise les listes */
+  for(i=0;i<VIRT_BUDDY_MAX;i++)
+    {
+      LLIST_NULLIFY(buddy_free[i]);
+    }
   LLIST_NULLIFY(buddy_used);
 
   /* Cree le cache des noeuds du buddy */
@@ -68,12 +77,21 @@ PUBLIC void  virtmem_buddy_init()
       LLIST_ADD(buddy_used,area);
     }
 
-
+  /* DEBUG: Cree une grosse zone pour les test */
+  area=(struct vmem_area*)virtmem_cache_alloc(area_cache);
+  area->base = 50*PAGING_PAGE_SIZE + PAGING_ALIGN_SUP( PHYS_PAGE_NODE_POOL_ADDR+((bootinfo->mem_total) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc) );
+  area->size = 1048576; // 1M
+  area->index = 8;
+  LLIST_ADD(buddy_free[area->index],area);
 
   /* DEBUG: Initialise le WaterMark */
   WMALLOC_INIT(virt_wm,20480+PAGING_ALIGN_SUP(PHYS_PAGE_NODE_POOL_ADDR+((bootinfo->mem_total) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc)),(1<<31));
 
   virtmem_print_slaballoc();
+
+  virtmem_buddy_alloc_area(PAGING_PAGE_SIZE);
+
+  virtmem_print_buddy_free();
   virtmem_print_buddy_used();
 
   return;
@@ -118,6 +136,75 @@ PUBLIC void* virtmem_buddy_alloc(u32_t size, u8_t flags)
 
 
 /*========================================================================
+ * Allocation 
+ *========================================================================*/
+
+PRIVATE void* virtmem_buddy_alloc_area(u32_t size)
+{
+
+  u32_t i,j;
+  int ind;
+  struct vmem_area* area;
+  
+  /* trouve la puissance de 2 superieure */
+  size = size - 1;
+  size = size | (size >> 1);
+  size = size | (size >> 2);
+  size = size | (size >> 4);
+  size = size | (size >> 8);
+  size = size | (size >> 16);
+  size = size + 1;
+  
+  /* En deduit l indice */
+  ind = msb(size) - PAGING_PAGE_SHIFT;
+  
+  /* Si ppage_free[ind] est NULL, on cherche un niveau superieur disponible */
+  for(i=ind;LLIST_ISNULL(buddy_free[i])&&(i<VIRT_BUDDY_MAX);i++)
+    {}
+
+  if (i>=VIRT_BUDDY_MAX)
+    {
+      bochs_print("Can't allocate %d bytes !\n",size);
+      return NULL;
+    }
+  
+  /* Scinde "recursivement" les niveaux superieurs */
+  for(j=i;j>ind;j--)
+    {
+      struct vmem_area* ar1;
+     
+      area = LLIST_GETHEAD(buddy_free[j]);
+      LLIST_REMOVE(buddy_free[j],area);
+
+      /* Prend un vmem_area dans le cache */
+      ar1 = (struct vmem_area*)virtmem_cache_alloc(area_cache);
+
+      /* Scinde le noeud en 2 noeuds */
+
+      ar1->base = area->base + (area->size >> 1);
+      ar1->size = (area->size >> 1);
+      ar1->index = area->index-1;
+
+      area->size = (area->size >> 1);
+      area->index = area->index-1;
+
+      LLIST_ADD(buddy_free[j-1],ar1);
+      LLIST_ADD(buddy_free[j-1],area);
+
+    }
+
+  /* Maintenant nous avons un noeud disponible au niveau voulu */
+  area = LLIST_GETHEAD(buddy_free[ind]);
+  /* Met a jour les listes */
+  LLIST_REMOVE(buddy_free[ind],area);
+  LLIST_ADD(buddy_used,area);
+  
+  return (void*)(area->base);
+}
+
+
+
+/*========================================================================
  * Liberation
  *========================================================================*/
 
@@ -154,6 +241,37 @@ PRIVATE void virtmem_print_buddy_used(void)
       }
 
     bochs_print("\n");
+
+    return;
+}
+
+/*========================================================================
+ * DEBUG: print buddy_free
+ *========================================================================*/
+
+
+PRIVATE void virtmem_print_buddy_free(void)
+{
+    struct vmem_area* area;
+    u8_t i;
+    for(i=VIRT_BUDDY_MAX;i;i--)
+      {
+	if (LLIST_ISNULL(buddy_free[i-1]))
+	  {
+	    bochs_print("~");
+	  }
+	else
+	  {
+	    area = LLIST_GETHEAD(buddy_free[i-1]);
+	    do
+	      {
+		bochs_print("[0x%x (0x%x - %d)] ",area->base,area->size,area->index);
+		area=LLIST_NEXT(buddy_free[i-1],area);
+	      }while(!LLIST_ISHEAD(buddy_free[i-1],area));
+	  }
+
+	bochs_print("\n");
+      }
 
     return;
 }

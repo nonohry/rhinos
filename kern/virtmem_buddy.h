@@ -26,6 +26,9 @@
 #define VIRT_BUDDY_STARTSLABS  3
 #define VIRT_BUDDY_MINSLABS    2
 
+#define VIRT_BUDDY_MAX         21
+
+
 /*========================================================================
  * Structures
  *========================================================================*/
@@ -58,6 +61,7 @@ struct virt_buddy_wm_alloc
 
 PUBLIC void  virtmem_buddy_init();
 PUBLIC void* virtmem_buddy_alloc(u32_t size, u8_t flags);
+PUBLIC void* virtmem_buddy_alloc2(u32_t size, u8_t flags);
 PUBLIC void  virtmem_buddy_free(void* addr);
 
 
