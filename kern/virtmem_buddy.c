@@ -91,9 +91,10 @@ PUBLIC void  virtmem_buddy_init()
   virtmem_print_slaballoc();
 
   /* DEBUG: test */
-  area = virtmem_buddy_alloc_area(PAGING_PAGE_SIZE);
+  area = (struct vmem_area*)virtmem_buddy_alloc_area(PAGING_PAGE_SIZE);
   virtmem_print_buddy_free();
   virtmem_print_buddy_used();
+  
   virtmem_buddy_free_area(area);
   virtmem_print_buddy_free();
   virtmem_print_buddy_used();
@@ -228,8 +229,11 @@ PUBLIC void  virtmem_buddy_free(void* addr)
 
 PRIVATE void virtmem_buddy_free_area(struct vmem_area* area)
 {
+  /* Enleve la zone de buddy_used */
+  LLIST_REMOVE(buddy_used,area);
+
   /* Insere "recursivement" le noeud */
-  while((area->index < VIRT_BUDDY_MAX-1)&&(!LLIST_ISNULL(buddy_free[pdesc->index])))
+  while((area->index < VIRT_BUDDY_MAX-1)&&(!LLIST_ISNULL(buddy_free[area->index])))
     {
       struct vmem_area* buddy;
       
@@ -260,7 +264,7 @@ PRIVATE void virtmem_buddy_free_area(struct vmem_area* area)
     }
   
   /* Dernier niveau ou niveau vide */
-  LLIST_ADD(buddy_free[pdesc->index],area);
+  LLIST_ADD(buddy_free[area->index],area);
   
   return;
 }
