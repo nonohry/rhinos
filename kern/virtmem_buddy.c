@@ -30,6 +30,7 @@ PRIVATE struct vmem_area* buddy_used;
 
 PRIVATE struct vmem_area* virtmem_buddy_alloc_area(u32_t size);
 PRIVATE void virtmem_buddy_free_area(struct vmem_area* area);
+PRIVATE void virtmem_buddy_init_area(u32_t base, u32_t size);
 PRIVATE void virtmem_print_buddy_used(void);
 PRIVATE void virtmem_print_buddy_free(void);
 
@@ -58,7 +59,7 @@ PUBLIC void  virtmem_buddy_init()
   for(i=0;i<VIRT_BUDDY_STARTSLABS;i++)
     {
        /* Cree une adresse virtuelle mappee pour les initialisations */
-      vaddr_init = (i+VIRT_CACHE_STARTSLABS)*PAGING_PAGE_SIZE + PAGING_ALIGN_SUP( PHYS_PAGE_NODE_POOL_ADDR+((bootinfo->mem_total) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc) );
+      vaddr_init = (i+VIRT_CACHE_STARTSLABS)*PAGING_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT;
       paddr_init = (physaddr_t)phys_alloc(PAGING_PAGE_SIZE);
       paging_map(vaddr_init, paddr_init, TRUE);
       /* Fait grossir cache_cache dans cette page */
@@ -72,32 +73,29 @@ PUBLIC void  virtmem_buddy_init()
   for(i=0;i<VIRT_CACHE_STARTSLABS+VIRT_BUDDY_STARTSLABS;i++)
     {
       area=(struct vmem_area*)virtmem_cache_alloc(area_cache);
-      area->base = i*PAGING_PAGE_SIZE + PAGING_ALIGN_SUP( PHYS_PAGE_NODE_POOL_ADDR+((bootinfo->mem_total) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc) );
+      area->base = i*PAGING_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT;
       area->size = PAGING_PAGE_SIZE;
       area->index = 0;
       LLIST_ADD(buddy_used,area);
     }
 
-  /* DEBUG: Cree une zone de 1M pour les tests */
-  area=(struct vmem_area*)virtmem_cache_alloc(area_cache);
-  area->base = 50*PAGING_PAGE_SIZE + PAGING_ALIGN_SUP( PHYS_PAGE_NODE_POOL_ADDR+((bootinfo->mem_total) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc) );
-  area->size = 1048576; // 1M
-  area->index = 8;
-  LLIST_ADD(buddy_free[area->index],area);
+  /* Initialise toute le emeoire virtuelle */
+  virtmem_buddy_init_area( (VIRT_CACHE_STARTSLABS+VIRT_BUDDY_STARTSLABS)*PAGING_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT, 
+			   (-1)-((VIRT_CACHE_STARTSLABS+VIRT_BUDDY_STARTSLABS)*PAGING_PAGE_SIZE+VIRT_BUDDY_POOLLIMIT) );
 
   /* DEBUG: Initialise le WaterMark */
-  WMALLOC_INIT(virt_wm,20480+PAGING_ALIGN_SUP(PHYS_PAGE_NODE_POOL_ADDR+((bootinfo->mem_total) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc)),(1<<31));
-
-  virtmem_print_slaballoc();
+  WMALLOC_INIT(virt_wm,20480+VIRT_BUDDY_POOLLIMIT,(1<<31));
 
   /* DEBUG: test */
   area = (struct vmem_area*)virtmem_buddy_alloc_area(PAGING_PAGE_SIZE);
   virtmem_print_buddy_free();
   virtmem_print_buddy_used();
-  
+  virtmem_print_slaballoc();
+
   virtmem_buddy_free_area(area);
   virtmem_print_buddy_free();
   virtmem_print_buddy_used();
+  virtmem_print_slaballoc();
 
   return;
 }
@@ -141,7 +139,22 @@ PUBLIC void* virtmem_buddy_alloc(u32_t size, u8_t flags)
 
 
 /*========================================================================
- * Allocation 
+ * Liberation
+ *========================================================================*/
+
+PUBLIC void  virtmem_buddy_free(void* addr)
+{
+  /* DEBUG: Liberation via WaterMark */
+  WMALLOC_FREE(virt_wm,addr);
+  bochs_print("Liberation de 0x%x (buddy)\n",(u32_t)addr);
+
+  return;
+}
+
+
+
+/*========================================================================
+ * Allocation (fonction reelle)
  *========================================================================*/
 
 PRIVATE struct vmem_area* virtmem_buddy_alloc_area(u32_t size)
@@ -208,23 +221,8 @@ PRIVATE struct vmem_area* virtmem_buddy_alloc_area(u32_t size)
 }
 
 
-
 /*========================================================================
- * Liberation
- *========================================================================*/
-
-PUBLIC void  virtmem_buddy_free(void* addr)
-{
-  /* DEBUG: Liberation via WaterMark */
-  WMALLOC_FREE(virt_wm,addr);
-  bochs_print("Liberation de 0x%x (buddy)\n",(u32_t)addr);
-
-  return;
-}
-
-
-/*========================================================================
- * Liberation
+ * Liberation (fonction reelle)
  *========================================================================*/
 
 PRIVATE void virtmem_buddy_free_area(struct vmem_area* area)
@@ -266,6 +264,51 @@ PRIVATE void virtmem_buddy_free_area(struct vmem_area* area)
   /* Dernier niveau ou niveau vide */
   LLIST_ADD(buddy_free[area->index],area);
   
+  return;
+}
+
+
+/*========================================================================
+ * Initialise une zone en buddy
+ *========================================================================*/
+
+PRIVATE void virtmem_buddy_init_area(u32_t base, u32_t size)
+{
+  u32_t power;
+  u8_t ind;
+  struct vmem_area* area;
+
+  base = PAGING_ALIGN_SUP(base);
+
+  while (size >= PAGING_PAGE_SIZE)
+    {
+      /* Puissance de 2 inferieure */     
+      power = size;
+      power = power | (power >> 1);
+      power = power | (power >> 2);
+      power = power | (power >> 4);
+      power = power | (power >> 8);
+      power = power | (power >> 16);
+      power = power - (power >> 1);
+
+      /* Indice dans le buddy */
+      ind = msb(power) - PHYS_PAGE_SHIFT;
+
+      /* Prend un vmem_area dans le cache */
+      area = (struct vmem_area*)virtmem_cache_alloc(area_cache);
+ 
+      /* Remplit le vmem_area */
+      area->base = base;
+      area->size = power;
+      area->index = ind;
+
+      /* Insere dans le buddy */
+      LLIST_ADD(buddy_free[ind],area);
+      
+      size -= power;
+      base += power;
+    }
+
   return;
 }
 

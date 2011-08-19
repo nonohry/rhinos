@@ -77,7 +77,7 @@ PUBLIC void virtmem_cache_init(void)
   for(i=0;i<VIRT_CACHE_STARTSLABS;i++)
     {
       /* Cree une adresse virtuelle mappee pour les initialisations */
-      vaddr_init = i*PAGING_PAGE_SIZE + PAGING_ALIGN_SUP( PHYS_PAGE_NODE_POOL_ADDR+((bootinfo->mem_total) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc) );
+      vaddr_init = i*PAGING_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT;
       paddr_init = (physaddr_t)phys_alloc(PAGING_PAGE_SIZE);
       paging_map(vaddr_init, paddr_init, TRUE);
       /* Fait grossir cache_cache dans cette page */
