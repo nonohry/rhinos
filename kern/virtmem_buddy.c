@@ -34,6 +34,7 @@ PRIVATE void virtmem_buddy_init_area(u32_t base, u32_t size);
 PRIVATE void virtmem_print_buddy_used(void);
 PRIVATE void virtmem_print_buddy_free(void);
 
+
 /*========================================================================
  * Initialisation de l'allocateur
  *========================================================================*/
@@ -54,6 +55,11 @@ PUBLIC void  virtmem_buddy_init()
 
   /* Cree le cache des noeuds du buddy */
   area_cache = virtmem_cache_create("area_cache",sizeof(struct vmem_area),0,VIRT_BUDDY_MINSLABS,VIRT_CACHE_NOREAP,NULL,NULL);
+  if (area_cache==NULL)
+    {
+      bochs_print("Cannot initialise virtual buddy\n");
+      return;
+    }
 
   /* Initialisation manuelle du cache */
   for(i=0;i<VIRT_BUDDY_STARTSLABS;i++)
@@ -73,15 +79,20 @@ PUBLIC void  virtmem_buddy_init()
   for(i=0;i<VIRT_CACHE_STARTSLABS+VIRT_BUDDY_STARTSLABS;i++)
     {
       area=(struct vmem_area*)virtmem_cache_alloc(area_cache);
+      if (area==NULL)
+	{
+	  bochs_print("Cannot initialise virtual buddy\n");
+	  return;
+	}
       area->base = i*PAGING_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT;
       area->size = PAGING_PAGE_SIZE;
       area->index = 0;
       LLIST_ADD(buddy_used,area);
     }
 
-  /* Initialise toute le emeoire virtuelle */
+  /* Initialise toute la memoire virtuelle disponible */
   virtmem_buddy_init_area( (VIRT_CACHE_STARTSLABS+VIRT_BUDDY_STARTSLABS)*PAGING_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT, 
-			   (-1)-((VIRT_CACHE_STARTSLABS+VIRT_BUDDY_STARTSLABS)*PAGING_PAGE_SIZE+VIRT_BUDDY_POOLLIMIT) );
+			   VIRT_BUDDY_HIGHTMEM - ((VIRT_CACHE_STARTSLABS+VIRT_BUDDY_STARTSLABS)*PAGING_PAGE_SIZE+VIRT_BUDDY_POOLLIMIT) );
 
   /* DEBUG: Initialise le WaterMark */
   WMALLOC_INIT(virt_wm,20480+VIRT_BUDDY_POOLLIMIT,(1<<31));
@@ -196,6 +207,11 @@ PRIVATE struct vmem_area* virtmem_buddy_alloc_area(u32_t size)
 
       /* Prend un vmem_area dans le cache */
       ar1 = (struct vmem_area*)virtmem_cache_alloc(area_cache);
+      if (ar1==NULL)
+	{
+	  bochs_print("Cannot allocate %d bytes !\n",size);
+	  return NULL;
+	}
 
       /* Scinde le noeud en 2 noeuds */
 
@@ -296,7 +312,12 @@ PRIVATE void virtmem_buddy_init_area(u32_t base, u32_t size)
 
       /* Prend un vmem_area dans le cache */
       area = (struct vmem_area*)virtmem_cache_alloc(area_cache);
- 
+      if (area==NULL)
+	{
+	  bochs_print("Cannot initialise area\n");
+	  return;
+	}
+
       /* Remplit le vmem_area */
       area->base = base;
       area->size = power;

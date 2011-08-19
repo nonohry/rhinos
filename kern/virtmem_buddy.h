@@ -27,6 +27,7 @@
 #define VIRT_BUDDY_MINSLABS    2
 
 #define VIRT_BUDDY_MAX         21
+#define VIRT_BUDDY_HIGHTMEM    -1     /* (unsigned)-1 = 4G */
 
 
 /*========================================================================
