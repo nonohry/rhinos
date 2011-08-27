@@ -7,7 +7,6 @@
 
 #include <types.h>
 #include <llist.h>
-#include <wmalloc.h>
 #include "klib.h"
 #include "start.h"
 #include "physmem.h"
@@ -19,9 +18,6 @@
 /*========================================================================
  * Declarations PRIVATE
  *========================================================================*/
-
-/* DEBUG: WaterMArk Allocator */
-PRIVATE struct virt_buddy_wm_alloc virt_wm;
 
 PRIVATE struct vmem_cache* area_cache;
 
@@ -94,8 +90,6 @@ PUBLIC void  virtmem_buddy_init()
   virtmem_buddy_init_area( (VIRT_CACHE_STARTSLABS+VIRT_BUDDY_STARTSLABS)*PAGING_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT, 
 			   VIRT_BUDDY_HIGHTMEM - ((VIRT_CACHE_STARTSLABS+VIRT_BUDDY_STARTSLABS)*PAGING_PAGE_SIZE+VIRT_BUDDY_POOLLIMIT) );
 
-  /* DEBUG: Initialise le WaterMark */
-  WMALLOC_INIT(virt_wm,20480+VIRT_BUDDY_POOLLIMIT,(1<<31));
 
   /* DEBUG: test */
   area = (struct vmem_area*)virtmem_buddy_alloc(64000,VIRT_BUDDY_TRYMAP);
@@ -196,8 +190,7 @@ PUBLIC void* virtmem_buddy_alloc(u32_t size, u8_t flags)
 
 PUBLIC void  virtmem_buddy_free(void* addr)
 {
-  /* DEBUG: Liberation via WaterMark */
-  WMALLOC_FREE(virt_wm,addr);
+
   bochs_print("Liberation de 0x%x (buddy)\n",(u32_t)addr);
 
   return;
