@@ -97,7 +97,7 @@ PUBLIC void  virtmem_buddy_init()
   bochs_print("test : 0x%x\n",(virtaddr_t)(area));
   
 
-  for(i=0;i<97;i++)
+  for(i=0;i<997;i++)
     {
       virtmem_cache_alloc(area_cache, VIRT_CACHE_DEFAULT);
     }
@@ -247,15 +247,7 @@ PRIVATE struct vmem_area* virtmem_buddy_alloc_area(u32_t size, u8_t flags)
       LLIST_REMOVE(buddy_free[j],area);
 
       /* Prend un vmem_area dans le cache */
-      if ( flags & VIRT_BUDDY_NOMINCHECK )
-	{
-	  ar1 = (struct vmem_area*)virtmem_cache_alloc(area_cache, VIRT_CACHE_NOMINCHECK);
-	}
-      else
-	{
-	  ar1 = (struct vmem_area*)virtmem_cache_alloc(area_cache, VIRT_CACHE_DEFAULT);
-	}
-	
+      ar1 = (struct vmem_area*)virtmem_cache_alloc(area_cache, (flags&VIRT_BUDDY_NOMINCHECK?VIRT_CACHE_NOMINCHECK:VIRT_CACHE_DEFAULT));
       if (ar1==NULL)
 	{
 	  bochs_print("Cannot allocate %d virtual bytes !\n",size);
