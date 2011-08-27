@@ -90,7 +90,7 @@ PUBLIC void  virtmem_buddy_init()
       LLIST_ADD(buddy_used,area);
     }
 
-  /* Initialise toute la memoire virtuelle disponible */
+  /* Initialise la memoire virtuelle disponible */
   virtmem_buddy_init_area( (VIRT_CACHE_STARTSLABS+VIRT_BUDDY_STARTSLABS)*PAGING_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT, 
 			   VIRT_BUDDY_HIGHTMEM - ((VIRT_CACHE_STARTSLABS+VIRT_BUDDY_STARTSLABS)*PAGING_PAGE_SIZE+VIRT_BUDDY_POOLLIMIT) );
 
@@ -178,6 +178,9 @@ PUBLIC void* virtmem_buddy_alloc(u32_t size, u8_t flags)
 	  {
 	    paging_unmap(va);
 	  }
+	  /* On desalloue l area */
+	  virtmem_buddy_free_area(area);
+	  return NULL;
 	}
     }
 
