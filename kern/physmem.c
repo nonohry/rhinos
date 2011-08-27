@@ -105,7 +105,7 @@ PUBLIC void* phys_alloc(u32_t size)
 
   if (i>=PHYS_PAGE_MAX_BUDDY)
     {
-      bochs_print("Can't allocate %d bytes !\n",size);
+      bochs_print("Can't allocate %d physical bytes !\n",size);
       return NULL;
     }
   

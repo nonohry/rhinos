@@ -13,21 +13,21 @@
  *========================================================================*/
 
 #include <types.h>
-#include <wmalloc.h>
 
 
 /*========================================================================
  * Constantes
  *========================================================================*/
 
-#define VIRT_BUDDY_NOMAP       0
-#define VIRT_BUDDY_MAP         1
+#define VIRT_BUDDY_NOMAP       0x0
+#define VIRT_BUDDY_TRYMAP      0x1
+#define VIRT_BUDDY_MAP         0x3
 
 #define VIRT_BUDDY_STARTSLABS  3
 #define VIRT_BUDDY_MINSLABS    2
 
 #define VIRT_BUDDY_MAX         21
-#define VIRT_BUDDY_HIGHTMEM    -1     /* (unsigned)-1 = 4G */
+#define VIRT_BUDDY_HIGHTMEM    (1<<30)     /* (unsigned)-1 = 4G */
 
 
 /*========================================================================
@@ -35,6 +35,7 @@
  *========================================================================*/
 
 #define VIRT_BUDDY_POOLLIMIT   (PAGING_ALIGN_SUP( PHYS_PAGE_NODE_POOL_ADDR+((bootinfo->mem_total) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc) ))
+
 
 /*========================================================================
  * Structures
@@ -68,7 +69,6 @@ struct virt_buddy_wm_alloc
 
 PUBLIC void  virtmem_buddy_init();
 PUBLIC void* virtmem_buddy_alloc(u32_t size, u8_t flags);
-PUBLIC void* virtmem_buddy_alloc2(u32_t size, u8_t flags);
 PUBLIC void  virtmem_buddy_free(void* addr);
 
 

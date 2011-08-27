@@ -55,7 +55,5 @@ virtmem_buddy.o: klib.h start.h physmem.h virtmem_slab.h paging.h
 virtmem_buddy.o: virtmem_buddy.h
 virtmem_slab.o: ../include/types.h ../include/llist.h klib.h start.h
 virtmem_slab.o: physmem.h virtmem_slab.h paging.h virtmem_buddy.h
-virtmem_slab.o: ../include/wmalloc.h
 main.o: ../include/types.h ../include/llist.h start.h klib.h physmem.h
 main.o: virtmem_slab.h paging.h irq.h pit.h virtmem_buddy.h
-main.o: ../include/wmalloc.h

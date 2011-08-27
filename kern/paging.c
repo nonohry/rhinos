@@ -85,7 +85,7 @@ PUBLIC u8_t paging_map(virtaddr_t vaddr, physaddr_t paddr, u8_t super)
       table = (struct pte*)phys_alloc(PAGING_ENTRIES*sizeof(struct pte));
       if (table == NULL)
 	{
-	  bochs_print("Unable to allocate %d bytes\n",PAGING_ENTRIES*sizeof(struct pte));
+	  bochs_print("Unable to allocate %d bytes for PTE\n",PAGING_ENTRIES*sizeof(struct pte));
 	  return EXIT_FAILURE;
 	}
 

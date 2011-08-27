@@ -98,15 +98,8 @@ PUBLIC void  virtmem_buddy_init()
   WMALLOC_INIT(virt_wm,20480+VIRT_BUDDY_POOLLIMIT,(1<<31));
 
   /* DEBUG: test */
-  area = (struct vmem_area*)virtmem_buddy_alloc_area(PAGING_PAGE_SIZE);
-  virtmem_print_buddy_free();
-  virtmem_print_buddy_used();
-  virtmem_print_slaballoc();
-
-  virtmem_buddy_free_area(area);
-  virtmem_print_buddy_free();
-  virtmem_print_buddy_used();
-  virtmem_print_slaballoc();
+  area = (struct vmem_area*)virtmem_buddy_alloc(64000,VIRT_BUDDY_TRYMAP);
+  bochs_print("test : 0x%x\n",(virtaddr_t)(area));
 
   return;
 }
@@ -118,33 +111,78 @@ PUBLIC void  virtmem_buddy_init()
 
 PUBLIC void* virtmem_buddy_alloc(u32_t size, u8_t flags)
 {
-  virtaddr_t vaddr,vaddr2;
+  struct vmem_area* area;
 
-  /* DEBUG: Allocation via WaterMark */
-  vaddr = vaddr2 = (virtaddr_t)WMALLOC_ALLOC(virt_wm,size);
-
-  /* DEBUG: Mappage sur pages physiques */
-  if (flags & VIRT_BUDDY_MAP)
+  /* Taille minimale */
+  if (size < PAGING_PAGE_SIZE )
     {
-      u32_t i,n;
-  
-      /* DEBUG: Nombre de pages */
-      n = ((size&0xFFFFF000) == size)?(size >> PAGING_PAGE_SHIFT) :((size >> PAGING_PAGE_SHIFT)+1);
-      
-      /* DEBUG: Mapping */
-      for(i=0;i<n;i++)
-	{
-	  physaddr_t paddr;
-
-	  paddr = (u32_t)phys_alloc(PAGING_PAGE_SIZE);
-	  paging_map(vaddr2,paddr,TRUE);
-	  vaddr2+=PAGING_PAGE_SIZE;
-
-	}
-      
+      size = PAGING_PAGE_SIZE;
     }
 
-  return (void*)vaddr;
+  /* Allocation dans le buddy */
+  area = virtmem_buddy_alloc_area(size);
+  if (area == NULL)
+    {
+      return NULL;
+    }
+
+  /* Mapping physique selon flags */
+  if ( flags & VIRT_BUDDY_TRYMAP )
+    {
+      u32_t n,base,sum;
+      physaddr_t paddr,pa;
+      virtaddr_t va;
+
+      n = area->size;
+      base = area->base;
+      sum = 0;
+
+      while( (sum < area->size)&&(n) )
+	{
+	  while (sum < area->size)
+	    {
+	      /* Essaie d allouer physiquement */
+	      paddr = (physaddr_t)phys_alloc(n);
+	      if (paddr)
+		{
+		  /* Incremente la taille physique allouee */
+		  sum += n;
+		  
+		  /* Mappe la memoire physique et virtuelle */
+		  for(va=base,pa=paddr;
+		      va<base+n;
+		      va+=PAGING_PAGE_SIZE,pa+=PAGING_PAGE_SIZE)
+		    {
+		      paging_map(va,pa,TRUE);
+		    }
+
+		  /* Deplace la base a mapper */
+		  base += n;
+
+		}
+	      else
+		{
+		  break;
+		}
+	    }
+
+	  /* Divise la taille par 2 */
+	  n >>= 1;
+	}
+
+      /* Si tout n est pas mappe alors qu il faudrait */
+      if ( (sum < area->size)&&(flags == VIRT_BUDDY_MAP) )
+	{
+	  /* On demappe ! */
+	  for(va=area->base;va<(area->base+area->size);va+=PAGING_PAGE_SIZE)
+	  {
+	    paging_unmap(va);
+	  }
+	}
+    }
+
+  /* Retourne l adresse de base */
+  return (void*)area->base;
 
 }
 
@@ -193,7 +231,7 @@ PRIVATE struct vmem_area* virtmem_buddy_alloc_area(u32_t size)
 
   if (i>=VIRT_BUDDY_MAX)
     {
-      bochs_print("Can't allocate %d bytes !\n",size);
+      bochs_print("Can't allocate %d virtual bytes !\n",size);
       return NULL;
     }
   
@@ -209,7 +247,7 @@ PRIVATE struct vmem_area* virtmem_buddy_alloc_area(u32_t size)
       ar1 = (struct vmem_area*)virtmem_cache_alloc(area_cache);
       if (ar1==NULL)
 	{
-	  bochs_print("Cannot allocate %d bytes !\n",size);
+	  bochs_print("Cannot allocate %d virtual bytes !\n",size);
 	  return NULL;
 	}
 
@@ -314,7 +352,7 @@ PRIVATE void virtmem_buddy_init_area(u32_t base, u32_t size)
       area = (struct vmem_area*)virtmem_cache_alloc(area_cache);
       if (area==NULL)
 	{
-	  bochs_print("Cannot initialise area\n");
+	  bochs_print("Cannot initialize area\n");
 	  return;
 	}
 
