@@ -20,8 +20,8 @@
  *========================================================================*/
 
 #define VIRT_BUDDY_NOMAP       0x0
-#define VIRT_BUDDY_TRYMAP      0x1
-#define VIRT_BUDDY_MAP         0x3
+#define VIRT_BUDDY_MAP         0x1
+#define VIRT_BUDDY_NOMINCHECK  0x2
 
 #define VIRT_BUDDY_STARTSLABS  3
 #define VIRT_BUDDY_MINSLABS    2

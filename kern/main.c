@@ -42,6 +42,7 @@ PUBLIC int main()
   virtmem_buddy_init();
   bochs_print("Virtual Memory Manager initialized\n");
 
+
   /* Initialisation du gestionnaire des IRQ */
   irq_init();
 

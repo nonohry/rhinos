@@ -111,7 +111,7 @@ PUBLIC struct vmem_cache* virtmem_cache_create(const char* name, u16_t size, u16
   struct vmem_cache* cache;
 
   /* Allocation du cache */
-  cache = (struct vmem_cache*)virtmem_cache_alloc(&cache_cache);
+  cache = (struct vmem_cache*)virtmem_cache_alloc(&cache_cache, VIRT_CACHE_DEFAULT);
   if (cache == NULL)
     {
       return NULL;
@@ -227,7 +227,7 @@ PUBLIC u8_t virtmem_cache_free(struct vmem_cache* cache, void* buf)
  *========================================================================*/
 
 
-PUBLIC void* virtmem_cache_alloc(struct vmem_cache* cache)
+PUBLIC void* virtmem_cache_alloc(struct vmem_cache* cache, u8_t flags)
 {
   struct vmem_slab* slabs_list;
   struct vmem_slab* slab;
@@ -293,7 +293,7 @@ PUBLIC void* virtmem_cache_alloc(struct vmem_cache* cache)
 
 
   /* Controle du min_slab_free */
-  if ( cache->min_slab_free )
+  if ( (cache->min_slab_free) && !(flags & VIRT_CACHE_NOMINCHECK) )
     {
       /* Compte les slabs free */
       count = 0;
@@ -315,7 +315,6 @@ PUBLIC void* virtmem_cache_alloc(struct vmem_cache* cache)
 	}
     }
   
-
 
   /* Retourne l'adresse du buffer */
   return (void*)(bufctl->base);
@@ -575,7 +574,7 @@ PRIVATE u8_t virtmem_cache_grow_little(struct vmem_cache* cache, virtaddr_t addr
   /* Obtention d'un page virtuelle mappee */
   if (addr == VIRT_CACHE_NOADDR)
     {
-      page = (virtaddr_t)virtmem_buddy_alloc(np*PAGING_PAGE_SIZE, VIRT_BUDDY_MAP);
+      page = (virtaddr_t)virtmem_buddy_alloc(np*PAGING_PAGE_SIZE, VIRT_BUDDY_MAP | VIRT_BUDDY_NOMINCHECK);
       if ( ((void*)page) == NULL)
 	{
 	  return EXIT_FAILURE;
@@ -668,7 +667,7 @@ PRIVATE u8_t virtmem_cache_grow_big(struct vmem_cache* cache, virtaddr_t addr)
   /* Obtention de pages virtuelle mappee */
   if (addr == VIRT_CACHE_NOADDR)
     {
-      page = (virtaddr_t)virtmem_buddy_alloc(np*PAGING_PAGE_SIZE, VIRT_BUDDY_MAP);
+      page = (virtaddr_t)virtmem_buddy_alloc(np*PAGING_PAGE_SIZE, VIRT_BUDDY_MAP | VIRT_BUDDY_NOMINCHECK);
       if ( ((void*)page) == NULL)
 	{
 	  return EXIT_FAILURE;
@@ -690,7 +689,7 @@ PRIVATE u8_t virtmem_cache_grow_big(struct vmem_cache* cache, virtaddr_t addr)
   
   
   /* Obtention d un slab */
-  slab = (struct vmem_slab*)virtmem_cache_alloc(slab_cache);
+  slab = (struct vmem_slab*)virtmem_cache_alloc(slab_cache, VIRT_CACHE_DEFAULT);
   if (slab == NULL)
     {
       return EXIT_FAILURE;
@@ -718,7 +717,7 @@ PRIVATE u8_t virtmem_cache_grow_big(struct vmem_cache* cache, virtaddr_t addr)
   /* Cree les bufctls et les fait pointer sur la page */
   for(i=0; i<slab->max_objects; i++)
     {
-      bc = (struct vmem_bufctl*)virtmem_cache_alloc(bufctl_cache);
+      bc = (struct vmem_bufctl*)virtmem_cache_alloc(bufctl_cache, VIRT_CACHE_DEFAULT);
       if (bc == NULL)
 	{
 	  return EXIT_FAILURE;
