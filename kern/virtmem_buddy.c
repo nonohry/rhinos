@@ -92,10 +92,19 @@ PUBLIC void  virtmem_buddy_init()
 
 
   /* DEBUG: tests */
+  
+  struct vmem_area* tab[300];
+  for(i=0;i<300;i++)
+    {
+      tab[i] = (struct vmem_area*)virtmem_buddy_alloc(64000,VIRT_BUDDY_NOMAP);
+    }
+  virtmem_print_buddy_free();
+  virtmem_print_buddy_used();
+  virtmem_print_slaballoc();
 
   for(i=0;i<3000;i++)
     {
-      area = (struct vmem_area*)virtmem_buddy_alloc(64000,VIRT_BUDDY_NOMAP);
+      virtmem_buddy_free(tab[i]);
     }
   virtmem_print_buddy_free();
   virtmem_print_buddy_used();
