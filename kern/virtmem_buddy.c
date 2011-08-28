@@ -102,7 +102,7 @@ PUBLIC void  virtmem_buddy_init()
   virtmem_print_buddy_used();
   virtmem_print_slaballoc();
 
-  for(i=0;i<3000;i++)
+  for(i=0;i<300;i++)
     {
       virtmem_buddy_free(tab[i]);
     }
