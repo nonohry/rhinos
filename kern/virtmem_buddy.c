@@ -94,14 +94,9 @@ PUBLIC void  virtmem_buddy_init()
   /* DEBUG: tests */
 
   area = (struct vmem_area*)virtmem_buddy_alloc(64000,VIRT_BUDDY_MAP);
-  bochs_print("test : 0x%x\n",(virtaddr_t)(area));
-  
-
-  for(i=0;i<997;i++)
-    {
-      virtmem_cache_alloc(area_cache, VIRT_CACHE_DEFAULT);
-    }
-  virtmem_print_slaballoc();
+  virtmem_print_buddy_free();
+  virtmem_buddy_free(area);
+  virtmem_print_buddy_free();
 
   return;
 }
@@ -197,8 +192,32 @@ PUBLIC void* virtmem_buddy_alloc(u32_t size, u8_t flags)
 
 PUBLIC void  virtmem_buddy_free(void* addr)
 {
+  
+  struct vmem_area* area;
 
-  bochs_print("Liberation de 0x%x (buddy)\n",(u32_t)addr);
+  /* Cherche la vmem_area associee a l adresse */
+  if (!LLIST_ISNULL(buddy_used))
+    {
+      area = LLIST_GETHEAD(buddy_used);
+      do
+	{
+	  /* Sort si l adresse est trouvee */
+	  if (area->base == (virtaddr_t)addr)
+	    {
+	      break;
+	    }
+	  /* Suivant */
+	  area = LLIST_NEXT(buddy_used, area);
+	  
+	}while(!LLIST_ISHEAD(buddy_used, area));
+      
+      /* Reintegre l area dans le buddy si trouvee */
+      if (area->base == (virtaddr_t)addr)
+	{
+	  virtmem_buddy_free_area(area);
+	}
+
+    }
 
   return;
 }
