@@ -27,7 +27,7 @@ PRIVATE struct vmem_area* buddy_used;
 PRIVATE struct vmem_area* virtmem_buddy_alloc_area(u32_t size, u8_t flags);
 PRIVATE void virtmem_buddy_free_area(struct vmem_area* area);
 PRIVATE void virtmem_buddy_init_area(u32_t base, u32_t size);
-PRIVATE void virtmem_buddy_map_area(struct vmem_area* area);
+PRIVATE u8_t virtmem_buddy_map_area(struct vmem_area* area);
 PRIVATE void virtmem_print_buddy_used(void);
 PRIVATE void virtmem_print_buddy_free(void);
 
@@ -95,21 +95,68 @@ PUBLIC void  virtmem_buddy_init()
   /* DEBUG: tests */
   
   struct vmem_area* tab[300];
+  struct ppage_desc* pdesc;
+
+ virtmem_print_buddy_free();
+
   for(i=0;i<300;i++)
     {
       tab[i] = (struct vmem_area*)virtmem_buddy_alloc(64000,VIRT_BUDDY_MAP);
     }
+ 
   virtmem_print_buddy_free();
-  virtmem_print_buddy_used();
-  virtmem_print_slaballoc();
+
+  for(i=0;i<300;i++)
+    {
+      pdesc = PHYS_GET_DESC( paging_virt2phys((virtaddr_t)tab[i])  );
+      if ( (!PHYS_PDESC_ISNULL(pdesc)) && (!LLIST_ISNULL(pdesc->area)) )
+      {
+	
+	struct vmem_area* ar = LLIST_GETHEAD(pdesc->area);
+	do
+	  {
+	    bochs_print("[0x%x (0x%x - %d)] ",ar->base,ar->size,ar->index);
+	    ar = LLIST_NEXT(pdesc->area,ar);
+	  }while(!LLIST_ISHEAD(pdesc->area,ar));
+      }
+    }
+
+
+  // virtmem_print_buddy_used();
+  //virtmem_print_slaballoc();
 
   for(i=0;i<300;i++)
     {
       virtmem_buddy_free(tab[i]);
     }
+
+  virtmem_print_buddy_free();
+
+  for(i=0;i<300;i++)
+    {
+      pdesc = PHYS_GET_DESC( paging_virt2phys((virtaddr_t)tab[i])  );
+      if ( (!PHYS_PDESC_ISNULL(pdesc)) && (!LLIST_ISNULL(pdesc->area)) )
+      {
+	
+	struct vmem_area* ar = LLIST_GETHEAD(pdesc->area);
+	do
+	  {
+	    bochs_print("[0x%x (0x%x - %d)] ",ar->base,ar->size,ar->index);
+	    ar = LLIST_NEXT(pdesc->area,ar);
+	  }while(!LLIST_ISHEAD(pdesc->area,ar));
+      }
+    }
+
+
+  
+ 
+
+  /*
   virtmem_print_buddy_free();
   virtmem_print_buddy_used();
   virtmem_print_slaballoc();
+
+  */
 
   return;
 }
@@ -122,6 +169,7 @@ PUBLIC void  virtmem_buddy_init()
 PUBLIC void* virtmem_buddy_alloc(u32_t size, u8_t flags)
 {
   struct vmem_area* area;
+  struct ppage_desc* pdesc;
 
   /* Taille minimale */
   if (size < PAGING_PAGE_SIZE )
@@ -139,7 +187,22 @@ PUBLIC void* virtmem_buddy_alloc(u32_t size, u8_t flags)
   /* Mapping physique selon flags */
   if ( flags & VIRT_BUDDY_MAP )
     {
-      virtmem_buddy_map_area(area);
+      if (!virtmem_buddy_map_area(area))
+	{
+	  /* On libere area si le mapping echoue */
+	  virtmem_buddy_free_area(area);
+	  return NULL;
+	}
+      else
+	{
+	  /* Si le mapping reussi, tentative de lier area au descripteur physique */
+	  pdesc = PHYS_GET_DESC( paging_virt2phys((virtaddr_t)area->base)  );
+	    if (!PHYS_PDESC_ISNULL(pdesc))
+	      {
+		LLIST_REMOVE(buddy_used, area);
+		LLIST_ADD(pdesc->area, area);
+	      }
+	}
     }
 
   /* Retourne l adresse de base */
@@ -156,36 +219,57 @@ PUBLIC void  virtmem_buddy_free(void* addr)
 {
   
   struct vmem_area* area;
+  struct ppage_desc* pdesc;
   virtaddr_t va;
 
-  /* Cherche la vmem_area associee a l adresse */
-  if (!LLIST_ISNULL(buddy_used))
+  /* Cherche la vmem_area associee a l adresse via le descripteur physique */
+  area = NULL;
+  pdesc = PHYS_GET_DESC( paging_virt2phys((virtaddr_t)addr)  );
+  if ( (!PHYS_PDESC_ISNULL(pdesc)) && (!LLIST_ISNULL(pdesc->area)) )
     {
-      area = LLIST_GETHEAD(buddy_used);
+      area = LLIST_GETHEAD(pdesc->area);
       do
 	{
-	  /* Sort si l adresse est trouvee */
 	  if (area->base == (virtaddr_t)addr)
 	    {
 	      break;
 	    }
-	  /* Suivant */
-	  area = LLIST_NEXT(buddy_used, area);
-	  
-	}while(!LLIST_ISHEAD(buddy_used, area));
-      
-      /* Demap physiquement (aucun effet si non mappee) */
+	  area = LLIST_NEXT(pdesc->area,area);
+	}while(!LLIST_ISHEAD(pdesc->area,area));
+    }
+
+  /* Cherche la vmem_area associe dans la liste buddy_used sinon */
+  if ( (area == NULL) || (area->base != (virtaddr_t)addr) )
+    {
+      if (!LLIST_ISNULL(buddy_used))
+	{
+	  area = LLIST_GETHEAD(buddy_used);
+	  do
+	    {
+	      /* Sort si l adresse est trouvee */
+	      if (area->base == (virtaddr_t)addr)
+		{
+		  break;
+		}
+	      /* Suivant */
+	      area = LLIST_NEXT(buddy_used, area);
+	      
+	    }while(!LLIST_ISHEAD(buddy_used, area));
+	}
+    }
+  
+  /* Libere si on a l area */
+  if (  (area != NULL) && (area->base == (virtaddr_t)addr) )
+    {
+      /* Demappe physiquement (aucun effet si non mappee) */
       for(va=area->base;va<(area->base+area->size);va+=PAGING_PAGE_SIZE)
 	{
 	  paging_unmap(va);
 	}
-
-      /* Reintegre l area dans le buddy si trouvee */
-      if (area->base == (virtaddr_t)addr)
-	{
-	  virtmem_buddy_free_area(area);
-	}
-
+      
+      /* Reintegre l area dans le buddy */
+      virtmem_buddy_free_area(area);
+      
     }
 
   return;
@@ -368,7 +452,7 @@ PRIVATE void virtmem_buddy_init_area(u32_t base, u32_t size)
  *========================================================================*/
 
 
-PRIVATE void virtmem_buddy_map_area(struct vmem_area* area)
+PRIVATE u8_t virtmem_buddy_map_area(struct vmem_area* area)
 {
   u32_t n,base,sum;
   physaddr_t paddr,pa;
@@ -418,11 +502,10 @@ PRIVATE void virtmem_buddy_map_area(struct vmem_area* area)
 	{
 	  paging_unmap(va);
 	}
-      /* On desalloue l area */
-      virtmem_buddy_free_area(area);
+      return EXIT_FAILURE;
     }
   
-  return;
+  return EXIT_SUCCESS;
 }
 
 

@@ -13,6 +13,8 @@
 
 #include <types.h>
 #include "virtmem_slab.h"
+#include "virtmem_buddy.h"
+
 
 /*========================================================================
  * Constantes 
@@ -66,7 +68,9 @@
     (desc)->size = 0;				\
     (desc)->maps = 0;				\
     (desc)->index = 0;				\
+    (desc)->cache = NULL;			\
     (desc)->bufctl = NULL;			\
+    (desc)->area = NULL;			\
     (desc)->prev = NULL;			\
     (desc)->next = NULL;			\
   }
@@ -86,6 +90,7 @@ struct ppage_desc
   u8_t  index;
   struct vmem_cache* cache;
   struct vmem_bufctl* bufctl;
+  struct vmem_area* area;
   struct ppage_desc* prev;
   struct ppage_desc* next;
 }__attribute__((packed));
