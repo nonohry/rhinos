@@ -27,6 +27,7 @@ PRIVATE struct vmem_area* buddy_used;
 PRIVATE struct vmem_area* virtmem_buddy_alloc_area(u32_t size, u8_t flags);
 PRIVATE void virtmem_buddy_free_area(struct vmem_area* area);
 PRIVATE void virtmem_buddy_init_area(u32_t base, u32_t size);
+PRIVATE void virtmem_buddy_map_area(struct vmem_area* area);
 PRIVATE void virtmem_print_buddy_used(void);
 PRIVATE void virtmem_print_buddy_free(void);
 
@@ -96,7 +97,7 @@ PUBLIC void  virtmem_buddy_init()
   struct vmem_area* tab[300];
   for(i=0;i<300;i++)
     {
-      tab[i] = (struct vmem_area*)virtmem_buddy_alloc(64000,VIRT_BUDDY_NOMAP);
+      tab[i] = (struct vmem_area*)virtmem_buddy_alloc(64000,VIRT_BUDDY_MAP);
     }
   virtmem_print_buddy_free();
   virtmem_print_buddy_used();
@@ -138,58 +139,7 @@ PUBLIC void* virtmem_buddy_alloc(u32_t size, u8_t flags)
   /* Mapping physique selon flags */
   if ( flags & VIRT_BUDDY_MAP )
     {
-      u32_t n,base,sum;
-      physaddr_t paddr,pa;
-      virtaddr_t va;
-
-      n = area->size;
-      base = area->base;
-      sum = 0;
-
-      while( (sum < area->size)&&(n) )
-	{
-	  while (sum < area->size)
-	    {
-	      /* Essaie d allouer physiquement */
-	      paddr = (physaddr_t)phys_alloc(n);
-	      if (paddr)
-		{
-		  /* Incremente la taille physique allouee */
-		  sum += n;
-		  
-		  /* Mappe la memoire physique et virtuelle */
-		  for(va=base,pa=paddr;
-		      va<base+n;
-		      va+=PAGING_PAGE_SIZE,pa+=PAGING_PAGE_SIZE)
-		    {
-		      paging_map(va,pa,TRUE);
-		    }
-
-		  /* Deplace la base a mapper */
-		  base += n;
-
-		}
-	      else
-		{
-		  break;
-		}
-	    }
-
-	  /* Divise la taille par 2 */
-	  n >>= 1;
-	}
-
-      /* Si tout n est pas mappe, on demappe et on retourne */
-      if ( sum < area->size )
-	{
-	  for(va=area->base;va<(area->base+area->size);va+=PAGING_PAGE_SIZE)
-	  {
-	    paging_unmap(va);
-	  }
-	  /* On desalloue l area */
-	  virtmem_buddy_free_area(area);
-	  return NULL;
-	}
+      virtmem_buddy_map_area(area);
     }
 
   /* Retourne l adresse de base */
@@ -206,6 +156,7 @@ PUBLIC void  virtmem_buddy_free(void* addr)
 {
   
   struct vmem_area* area;
+  virtaddr_t va;
 
   /* Cherche la vmem_area associee a l adresse */
   if (!LLIST_ISNULL(buddy_used))
@@ -223,6 +174,12 @@ PUBLIC void  virtmem_buddy_free(void* addr)
 	  
 	}while(!LLIST_ISHEAD(buddy_used, area));
       
+      /* Demap physiquement (aucun effet si non mappee) */
+      for(va=area->base;va<(area->base+area->size);va+=PAGING_PAGE_SIZE)
+	{
+	  paging_unmap(va);
+	}
+
       /* Reintegre l area dans le buddy si trouvee */
       if (area->base == (virtaddr_t)addr)
 	{
@@ -404,6 +361,70 @@ PRIVATE void virtmem_buddy_init_area(u32_t base, u32_t size)
 
   return;
 }
+
+
+/*========================================================================
+ * Mapping physique d une area
+ *========================================================================*/
+
+
+PRIVATE void virtmem_buddy_map_area(struct vmem_area* area)
+{
+  u32_t n,base,sum;
+  physaddr_t paddr,pa;
+  virtaddr_t va;
+  
+  n = area->size;
+  base = area->base;
+  sum = 0;
+  
+  while( (sum < area->size)&&(n) )
+    {
+      while (sum < area->size)
+	{
+	  /* Essaie d allouer physiquement */
+	  paddr = (physaddr_t)phys_alloc(n);
+	  if (paddr)
+	    {
+	      /* Incremente la taille physique allouee */
+	      sum += n;
+	      
+	      /* Mappe la memoire physique et virtuelle */
+	      for(va=base,pa=paddr;
+		  va<base+n;
+		  va+=PAGING_PAGE_SIZE,pa+=PAGING_PAGE_SIZE)
+		{
+		  paging_map(va,pa,TRUE);
+		}
+	      
+	      /* Deplace la base a mapper */
+	      base += n;
+	      
+	    }
+	  else
+	    {
+	      break;
+	    }
+	}
+      
+      /* Divise la taille par 2 */
+      n >>= 1;
+    }
+  
+  /* Si tout n est pas mappe, on demappe */
+  if ( sum < area->size )
+    {
+      for(va=area->base;va<(area->base+area->size);va+=PAGING_PAGE_SIZE)
+	{
+	  paging_unmap(va);
+	}
+      /* On desalloue l area */
+      virtmem_buddy_free_area(area);
+    }
+  
+  return;
+}
+
 
 
 /*========================================================================
