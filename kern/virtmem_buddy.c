@@ -28,8 +28,6 @@ PRIVATE struct vmem_area* virtmem_buddy_alloc_area(u32_t size, u8_t flags);
 PRIVATE void virtmem_buddy_free_area(struct vmem_area* area);
 PRIVATE void virtmem_buddy_init_area(u32_t base, u32_t size);
 PRIVATE u8_t virtmem_buddy_map_area(struct vmem_area* area);
-PRIVATE void virtmem_print_buddy_used(void);
-PRIVATE void virtmem_print_buddy_free(void);
 
 
 /*========================================================================
@@ -87,76 +85,9 @@ PUBLIC void  virtmem_buddy_init()
       LLIST_ADD(buddy_used,area);
     }
 
-  /* Initialise la memoire virtuelle disponible */
+  /* Initialise la memoire virtuelle disponible pour le noyau */
   virtmem_buddy_init_area( (VIRT_CACHE_STARTSLABS+VIRT_BUDDY_STARTSLABS)*PAGING_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT, 
 			   VIRT_BUDDY_HIGHTMEM - ((VIRT_CACHE_STARTSLABS+VIRT_BUDDY_STARTSLABS)*PAGING_PAGE_SIZE+VIRT_BUDDY_POOLLIMIT) );
-
-
-  /* DEBUG: tests */
-  
-  struct vmem_area* tab[300];
-  struct ppage_desc* pdesc;
-
- virtmem_print_buddy_free();
-
-  for(i=0;i<300;i++)
-    {
-      tab[i] = (struct vmem_area*)virtmem_buddy_alloc(64000,VIRT_BUDDY_MAP);
-    }
- 
-  virtmem_print_buddy_free();
-
-  for(i=0;i<300;i++)
-    {
-      pdesc = PHYS_GET_DESC( paging_virt2phys((virtaddr_t)tab[i])  );
-      if ( (!PHYS_PDESC_ISNULL(pdesc)) && (!LLIST_ISNULL(pdesc->area)) )
-      {
-	
-	struct vmem_area* ar = LLIST_GETHEAD(pdesc->area);
-	do
-	  {
-	    bochs_print("[0x%x (0x%x - %d)] ",ar->base,ar->size,ar->index);
-	    ar = LLIST_NEXT(pdesc->area,ar);
-	  }while(!LLIST_ISHEAD(pdesc->area,ar));
-      }
-    }
-  virtmem_print_buddy_used();
-
-  // virtmem_print_buddy_used();
-  //virtmem_print_slaballoc();
-
-  for(i=0;i<300;i++)
-    {
-      virtmem_buddy_free(tab[i]);
-    }
-
-  virtmem_print_buddy_free();
-
-  for(i=0;i<300;i++)
-    {
-      pdesc = PHYS_GET_DESC( paging_virt2phys((virtaddr_t)tab[i])  );
-      if ( (!PHYS_PDESC_ISNULL(pdesc)) && (!LLIST_ISNULL(pdesc->area)) )
-      {
-	
-	struct vmem_area* ar = LLIST_GETHEAD(pdesc->area);
-	do
-	  {
-	    bochs_print("[0x%x (0x%x - %d)] ",ar->base,ar->size,ar->index);
-	    ar = LLIST_NEXT(pdesc->area,ar);
-	  }while(!LLIST_ISHEAD(pdesc->area,ar));
-      }
-    }
-  virtmem_print_buddy_used();
-
-  
- 
-
-  /*
-  virtmem_print_buddy_free();
-  virtmem_print_buddy_used();
-  virtmem_print_slaballoc();
-
-  */
 
   return;
 }
@@ -358,6 +289,7 @@ PRIVATE struct vmem_area* virtmem_buddy_alloc_area(u32_t size, u8_t flags)
  * Liberation (fonction reelle)
  *========================================================================*/
 
+
 PRIVATE void virtmem_buddy_free_area(struct vmem_area* area)
 {
 
@@ -510,62 +442,3 @@ PRIVATE u8_t virtmem_buddy_map_area(struct vmem_area* area)
   return EXIT_SUCCESS;
 }
 
-
-
-/*========================================================================
- * DEBUG: print buddy_used
- *========================================================================*/
-
-
-PRIVATE void virtmem_print_buddy_used(void)
-{
-    struct vmem_area* area;
-    if (LLIST_ISNULL(buddy_used))
-      {
-	bochs_print("~");
-      }
-    else
-      {
-	area = LLIST_GETHEAD(buddy_used);
-	do
-	  {
-	    bochs_print("[0x%x (0x%x - %d)] ",area->base,area->size,area->index);
-	    area=LLIST_NEXT(buddy_used,area);
-	  }while(!LLIST_ISHEAD(buddy_used,area));
-      }
-
-    bochs_print("\n");
-
-    return;
-}
-
-/*========================================================================
- * DEBUG: print buddy_free
- *========================================================================*/
-
-
-PRIVATE void virtmem_print_buddy_free(void)
-{
-    struct vmem_area* area;
-    u8_t i;
-    for(i=VIRT_BUDDY_MAX;i;i--)
-      {
-	if (LLIST_ISNULL(buddy_free[i-1]))
-	  {
-	    bochs_print("~");
-	  }
-	else
-	  {
-	    area = LLIST_GETHEAD(buddy_free[i-1]);
-	    do
-	      {
-		bochs_print("[0x%x (0x%x - %d)] ",area->base,area->size,area->index);
-		area=LLIST_NEXT(buddy_free[i-1],area);
-	      }while(!LLIST_ISHEAD(buddy_free[i-1],area));
-	  }
-
-	bochs_print("\n");
-      }
-    bochs_print("\n");
-    return;
-}

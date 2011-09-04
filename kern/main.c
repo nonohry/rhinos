@@ -27,8 +27,6 @@
 PUBLIC int main()
 {
 
-
-
   /* Initialisation de la memoire physique */
   phys_init();
   bochs_print("Physical Memory Manager initialized\n");
@@ -41,7 +39,6 @@ PUBLIC int main()
   virtmem_cache_init();
   virtmem_buddy_init();
   bochs_print("Virtual Memory Manager initialized\n");
-
 
   /* Initialisation du gestionnaire des IRQ */
   irq_init();

@@ -96,6 +96,5 @@ PUBLIC struct vmem_cache* virtmem_cache_create(const char* name, u16_t size, u16
 PUBLIC void virtmem_cache_destroy(struct vmem_cache* cache);
 PUBLIC u32_t virtmem_cache_reap(u8_t flags);
 PUBLIC u8_t virtmem_cache_grow(struct vmem_cache* cache, virtaddr_t addr);
-PUBLIC void virtmem_print_slaballoc(void);
 
 #endif

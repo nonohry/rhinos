@@ -310,36 +310,3 @@ PRIVATE void phys_init_area(u32_t base, u32_t size)
 
   return;
 }
-
-
-/*========================================================================
- * DEBUG: Affiche le buddy
- *========================================================================*/
-
-PUBLIC void phys_print_buddy(void)
-{
-  short i;
-   bochs_print("-= Buddy =-\n");
-  for(i=PHYS_PAGE_MAX_BUDDY-1;i>=0;i--)
-    {
-      if (LLIST_ISNULL(ppage_free[i]))
-	{
-	  bochs_print("   ~");
-	}
-      else
-	{
-	  struct ppage_desc* pdesc;
-	  pdesc = LLIST_GETHEAD(ppage_free[i]);
-	  bochs_print("   ");
-	  do
-	    {
-	      bochs_print("[%d (%d)] ",pdesc->start,pdesc->size);
-	      pdesc=LLIST_NEXT(ppage_free[i],pdesc);
-	    }while(!LLIST_ISHEAD(ppage_free[i],pdesc));
-	}
-
-      bochs_print("\n");
-    }
-
-  return;
-}

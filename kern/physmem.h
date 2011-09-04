@@ -106,7 +106,4 @@ PUBLIC void phys_free(void* addr);
 PUBLIC void phys_map(physaddr_t addr);
 PUBLIC u8_t phys_unmap(physaddr_t addr);
 
-/* DEBUG */
-PUBLIC void phys_print_buddy(void);
-
 #endif
