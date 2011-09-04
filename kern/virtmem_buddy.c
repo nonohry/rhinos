@@ -120,7 +120,7 @@ PUBLIC void  virtmem_buddy_init()
 	  }while(!LLIST_ISHEAD(pdesc->area,ar));
       }
     }
-
+  virtmem_print_buddy_used();
 
   // virtmem_print_buddy_used();
   //virtmem_print_slaballoc();
@@ -146,7 +146,7 @@ PUBLIC void  virtmem_buddy_init()
 	  }while(!LLIST_ISHEAD(pdesc->area,ar));
       }
     }
-
+  virtmem_print_buddy_used();
 
   
  
@@ -227,9 +227,11 @@ PUBLIC void  virtmem_buddy_free(void* addr)
   pdesc = PHYS_GET_DESC( paging_virt2phys((virtaddr_t)addr)  );
   if ( (!PHYS_PDESC_ISNULL(pdesc)) && (!LLIST_ISNULL(pdesc->area)) )
     {
+      /* Parcourt la liste des area du descripteur */
       area = LLIST_GETHEAD(pdesc->area);
       do
 	{
+	  /* Sort si l adresse est reouvee */
 	  if (area->base == (virtaddr_t)addr)
 	    {
 	      break;
@@ -249,6 +251,8 @@ PUBLIC void  virtmem_buddy_free(void* addr)
 	      /* Sort si l adresse est trouvee */
 	      if (area->base == (virtaddr_t)addr)
 		{
+		  /* Enleve la zone de buddy_used */
+		  LLIST_REMOVE(buddy_used,area);
 		  break;
 		}
 	      /* Suivant */
@@ -356,8 +360,6 @@ PRIVATE struct vmem_area* virtmem_buddy_alloc_area(u32_t size, u8_t flags)
 
 PRIVATE void virtmem_buddy_free_area(struct vmem_area* area)
 {
-  /* Enleve la zone de buddy_used */
-  LLIST_REMOVE(buddy_used,area);
 
   /* Insere "recursivement" le noeud */
   while((area->index < VIRT_BUDDY_MAX-1)&&(!LLIST_ISNULL(buddy_free[area->index])))
