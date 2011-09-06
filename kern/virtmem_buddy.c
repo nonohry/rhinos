@@ -52,7 +52,7 @@ PUBLIC void  virtmem_buddy_init()
   area_cache = virtmem_cache_create("area_cache",sizeof(struct vmem_area),0,VIRT_BUDDY_MINSLABS,VIRT_CACHE_NOREAP,NULL,NULL);
   if (area_cache==NULL)
     {
-      bochs_print("Cannot initialise virtual buddy\n");
+      bochs_print("Cannot initialize virtual buddy\n");
       return;
     }
 
@@ -76,7 +76,7 @@ PUBLIC void  virtmem_buddy_init()
       area=(struct vmem_area*)virtmem_cache_alloc(area_cache, VIRT_CACHE_DEFAULT);
       if (area==NULL)
 	{
-	  bochs_print("Cannot initialise virtual buddy\n");
+	  bochs_print("Cannot initialize virtual buddy\n");
 	  return;
 	}
       area->base = i*PAGING_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT;
@@ -146,7 +146,7 @@ PUBLIC void* virtmem_buddy_alloc(u32_t size, u8_t flags)
  * Liberation
  *========================================================================*/
 
-PUBLIC void  virtmem_buddy_free(void* addr)
+PUBLIC u8_t  virtmem_buddy_free(void* addr)
 {
   
   struct vmem_area* area;
@@ -204,10 +204,13 @@ PUBLIC void  virtmem_buddy_free(void* addr)
       
       /* Reintegre l area dans le buddy */
       virtmem_buddy_free_area(area);
+
+      /* Retourne */
+      return EXIT_SUCCESS;
       
     }
 
-  return;
+  return EXIT_FAILURE;
 }
 
 
@@ -441,4 +444,3 @@ PRIVATE u8_t virtmem_buddy_map_area(struct vmem_area* area)
   
   return EXIT_SUCCESS;
 }
-

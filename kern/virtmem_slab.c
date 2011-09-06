@@ -31,7 +31,6 @@ PRIVATE struct vmem_cache* slab_cache;
 PRIVATE struct vmem_cache* bufctl_cache;
 PRIVATE struct vmem_cache* cache_list;
 
-
 /*========================================================================
  * Caches Statiques
  *========================================================================*/
@@ -181,11 +180,19 @@ PUBLIC u8_t virtmem_cache_free(struct vmem_cache* cache, void* buf)
 	}
     }
 
+  /* Recupere le slab */
+  slab = bc->slab;
+
+  /* Verifie que le cache est bien celui attendu */
+  if (slab->cache != cache)
+    {
+      return EXIT_FAILURE;
+    }
+
   /* Enleve le bufctl de la page physique */
   LLIST_REMOVE(pdesc->bufctl,bc);
 
-  /* Recupere le slab */
-  slab = bc->slab;
+
   /* Modifie le slab en consequence */
   slab->count--;
   LLIST_ADD(slab->free_buf,bc);
