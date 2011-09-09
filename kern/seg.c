@@ -132,7 +132,7 @@ PRIVATE void init_seg_desc(struct seg_desc *desc, lineaddr_t base, u32_t size)
   desc->base_high = base >> 24;
 
   /* Active la granularite pour les grandes tailles */
-  size--;                         /* 0 signifie 4G - Complement a 2 */
+  size--;                         /* -1 signifie 4G */
   if (size > SEG_GRANULAR_LIMIT)      /* Le descripteur commence a 0, d'ou le -1 */
     {
       desc->limit_low = size >> 12;   /* Divise la taille par 4k (ie shift par 12) */
