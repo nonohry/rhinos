@@ -107,7 +107,7 @@ PUBLIC struct pde* kern_PD;
 
 PUBLIC void paging_init(void);
 PUBLIC u8_t paging_map(virtaddr_t vaddr, physaddr_t paddr, u8_t super);
-PUBLIC void paging_unmap(virtaddr_t vaddr);
+PUBLIC u8_t paging_unmap(virtaddr_t vaddr);
 PUBLIC physaddr_t paging_virt2phys(virtaddr_t vaddr);
 
 #endif

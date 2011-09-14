@@ -49,7 +49,7 @@ irq.o: ../include/types.h ../include/llist.h klib.h pic.h irq.h
 exceptions.o: ../include/types.h klib.h exceptions.h
 physmem.o: ../include/types.h ../include/llist.h klib.h start.h physmem.h
 physmem.o: virtmem_slab.h virtmem_buddy.h
-paging.o: ../include/types.h klib.h start.h physmem.h virtmem_slab.h
+paging.o: ../include/types.h klib.h assert.h start.h physmem.h virtmem_slab.h
 paging.o: virtmem_buddy.h paging.h
 virtmem_buddy.o: ../include/types.h ../include/llist.h klib.h start.h
 virtmem_buddy.o: physmem.h virtmem_slab.h virtmem_buddy.h paging.h
