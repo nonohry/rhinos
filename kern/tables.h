@@ -26,7 +26,7 @@
 /* Taille de la GDT & IDT */
 
 #define TABLES_GDT_SIZE       TABLES_MAX_INDEX+1  /* Debute a 0 */
-#define TABLES_IDT_SIZE       255
+#define TABLES_IDT_SIZE       50
 
 /* Selecteurs de segment */
 

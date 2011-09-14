@@ -1,5 +1,5 @@
 OUTPUT_FORMAT("binary")
-offset = 0xE00;
+offset = 0x1000;
 ENTRY(_start)
 SECTIONS
 {	

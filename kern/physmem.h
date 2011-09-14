@@ -102,8 +102,8 @@ struct ppage_desc
 
 PUBLIC void phys_init(void);
 PUBLIC void* phys_alloc(u32_t size);
-PUBLIC void phys_free(void* addr);
-PUBLIC void phys_map(physaddr_t addr);
+PUBLIC u8_t phys_free(void* addr);
+PUBLIC u8_t phys_map(physaddr_t addr);
 PUBLIC u8_t phys_unmap(physaddr_t addr);
 
 #endif

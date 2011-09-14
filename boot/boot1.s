@@ -13,7 +13,7 @@
 	%assign KERN_LBA_START		3
 	%assign	KERN_SIZE		80
 	%assign KERN_LBA_END		(KERN_LBA_START+KERN_SIZE-1)
-	%assign	KERN_ABS_ADDR		0xE00
+	%assign	KERN_ABS_ADDR		0x1000
 
 	%assign	BOOT1_MMAP_ADDR		0xC00
 	%assign	BOOT1_MMAP_SIZE		0x14

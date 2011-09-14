@@ -322,11 +322,6 @@ excep_err_next:
 	excep_code	dd	0 ; Code Erreur des exceptions
 	excep_num	dd	0 ; Vecteur de l exception
 
-	;;
-	;; Adresse du bootinfo
-	;;
-
-	BOOTINFO_ADDR	equ	0x803
 	
 	;; 
 	;; Segment Selector

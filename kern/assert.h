@@ -18,9 +18,9 @@
   {									\
     if ( !(__expr) )							\
       {									\
-	bochs_print("Assertion [");					\
+	bochs_print("Assertion [ ");					\
 	bochs_print(TO_STRING(__expr));					\
-	bochs_print("] failed ! file ");				\
+	bochs_print(" ] failed ! file ");				\
 	bochs_print(__FILE__);						\
 	bochs_print(", line %d\n",__LINE__);				\
       }									\
@@ -32,9 +32,9 @@
   {									\
     if ( !(__expr) )							\
       {									\
-	bochs_print("Assertion [");					\
+	bochs_print("Assertion [ ");					\
 	bochs_print(TO_STRING(__expr));					\
-	bochs_print("] failed ! file ");				\
+	bochs_print(" ] failed ! file ");				\
 	bochs_print(__FILE__);						\
 	bochs_print(", line %d\n",__LINE__);				\
 	return  __ret;							\
@@ -51,9 +51,9 @@
   {									\
     if ( !(__expr) )							\
       {									\
-	bochs_print("Fatal assertion [");				\
+	bochs_print("Fatal assertion [ ");				\
 	bochs_print(TO_STRING(__expr));					\
-	bochs_print("] failed ! file ");				\
+	bochs_print(" ] failed ! file ");				\
 	bochs_print(__FILE__);						\
 	bochs_print(", line %d\n",__LINE__);				\
 	while(1){};							\

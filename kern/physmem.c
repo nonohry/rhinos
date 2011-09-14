@@ -7,6 +7,7 @@
 #include <types.h>
 #include <llist.h>
 #include "klib.h"
+#include "assert.h"
 #include "start.h"
 #include "physmem.h"
 
@@ -103,11 +104,7 @@ PUBLIC void* phys_alloc(u32_t size)
   for(i=ind;LLIST_ISNULL(ppage_free[i])&&(i<PHYS_PAGE_MAX_BUDDY);i++)
     {}
 
-  if (i>=PHYS_PAGE_MAX_BUDDY)
-    {
-      bochs_print("Can't allocate %d physical bytes !\n",size);
-      return NULL;
-    }
+  ASSERT_RETURN( i<PHYS_PAGE_MAX_BUDDY , NULL);
   
   /* Scinde "recursivement" les niveaux superieurs */
   for(j=i;j>ind;j--)
@@ -148,22 +145,16 @@ PUBLIC void* phys_alloc(u32_t size)
  * Liberation
  *========================================================================*/
 
-PUBLIC void phys_free(void* addr)
+PUBLIC u8_t phys_free(void* addr)
 {
   struct ppage_desc* pdesc;
 
   /* Cherche la description associee a l adresse */
   pdesc = PHYS_GET_DESC((physaddr_t)addr);
-  if (PHYS_PDESC_ISNULL(pdesc))
-    {
-      return;
-    }
+  ASSERT_RETURN( !PHYS_PDESC_ISNULL(pdesc) , EXIT_FAILURE);
 
   /* Si la taille est nulle, on sort */
-  if (!pdesc->size)
-    {
-      return;
-    }
+  ASSERT_RETURN( pdesc->size , EXIT_FAILURE);
 
   /* Insere "recursivement" le noeud */
   while((pdesc->index < PHYS_PAGE_MAX_BUDDY-1)&&(!LLIST_ISNULL(ppage_free[pdesc->index])))
@@ -181,7 +172,7 @@ PUBLIC void phys_free(void* addr)
 	    {
 	      /* Pas de buddy, on insere */
 	      LLIST_ADD(ppage_free[pdesc->index],pdesc);
-	      return;
+	      return EXIT_SUCCESS;
 	    }
 	}
       
@@ -199,7 +190,7 @@ PUBLIC void phys_free(void* addr)
   /* Dernier niveau ou niveau vide */
   LLIST_ADD(ppage_free[pdesc->index],pdesc);
   
-  return;
+  return EXIT_SUCCESS;
 }
 
 
@@ -208,24 +199,21 @@ PUBLIC void phys_free(void* addr)
  * Indique un mappage sur une ppage allouee
  *========================================================================*/
 
-PUBLIC void phys_map(physaddr_t addr)
+PUBLIC u8_t phys_map(physaddr_t addr)
 {
   struct ppage_desc* pdesc;
   
   /* Cherche la description associee a l adresse */
   pdesc = PHYS_GET_DESC(addr);
-  if (PHYS_PDESC_ISNULL(pdesc))
-    {
-      return;
-    }
 
   if (pdesc->size)
     {
       /* Incremente le nombre de mappages */
       pdesc->maps++;
+      return EXIT_SUCCESS;
     }
 
-  return;
+  return EXIT_FAILURE;
 }
 
 
@@ -239,10 +227,7 @@ PUBLIC u8_t phys_unmap(physaddr_t addr)
   
   /* Cherche la description associee a l adresse */
   pdesc = PHYS_GET_DESC(addr);
-  if (PHYS_PDESC_ISNULL(pdesc))
-    {
-      return PHYS_UNMAP_NONE;
-    }
+  ASSERT_RETURN( !PHYS_PDESC_ISNULL(pdesc) , PHYS_UNMAP_NONE);
 
   if ((pdesc->size)&&(pdesc->maps))
     {
@@ -252,8 +237,16 @@ PUBLIC u8_t phys_unmap(physaddr_t addr)
       if (!(pdesc->maps))
 	{
 	  /* On libere */
-	  phys_free((void*)addr);
-	  return PHYS_UNMAP_FREE;
+	  if ( phys_free((void*)addr) == EXIT_SUCCESS )
+	    {
+	      return PHYS_UNMAP_FREE;
+	    }
+	  else
+	    {
+	      /* Erreur, on remet dans l etat d origine */
+	      pdesc->maps++;
+	      return PHYS_UNMAP_NONE;
+	    }
 	}
       else
 	{
@@ -293,7 +286,6 @@ PRIVATE void phys_init_area(u32_t base, u32_t size)
 
       /* Prend un pdesc dans le pool */
       pdesc = PHYS_GET_DESC(base);
- 
       PHYS_NULLIFY_DESC(pdesc);
  
       /* Remplit le pdesc */

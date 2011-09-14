@@ -67,7 +67,7 @@ PUBLIC void virtmem_cache_init(void)
   /* Initialise la liste des caches */
   LLIST_NULLIFY(cache_list);
   LLIST_SETHEAD(&cache_cache);
-
+      
   /* Initialisation manuelle de cache_cache */
   for(i=0;i<VIRT_CACHE_STARTSLABS;i++)
     {
