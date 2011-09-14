@@ -12,6 +12,7 @@
 #include <llist.h>
 #include "start.h"
 #include "klib.h"
+#include "assert.h"
 #include "physmem.h"
 #include "paging.h"
 #include "virtmem.h"
