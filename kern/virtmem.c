@@ -10,6 +10,7 @@
  *========================================================================*/
 
 #include <types.h>
+#include "assert.h"
 #include "virtmem_buddy.h"
 #include "virtmem_slab.h"
 #include "virtmem.h"
@@ -47,13 +48,14 @@ PUBLIC void  virt_init(void)
   u8_t i;
 
   /* Initialise les backends de memoire virtuelle */
-  virtmem_cache_init();
-  virtmem_buddy_init();
+  ASSERT_FATAL( virtmem_cache_init()==EXIT_SUCCESS);
+  ASSERT_FATAL( virtmem_buddy_init()==EXIT_SUCCESS);
 
   /* Cree les caches d allocation */
   for(i=0;virt_caches[i].size;i++)
     {
       virt_caches[i].cache = virtmem_cache_create(virt_caches[i].name,virt_caches[i].size,0,0,virt_caches[i].flags,NULL,NULL);
+      ASSERT_FATAL( virt_caches[i].cache != NULL );
     }
 
   return;
@@ -88,7 +90,7 @@ PUBLIC void* virt_alloc(u32_t size)
  *========================================================================*/
 
 
-PUBLIC void  virt_free(void* addr)
+PUBLIC u8_t  virt_free(void* addr)
 {
   u8_t i;
 
@@ -97,12 +99,10 @@ PUBLIC void  virt_free(void* addr)
     {
       if (virtmem_cache_free(virt_caches[i].cache, addr) == EXIT_SUCCESS)
 	{
-	  return;
+	  return EXIT_SUCCESS;
 	}
     }
 
   /* Sinon, tente de liberer dans le buddy */
-  virtmem_buddy_free(addr);
-
-  return;
+  return virtmem_buddy_free(addr);
 }

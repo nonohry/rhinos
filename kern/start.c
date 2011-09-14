@@ -105,13 +105,14 @@ PUBLIC void cstart(struct boot_info* binfo)
   else
     {
       /* Erreur memoire  */
-      bochs_print("Unable to get memory size or not enough memory !\n");
+      bochs_print("Memory Error ! Aborting...\n");
       while(1){}
     }
 
   /* Initialise les tables du mode protege */
   gdt_init();
   idt_init();
+  bochs_print("GDT & IDT initialized\n");
 
   return;
 

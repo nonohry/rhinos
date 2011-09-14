@@ -67,7 +67,7 @@ struct virt_buddy_wm_alloc
  * Prototypes
  *========================================================================*/
 
-PUBLIC void  virtmem_buddy_init();
+PUBLIC u8_t  virtmem_buddy_init();
 PUBLIC void* virtmem_buddy_alloc(u32_t size, u8_t flags);
 PUBLIC u8_t  virtmem_buddy_free(void* addr);
 

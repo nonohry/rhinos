@@ -51,11 +51,12 @@ physmem.o: ../include/types.h ../include/llist.h klib.h assert.h start.h
 physmem.o: physmem.h virtmem_slab.h virtmem_buddy.h
 paging.o: ../include/types.h klib.h assert.h start.h physmem.h virtmem_slab.h
 paging.o: virtmem_buddy.h paging.h
-virtmem_buddy.o: ../include/types.h ../include/llist.h klib.h start.h
-virtmem_buddy.o: physmem.h virtmem_slab.h virtmem_buddy.h paging.h
-virtmem_slab.o: ../include/types.h ../include/llist.h klib.h start.h
+virtmem_buddy.o: ../include/types.h ../include/llist.h klib.h assert.h
+virtmem_buddy.o: start.h physmem.h virtmem_slab.h virtmem_buddy.h paging.h
+virtmem_slab.o: ../include/types.h ../include/llist.h klib.h assert.h start.h
 virtmem_slab.o: physmem.h virtmem_slab.h virtmem_buddy.h paging.h
-virtmem.o: ../include/types.h virtmem_buddy.h virtmem_slab.h virtmem.h
+virtmem.o: ../include/types.h assert.h klib.h virtmem_buddy.h virtmem_slab.h
+virtmem.o: virtmem.h
 main.o: ../include/types.h ../include/llist.h start.h klib.h assert.h
 main.o: physmem.h virtmem_slab.h virtmem_buddy.h paging.h virtmem.h irq.h
 main.o: pit.h

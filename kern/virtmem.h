@@ -36,6 +36,6 @@ struct virtmem_caches
 
 PUBLIC void  virt_init(void);
 PUBLIC void* virt_alloc(u32_t size);
-PUBLIC void  virt_free(void* addr);
+PUBLIC u8_t  virt_free(void* addr);
 
 #endif
