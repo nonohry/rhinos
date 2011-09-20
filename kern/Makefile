@@ -18,7 +18,7 @@ CFLAGS	=	-I../include
 
 # Fichiers source et de sortie
 
-ASM_SRC	=	khead.s klib.s
+ASM_SRC	=	khead.s klib.s interrupt.s
 ASM_OUT	=	${ASM_SRC:.s=.o}
 C_SRC	=	start.c seg.c tables.c pic.c pit.c irq.c exceptions.c physmem.c paging.c virtmem_buddy.c virtmem_slab.c virtmem.c main.c 
 C_OUT	=	${C_SRC:.c=.o}
@@ -42,7 +42,7 @@ clean:
 
 start.o: klib.h ../include/types.h tables.h seg.h irq.h start.h
 seg.o: ../include/types.h seg.h
-tables.o: ../include/types.h klib.h pic.h seg.h tables.h irq.h
+tables.o: ../include/types.h klib.h pic.h seg.h interrupt.h tables.h irq.h
 pic.o: ../include/types.h klib.h pic.h
 pit.o: ../include/types.h klib.h tables.h seg.h irq.h pit.h
 irq.o: ../include/types.h ../include/llist.h klib.h pic.h irq.h

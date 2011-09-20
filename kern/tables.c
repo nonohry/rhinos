@@ -13,6 +13,7 @@
 #include "klib.h"
 #include "pic.h"
 #include "seg.h"
+#include "interrupt.h"
 #include "tables.h"
 
 
