@@ -35,7 +35,7 @@ PUBLIC struct context_cpu
   reg32_t edx;
   reg32_t ecx;
   reg32_t eax;
-  reg32_t ret_addr;   /* Adresse de retour empilee par les appels de focntions */
+  reg32_t ret_addr;   /* Adresse de retour empilee par les appels de fonctions */
   reg32_t eip;
   reg32_t cs;
   reg32_t eflags;
