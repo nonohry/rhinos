@@ -44,4 +44,13 @@ PUBLIC struct context_cpu
 } __attribute__ ((packed));
 
 
+/*========================================================================
+ * Structures
+ *========================================================================*/
+
+
+PUBLIC	struct context_cpu* cur_ctx;
+PUBLIC  struct context_cpu* next_ctx;
+
+
 #endif

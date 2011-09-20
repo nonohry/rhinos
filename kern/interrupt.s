@@ -42,6 +42,7 @@ global	excep_18
 
 extern	irq_handle_flih		; Handlers pour les IRQ en C
 extern	excep_handle		; Handlers pour les exceptions en C
+extern	cur_ctx			; Contexte courant
 
 	;;
 	;; Traitement generique des IRQ (macro maitre)
