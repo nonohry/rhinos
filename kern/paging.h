@@ -35,7 +35,7 @@
 
 /* Page directory entry */
 
-struct pde
+PUBLIC struct pde
 {
   u32_t present   :1  ;  /* Page presente en memoire  */
   u32_t rw        :1  ;  /* Page en lecture/ecriture  */
@@ -53,7 +53,7 @@ struct pde
 
 /* Page table entry */
 
-struct pte
+PUBLIC struct pte
 {
   u32_t present   :1  ;
   u32_t rw        :1  ;

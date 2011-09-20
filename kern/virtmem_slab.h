@@ -42,7 +42,7 @@
 
 
 /* Bufctl */
-struct vmem_bufctl
+PUBLIC struct vmem_bufctl
 {
   virtaddr_t base;
   struct vmem_slab* slab;
@@ -52,7 +52,7 @@ struct vmem_bufctl
 
 
 /* Slab */
-struct vmem_slab
+PUBLIC struct vmem_slab
 {
   u16_t count;
   u16_t max_objects;
@@ -66,7 +66,7 @@ struct vmem_slab
 
 
 /* Cache */
-struct vmem_cache
+PUBLIC struct vmem_cache
 {
   char name[VIRT_CACHE_NAMELEN];
   u16_t size;

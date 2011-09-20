@@ -82,7 +82,7 @@
 
 /* Noeud des buddies */
 
-struct ppage_desc 
+PUBLIC struct ppage_desc 
 {
   physaddr_t start;
   u32_t size;

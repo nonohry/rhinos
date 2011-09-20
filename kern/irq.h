@@ -27,7 +27,7 @@ typedef void (*irq_flih_t)(void);
 
 
 /* Structure irq_node */
-struct irq_node
+PUBLIC struct irq_node
 {
   void (*flih)(void);      /* First Level Interrupt Handler */
   struct irq_node* prev;   /* Noeud precedent */

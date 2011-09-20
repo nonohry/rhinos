@@ -33,6 +33,7 @@ typedef unsigned long long int u64_t;
 typedef unsigned int   physaddr_t;
 typedef unsigned int   lineaddr_t;
 typedef unsigned int   virtaddr_t;
-
+typedef unsigned int   reg32_t;
+typedef unsigned short reg16_t;
 
 #endif

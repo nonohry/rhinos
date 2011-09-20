@@ -20,7 +20,7 @@ CFLAGS	=	-I../include
 
 ASM_SRC	=	khead.s klib.s interrupt.s
 ASM_OUT	=	${ASM_SRC:.s=.o}
-C_SRC	=	start.c seg.c tables.c pic.c pit.c irq.c exceptions.c physmem.c paging.c virtmem_buddy.c virtmem_slab.c virtmem.c main.c 
+C_SRC	=	start.c seg.c tables.c pic.c pit.c irq.c exceptions.c physmem.c paging.c virtmem_buddy.c virtmem_slab.c virtmem.c context_cpu.c main.c 
 C_OUT	=	${C_SRC:.c=.o}
 OBJ	=	$(ASM_OUT) $(C_OUT)
 
@@ -57,6 +57,7 @@ virtmem_slab.o: ../include/types.h ../include/llist.h klib.h assert.h start.h
 virtmem_slab.o: physmem.h virtmem_slab.h virtmem_buddy.h paging.h
 virtmem.o: ../include/types.h assert.h klib.h virtmem_buddy.h virtmem_slab.h
 virtmem.o: virtmem.h
+context_cpu.o: ../include/types.h context_cpu.h
 main.o: ../include/types.h ../include/llist.h start.h klib.h assert.h
 main.o: physmem.h virtmem_slab.h virtmem_buddy.h paging.h virtmem.h irq.h
 main.o: pit.h
