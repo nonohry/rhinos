@@ -52,5 +52,6 @@ PUBLIC struct context_cpu
 PUBLIC	struct context_cpu* cur_ctx;
 PUBLIC  struct context_cpu* next_ctx;
 
+PUBLIC void context_cpu_presave(reg32_t ss, reg32_t* esp);
 
 #endif

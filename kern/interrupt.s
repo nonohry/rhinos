@@ -43,12 +43,14 @@ global	excep_18
 extern	irq_handle_flih		; Handlers pour les IRQ en C
 extern	excep_handle		; Handlers pour les exceptions en C
 extern	cur_ctx			; Contexte courant
-
+extern	context_cpu_presave	; Pretraitement de la sauvegarde de context en C
+	
 	;;
 	;; Traitement generique des IRQ (macro maitre)
 	;;
 	
 %macro	hwint_generic0	1
+	push	0x0		; Faux erreur code
    	call	hwint_save	; Sauvegarde des registres
 	call	hwint_reg	; Mise en place des registres noyau
 	push	%1		; Empile l'IRQ
@@ -64,6 +66,7 @@ extern	cur_ctx			; Contexte courant
 	;;
 
 %macro	hwint_generic1	1
+	push	0x0		; Faux erreur code	
 	call	hwint_save	; Sauvegarde des registres
 	call	hwint_reg	; Mise en place des registres noyau
 	push	%1		; Empile l'IRQ
@@ -134,6 +137,12 @@ hwint_15:
 excep_save:	
 hwint_save:
 	cld		        ; Positionne le sens d empilement
+	
+	push	esp		; Empile le pointeur de pile
+	push	ss		; Empile le stack segement
+	call	context_cpu_presave ; Passe par le C pour preparer le contexte
+	add	esp,8		; Depile les arguments
+	
 	pushad			; Sauve les registres generaux 32bits
 	mov eax,esp		; Repere pour le retour
 	o16 push	ds	; Sauve les registres de segments (empile en 16bits)
