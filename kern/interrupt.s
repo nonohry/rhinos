@@ -180,44 +180,53 @@ hwint_rest:
 	;; 
 
 excep_00:
+	push	0
 	push	DIVIDE_VECTOR
-	jmp	excep_noerr
+	jmp	excep_err
 
 excep_01:
+	push	0
 	push	DEBUG_VECTOR
-	jmp	excep_noerr
+	jmp	excep_err
 
 excep_02:
+	push	0
 	push	NMI_VECTOR
-	jmp	excep_noerr
+	jmp	excep_err
 
 excep_03:
+	push	0
 	push	BREAKPT_VECTOR
-	jmp	excep_noerr
+	jmp	excep_err
 
 excep_04:
+	push	0
 	push	OVERFLOW_VECTOR	
-	jmp	excep_noerr
+	jmp	excep_err
 
-excep_05:	
+excep_05:
+	push	0
 	push	BOUND_VECTOR
-	jmp	excep_noerr
+	jmp	excep_err
 
 excep_06:
+	push	0
 	push	OPCODE_VECTOR	
-	jmp	excep_noerr
+	jmp	excep_err
 
 excep_07:
+	push	0
 	push	NOMATH_VECTOR
-	jmp	excep_noerr
+	jmp	excep_err
 	
 excep_08:
 	push	DFAULT_VECTOR
 	jmp	excep_err
 
 excep_09:
+	push	0
 	push	COSEG_VECTOR	
-	jmp	excep_noerr	
+	jmp	excep_err	
 
 excep_10:
 	push	TSS_VECTOR	
@@ -240,42 +249,31 @@ excep_14:
 	jmp	excep_err
 	
 excep_16:
+	push	0
 	push	MFAULT_VECTOR
-	jmp	excep_noerr	
+	jmp	excep_err	
 
 excep_17:
 	push	ALIGN_VECTOR
 	jmp	excep_err
 
 excep_18:
+	push	0
 	push	MACHINE_VECTOR	
-	jmp	excep_noerr	
+	jmp	excep_err	
 
 	
-	;;
-	;; Gestion des exceptions sans code d erreur
-	;; 
-
-excep_noerr:
-
-	mov	dword [excep_code],0	; Cree un faux code d erreur
-	pop	dword [excep_num]	; Recupere le vecteur
-	jmp	excep_err_next		; Saute a la gestion avec erreur
-
 	;;
 	;; Gestion des exceptions avec code erreur
 	;; 
 
 excep_err:
 	pop	dword [excep_num] 	; Recupere le vecteur
-	pop	dword [excep_code]	; Recupere le code d erreur (empile par le proc)	
-excep_err_next:	
 	call	excep_save	; Sauve le contexte
 	call	excep_reg	; Met en place les registres noyau
-	push	dword [excep_code]	; Argument 2 de excep_handle
 	push	dword [excep_num]	; Argument 1 de excep_handle
 	call	excep_handle	; Gestion de l exception en C
-	add	esp,2*4		; Depile les arguments
+	add	esp,1*4		; Depile les arguments
 	call	excep_rest	; Restaure les registres
 
 

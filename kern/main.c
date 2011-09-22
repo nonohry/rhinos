@@ -40,11 +40,17 @@ PUBLIC int main()
   bochs_print("Virtual Memory Manager initialized\n");
 
   /* Initialisation du gestionnaire des IRQ */
-  irq_init();
+  //irq_init();
 
   /* Initialisation Horloge */
-  pit_init();
+  //pit_init();
   bochs_print("Clock initialized (100Hz)\n");
+
+
+  virtaddr_t* a = (virtaddr_t*)0x98765;
+  u32_t b;
+  b = *a; 
+
 
   /* On ne doit plus arriver ici (sauf DEBUG) */
   while(1)

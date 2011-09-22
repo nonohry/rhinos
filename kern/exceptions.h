@@ -12,6 +12,6 @@
  * Prototypes
  *========================================================================*/
 
-PUBLIC void excep_handle(u32_t num, u32_t code);
+PUBLIC void excep_handle(u32_t num);
 
 #endif
