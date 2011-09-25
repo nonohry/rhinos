@@ -1,8 +1,8 @@
 [BITS 32]
 
-	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	;;========================================================================
 	;; Gestion bas niveau des interruptions/exceptions
-	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	;;========================================================================
 
 	
 global	hwint_00		; ISR visibles pour le C
@@ -44,13 +44,77 @@ extern	irq_handle_flih		; Handlers pour les IRQ en C
 extern	excep_handle		; Handlers pour les exceptions en C
 extern	cur_ctx			; Contexte courant
 extern	context_cpu_presave	; Pretraitement de la sauvegarde de context en C
+
+
+	;;========================================================================
+	;; Constantes
+	;;========================================================================
+
+	
+	;; 
+	;; Segment Selector
+	;;
+
+%assign		CS_SELECTOR		8  ; CS  = 00000001  0  00   = (byte) 8
+%assign		DS_SELECTOR		16 ; DS  = 00000010  0  00   = (byte) 16
+%assign		ES_SELECTOR		16 ; ES  = 00000010  0  00   = (byte) 16
+%assign		SS_SELECTOR		16 ; SS  = 00000010  0  00   = (byte) 16
+	
+	;;
+	;; IRQ Magic Numbers
+	;;
+
+%assign		IRQ_EOI			0x20
+%assign		IRQ_MASTER		0x20
+%assign		IRQ_SLAVE		0xA0
+
+	;;
+	;; Fake Error Code
+	;;
+%assign		FAKE_ERROR		0xFEC	
+
+	;;
+	;; Taille des registres sauves par pushad
+	;;
+
+%assign		PUSHAD_SIZE		32
+	
+	;;
+	;; Vecteurs Exceptions
+	;;
+
+%assign		DIVIDE_VECTOR		0
+%assign		DEBUG_VECTOR		1
+%assign		NMI_VECTOR		2
+%assign		BREAKPT_VECTOR		3
+%assign		OVERFLOW_VECTOR		4
+%assign		BOUND_VECTOR		5
+%assign		OPCODE_VECTOR		6
+%assign		NOMATH_VECTOR		7
+%assign		DFAULT_VECTOR		8
+%assign		COSEG_VECTOR		9
+%assign		TSS_VECTOR		10
+%assign		NOSEG_VECTOR		11
+%assign		SSFAULT_VECTOR		12
+%assign		GPROT_VECTOR		13
+%assign		PFAULT_VECTOR		14
+%assign		MFAULT_VECTOR		16
+%assign		ALIGN_VECTOR		17
+%assign		MACHINE_VECTOR		18
+
+
+	;;========================================================================
+	;; Macros
+	;;========================================================================
+
+
 	
 	;;
 	;; Traitement generique des IRQ (macro maitre)
 	;;
 	
 %macro	hwint_generic0	1
-	push	0x0		; Faux erreur code
+	push	FAKE_ERROR	; Faux erreur code
    	call	hwint_save	; Sauvegarde des registres
 	call	hwint_reg	; Mise en place des registres noyau
 	push	%1		; Empile l'IRQ
@@ -66,7 +130,7 @@ extern	context_cpu_presave	; Pretraitement de la sauvegarde de context en C
 	;;
 
 %macro	hwint_generic1	1
-	push	0x0		; Faux erreur code	
+	push	FAKE_ERROR	; Faux erreur code	
 	call	hwint_save	; Sauvegarde des registres
 	call	hwint_reg	; Mise en place des registres noyau
 	push	%1		; Empile l'IRQ
@@ -77,10 +141,14 @@ extern	context_cpu_presave	; Pretraitement de la sauvegarde de context en C
 	out	IRQ_MASTER,al	; puis au Maitre
 	call	hwint_rest	; Restaure les registres
 %endmacro
+
+
 	
-	;;
-	;; IRQ handlers
-	;; 
+	;;========================================================================
+	;; IRQ Handlers
+	;;========================================================================
+
+	
 
 hwint_00:
 	hwint_generic0	0	
@@ -129,10 +197,11 @@ hwint_14:
 
 hwint_15:
 	hwint_generic1	15
+
 	
-	;;
+	;;========================================================================
 	;; Sauvegarde du contexte pour les IRQ et les exceptions
-	;;
+	;;========================================================================
 
 excep_save:	
 hwint_save:
@@ -158,11 +227,13 @@ hwint_reg:
 	mov	ax,ES_SELECTOR
 	mov	es,ax		; note: FS & GS ne sont pas utilises par le noyau
 	ret
-	
-	;; 
-	;; Restauration du contexte pour les IRQ et les exceptions
-	;; 
 
+	
+	;;======================================================================== 
+	;; Restauration du contexte pour les IRQ et les exceptions
+	;;======================================================================== 
+
+	
 excep_rest:	
 hwint_rest:
 	add esp,4		; Depile l adresse de retour
@@ -175,47 +246,48 @@ hwint_rest:
 	iretd
 
 
-	;;
+	
+	;;========================================================================
 	;; Exceptions Handlers
-	;; 
+	;;======================================================================== 
 
 excep_00:
-	push	0
+	push	FAKE_ERROR
 	push	DIVIDE_VECTOR
 	jmp	excep_err
 
 excep_01:
-	push	0
+	push	FAKE_ERROR
 	push	DEBUG_VECTOR
 	jmp	excep_err
 
 excep_02:
-	push	0
+	push	FAKE_ERROR
 	push	NMI_VECTOR
 	jmp	excep_err
 
 excep_03:
-	push	0
+	push	FAKE_ERROR
 	push	BREAKPT_VECTOR
 	jmp	excep_err
 
 excep_04:
-	push	0
+	push	FAKE_ERROR
 	push	OVERFLOW_VECTOR	
 	jmp	excep_err
 
 excep_05:
-	push	0
+	push	FAKE_ERROR
 	push	BOUND_VECTOR
 	jmp	excep_err
 
 excep_06:
-	push	0
+	push	FAKE_ERROR
 	push	OPCODE_VECTOR	
 	jmp	excep_err
 
 excep_07:
-	push	0
+	push	FAKE_ERROR
 	push	NOMATH_VECTOR
 	jmp	excep_err
 	
@@ -224,7 +296,7 @@ excep_08:
 	jmp	excep_err
 
 excep_09:
-	push	0
+	push	FAKE_ERROR
 	push	COSEG_VECTOR	
 	jmp	excep_err	
 
@@ -249,7 +321,7 @@ excep_14:
 	jmp	excep_err
 	
 excep_16:
-	push	0
+	push	FAKE_ERROR
 	push	MFAULT_VECTOR
 	jmp	excep_err	
 
@@ -258,15 +330,17 @@ excep_17:
 	jmp	excep_err
 
 excep_18:
-	push	0
+	push	FAKE_ERROR
 	push	MACHINE_VECTOR	
 	jmp	excep_err	
 
 	
-	;;
+	
+	;;========================================================================
 	;; Gestion des exceptions avec code erreur
-	;; 
+	;;======================================================================== 
 
+	
 excep_err:
 	pop	dword [excep_num] 	; Recupere le vecteur
 	call	excep_save	; Sauve le contexte
@@ -277,55 +351,12 @@ excep_err:
 	call	excep_rest	; Restaure les registres
 
 
-	;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	;; Declaration des Donnees
-	;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-	excep_code	dd	0 ; Code Erreur des exceptions
+	
+	;;========================================================================
+	;; Declaration des Donnees
+	;;========================================================================
+
+	
 	excep_num	dd	0 ; Vecteur de l exception
 
-		;; 
-	;; Segment Selector
-	;;
-
-	CS_SELECTOR	equ	8  ; CS  = 00000001  0  00   = (byte) 8
-	DS_SELECTOR	equ	16 ; DS  = 00000010  0  00   = (byte) 16
-	ES_SELECTOR	equ	16 ; ES  = 00000010  0  00   = (byte) 16
-	SS_SELECTOR	equ	16 ; SS  = 00000010  0  00   = (byte) 16
-	
-	;;
-	;; IRQ Magic Numbers
-	;;
-
-	IRQ_EOI		equ	0x20
-	IRQ_MASTER	equ	0x20
-	IRQ_SLAVE	equ	0xA0
-
-	;;
-	;; Taille des registres sauves par pushad
-	;;
-
-	PUSHAD_SIZE	equ	32
-	
-	;;
-	;; Vecteurs Exceptions
-	;;
-
-	DIVIDE_VECTOR	equ	0
-	DEBUG_VECTOR	equ	1
-	NMI_VECTOR	equ	2
-	BREAKPT_VECTOR	equ	3
-	OVERFLOW_VECTOR	equ	4
-	BOUND_VECTOR	equ	5
-	OPCODE_VECTOR	equ	6
-	NOMATH_VECTOR	equ	7
-	DFAULT_VECTOR	equ	8
-	COSEG_VECTOR	equ	9
-	TSS_VECTOR	equ	10
-	NOSEG_VECTOR	equ	11
-	SSFAULT_VECTOR	equ	12
-	GPROT_VECTOR	equ	13
-	PFAULT_VECTOR	equ	14
-	MFAULT_VECTOR	equ	16
-	ALIGN_VECTOR	equ	17
-	MACHINE_VECTOR	equ	18
