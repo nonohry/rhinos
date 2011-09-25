@@ -43,7 +43,7 @@ global	excep_18
 extern	irq_handle_flih		; Handlers pour les IRQ en C
 extern	excep_handle		; Handlers pour les exceptions en C
 extern	cur_ctx			; Contexte courant
-extern	context_cpu_presave	; Pretraitement de la sauvegarde de context en C
+extern	context_cpu_postsave	; Pretraitement de la sauvegarde de context en C
 
 
 	;;========================================================================
@@ -74,10 +74,15 @@ extern	context_cpu_presave	; Pretraitement de la sauvegarde de context en C
 %assign		FAKE_ERROR		0xFEC	
 
 	;;
-	;; Taille des registres sauves par pushad
+	;; Offset dans struct context_cpu
 	;;
 
-%assign		PUSHAD_SIZE		32
+%assign		CONTEXT_OFFSET		40
+	;;
+	;; Taille de la pile d interruption
+	;; 
+
+%assign		INT_STACK_SIZE		1024	
 	
 	;;
 	;; Vecteurs Exceptions
@@ -115,14 +120,13 @@ extern	context_cpu_presave	; Pretraitement de la sauvegarde de context en C
 	
 %macro	hwint_generic0	1
 	push	FAKE_ERROR	; Faux erreur code
-   	call	hwint_save	; Sauvegarde des registres
-	call	hwint_reg	; Mise en place des registres noyau
+   	call	save_ctx	; Sauvegarde des registres
 	push	%1		; Empile l'IRQ
  	call	irq_handle_flih	; Appel les handles C
 	add	esp,4		; Depile l'IRQ
 	mov	al,IRQ_EOI	; Envoi la fin d interruption
-	out	IRQ_MASTER,al	; au PIC Maitre	
-	call	hwint_rest	; Restaure les registres
+	out	IRQ_MASTER,al	; au PIC Maitre
+	call	restore_ctx	; Restaure les registres
 %endmacro
 
 	;;
@@ -131,15 +135,14 @@ extern	context_cpu_presave	; Pretraitement de la sauvegarde de context en C
 
 %macro	hwint_generic1	1
 	push	FAKE_ERROR	; Faux erreur code	
-	call	hwint_save	; Sauvegarde des registres
-	call	hwint_reg	; Mise en place des registres noyau
+	call	save_ctx	; Sauvegarde des registres
 	push	%1		; Empile l'IRQ
 	call	irq_handle_flih	; Appel les handles C
 	add	esp,4		; Depile l'IRQ
 	mov	al,IRQ_EOI	; Envoi la fin d interruption
 	out	IRQ_SLAVE,al	; au PIC Esclave
 	out	IRQ_MASTER,al	; puis au Maitre
-	call	hwint_rest	; Restaure les registres
+	call	restore_ctx	; Restaure les registres
 %endmacro
 
 
@@ -203,30 +206,32 @@ hwint_15:
 	;; Sauvegarde du contexte pour les IRQ et les exceptions
 	;;========================================================================
 
-excep_save:	
-hwint_save:
+save_ctx:
 	cld		        ; Positionne le sens d empilement
 	
-	push	esp		; Empile le pointeur de pile
-	push	ss		; Empile le stack segement
-	call	context_cpu_presave ; Passe par le C pour preparer le contexte
-	add	esp,8		; Depile les arguments
+	mov dword [save_esp],esp; Sauvegarde ESP
+	mov esp, [cur_ctx] 	; Placement de ESP sur le contexte courant
+	add esp,CONTEXT_OFFSET	; Placement a ret_addr
 	
 	pushad			; Sauve les registres generaux 32bits
-	mov eax,esp		; Repere pour le retour
 	o16 push	ds	; Sauve les registres de segments (empile en 16bits)
 	o16 push	es
 	o16 push	fs
 	o16 push	gs
-	jmp [eax+PUSHAD_SIZE]	; Retour a l'adresse reperee
-	
-excep_reg:
-hwint_reg:	
+
+	mov	esp, int_stack_top ; Positionne la pile d interruption
 	mov	ax,DS_SELECTOR	; Ajuste les segments noyau (CS & SS sont deja positionnes)
 	mov	ds,ax
 	mov	ax,ES_SELECTOR
 	mov	es,ax		; note: FS & GS ne sont pas utilises par le noyau
-	ret
+
+	push	dword [save_esp]; Empile le pointeur de pile
+	push	ss		; Empile le stack segement
+	call	context_cpu_postsave ; Passe par le C pour finaliser le contexte
+	add	esp,8		; Depile les arguments
+
+	mov	eax,dword [save_esp] ; La pile sauvee pointe sur l adresse de retour
+	jmp	[eax]		     ; Saute a l adresse de retour
 
 	
 	;;======================================================================== 
@@ -234,15 +239,15 @@ hwint_reg:
 	;;======================================================================== 
 
 	
-excep_rest:	
-hwint_rest:
-	add esp,4		; Depile l adresse de retour
+restore_ctx:	
+	mov esp, [cur_ctx]
 	o16 pop gs		; Restaure les registres
 	o16 pop fs		; sauves par hwint_save
 	o16 pop	es		; en 16bits
 	o16 pop	ds
 	popad		    	; Restaure les registre generaux
 	add esp,4		; Depile l adresse de retour de hwint_save
+	add esp,4		; Depile le code d erreur
 	iretd
 
 
@@ -343,12 +348,11 @@ excep_18:
 	
 excep_err:
 	pop	dword [excep_num] 	; Recupere le vecteur
-	call	excep_save	; Sauve le contexte
-	call	excep_reg	; Met en place les registres noyau
+	call	save_ctx		; Sauve le contexte
 	push	dword [excep_num]	; Argument 1 de excep_handle
 	call	excep_handle	; Gestion de l exception en C
 	add	esp,1*4		; Depile les arguments
-	call	excep_rest	; Restaure les registres
+	call	restore_ctx	; Restaure les registres
 
 
 
@@ -357,6 +361,18 @@ excep_err:
 	;; Declaration des Donnees
 	;;========================================================================
 
+	;;
+	;; Divers
+	;; 
 	
 	excep_num	dd	0 ; Vecteur de l exception
+	save_esp	dd	0 ; Sauvegarde de ESP
+	
+	;;
+	;; La pile d interruption
+	;;
 
+int_stack:
+	times	INT_STACK_SIZE	db 0
+int_stack_top:
+	

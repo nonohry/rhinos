@@ -17,6 +17,12 @@
 
 
 /*========================================================================
+ * CONSTANTES
+ *========================================================================*/
+
+#define   SS_SELECTOR		16 /* SS  = 00000010  0  00   = (byte) 16 */
+
+/*========================================================================
  * Structures
  *========================================================================*/
 
@@ -36,6 +42,7 @@ PUBLIC struct context_cpu
   reg32_t ecx;
   reg32_t eax;
   reg32_t ret_addr;   /* Adresse de retour empilee par les appels de fonctions */
+  reg32_t error_code;
   reg32_t eip;
   reg32_t cs;
   reg32_t eflags;
@@ -52,6 +59,7 @@ PUBLIC struct context_cpu
 PUBLIC	struct context_cpu* cur_ctx;
 PUBLIC  struct context_cpu* next_ctx;
 
-PUBLIC void context_cpu_presave(reg32_t ss, reg32_t* esp);
+PUBLIC u8_t context_cpu_init(void);
+PUBLIC void context_cpu_postsave(reg32_t ss, reg32_t* esp);
 
 #endif

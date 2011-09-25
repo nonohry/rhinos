@@ -76,7 +76,7 @@ next:
 
 
 	;;
-	;; La pile noyau pour gerer les interruptions
+	;; La pile noyau
 	;;
 
 kstack:

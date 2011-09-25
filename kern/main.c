@@ -16,6 +16,7 @@
 #include "physmem.h"
 #include "paging.h"
 #include "virtmem.h"
+#include "context_cpu.h"
 #include "irq.h"
 #include "pit.h"
 
@@ -39,8 +40,11 @@ PUBLIC int main()
   virt_init();
   bochs_print("Virtual Memory Manager initialized\n");
 
+  /* Initialisation des contextes */
+  context_cpu_init();
+
   /* Initialisation du gestionnaire des IRQ */
-  //irq_init();
+  irq_init();
 
   /* Initialisation Horloge */
   pit_init();
