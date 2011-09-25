@@ -55,11 +55,11 @@ PUBLIC struct context_cpu
  * Structures
  *========================================================================*/
 
-
+PUBLIC	struct context_cpu* kern_ctx;
 PUBLIC	struct context_cpu* cur_ctx;
 PUBLIC  struct context_cpu* next_ctx;
 
-PUBLIC u8_t context_cpu_init(void);
+PUBLIC void context_cpu_init(void);
 PUBLIC void context_cpu_postsave(reg32_t ss, reg32_t* esp);
 
 #endif

@@ -42,6 +42,7 @@ PUBLIC int main()
 
   /* Initialisation des contextes */
   context_cpu_init();
+  bochs_print("Kernel Context initialized\n");
 
   /* Initialisation du gestionnaire des IRQ */
   irq_init();
@@ -50,8 +51,8 @@ PUBLIC int main()
   pit_init();
   bochs_print("Clock initialized (100Hz)\n");
 
+  
   /*
-
   virtaddr_t* a = (virtaddr_t*)0x98765;
   u32_t b;
   b = *a; 

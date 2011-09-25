@@ -27,16 +27,18 @@ PRIVATE void print_context(struct context_cpu* ctx);
  *========================================================================*/
 
 
-PUBLIC u8_t context_cpu_init(void)
+PUBLIC void context_cpu_init(void)
 {
-  /* Alloue le contexte initial */
-  cur_ctx = (struct context_cpu*)virt_alloc(sizeof(struct context_cpu));
-  ASSERT_RETURN( cur_ctx != NULL , EXIT_FAILURE );
+  /* Alloue le contexte noyau */
+  kern_ctx = (struct context_cpu*)virt_alloc(sizeof(struct context_cpu));
+  ASSERT_FATAL( kern_ctx != NULL );
 
-  bochs_print("ctxt=0x%x\n",(u32_t)cur_ctx);
+  /* Le noyau devient le contexte courant */
+  cur_ctx = kern_ctx;
 
-  return EXIT_SUCCESS;
+  return;
 }
+
 
 /*========================================================================
  * Post traitement de la sauvegarde du contexte
@@ -56,10 +58,8 @@ PUBLIC void context_cpu_postsave(reg32_t ss, reg32_t* esp)
       cur_ctx->eflags = *(esp+4);
       cur_ctx->esp = (reg32_t)(esp+5);
       cur_ctx->ss = ss;
-
-      //print_context(cur_ctx);
-      //while(1){};
     }
+
   return;
 }
 
