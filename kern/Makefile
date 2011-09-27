@@ -50,7 +50,7 @@ pit.o: ../include/types.h klib.h tables.h seg.h irq.h interrupt.h
 pit.o: context_cpu.h pit.h
 irq.o: ../include/types.h ../include/llist.h klib.h interrupt.h context_cpu.h
 irq.o: pic.h irq.h
-exceptions.o: ../include/types.h klib.h exceptions.h
+exceptions.o: ../include/types.h klib.h exceptions.h context_cpu.h
 physmem.o: ../include/types.h ../include/llist.h klib.h assert.h start.h
 physmem.o: physmem.h virtmem_slab.h virtmem_buddy.h
 paging.o: ../include/types.h klib.h assert.h start.h physmem.h virtmem_slab.h

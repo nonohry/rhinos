@@ -56,7 +56,7 @@ PUBLIC int main()
   virtaddr_t* a = (virtaddr_t*)0x98765;
   u32_t b;
   b = *a; 
-  */
+  */ 
 
   /* On ne doit plus arriver ici (sauf DEBUG) */
   while(1)

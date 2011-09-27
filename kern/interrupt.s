@@ -261,85 +261,85 @@ restore_ctx:
 excep_00:
 	push	FAKE_ERROR
 	push	DIVIDE_VECTOR
-	jmp	excep_err
+	jmp	excep_next
 
 excep_01:
 	push	FAKE_ERROR
 	push	DEBUG_VECTOR
-	jmp	excep_err
+	jmp	excep_next
 
 excep_02:
 	push	FAKE_ERROR
 	push	NMI_VECTOR
-	jmp	excep_err
+	jmp	excep_next
 
 excep_03:
 	push	FAKE_ERROR
 	push	BREAKPT_VECTOR
-	jmp	excep_err
+	jmp	excep_next
 
 excep_04:
 	push	FAKE_ERROR
 	push	OVERFLOW_VECTOR	
-	jmp	excep_err
+	jmp	excep_next
 
 excep_05:
 	push	FAKE_ERROR
 	push	BOUND_VECTOR
-	jmp	excep_err
+	jmp	excep_next
 
 excep_06:
 	push	FAKE_ERROR
 	push	OPCODE_VECTOR	
-	jmp	excep_err
+	jmp	excep_next
 
 excep_07:
 	push	FAKE_ERROR
 	push	NOMATH_VECTOR
-	jmp	excep_err
+	jmp	excep_next
 	
 excep_08:
 	push	DFAULT_VECTOR
-	jmp	excep_err
+	jmp	excep_next
 
 excep_09:
 	push	FAKE_ERROR
 	push	COSEG_VECTOR	
-	jmp	excep_err	
+	jmp	excep_next	
 
 excep_10:
 	push	TSS_VECTOR	
-	jmp	excep_err
+	jmp	excep_next
 
 excep_11:
 	push	NOSEG_VECTOR
-	jmp	excep_err	
+	jmp	excep_next	
 
 excep_12:
 	push	SSFAULT_VECTOR	
-	jmp	excep_err
+	jmp	excep_next
 
 excep_13:
 	push	GPROT_VECTOR	
-	jmp	excep_err
+	jmp	excep_next
 
 excep_14:
 	push	PFAULT_VECTOR	
-	jmp	excep_err
+	jmp	excep_next
 	
 excep_16:
 	push	FAKE_ERROR
 	push	MFAULT_VECTOR
-	jmp	excep_err	
+	jmp	excep_next	
 
 excep_17:
 	push	ALIGN_VECTOR
-	jmp	excep_err
+	jmp	excep_next
 
 excep_18:
 	push	FAKE_ERROR
 	push	MACHINE_VECTOR	
-	jmp	excep_err	
+	jmp	excep_next	
 
 	
 	
@@ -348,9 +348,10 @@ excep_18:
 	;;======================================================================== 
 
 	
-excep_err:
+excep_next:
 	pop	dword [excep_num] 	; Recupere le vecteur
-	call	save_ctx		; Sauve le contexte
+	call	save_ctx	; Sauve le contexte
+	push	dword [cur_ctx]	; Empile le contexte courant	
 	push	dword [excep_num]	; Argument 1 de excep_handle
 	call	excep_handle	; Gestion de l exception en C
 	add	esp,1*4		; Depile les arguments
