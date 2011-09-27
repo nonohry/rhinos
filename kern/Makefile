@@ -40,12 +40,16 @@ clean:
 
 # DO NOT DELETE
 
-start.o: klib.h ../include/types.h tables.h seg.h irq.h start.h
+start.o: klib.h ../include/types.h tables.h seg.h irq.h interrupt.h
+start.o: context_cpu.h start.h
 seg.o: ../include/types.h seg.h
-tables.o: ../include/types.h klib.h pic.h seg.h interrupt.h tables.h irq.h
+tables.o: ../include/types.h klib.h pic.h seg.h interrupt.h context_cpu.h
+tables.o: tables.h irq.h
 pic.o: ../include/types.h klib.h pic.h
-pit.o: ../include/types.h klib.h tables.h seg.h irq.h pit.h
-irq.o: ../include/types.h ../include/llist.h klib.h pic.h irq.h
+pit.o: ../include/types.h klib.h tables.h seg.h irq.h interrupt.h
+pit.o: context_cpu.h pit.h
+irq.o: ../include/types.h ../include/llist.h klib.h interrupt.h context_cpu.h
+irq.o: pic.h irq.h
 exceptions.o: ../include/types.h klib.h exceptions.h
 physmem.o: ../include/types.h ../include/llist.h klib.h assert.h start.h
 physmem.o: physmem.h virtmem_slab.h virtmem_buddy.h
@@ -61,4 +65,4 @@ context_cpu.o: ../include/types.h klib.h assert.h virtmem.h virtmem_slab.h
 context_cpu.o: context_cpu.h
 main.o: ../include/types.h ../include/llist.h start.h klib.h assert.h
 main.o: physmem.h virtmem_slab.h virtmem_buddy.h paging.h virtmem.h
-main.o: context_cpu.h irq.h pit.h
+main.o: context_cpu.h irq.h interrupt.h pit.h

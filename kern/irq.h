@@ -11,29 +11,14 @@
  *========================================================================*/
 
 #include <types.h>
+#include "interrupt.h"
+
 
 /*========================================================================
  * Constantes
  *========================================================================*/
 
 #define IRQ_VECTORS   16
-
-/*========================================================================
- * Definitions
- *========================================================================*/
-
-/* alias pour le handler */
-typedef void (*irq_flih_t)(void);
-
-
-/* Structure irq_node */
-PUBLIC struct irq_node
-{
-  void (*flih)(void);      /* First Level Interrupt Handler */
-  struct irq_node* prev;   /* Noeud precedent */
-  struct irq_node* next;   /* Noeud suivant */
-};
-
 
 
 /*========================================================================
@@ -43,9 +28,9 @@ PUBLIC struct irq_node
 PUBLIC void irq_init(void);
 PUBLIC void irq_enable(u8_t irq);
 PUBLIC void irq_disable(u8_t irq);
-PUBLIC void irq_add_flih(u8_t irq, struct irq_node* node);
-PUBLIC void irq_remove_flih(u8_t irq, struct irq_node* node);
-PUBLIC void irq_handle_flih(u8_t irq);
+PUBLIC void irq_add_flih(u8_t irq, struct int_node* node);
+PUBLIC void irq_remove_flih(u8_t irq, struct int_node* node);
+PUBLIC void irq_handle_flih(u8_t irq, struct context_cpu* ctx);
 
 #endif
 

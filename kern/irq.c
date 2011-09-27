@@ -6,6 +6,7 @@
 #include <types.h>
 #include <llist.h>
 #include "klib.h"
+#include "interrupt.h"
 #include "pic.h"
 #include "irq.h"
 
@@ -14,7 +15,7 @@
  * Private
  *========================================================================*/
 
-PRIVATE struct irq_node* irq_flih[IRQ_VECTORS];
+PRIVATE struct int_node* irq_flih[IRQ_VECTORS];
 
 
 /*========================================================================
@@ -57,7 +58,7 @@ PUBLIC void irq_disable(u8_t irq)
  * Ajout d un handler - fonction pour le boot
  *========================================================================*/
 
-PUBLIC void irq_add_flih(u8_t irq, struct irq_node* node)
+PUBLIC void irq_add_flih(u8_t irq, struct int_node* node)
 {
   if (irq < IRQ_VECTORS)
     {
@@ -76,7 +77,7 @@ PUBLIC void irq_add_flih(u8_t irq, struct irq_node* node)
  * Retrait d un handler - fonction pour le boot
  *========================================================================*/
 
-PUBLIC void irq_remove_flih(u8_t irq, struct irq_node* node)
+PUBLIC void irq_remove_flih(u8_t irq, struct int_node* node)
 {
   if (irq < IRQ_VECTORS)
     {
@@ -99,20 +100,20 @@ PUBLIC void irq_remove_flih(u8_t irq, struct irq_node* node)
  * Execution des flih
  *========================================================================*/
 
-PUBLIC void irq_handle_flih(u8_t irq)
+PUBLIC void irq_handle_flih(u8_t irq, struct context_cpu* ctx)
 {
   if (irq < IRQ_VECTORS)
     {
       if (!LLIST_ISNULL(irq_flih[irq]))
 	{
 	  /* Noeud de parcours */
-	   struct irq_node* node;
+	   struct int_node* node;
 
 	   node = irq_flih[irq];
 	   do
 	     {
 	       /* Execute le flih */
-	       node->flih();
+	       node->flih(ctx);
 	       /* Suite du parcours */
 	       node = LLIST_NEXT(irq_flih[irq],node);
 

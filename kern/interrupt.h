@@ -8,7 +8,13 @@
 #ifndef INTERRUPT_H
 #define INTERRUPT_H
 
+/*========================================================================
+ * Includes
+ *========================================================================*/
+
 #include <types.h>
+#include "context_cpu.h"
+
 
 /*========================================================================
  * ISR assembleur
@@ -48,6 +54,20 @@ EXTERN void excep_14(void);
 EXTERN void excep_16(void);
 EXTERN void excep_17(void);
 EXTERN void excep_18(void);
+
+
+
+/*========================================================================
+ * Structure
+ *========================================================================*/
+
+/* Structure int_node */
+PUBLIC struct int_node
+{
+  void (*flih)(struct context_cpu* ctx);      /* First Level Interrupt Handler */
+  struct int_node* prev;   /* Noeud precedent */
+  struct int_node* next;   /* Noeud suivant */
+};
 
 
 #endif

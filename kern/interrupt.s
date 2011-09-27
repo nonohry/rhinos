@@ -121,6 +121,7 @@ extern	context_cpu_postsave	; Pretraitement de la sauvegarde de context en C
 %macro	hwint_generic0	1
 	push	FAKE_ERROR	; Faux erreur code
    	call	save_ctx	; Sauvegarde des registres
+	push	dword [cur_ctx]	; Empile le contexte courant
 	push	%1		; Empile l'IRQ
  	call	irq_handle_flih	; Appel les handles C
 	add	esp,4		; Depile l'IRQ
@@ -136,6 +137,7 @@ extern	context_cpu_postsave	; Pretraitement de la sauvegarde de context en C
 %macro	hwint_generic1	1
 	push	FAKE_ERROR	; Faux erreur code	
 	call	save_ctx	; Sauvegarde des registres
+	push	dword [cur_ctx]	; Empile le contexte courant
 	push	%1		; Empile l'IRQ
 	call	irq_handle_flih	; Appel les handles C
 	add	esp,4		; Depile l'IRQ

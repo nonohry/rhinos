@@ -6,6 +6,7 @@
 #include <types.h>
 #include "klib.h"
 #include "tables.h"
+#include "interrupt.h"
 #include "irq.h"
 #include "pit.h"
 
@@ -13,8 +14,8 @@
  * Declarations PRIVATE 
  *========================================================================*/
 
-PRIVATE void pit_handler();
-PRIVATE struct irq_node pit_irq_node;
+PRIVATE void pit_handler(struct context_cpu* ctx);
+PRIVATE struct int_node pit_irq_node;
 
 /*========================================================================
  * Initialise l'horloge avec une frequence
@@ -56,10 +57,9 @@ PUBLIC void pit_init()
  * Handler (flih) 
  *========================================================================*/
 
-PRIVATE void pit_handler()
+PRIVATE void pit_handler(struct context_cpu* ctx)
 {
-  
-   bochs_print("tick ! ");
+  bochs_print("tick ! ");
 
   return;
 }
