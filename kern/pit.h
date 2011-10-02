@@ -2,6 +2,7 @@
 #define PIT_H
 
 #include <types.h>
+#include "const.h"
 
 /* Constantes */
 

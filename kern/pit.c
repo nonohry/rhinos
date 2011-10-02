@@ -4,6 +4,7 @@
  */
 
 #include <types.h>
+#include "const.h"
 #include "klib.h"
 #include "tables.h"
 #include "interrupt.h"

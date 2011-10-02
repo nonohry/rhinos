@@ -6,6 +6,7 @@
 
 
 #include <types.h>
+#include "const.h"
 #include <llist.h>
 #include "klib.h"
 #include "assert.h"
@@ -337,7 +338,7 @@ PRIVATE u8_t virtmem_buddy_init_area(u32_t base, u32_t size)
       power = power - (power >> 1);
 
       /* Indice dans le buddy */
-      ind = msb(power) - PHYS_PAGE_SHIFT;
+      ind = msb(power) - CONST_PAGE_SHIFT;
 
       /* Prend un vmem_area dans le cache */
       area = (struct vmem_area*)virtmem_cache_alloc(area_cache, VIRT_CACHE_DEFAULT);

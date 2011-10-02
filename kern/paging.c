@@ -4,6 +4,7 @@
  */
 
 #include <types.h>
+#include "const.h"
 #include "klib.h"
 #include "assert.h"
 #include "start.h"
@@ -40,7 +41,7 @@ PUBLIC void paging_init(void)
   
   /* Identity Mapping */
   ASSERT_FATAL( paging_identityMapping(0,bootinfo->kern_end)==EXIT_SUCCESS );
-  ASSERT_FATAL( paging_identityMapping(0x9FC00,PHYS_PAGE_NODE_POOL_ADDR+((bootinfo->mem_total) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc))==EXIT_SUCCESS );
+  ASSERT_FATAL( paging_identityMapping(0x9FC00,CONST_PAGE_NODE_POOL_ADDR+((bootinfo->mem_total) >> CONST_PAGE_SHIFT)*sizeof(struct ppage_desc))==EXIT_SUCCESS );
 
   /* Charge le Kernel  Page Directory */
   load_CR3((physaddr_t)kern_PD);

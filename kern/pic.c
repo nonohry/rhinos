@@ -9,6 +9,7 @@
  *========================================================================*/
 
 #include <types.h>
+#include "const.h"
 #include "klib.h"
 #include "pic.h"
 

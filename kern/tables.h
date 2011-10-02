@@ -6,6 +6,7 @@
  *========================================================================*/
 
 #include <types.h>
+#include "const.h"
 #include "seg.h"
 #include "irq.h"
 

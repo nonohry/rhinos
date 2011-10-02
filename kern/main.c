@@ -9,6 +9,7 @@
  *========================================================================*/
 
 #include <types.h>
+#include "const.h"
 #include <llist.h>
 #include "start.h"
 #include "klib.h"

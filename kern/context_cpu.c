@@ -9,6 +9,7 @@
  *========================================================================*/
 
 #include <types.h>
+#include "const.h"
 #include "klib.h"
 #include "assert.h"
 #include "virtmem.h"

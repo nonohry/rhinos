@@ -13,6 +13,7 @@
  *========================================================================*/
 
 #include <types.h>
+#include "const.h"
 
 
 /*========================================================================
@@ -34,7 +35,7 @@
  * Macros
  *========================================================================*/
 
-#define VIRT_BUDDY_POOLLIMIT   (PAGING_ALIGN_SUP( PHYS_PAGE_NODE_POOL_ADDR+((bootinfo->mem_total) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc) ))
+#define VIRT_BUDDY_POOLLIMIT   (PAGING_ALIGN_SUP( CONST_PAGE_NODE_POOL_ADDR+((bootinfo->mem_total) >> CONST_PAGE_SHIFT)*sizeof(struct ppage_desc) ))
 
 
 /*========================================================================

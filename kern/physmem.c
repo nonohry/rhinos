@@ -5,6 +5,7 @@
 
 
 #include <types.h>
+#include "const.h"
 #include <llist.h>
 #include "klib.h"
 #include "assert.h"
@@ -38,7 +39,7 @@ PUBLIC void phys_init(void)
     }
 
   /* Calcule la taille maximale du pool */
-  pool_size = ((bootinfo->mem_total) >> PHYS_PAGE_SHIFT)*sizeof(struct ppage_desc);
+  pool_size = ((bootinfo->mem_total) >> CONST_PAGE_SHIFT)*sizeof(struct ppage_desc);
 
   /* Entre les zones libres du memory map dans le buddy */
   for(entry=(struct boot_mmap_e820*)bootinfo->mem_map_addr,i=0;i<bootinfo->mem_map_count;i++,entry++)
@@ -59,12 +60,12 @@ PUBLIC void phys_init(void)
 	    }
 	  
 	  /* Si le pool est dans la zone, alors sa fin devient le debut de la zone */
-	  if ( (PHYS_PAGE_NODE_POOL_ADDR+pool_size >= base)&&
-	       (PHYS_PAGE_NODE_POOL_ADDR+pool_size <= base+size) )
+	  if ( (CONST_PAGE_NODE_POOL_ADDR+pool_size >= base)&&
+	       (CONST_PAGE_NODE_POOL_ADDR+pool_size <= base+size) )
 	    {
 	      /* Reajuste la taille */
-	      size -= (PHYS_PAGE_NODE_POOL_ADDR+pool_size - base);
-	      base = PHYS_PAGE_NODE_POOL_ADDR+pool_size;
+	      size -= (CONST_PAGE_NODE_POOL_ADDR+pool_size - base);
+	      base = CONST_PAGE_NODE_POOL_ADDR+pool_size;
 	      
 	    }
 	  
@@ -98,7 +99,7 @@ PUBLIC void* phys_alloc(u32_t size)
   size = size + 1;
   
   /* En deduit l indice */
-  ind = msb(size) - PHYS_PAGE_SHIFT;
+  ind = msb(size) - CONST_PAGE_SHIFT;
   
   /* Si ppage_free[ind] est NULL, on cherche un niveau superieur disponible */
   for(i=ind;LLIST_ISNULL(ppage_free[i])&&(i<PHYS_PAGE_MAX_BUDDY);i++)
@@ -270,7 +271,7 @@ PRIVATE void phys_init_area(u32_t base, u32_t size)
 
   base = PHYS_ALIGN_SUP(base);
 
-  while (size >= PHYS_PAGE_SIZE)
+  while (size >= CONST_PAGE_SIZE)
     {
       /* Puissance de 2 inferieure */     
       power = size;
@@ -282,7 +283,7 @@ PRIVATE void phys_init_area(u32_t base, u32_t size)
       power = power - (power >> 1);
 
       /* Indice dans le buddy */
-      ind = msb(power) - PHYS_PAGE_SHIFT;
+      ind = msb(power) - CONST_PAGE_SHIFT;
 
       /* Prend un pdesc dans le pool */
       pdesc = PHYS_GET_DESC(base);

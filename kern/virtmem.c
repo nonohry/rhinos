@@ -10,6 +10,7 @@
  *========================================================================*/
 
 #include <types.h>
+#include "const.h"
 #include "assert.h"
 #include "virtmem_buddy.h"
 #include "virtmem_slab.h"

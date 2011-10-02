@@ -10,6 +10,7 @@
  *========================================================================*/
 
 #include <types.h>
+#include "const.h"
 #include <llist.h>
 #include "klib.h"
 #include "assert.h"
