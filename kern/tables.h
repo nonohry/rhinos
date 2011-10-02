@@ -29,7 +29,6 @@
 #define TABLES_GDT_SIZE       TABLES_MAX_INDEX+1  /* Debute a 0 */
 #define TABLES_IDT_SIZE       50
 
-
 #define TABLES_SHIFT_SELECTOR  3    /* INDEX << SHIFT_SELECTOR = SELECTOR */
 
 /* Rings */
@@ -43,7 +42,6 @@
 
 #define TABLES_KERN_BASE         0x0        /* Adresse de base du noyau */
 #define TABLES_KERN_LIMIT_4G     0x0        /* Limite de l'espace Noyau (4G) */
-#define TABLES_KERN_TOP_STACK    0x7C00     /* ESP Noyau au boot */
 
 
 /* Descripteur de Table (GDT & LDT) */
