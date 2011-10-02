@@ -54,43 +54,43 @@ PUBLIC void idt_init()
 
   /* Initialisation de l IDT - Exceptions */
 
-  init_int_gate(&idt[0] , TABLES_CS_SELECTOR, (lineaddr_t)excep_00, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[1] , TABLES_CS_SELECTOR, (lineaddr_t)excep_01, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[2] , TABLES_CS_SELECTOR, (lineaddr_t)excep_02, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[3] , TABLES_CS_SELECTOR, (lineaddr_t)excep_03, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[4] , TABLES_CS_SELECTOR, (lineaddr_t)excep_04, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[5] , TABLES_CS_SELECTOR, (lineaddr_t)excep_05, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[6] , TABLES_CS_SELECTOR, (lineaddr_t)excep_06, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[7] , TABLES_CS_SELECTOR, (lineaddr_t)excep_07, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[8] , TABLES_CS_SELECTOR, (lineaddr_t)excep_08, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[9] , TABLES_CS_SELECTOR, (lineaddr_t)excep_09, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[10], TABLES_CS_SELECTOR, (lineaddr_t)excep_10, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[11], TABLES_CS_SELECTOR, (lineaddr_t)excep_11, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[12], TABLES_CS_SELECTOR, (lineaddr_t)excep_12, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[13], TABLES_CS_SELECTOR, (lineaddr_t)excep_13, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[14], TABLES_CS_SELECTOR, (lineaddr_t)excep_14, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[16], TABLES_CS_SELECTOR, (lineaddr_t)excep_16, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[17], TABLES_CS_SELECTOR, (lineaddr_t)excep_17, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[18], TABLES_CS_SELECTOR, (lineaddr_t)excep_18, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[0] , CONST_CS_SELECTOR, (lineaddr_t)excep_00, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[1] , CONST_CS_SELECTOR, (lineaddr_t)excep_01, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[2] , CONST_CS_SELECTOR, (lineaddr_t)excep_02, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[3] , CONST_CS_SELECTOR, (lineaddr_t)excep_03, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[4] , CONST_CS_SELECTOR, (lineaddr_t)excep_04, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[5] , CONST_CS_SELECTOR, (lineaddr_t)excep_05, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[6] , CONST_CS_SELECTOR, (lineaddr_t)excep_06, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[7] , CONST_CS_SELECTOR, (lineaddr_t)excep_07, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[8] , CONST_CS_SELECTOR, (lineaddr_t)excep_08, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[9] , CONST_CS_SELECTOR, (lineaddr_t)excep_09, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[10], CONST_CS_SELECTOR, (lineaddr_t)excep_10, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[11], CONST_CS_SELECTOR, (lineaddr_t)excep_11, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[12], CONST_CS_SELECTOR, (lineaddr_t)excep_12, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[13], CONST_CS_SELECTOR, (lineaddr_t)excep_13, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[14], CONST_CS_SELECTOR, (lineaddr_t)excep_14, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[16], CONST_CS_SELECTOR, (lineaddr_t)excep_16, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[17], CONST_CS_SELECTOR, (lineaddr_t)excep_17, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[18], CONST_CS_SELECTOR, (lineaddr_t)excep_18, SEG_PRESENT | SEG_DPL_0);
 
   /* Initialisation de l IDT - IRQ */
   
-  init_int_gate(&idt[32], TABLES_CS_SELECTOR, (lineaddr_t)hwint_00, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[33], TABLES_CS_SELECTOR, (lineaddr_t)hwint_01, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[34], TABLES_CS_SELECTOR, (lineaddr_t)hwint_02, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[35], TABLES_CS_SELECTOR, (lineaddr_t)hwint_03, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[36], TABLES_CS_SELECTOR, (lineaddr_t)hwint_04, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[37], TABLES_CS_SELECTOR, (lineaddr_t)hwint_05, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[38], TABLES_CS_SELECTOR, (lineaddr_t)hwint_06, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[39], TABLES_CS_SELECTOR, (lineaddr_t)hwint_07, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[40], TABLES_CS_SELECTOR, (lineaddr_t)hwint_08, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[41], TABLES_CS_SELECTOR, (lineaddr_t)hwint_09, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[42], TABLES_CS_SELECTOR, (lineaddr_t)hwint_10, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[43], TABLES_CS_SELECTOR, (lineaddr_t)hwint_11, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[44], TABLES_CS_SELECTOR, (lineaddr_t)hwint_12, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[45], TABLES_CS_SELECTOR, (lineaddr_t)hwint_13, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[46], TABLES_CS_SELECTOR, (lineaddr_t)hwint_14, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[47], TABLES_CS_SELECTOR, (lineaddr_t)hwint_15, SEG_PRESENT | SEG_DPL_0);  
+  init_int_gate(&idt[32], CONST_CS_SELECTOR, (lineaddr_t)hwint_00, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[33], CONST_CS_SELECTOR, (lineaddr_t)hwint_01, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[34], CONST_CS_SELECTOR, (lineaddr_t)hwint_02, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[35], CONST_CS_SELECTOR, (lineaddr_t)hwint_03, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[36], CONST_CS_SELECTOR, (lineaddr_t)hwint_04, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[37], CONST_CS_SELECTOR, (lineaddr_t)hwint_05, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[38], CONST_CS_SELECTOR, (lineaddr_t)hwint_06, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[39], CONST_CS_SELECTOR, (lineaddr_t)hwint_07, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[40], CONST_CS_SELECTOR, (lineaddr_t)hwint_08, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[41], CONST_CS_SELECTOR, (lineaddr_t)hwint_09, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[42], CONST_CS_SELECTOR, (lineaddr_t)hwint_10, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[43], CONST_CS_SELECTOR, (lineaddr_t)hwint_11, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[44], CONST_CS_SELECTOR, (lineaddr_t)hwint_12, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[45], CONST_CS_SELECTOR, (lineaddr_t)hwint_13, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[46], CONST_CS_SELECTOR, (lineaddr_t)hwint_14, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[47], CONST_CS_SELECTOR, (lineaddr_t)hwint_15, SEG_PRESENT | SEG_DPL_0);  
 
   return;
 }

@@ -29,13 +29,6 @@
 #define TABLES_GDT_SIZE       TABLES_MAX_INDEX+1  /* Debute a 0 */
 #define TABLES_IDT_SIZE       50
 
-/* Selecteurs de segment */
-
-#define TABLES_CS_SELECTOR	8    /*  CS = 0000000000001  0  00   =  8  */
-#define	TABLES_DS_SELECTOR      16   /*  DS = 0000000000010  0  00   =  16 */
-#define	TABLES_ES_SELECTOR	16   /*  ES = 0000000000010  0  00   =  16 */
-#define	TABLES_SS_SELECTOR	16   /*  SS = 0000000000010  0  00   =  16 */
-#define TABLES_TSS_SELECTOR     24   /* TSS = 0000000000011  0  00   =  24 */
 
 #define TABLES_SHIFT_SELECTOR  3    /* INDEX << SHIFT_SELECTOR = SELECTOR */
 

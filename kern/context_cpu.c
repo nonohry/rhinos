@@ -49,7 +49,7 @@ PUBLIC void context_cpu_init(void)
 PUBLIC void context_cpu_postsave(reg32_t ss, reg32_t* esp)
 {
   /* Traitement si pas changement de privileges */
-  if (ss == SS_SELECTOR)
+  if (ss == CONST_SS_SELECTOR)
     {
       /* Recupere les registres oublies */
       cur_ctx->ret_addr = *(esp);
