@@ -74,8 +74,8 @@ PUBLIC u8_t virtmem_cache_init(void)
   for(i=0;i<VIRT_CACHE_STARTSLABS;i++)
     {
       /* Cree une adresse virtuelle mappee pour les initialisations */
-      vaddr_init = i*PAGING_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT;
-      paddr_init = (physaddr_t)phys_alloc(PAGING_PAGE_SIZE);
+      vaddr_init = i*CONST_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT;
+      paddr_init = (physaddr_t)phys_alloc(CONST_PAGE_SIZE);
       paging_map(vaddr_init, paddr_init, TRUE);
       /* Fait grossir cache_cache dans cette page */
       ASSERT_RETURN( virtmem_cache_grow(&cache_cache,vaddr_init)==EXIT_SUCCESS , EXIT_FAILURE );
@@ -323,7 +323,7 @@ PUBLIC u8_t virtmem_cache_destroy(struct vmem_cache* cache)
       /* Detruit le chainage */
       LLIST_REMOVE(cache->slabs_free,slab);
       /* Libere le slab au besoin */
-       if (cache->size > (PAGING_PAGE_SIZE >> VIRT_CACHE_GROWSHIFT))
+       if (cache->size > (CONST_PAGE_SIZE >> VIRT_CACHE_GROWSHIFT))
 	{
 	  ASSERT_RETURN( virtmem_cache_free(slab_cache,slab)==EXIT_SUCCESS, EXIT_FAILURE) ;
 	}
@@ -422,7 +422,7 @@ PUBLIC u32_t virtmem_cache_reap(u8_t flags)
       LLIST_REMOVE(cache_reap->slabs_free,slab);
 
       /* Libere le slab au besoin */
-       if (cache_reap->size > (PAGING_PAGE_SIZE >> VIRT_CACHE_GROWSHIFT))
+       if (cache_reap->size > (CONST_PAGE_SIZE >> VIRT_CACHE_GROWSHIFT))
 	{
 	  ASSERT_RETURN( virtmem_cache_free(slab_cache,slab)==EXIT_SUCCESS, 0);
 	}
@@ -446,7 +446,7 @@ PUBLIC u8_t virtmem_cache_grow(struct vmem_cache* cache, virtaddr_t addr)
   u8_t res;
 
   /* Redirige sur les 2 fonction de croissance en fonction de la taille */
-  if ( cache->size > (PAGING_PAGE_SIZE >> VIRT_CACHE_GROWSHIFT) )
+  if ( cache->size > (CONST_PAGE_SIZE >> VIRT_CACHE_GROWSHIFT) )
     {
       /* Gros objets */
       res = virtmem_cache_grow_big(cache, addr);
@@ -497,7 +497,7 @@ PRIVATE u8_t virtmem_slab_destroy(struct vmem_cache* cache,struct vmem_slab* sla
       LLIST_REMOVE(slab->free_buf,bc);
 
       /* Libere le bufctl si off slab */
-      if (cache->size > (PAGING_PAGE_SIZE >> VIRT_CACHE_GROWSHIFT))
+      if (cache->size > (CONST_PAGE_SIZE >> VIRT_CACHE_GROWSHIFT))
 	{
 	  ASSERT_RETURN( virtmem_cache_free(bufctl_cache,bc)==EXIT_SUCCESS, EXIT_FAILURE);
 	}
@@ -534,12 +534,12 @@ PRIVATE u8_t virtmem_cache_grow_little(struct vmem_cache* cache, virtaddr_t addr
   u8_t np;
 
   /* Calcul du nombre de page */
-  np = (PAGING_ALIGN_SUP(cache->size)) >> PAGING_PAGE_SHIFT;
+  np = (PAGING_ALIGN_SUP(cache->size)) >> CONST_PAGE_SHIFT;
 
   /* Obtention d'un page virtuelle mappee */
   if (addr == VIRT_CACHE_NOADDR)
     {
-      page = (virtaddr_t)virtmem_buddy_alloc(np*PAGING_PAGE_SIZE, VIRT_BUDDY_MAP | VIRT_BUDDY_NOMINCHECK);
+      page = (virtaddr_t)virtmem_buddy_alloc(np*CONST_PAGE_SIZE, VIRT_BUDDY_MAP | VIRT_BUDDY_NOMINCHECK);
       ASSERT_RETURN( ((void*)page) != NULL , EXIT_FAILURE);
     }
   else
@@ -563,12 +563,12 @@ PRIVATE u8_t virtmem_cache_grow_little(struct vmem_cache* cache, virtaddr_t addr
   buf_size = sizeof(struct vmem_bufctl) + cache->size;
 
   /* Calcul le nombre maximal d objets */
-  slab->max_objects = (np*PAGING_PAGE_SIZE - sizeof(struct vmem_slab)) / buf_size;
+  slab->max_objects = (np*CONST_PAGE_SIZE - sizeof(struct vmem_slab)) / buf_size;
 
   /* Calcul l alignement */
   if (cache->align)
     {
-      wasted = (np*PAGING_PAGE_SIZE)-(slab->max_objects*cache->size);
+      wasted = (np*CONST_PAGE_SIZE)-(slab->max_objects*cache->size);
       if (wasted)
 	{
 	  slab->start += cache->align_offset;
@@ -581,7 +581,7 @@ PRIVATE u8_t virtmem_cache_grow_little(struct vmem_cache* cache, virtaddr_t addr
 
   /* Cree les bufctl et les buffers dans la page */
   for(buf = slab->start;
-      buf < (page+PAGING_PAGE_SIZE-buf_size);
+      buf < (page+CONST_PAGE_SIZE-buf_size);
       buf += buf_size)
     {
       struct vmem_bufctl* bc = (struct vmem_bufctl*)buf;
@@ -618,12 +618,12 @@ PRIVATE u8_t virtmem_cache_grow_big(struct vmem_cache* cache, virtaddr_t addr)
   u8_t np;
 
   /* Calcul du nombre de pages */
-  np =  (PAGING_ALIGN_SUP(cache->size)) >> PAGING_PAGE_SHIFT;
+  np =  (PAGING_ALIGN_SUP(cache->size)) >> CONST_PAGE_SHIFT;
 
   /* Obtention de pages virtuelle mappee */
   if (addr == VIRT_CACHE_NOADDR)
     {
-      page = (virtaddr_t)virtmem_buddy_alloc(np*PAGING_PAGE_SIZE, VIRT_BUDDY_MAP | VIRT_BUDDY_NOMINCHECK);
+      page = (virtaddr_t)virtmem_buddy_alloc(np*CONST_PAGE_SIZE, VIRT_BUDDY_MAP | VIRT_BUDDY_NOMINCHECK);
       ASSERT_RETURN( ((void*)page)!=NULL , EXIT_FAILURE);
     }
   else
@@ -642,7 +642,7 @@ PRIVATE u8_t virtmem_cache_grow_big(struct vmem_cache* cache, virtaddr_t addr)
 
   /* Initialisation du slab */
   slab->count = 0;
-  slab->max_objects = (np*PAGING_PAGE_SIZE)/cache->size;
+  slab->max_objects = (np*CONST_PAGE_SIZE)/cache->size;
   slab->cache = cache;
   slab->n_pages = np;
   slab->start = page;
@@ -651,7 +651,7 @@ PRIVATE u8_t virtmem_cache_grow_big(struct vmem_cache* cache, virtaddr_t addr)
   /* Calcul l alignement */
   if (cache->align)
     {
-      wasted = (np*PAGING_PAGE_SIZE)-(slab->max_objects*cache->size);
+      wasted = (np*CONST_PAGE_SIZE)-(slab->max_objects*cache->size);
       if (wasted)
 	{
 	  slab->start += cache->align_offset;

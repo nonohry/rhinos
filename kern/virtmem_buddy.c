@@ -58,8 +58,8 @@ PUBLIC u8_t virtmem_buddy_init()
   for(i=0;i<VIRT_BUDDY_STARTSLABS;i++)
     {
        /* Cree une adresse virtuelle mappee pour les initialisations */
-      vaddr_init = (i+VIRT_CACHE_STARTSLABS)*PAGING_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT;
-      paddr_init = (physaddr_t)phys_alloc(PAGING_PAGE_SIZE);
+      vaddr_init = (i+VIRT_CACHE_STARTSLABS)*CONST_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT;
+      paddr_init = (physaddr_t)phys_alloc(CONST_PAGE_SIZE);
       paging_map(vaddr_init, paddr_init, TRUE);
       /* Fait grossir cache_cache dans cette page */
       ASSERT_RETURN( virtmem_cache_grow(area_cache,vaddr_init)==EXIT_SUCCESS , EXIT_FAILURE);
@@ -70,15 +70,15 @@ PUBLIC u8_t virtmem_buddy_init()
     {
       area=(struct vmem_area*)virtmem_cache_alloc(area_cache, VIRT_CACHE_DEFAULT);
       ASSERT_RETURN( area!=NULL , EXIT_FAILURE);
-      area->base = i*PAGING_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT;
-      area->size = PAGING_PAGE_SIZE;
+      area->base = i*CONST_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT;
+      area->size = CONST_PAGE_SIZE;
       area->index = 0;
       LLIST_ADD(buddy_used,area);
     }
 
   /* Initialise la memoire virtuelle disponible pour le noyau */
-  ASSERT_RETURN( virtmem_buddy_init_area( (VIRT_CACHE_STARTSLABS+VIRT_BUDDY_STARTSLABS)*PAGING_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT, 
-					  VIRT_BUDDY_HIGHTMEM - ((VIRT_CACHE_STARTSLABS+VIRT_BUDDY_STARTSLABS)*PAGING_PAGE_SIZE+VIRT_BUDDY_POOLLIMIT) )==EXIT_SUCCESS , EXIT_FAILURE);
+  ASSERT_RETURN( virtmem_buddy_init_area( (VIRT_CACHE_STARTSLABS+VIRT_BUDDY_STARTSLABS)*CONST_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT, 
+					  VIRT_BUDDY_HIGHTMEM - ((VIRT_CACHE_STARTSLABS+VIRT_BUDDY_STARTSLABS)*CONST_PAGE_SIZE+VIRT_BUDDY_POOLLIMIT) )==EXIT_SUCCESS , EXIT_FAILURE);
 
   return EXIT_SUCCESS;
 }
@@ -94,9 +94,9 @@ PUBLIC void* virtmem_buddy_alloc(u32_t size, u8_t flags)
   struct ppage_desc* pdesc;
 
   /* Taille minimale */
-  if (size < PAGING_PAGE_SIZE )
+  if (size < CONST_PAGE_SIZE )
     {
-      size = PAGING_PAGE_SIZE;
+      size = CONST_PAGE_SIZE;
     }
 
   /* Allocation dans le buddy */
@@ -185,7 +185,7 @@ PUBLIC u8_t  virtmem_buddy_free(void* addr)
   if (  (area != NULL) && (area->base == (virtaddr_t)addr) )
     {
       /* Demappe physiquement (aucun effet si non mappee) */
-      for(va=area->base;va<(area->base+area->size);va+=PAGING_PAGE_SIZE)
+      for(va=area->base;va<(area->base+area->size);va+=CONST_PAGE_SIZE)
 	{
 	  paging_unmap(va);
 	}
@@ -224,7 +224,7 @@ PRIVATE struct vmem_area* virtmem_buddy_alloc_area(u32_t size, u8_t flags)
   size = size + 1;
   
   /* En deduit l indice */
-  ind = msb(size) - PAGING_PAGE_SHIFT;
+  ind = msb(size) - CONST_PAGE_SHIFT;
   
   /* Si ppage_free[ind] est NULL, on cherche un niveau superieur disponible */
   for(i=ind;LLIST_ISNULL(buddy_free[i])&&(i<VIRT_BUDDY_MAX);i++)
@@ -326,7 +326,7 @@ PRIVATE u8_t virtmem_buddy_init_area(u32_t base, u32_t size)
 
   base = PAGING_ALIGN_SUP(base);
 
-  while (size >= PAGING_PAGE_SIZE)
+  while (size >= CONST_PAGE_SIZE)
     {
       /* Puissance de 2 inferieure */     
       power = size;
@@ -389,7 +389,7 @@ PRIVATE u8_t virtmem_buddy_map_area(struct vmem_area* area)
 	      /* Mappe la memoire physique et virtuelle */
 	      for(va=base,pa=paddr;
 		  va<base+n;
-		  va+=PAGING_PAGE_SIZE,pa+=PAGING_PAGE_SIZE)
+		  va+=CONST_PAGE_SIZE,pa+=CONST_PAGE_SIZE)
 		{
 		  paging_map(va,pa,TRUE);
 		}
@@ -411,7 +411,7 @@ PRIVATE u8_t virtmem_buddy_map_area(struct vmem_area* area)
   /* Si tout n est pas mappe, on demappe */
   if ( sum < area->size )
     {
-      for(va=area->base;va<(area->base+area->size);va+=PAGING_PAGE_SIZE)
+      for(va=area->base;va<(area->base+area->size);va+=CONST_PAGE_SIZE)
 	{
 	  paging_unmap(va);
 	}
