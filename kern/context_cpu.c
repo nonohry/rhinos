@@ -66,6 +66,54 @@ PUBLIC void context_cpu_postsave(reg32_t ss, reg32_t* esp)
 
 
 /*========================================================================
+ * Changement de contexte
+ *========================================================================*/
+
+
+PUBLIC void context_cpu_switch_to(struct context_cpu* ctx)
+{
+  asm("int $50");
+  return;
+}
+
+
+/*========================================================================
+ * Traite un changement de contexte
+ *========================================================================*/
+
+
+PUBLIC void context_cpu_handle_switch_to(struct context_cpu* ctx)
+{
+  //bochs_print("switch_to\n");
+  return;
+}
+
+
+/*========================================================================
+ * Sortie d un contexte
+ *========================================================================*/
+
+
+PUBLIC void context_cpu_exit_to(struct context_cpu* ctx)
+{
+  asm("int $51");
+  return;
+}
+
+
+/*========================================================================
+ * Traite la sortie d un contexte
+ *========================================================================*/
+
+
+PUBLIC void context_cpu_handle_exit_to(struct context_cpu* ctx)
+{
+  //bochs_print("exit_to\n");
+  return;
+}
+
+
+/*========================================================================
  * Affichage d un context
  *========================================================================*/
 

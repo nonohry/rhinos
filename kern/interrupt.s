@@ -21,6 +21,8 @@ global	hwint_12
 global	hwint_13
 global	hwint_14
 global	hwint_15
+global swint_switch_to
+global swint_exit_to	
 global	excep_00
 global	excep_01
 global	excep_02
@@ -44,7 +46,9 @@ extern	irq_handle_flih		; Handlers pour les IRQ en C
 extern	excep_handle		; Handlers pour les exceptions en C
 extern	cur_ctx			; Contexte courant
 extern	context_cpu_postsave	; Pretraitement de la sauvegarde de context en C
-
+extern	context_cpu_handle_switch_to ; Gestion du changement de contexte
+extern	context_cpu_handle_exit_to   ; Gestion de la sorite de contexte
+	
 
 	;;========================================================================
 	;; Constantes
@@ -203,6 +207,30 @@ hwint_14:
 hwint_15:
 	hwint_generic1	15
 
+
+	;;========================================================================
+	;; Soft Interrupt Handlers
+	;;========================================================================
+
+
+swint_switch_to:
+	push	FAKE_ERROR	; Faux erreur code	
+	call	save_ctx	; Sauvegarde des registres
+	push	dword [cur_ctx]	; Empile le contexte courant
+	call	context_cpu_handle_switch_to ; Handler
+	add	esp,4		; Depile le contexte courant	
+	call	restore_ctx	; Restaure les registres	
+
+	
+swint_exit_to:	
+	push	FAKE_ERROR	; Faux erreur code	
+	call	save_ctx	; Sauvegarde des registres
+	push	dword [cur_ctx]	; Empile le contexte courant
+	call	context_cpu_handle_exit_to ; Handler
+	add	esp,4		; Depile le contexte courant	
+	call	restore_ctx	; Restaure les registres
+	
+	
 	
 	;;========================================================================
 	;; Sauvegarde du contexte pour les IRQ et les exceptions
@@ -340,7 +368,6 @@ excep_18:
 	push	FAKE_ERROR
 	push	MACHINE_VECTOR	
 	jmp	excep_next	
-
 	
 	
 	;;========================================================================

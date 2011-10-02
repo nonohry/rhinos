@@ -27,7 +27,7 @@
 /* Taille de la GDT & IDT */
 
 #define TABLES_GDT_SIZE       TABLES_MAX_INDEX+1  /* Debute a 0 */
-#define TABLES_IDT_SIZE       50
+#define TABLES_IDT_SIZE       52
 
 #define TABLES_SHIFT_SELECTOR  3    /* INDEX << SHIFT_SELECTOR = SELECTOR */
 

@@ -90,7 +90,12 @@ PUBLIC void idt_init()
   init_int_gate(&idt[44], CONST_CS_SELECTOR, (lineaddr_t)hwint_12, SEG_PRESENT | SEG_DPL_0);
   init_int_gate(&idt[45], CONST_CS_SELECTOR, (lineaddr_t)hwint_13, SEG_PRESENT | SEG_DPL_0);
   init_int_gate(&idt[46], CONST_CS_SELECTOR, (lineaddr_t)hwint_14, SEG_PRESENT | SEG_DPL_0);
-  init_int_gate(&idt[47], CONST_CS_SELECTOR, (lineaddr_t)hwint_15, SEG_PRESENT | SEG_DPL_0);  
+  init_int_gate(&idt[47], CONST_CS_SELECTOR, (lineaddr_t)hwint_15, SEG_PRESENT | SEG_DPL_0);
+
+  /* Initialisation des Soft Int */
+
+  init_int_gate(&idt[CONST_SWINT_SWITCH_TO], CONST_CS_SELECTOR, (lineaddr_t)swint_switch_to, SEG_PRESENT | SEG_DPL_0);
+  init_int_gate(&idt[CONST_SWINT_EXIT_TO], CONST_CS_SELECTOR, (lineaddr_t)swint_exit_to, SEG_PRESENT | SEG_DPL_0); 
 
   return;
 }

@@ -20,3 +20,12 @@
 #define	CONST_ES_SELECTOR	     16   /*  ES = 0000000000010  0  00   =  16 */
 #define	CONST_SS_SELECTOR	     16   /*  SS = 0000000000010  0  00   =  16 */
 #define CONST_TSS_SELECTOR           24   /* TSS = 0000000000011  0  00   =  24 */
+
+
+/*========================================================================
+ * Interrupt
+ *========================================================================*/
+
+
+#define CONST_SWINT_SWITCH_TO        50
+#define CONST_SWINT_EXIT_TO          51
