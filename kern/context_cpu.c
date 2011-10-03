@@ -57,10 +57,10 @@ PUBLIC void context_cpu_postsave(reg32_t ss, reg32_t* esp)
       cur_ctx->eip = *(esp+2);
       cur_ctx->cs = *(esp+3);
       cur_ctx->eflags = *(esp+4);
-      cur_ctx->esp = (reg32_t)(esp+5);
+      cur_ctx->esp = (reg32_t)(esp);
       cur_ctx->ss = ss;
     }
-
+  
   return;
 }
 
@@ -84,7 +84,7 @@ PUBLIC void context_cpu_switch_to(struct context_cpu* ctx)
 
 PUBLIC void context_cpu_handle_switch_to(struct context_cpu* ctx)
 {
-  //bochs_print("switch_to\n");
+  bochs_print("switch_to\n");
   return;
 }
 
@@ -108,7 +108,7 @@ PUBLIC void context_cpu_exit_to(struct context_cpu* ctx)
 
 PUBLIC void context_cpu_handle_exit_to(struct context_cpu* ctx)
 {
-  //bochs_print("exit_to\n");
+  bochs_print("exit_to\n");
   return;
 }
 

@@ -21,8 +21,10 @@ global	hwint_12
 global	hwint_13
 global	hwint_14
 global	hwint_15
-global swint_switch_to
-global swint_exit_to	
+
+global	swint_switch_to
+global 	swint_exit_to	
+
 global	excep_00
 global	excep_01
 global	excep_02
@@ -42,12 +44,12 @@ global	excep_16
 global	excep_17
 global	excep_18
 
-extern	irq_handle_flih		; Handlers pour les IRQ en C
-extern	excep_handle		; Handlers pour les exceptions en C
-extern	cur_ctx			; Contexte courant
-extern	context_cpu_postsave	; Pretraitement de la sauvegarde de context en C
-extern	context_cpu_handle_switch_to ; Gestion du changement de contexte
-extern	context_cpu_handle_exit_to   ; Gestion de la sorite de contexte
+extern	irq_handle_flih			; Handlers pour les IRQ en C
+extern	excep_handle			; Handlers pour les exceptions en C
+extern	cur_ctx				; Contexte courant
+extern	context_cpu_postsave		; Pretraitement de la sauvegarde de context en C
+extern	context_cpu_handle_switch_to 	; Gestion du changement de contexte
+extern	context_cpu_handle_exit_to   	; Gestion de la sorite de contexte
 	
 
 	;;========================================================================
@@ -81,7 +83,10 @@ extern	context_cpu_handle_exit_to   ; Gestion de la sorite de contexte
 	;; Offset dans struct context_cpu
 	;;
 
-%assign		CONTEXT_OFFSET		40
+%assign		CONTEXT_RET_OFFSET		40
+%assign		CONTEXT_CS_OFFSET		12
+%assign		CONTEXT_ESP_OFFSET		20
+	
 	;;
 	;; Taille de la pile d interruption
 	;; 
@@ -128,7 +133,7 @@ extern	context_cpu_handle_exit_to   ; Gestion de la sorite de contexte
 	push	dword [cur_ctx]	; Empile le contexte courant
 	push	%1		; Empile l'IRQ
  	call	irq_handle_flih	; Appel les handles C
-	add	esp,4		; Depile l'IRQ
+	add	esp,8		; Depile l'IRQ
 	mov	al,IRQ_EOI	; Envoi la fin d interruption
 	out	IRQ_MASTER,al	; au PIC Maitre
 	call	restore_ctx	; Restaure les registres
@@ -144,7 +149,7 @@ extern	context_cpu_handle_exit_to   ; Gestion de la sorite de contexte
 	push	dword [cur_ctx]	; Empile le contexte courant
 	push	%1		; Empile l'IRQ
 	call	irq_handle_flih	; Appel les handles C
-	add	esp,4		; Depile l'IRQ
+	add	esp,8		; Depile l'IRQ
 	mov	al,IRQ_EOI	; Envoi la fin d interruption
 	out	IRQ_SLAVE,al	; au PIC Esclave
 	out	IRQ_MASTER,al	; puis au Maitre
@@ -239,9 +244,9 @@ swint_exit_to:
 save_ctx:
 	cld		        ; Positionne le sens d empilement
 	
-	mov dword [save_esp],esp; Sauvegarde ESP
-	mov esp, [cur_ctx] 	; Placement de ESP sur le contexte courant
-	add esp,CONTEXT_OFFSET	; Placement a ret_addr
+	mov dword [save_esp],esp	; Sauvegarde ESP
+	mov esp, [cur_ctx] 		; Placement de ESP sur le contexte courant
+	add esp,CONTEXT_RET_OFFSET	; Placement a ret_addr
 	
 	pushad			; Sauve les registres generaux 32bits
 	o16 push	ds	; Sauve les registres de segments (empile en 16bits)
@@ -249,19 +254,19 @@ save_ctx:
 	o16 push	fs
 	o16 push	gs
 
-	mov	esp, int_stack_top ; Positionne la pile d interruption
-	mov	ax,DS_SELECTOR	; Ajuste les segments noyau (CS & SS sont deja positionnes)
+	mov	esp, int_stack_top 	; Positionne la pile d interruption
+	mov	ax,DS_SELECTOR		; Ajuste les segments noyau (CS & SS sont deja positionnes)
 	mov	ds,ax
 	mov	ax,ES_SELECTOR
-	mov	es,ax		; note: FS & GS ne sont pas utilises par le noyau
+	mov	es,ax			; note: FS & GS ne sont pas utilises par le noyau
 
-	push	dword [save_esp]; Empile le pointeur de pile
-	push	ss		; Empile le stack segement
-	call	context_cpu_postsave ; Passe par le C pour finaliser le contexte
-	add	esp,8		; Depile les arguments
+	push	dword [save_esp]	; Empile le pointeur de pile
+	push	ss			; Empile le stack segment
+	call	context_cpu_postsave 	; Passe par le C pour finaliser le contexte
+	add	esp,8			; Depile les arguments
 
-	mov	eax,dword [save_esp] ; La pile sauvee pointe sur l adresse de retour
-	jmp	[eax]		     ; Saute a l adresse de retour
+	mov	eax,dword [save_esp] 	; La pile sauvee pointe sur l adresse de retour
+	jmp	[eax]		     	; Saute a l adresse de retour
 
 	
 	;;======================================================================== 
@@ -270,14 +275,20 @@ save_ctx:
 
 	
 restore_ctx:	
-	mov esp, [cur_ctx]
+	mov 	esp, [cur_ctx]
 	o16 pop gs		; Restaure les registres
-	o16 pop fs		; sauves par hwint_save
+	o16 pop fs		; sauves par save_ctx
 	o16 pop	es		; en 16bits
 	o16 pop	ds
 	popad		    	; Restaure les registre generaux
-	add esp,4		; Depile l adresse de retour de hwint_save
-	add esp,4		; Depile le code d erreur
+
+	cmp 	dword [esp+CONTEXT_CS_OFFSET], CS_SELECTOR 	; Teste si le contexte est un contexte noyau
+	jne 	restore_ctx_next	    			; Saute a la suite si ce n'est pas le cas
+	mov 	esp, dword [esp+CONTEXT_ESP_OFFSET]	    	; Retourne sur la pile interrompue (qui contient les bonnes infos pour iret) sinon
+
+restore_ctx_next:	
+	add 	esp,4		; Depile l adresse de retour de save_ctx
+	add 	esp,4		; Depile le code d erreur	
 	iretd
 
 
@@ -371,18 +382,18 @@ excep_18:
 	
 	
 	;;========================================================================
-	;; Gestion des exceptions avec code erreur
+	;; Gestion des exceptions
 	;;======================================================================== 
 
 	
 excep_next:
 	pop	dword [excep_num] 	; Recupere le vecteur
-	call	save_ctx	; Sauve le contexte
-	push	dword [cur_ctx]	; Empile le contexte courant	
+	call	save_ctx		; Sauve le contexte
+	push	dword [cur_ctx]		; Empile le contexte courant	
 	push	dword [excep_num]	; Argument 1 de excep_handle
-	call	excep_handle	; Gestion de l exception en C
-	add	esp,1*4		; Depile les arguments
-	call	restore_ctx	; Restaure les registres
+	call	excep_handle		; Gestion de l exception en C
+	add	esp,8			; Depile les arguments
+	call	restore_ctx		; Restaure les registres
 
 
 

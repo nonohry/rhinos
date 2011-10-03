@@ -52,8 +52,9 @@ PUBLIC int main()
   pit_init();
   bochs_print("Clock initialized (100Hz)\n");
 
-  //context_cpu_switch_to(kern_ctx);
-  
+  context_cpu_switch_to(kern_ctx);
+  context_cpu_exit_to(kern_ctx);
+
   /*
   virtaddr_t* a = (virtaddr_t*)0x98765;
   u32_t b;
@@ -63,7 +64,7 @@ PUBLIC int main()
   /* On ne doit plus arriver ici (sauf DEBUG) */
   while(1)
     {
-      //bochs_print("");
+      bochs_print("");
     }
 
   return EXIT_SUCCESS;
