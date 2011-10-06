@@ -4,7 +4,7 @@
 #include <types.h>
 #include "const.h"
 
-EXTERN void bochs_print(char*,...);
+EXTERN void klib_bochs_print(char*,...);
 EXTERN void outb(u16_t,u8_t);
 EXTERN void inb(u16_t,u8_t*);
 EXTERN u32_t msb(u32_t);

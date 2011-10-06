@@ -1,6 +1,6 @@
 [BITS 32]
 
-global bochs_print
+global klib_bochs_print
 global outb
 global inb
 global msb
@@ -22,7 +22,7 @@ global idle_task
 ASCII_OFFSET0	equ	48
 ASCII_OFFSETA	equ	55	
 	
-bochs_print:
+klib_bochs_print:
 	push 	ebp         	; Sauvegarde de EBP
 	mov  	ebp,esp 	; Mise en place de la base
 	push	esi		; Sauvegarde ESI (Requis par GCC)

@@ -84,7 +84,7 @@ PUBLIC void context_cpu_switch_to(struct context_cpu* ctx)
 
 PUBLIC void context_cpu_handle_switch_to(struct context_cpu* ctx)
 {
-  bochs_print("switch_to\n");
+  klib_bochs_print("switch_to\n");
   return;
 }
 
@@ -108,7 +108,7 @@ PUBLIC void context_cpu_exit_to(struct context_cpu* ctx)
 
 PUBLIC void context_cpu_handle_exit_to(struct context_cpu* ctx)
 {
-  bochs_print("exit_to\n");
+  klib_bochs_print("exit_to\n");
   return;
 }
 
@@ -119,11 +119,11 @@ PUBLIC void context_cpu_handle_exit_to(struct context_cpu* ctx)
 
 PRIVATE void print_context(struct context_cpu* ctx)
 {
-  bochs_print(" gs: 0x%x \n fs: 0x%x \n es: 0x%x \n ds: 0x%x \n",ctx->gs,ctx->fs,ctx->es,ctx->ds);
-  bochs_print(" edi: 0x%x \n esi: 0x%x \n ebp: 0x%x \n esp2: 0x%x \n",ctx->edi,ctx->esi,ctx->ebp,ctx->orig_esp);
-  bochs_print(" ebx: 0x%x \n edx: 0x%x \n ecx: 0x%x \n eax: 0x%x \n",ctx->ebx,ctx->edx,ctx->ecx,ctx->eax);
-  bochs_print(" ret_addr: 0x%x \n error: 0x%x \n eip: 0x%x \n cs: 0x%x \n",ctx->ret_addr,ctx->error_code,ctx->eip,ctx->cs);
-  bochs_print(" eflags: 0x%x \n esp: 0x%x \n ss: 0x%x \n",ctx->eflags,ctx->esp,ctx->ss);
+  klib_bochs_print(" gs: 0x%x \n fs: 0x%x \n es: 0x%x \n ds: 0x%x \n",ctx->gs,ctx->fs,ctx->es,ctx->ds);
+  klib_bochs_print(" edi: 0x%x \n esi: 0x%x \n ebp: 0x%x \n esp2: 0x%x \n",ctx->edi,ctx->esi,ctx->ebp,ctx->orig_esp);
+  klib_bochs_print(" ebx: 0x%x \n edx: 0x%x \n ecx: 0x%x \n eax: 0x%x \n",ctx->ebx,ctx->edx,ctx->ecx,ctx->eax);
+  klib_bochs_print(" ret_addr: 0x%x \n error: 0x%x \n eip: 0x%x \n cs: 0x%x \n",ctx->ret_addr,ctx->error_code,ctx->eip,ctx->cs);
+  klib_bochs_print(" eflags: 0x%x \n esp: 0x%x \n ss: 0x%x \n",ctx->eflags,ctx->esp,ctx->ss);
  
   return;
 }

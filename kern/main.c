@@ -31,26 +31,26 @@ PUBLIC int main()
 
   /* Initialisation de la memoire physique */
   phys_init();
-  bochs_print("Physical Memory Manager initialized\n");
+  klib_bochs_print("Physical Memory Manager initialized\n");
 
   /* Initialisation de la pagination */
   paging_init();
-  bochs_print("Paging enabled\n");
+  klib_bochs_print("Paging enabled\n");
 
   /* Initialisation de la memoire virtuelle */
   virt_init();
-  bochs_print("Virtual Memory Manager initialized\n");
+  klib_bochs_print("Virtual Memory Manager initialized\n");
 
   /* Initialisation des contextes */
   context_cpu_init();
-  bochs_print("Kernel Context initialized\n");
+  klib_bochs_print("Kernel Context initialized\n");
 
   /* Initialisation du gestionnaire des IRQ */
   irq_init();
 
   /* Initialisation Horloge */
   pit_init();
-  bochs_print("Clock initialized (100Hz)\n");
+  klib_bochs_print("Clock initialized (100Hz)\n");
 
   context_cpu_switch_to(kern_ctx);
   context_cpu_exit_to(kern_ctx);
@@ -64,7 +64,7 @@ PUBLIC int main()
   /* On ne doit plus arriver ici (sauf DEBUG) */
   while(1)
     {
-      bochs_print("");
+      klib_bochs_print("");
     }
 
   return EXIT_SUCCESS;

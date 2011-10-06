@@ -105,14 +105,14 @@ PUBLIC void cstart(struct boot_info* binfo)
   else
     {
       /* Erreur memoire  */
-      bochs_print("Memory Error ! Aborting...\n");
+      klib_bochs_print("Memory Error ! Aborting...\n");
       while(1){}
     }
 
   /* Initialise les tables du mode protege */
   gdt_init();
   idt_init();
-  bochs_print("GDT & IDT initialized\n");
+  klib_bochs_print("GDT & IDT initialized\n");
 
   return;
 

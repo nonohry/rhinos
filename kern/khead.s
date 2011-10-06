@@ -5,7 +5,7 @@
 	;;;;;;;;;;;;;;;;;;;;;;;;
 
 	
-extern	bochs_print
+extern	klib_bochs_print
 extern	cstart			; Fonction d'initialisation en C
 extern  gdt_desc		; Descripteur de la GDT en C
 extern  idt_desc		; Descripteur de l'IDT en C

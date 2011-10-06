@@ -60,7 +60,7 @@ PUBLIC void pit_init()
 
 PRIVATE void pit_handler(struct context_cpu* ctx)
 {
-  bochs_print("tick ! ");
+  klib_bochs_print("tick ! ");
 
   return;
 }
