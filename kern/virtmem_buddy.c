@@ -224,7 +224,7 @@ PRIVATE struct vmem_area* virtmem_buddy_alloc_area(u32_t size, u8_t flags)
   size = size + 1;
   
   /* En deduit l indice */
-  ind = msb(size) - CONST_PAGE_SHIFT;
+  ind = klib_msb(size) - CONST_PAGE_SHIFT;
   
   /* Si ppage_free[ind] est NULL, on cherche un niveau superieur disponible */
   for(i=ind;LLIST_ISNULL(buddy_free[i])&&(i<VIRT_BUDDY_MAX);i++)
@@ -338,7 +338,7 @@ PRIVATE u8_t virtmem_buddy_init_area(u32_t base, u32_t size)
       power = power - (power >> 1);
 
       /* Indice dans le buddy */
-      ind = msb(power) - CONST_PAGE_SHIFT;
+      ind = klib_msb(power) - CONST_PAGE_SHIFT;
 
       /* Prend un vmem_area dans le cache */
       area = (struct vmem_area*)virtmem_cache_alloc(area_cache, VIRT_CACHE_DEFAULT);

@@ -3,13 +3,13 @@
 global klib_bochs_print
 global klib_outb
 global klib_inb
-global msb
-global load_CR3
-global set_pg_cr0
-global flush_tlb
-global invlpg	
-global mem_set
-global mem_copy	
+global klib_msb
+global klib_load_CR3
+global klib_set_pg_cr0
+global klib_flush_tlb
+global klib_invlpg	
+global klib_mem_set
+global klib_mem_copy	
 global random
 global idle_task
 
@@ -135,10 +135,10 @@ klib_inb:
 
 	
 	;;========================================================================
-	;; u32_t msb(u32_t)
+	;; u32_t klib_msb(u32_t)
 	;;========================================================================
 
-msb:
+klib_msb:
 	push 	ebp         	; Sauvegarde de EBP
 	mov  	ebp,esp 	; Mise en place de la base
 	push	esi		; Sauvegarde ESI (Requis par GCC)
@@ -153,11 +153,11 @@ msb:
 
 	
 	;;========================================================================
-	;; load_CR3(u32_t cr3)
+	;; klib_load_CR3(u32_t cr3)
 	;;========================================================================
 
 	
-load_CR3:
+klib_load_CR3:
 	push 	ebp         	; Sauvegarde de EBP
 	mov  	ebp,esp 	; Mise en place de la base
 	push	esi		; Sauvegarde ESI (Requis par GCC)
@@ -172,11 +172,11 @@ load_CR3:
 
 
 	;;========================================================================
-	;; set_pg_cr0(void)
+	;; klib_set_pg_cr0(void)
 	;;========================================================================
 	
 
-set_pg_cr0:
+klib_set_pg_cr0:
 	push 	ebp         	; Sauvegarde de EBP
 	mov  	ebp,esp 	; Mise en place de la base
 	push	esi		; Sauvegarde ESI (Requis par GCC)
@@ -193,11 +193,11 @@ set_pg_cr0:
 
 
 	;;========================================================================
-	;; flush_tlb(void)
+	;; klib_flush_tlb(void)
 	;;========================================================================
 	
 
-flush_tlb:
+klib_flush_tlb:
 	push 	ebp         	; Sauvegarde de EBP
 	mov  	ebp,esp 	; Mise en place de la base
 	push	esi		; Sauvegarde ESI (Requis par GCC)
@@ -213,11 +213,11 @@ flush_tlb:
 	
 
 	;;========================================================================
-	;; invlpg(virtaddr_t)
+	;; klib_invlpg(virtaddr_t)
 	;;========================================================================
 	
 
-invlpg:
+klib_invlpg:
 	push 	ebp         	; Sauvegarde de EBP
 	mov  	ebp,esp 	; Mise en place de la base
 	push	esi		; Sauvegarde ESI (Requis par GCC)
@@ -233,11 +233,11 @@ invlpg:
 
 	
 	;;========================================================================
-	;; mem_set(u32_t val, u32_t dest, u32_t len)
+	;; klib_mem_set(u32_t val, u32_t dest, u32_t len)
 	;;========================================================================
 	
 	
-mem_set:
+klib_mem_set:
 	push 	ebp         	; Sauvegarde de EBP
 	mov  	ebp,esp 	; Mise en place de la base
 	push	esi		; Sauvegarde ESI (Requis par GCC)
@@ -258,11 +258,11 @@ mem_set:
 
 	
 	;;========================================================================
-	;; mem_copy(u32_t src, u32_t dest, u32_t len)
+	;; klib_mem_copy(u32_t src, u32_t dest, u32_t len)
 	;;========================================================================
 
 	
-mem_copy:
+klib_mem_copy:
 	push 	ebp         	; Sauvegarde de EBP
 	mov  	ebp,esp 	; Mise en place de la base
 	push	esi		; Sauvegarde ESI (Requis par GCC)
@@ -283,44 +283,8 @@ mem_copy:
 
 	
 	;;========================================================================
-	;; u32_t random(void)
+	;; Donnees
 	;;========================================================================
-	
-
-mod     equ     0x7FFFFFFF	; 2^31 - 1 (modulo de park-miller)
-cons    equ     16807		; constante de park-miller
-
-random:
-	push 	ebp         	; Sauvegarde de EBP
-	mov  	ebp,esp 	; Mise en place de la base
-	push	esi		; Sauvegarde ESI (Requis par GCC)
-	push	edi		; Sauvegarde EDI (Requis par GCC)
-        mov     eax,cons        ; EAX = 16807
-	mov	ebx,dword [seed] ; EBX =1
-	mul     ebx             ; EDX:EAX = EAX*EBX
-	add     eax,edx         ; EAX = EDX+EAX (algorithme de Carta)
-	jno     random_end 	; Saut a la fin si on ne depasse pas la limit 2^32
-	and     eax,mod       	; Sinon, bit 31 mis a 0
-	inc     eax             ; Incremente EAX
-random_end:	
-	mov     dword [seed],eax ; Met a jour seed pour l alea suivant
-	pop	edi		; Restaure EDI
-	pop	esi		; Restaure ESI
-	mov	esp,ebp		; Restaure la pile
-	pop	ebp		; Restaure EBP	
-	ret			; Retourne (le resultat est dans EAX)
 
 	
-
-	;;========================================================================
-	;; void idle_task()
-	;;========================================================================
-	
-
-idle_task:
-	;; hlt	Commente pour ne pas polluer la sortie de bochs
-	jmp	idle_task
-
-
 BASE	dd	0		; Base de decomposition
-seed	dd	1		; Debut de l alea

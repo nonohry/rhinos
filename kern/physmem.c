@@ -99,7 +99,7 @@ PUBLIC void* phys_alloc(u32_t size)
   size = size + 1;
   
   /* En deduit l indice */
-  ind = msb(size) - CONST_PAGE_SHIFT;
+  ind = klib_msb(size) - CONST_PAGE_SHIFT;
   
   /* Si ppage_free[ind] est NULL, on cherche un niveau superieur disponible */
   for(i=ind;LLIST_ISNULL(ppage_free[i])&&(i<PHYS_PAGE_MAX_BUDDY);i++)
@@ -283,7 +283,7 @@ PRIVATE void phys_init_area(u32_t base, u32_t size)
       power = power - (power >> 1);
 
       /* Indice dans le buddy */
-      ind = msb(power) - CONST_PAGE_SHIFT;
+      ind = klib_msb(power) - CONST_PAGE_SHIFT;
 
       /* Prend un pdesc dans le pool */
       pdesc = PHYS_GET_DESC(base);

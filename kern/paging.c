@@ -31,7 +31,7 @@ PUBLIC void paging_init(void)
   ASSERT_FATAL(kern_PD != NULL);
 
   /* Nullifie la page */
-  mem_set(0,(u32_t)kern_PD,PAGING_ENTRIES*sizeof(struct pde));
+  klib_mem_set(0,(u32_t)kern_PD,PAGING_ENTRIES*sizeof(struct pde));
 
   /* Self Mapping */
   kern_PD[PAGING_SELFMAP].present = 1;
@@ -44,10 +44,10 @@ PUBLIC void paging_init(void)
   ASSERT_FATAL( paging_identityMapping(0x9FC00,CONST_PAGE_NODE_POOL_ADDR+((bootinfo->mem_total) >> CONST_PAGE_SHIFT)*sizeof(struct ppage_desc))==EXIT_SUCCESS );
 
   /* Charge le Kernel  Page Directory */
-  load_CR3((physaddr_t)kern_PD);
+  klib_load_CR3((physaddr_t)kern_PD);
 
   /* Activation de la pagination */
-  set_pg_cr0();
+  klib_set_pg_cr0();
 
   return;
 }
@@ -85,7 +85,7 @@ PUBLIC u8_t paging_map(virtaddr_t vaddr, physaddr_t paddr, u8_t super)
       pd[pde].baseaddr = (((physaddr_t)table)>>PAGING_BASESHIFT);
 
       /* Nullifie le page table */
-      mem_set(0,PAGING_GET_PT(pde),PAGING_ENTRIES*sizeof(struct pte));
+      klib_mem_set(0,PAGING_GET_PT(pde),PAGING_ENTRIES*sizeof(struct pte));
 
     }
 
@@ -225,7 +225,7 @@ PRIVATE u8_t paging_identityMapping(physaddr_t start, physaddr_t end)
 	  ASSERT_RETURN( table!=NULL , EXIT_FAILURE);
 
 	  /* Nullifie la page */
-	  mem_set(0,(u32_t)table,PAGING_ENTRIES*sizeof(struct pte));
+	  klib_mem_set(0,(u32_t)table,PAGING_ENTRIES*sizeof(struct pte));
 
 	  /* Attributs du PDE */
 	  kern_PD[pde].baseaddr = (((physaddr_t)table)>>PAGING_BASESHIFT);
