@@ -1,8 +1,8 @@
 [BITS 32]
 
 global klib_bochs_print
-global outb
-global inb
+global klib_outb
+global klib_inb
 global msb
 global load_CR3
 global set_pg_cr0
@@ -97,10 +97,10 @@ bochs_end:
 	
 	
 	;;========================================================================
-	;; outb(u16_t,u8_t)
+	;; klib_outb(u16_t,u8_t)
 	;;========================================================================
 
-outb:
+klib_outb:
 	push 	ebp         	; Sauvegarde de EBP
 	mov  	ebp,esp 	; Mise en place de la base
 	push	esi		; Sauvegarde ESI (Requis par GCC)
@@ -115,10 +115,10 @@ outb:
 	ret
 
 	;;========================================================================
-	;; inb(u16_t,u8_t*)
+	;; klib_inb(u16_t,u8_t*)
 	;;========================================================================
 
-inb:
+klib_inb:
 	push 	ebp         	; Sauvegarde de EBP
 	mov  	ebp,esp 	; Mise en place de la base
 	push	esi		; Sauvegarde ESI (Requis par GCC)

@@ -22,28 +22,28 @@ PUBLIC void pic_init()
 {
 
   /* Envoie ICW1 sue les ports maitre et esclave */
-  outb(PIC_MASTER_PORT,PIC_ICW1);
-  outb(PIC_SLAVE_PORT,PIC_ICW1);
+  klib_outb(PIC_MASTER_PORT,PIC_ICW1);
+  klib_outb(PIC_SLAVE_PORT,PIC_ICW1);
 
   /* Puis ICW2 */
-  outb(PIC_MASTER_PORT+1,PIC_ICW2_MASTER);
-  outb(PIC_SLAVE_PORT+1,PIC_ICW2_SLAVE);
+  klib_outb(PIC_MASTER_PORT+1,PIC_ICW2_MASTER);
+  klib_outb(PIC_SLAVE_PORT+1,PIC_ICW2_SLAVE);
 
   /* ICW3 a la suite */
-  outb(PIC_MASTER_PORT+1,PIC_ICW3_MASTER);
-  outb(PIC_SLAVE_PORT+1,PIC_ICW3_SLAVE);
+  klib_outb(PIC_MASTER_PORT+1,PIC_ICW3_MASTER);
+  klib_outb(PIC_SLAVE_PORT+1,PIC_ICW3_SLAVE);
 
   /* Enfin, ICW4 */
-  outb(PIC_MASTER_PORT+1,PIC_ICW4);
-  outb(PIC_SLAVE_PORT+1,PIC_ICW4);
+  klib_outb(PIC_MASTER_PORT+1,PIC_ICW4);
+  klib_outb(PIC_SLAVE_PORT+1,PIC_ICW4);
 
   /* Tant qu'on n'a pas de gestionnaire
    * d'interruptions, on les desactive 
    * excepte la ligne 2 (cascade)
    */
 
-  outb(PIC_MASTER_PORT+1,0xFB);
-  outb(PIC_SLAVE_PORT+1,0xFF);
+  klib_outb(PIC_MASTER_PORT+1,0xFB);
+  klib_outb(PIC_SLAVE_PORT+1,0xFF);
 
   return;
 }
@@ -65,9 +65,9 @@ PUBLIC void pic_enable_irq(u8_t n)
       port = (n<8)?PIC_MASTER_PORT+1:PIC_SLAVE_PORT+1;
 
       /* Active la ligne */
-      inb(port,&read);
+      klib_inb(port,&read);
       read &= ~(1<<n);
-      outb(port,read);
+      klib_outb(port,read);
     }
 
   return;
@@ -89,9 +89,9 @@ PUBLIC void pic_disable_irq(u8_t n)
       port = (n<8)?PIC_MASTER_PORT+1:PIC_SLAVE_PORT+1;
 
       /* Desactive la ligne */
-      inb(port,&read);
+      klib_inb(port,&read);
       read |= (1<<n);
-      outb(port,read);
+      klib_outb(port,read);
     }
 
   return;

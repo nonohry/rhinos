@@ -5,8 +5,8 @@
 #include "const.h"
 
 EXTERN void klib_bochs_print(char*,...);
-EXTERN void outb(u16_t,u8_t);
-EXTERN void inb(u16_t,u8_t*);
+EXTERN void klib_outb(u16_t,u8_t);
+EXTERN void klib_inb(u16_t,u8_t*);
 EXTERN u32_t msb(u32_t);
 EXTERN void load_CR3(physaddr_t);
 EXTERN void set_pg_cr0(void);

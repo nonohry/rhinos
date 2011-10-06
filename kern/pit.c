@@ -39,11 +39,11 @@ PUBLIC void pit_init()
       ticks = (ticks==65536?0:ticks);
 
       /* Envoie le mot de controle */
-      outb(PIT_CWREG,PIT_MODE2);
+      klib_outb(PIT_CWREG,PIT_MODE2);
 
       /* Envoie la frequence */
-      outb(PIT_COUNTER0,(u8_t)ticks);        /* LSB d abord */
-      outb(PIT_COUNTER0,(u8_t)(ticks>>8));   /* MSB ensuite */
+      klib_outb(PIT_COUNTER0,(u8_t)ticks);        /* LSB d abord */
+      klib_outb(PIT_COUNTER0,(u8_t)(ticks>>8));   /* MSB ensuite */
     }
   
   /* Cree le noeud irq */
@@ -73,9 +73,9 @@ PUBLIC u16_t pit_read()
 {
   u8_t r1,r2;
 
-  outb(PIT_CWREG,PIT_LATCH); /* Active le counter latch */
-  inb(PIT_COUNTER0,&r1);      /* Lit le LSB */
-  inb(PIT_COUNTER0,&r2);      /* Lit le MSB */
+  klib_outb(PIT_CWREG,PIT_LATCH); /* Active le counter latch */
+  klib_inb(PIT_COUNTER0,&r1);      /* Lit le LSB */
+  klib_inb(PIT_COUNTER0,&r2);      /* Lit le MSB */
 
   return ( r1 | (r2<<8) );
 }
