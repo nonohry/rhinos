@@ -81,17 +81,26 @@ PUBLIC struct context_cpu* context_cpu_create(virtaddr_t entry, void* arg, virta
   /* Active les interruptions */
   ctx->eflags = (1<<CTX_CPU_INTFLAG_SHIFT);
 
-  /* Empile les arguments */
-  *(--esp) = (virtaddr_t)arg;
-  *(--esp) = entry;
-  /* Fausse adresse de retour */
-  *(--esp) = 0;
-  
-  /* Installe la pile */
-  ctx->esp = (reg32_t)esp;
 
   /* Pointe EIP sur la fonction trampoline */
   ctx->eip = (reg32_t)context_cpu_trampoline;
+
+  /* Empile les arguments */
+  *(--esp) = (virtaddr_t)arg;
+  *(--esp) = entry;
+  /* Fausse adresse de retour pour la fonction de trampoline*/
+  *(--esp) = 0;
+
+  /* Simule une pile interrompue (le switch passe par une interruption logicielle) */
+  *(--esp) = ctx->eflags;
+  *(--esp) = CONST_CS_SELECTOR;
+  *(--esp) = ctx->eip;
+  *(--esp) = 0xFEC;
+  *(--esp) = 0;
+
+  /* Installe la pile */
+  ctx->esp = (reg32_t)esp;
+
 
   return ctx;
 }
