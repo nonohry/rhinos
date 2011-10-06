@@ -223,7 +223,7 @@ swint_switch_to:
 	call	save_ctx	; Sauvegarde des registres
 	push	dword [cur_ctx]	; Empile le contexte courant
 	call	context_cpu_handle_switch_to ; Handler
-	add	esp,4		; Depile le contexte courant	
+	add	esp,4		; Depile le contexte courant
 	call	restore_ctx	; Restaure les registres	
 
 	
@@ -281,14 +281,14 @@ restore_ctx:
 	o16 pop	es		; en 16bits
 	o16 pop	ds
 	popad		    	; Restaure les registre generaux
-
+	 
 	cmp 	dword [esp+CONTEXT_CS_OFFSET], CS_SELECTOR 	; Teste si le contexte est un contexte noyau
 	jne 	restore_ctx_next	    			; Saute a la suite si ce n'est pas le cas
 	mov 	esp, dword [esp+CONTEXT_ESP_OFFSET]	    	; Retourne sur la pile interrompue (qui contient les bonnes infos pour iret) sinon
 
 restore_ctx_next:	
 	add 	esp,4		; Depile l adresse de retour de save_ctx
-	add 	esp,4		; Depile le code d erreur	
+	add 	esp,4		; Depile le code d erreur
 	iretd
 
 

@@ -12,7 +12,7 @@
 #include "const.h"
 #include "klib.h"
 #include "assert.h"
-#include "virtmem.h"
+#include "virtmem_slab.h"
 #include "context_cpu.h"
 
 
@@ -20,7 +20,11 @@
  * Declaration Private
  *========================================================================*/
 
+PRIVATE void context_cpu_trampoline(cpu_ctx_func_t func, void* arg);
 PRIVATE void print_context(struct context_cpu* ctx);
+
+PRIVATE struct vmem_cache* ctx_cache;
+PRIVATE struct context_cpu* next_ctx;
 
 
 /*========================================================================
@@ -30,14 +34,78 @@ PRIVATE void print_context(struct context_cpu* ctx);
 
 PUBLIC void context_cpu_init(void)
 {
+
+  /* Initialise un cache */
+  ctx_cache = virtmem_cache_create("ctx_cpu_cache",sizeof(struct context_cpu),0,0,VIRT_CACHE_DEFAULT,NULL,NULL);
+  ASSERT_FATAL( ctx_cache!=NULL );
+
   /* Alloue le contexte noyau */
-  kern_ctx = (struct context_cpu*)virt_alloc(sizeof(struct context_cpu));
+  kern_ctx = (struct context_cpu*)virtmem_cache_alloc(ctx_cache,VIRT_CACHE_DEFAULT);
   ASSERT_FATAL( kern_ctx != NULL );
 
   /* Le noyau devient le contexte courant */
   cur_ctx = kern_ctx;
 
   return;
+}
+
+
+/*========================================================================
+ * Creation d un contexte
+ *========================================================================*/
+
+
+PUBLIC struct context_cpu* context_cpu_create(virtaddr_t entry, void* arg, virtaddr_t stack_base, u32_t stack_size)
+{
+  struct context_cpu* ctx;
+  virtaddr_t* esp;
+  
+  /* Petite verification */
+  ASSERT_RETURN( (entry != 0)&&(stack_base!=0)&&(stack_size!=0) , NULL);
+
+  /* Alloue le contexte */
+  ctx = (struct context_cpu*)virtmem_cache_alloc(ctx_cache,VIRT_CACHE_DEFAULT);
+  ASSERT_RETURN( ctx != NULL , NULL );
+
+  /* Nettoie la pile */
+  klib_mem_set(0,stack_base,stack_size);
+  /* Recupere l'adresse de pile pour empiler les arguments */
+  esp = (virtaddr_t*)(stack_base+stack_size);
+ 
+  /* Installe les registres de segments */
+  ctx->cs = CONST_CS_SELECTOR;
+  ctx->ds = CONST_DS_SELECTOR;
+  ctx->es = CONST_ES_SELECTOR;
+  ctx->ss = CONST_SS_SELECTOR;
+
+  /* Active les interruptions */
+  ctx->eflags = (1<<CTX_CPU_INTFLAG_SHIFT);
+
+  /* Empile les arguments */
+  *(--esp) = (virtaddr_t)arg;
+  *(--esp) = entry;
+  /* Fausse adresse de retour */
+  *(--esp) = 0;
+  
+  /* Installe la pile */
+  ctx->esp = (reg32_t)esp;
+
+  /* Pointe EIP sur la fonction trampoline */
+  ctx->eip = (reg32_t)context_cpu_trampoline;
+
+  return ctx;
+}
+
+
+/*========================================================================
+ * Suppression d un contexte
+ *========================================================================*/
+
+
+PUBLIC u8_t context_cpu_destroy(struct context_cpu* ctx)
+{
+  /* Libere la structure */
+  return virtmem_cache_free(ctx_cache,ctx);
 }
 
 
@@ -72,7 +140,11 @@ PUBLIC void context_cpu_postsave(reg32_t ss, reg32_t* esp)
 
 PUBLIC void context_cpu_switch_to(struct context_cpu* ctx)
 {
+  /* Contexte surlequel switcher */
+  next_ctx = ctx;
+  /* Interruption pour changer le contexte */
   klib_int50();
+
   return;
 }
 
@@ -84,7 +156,10 @@ PUBLIC void context_cpu_switch_to(struct context_cpu* ctx)
 
 PUBLIC void context_cpu_handle_switch_to(struct context_cpu* ctx)
 {
-  klib_bochs_print("switch_to\n");
+
+  /* Definit le nouveau contexte */
+  cur_ctx = next_ctx;
+
   return;
 }
 
@@ -96,6 +171,7 @@ PUBLIC void context_cpu_handle_switch_to(struct context_cpu* ctx)
 
 PUBLIC void context_cpu_exit_to(struct context_cpu* ctx)
 {
+  /* Interruption pour forcer le changement de contexte */
   klib_int51();
   return;
 }
@@ -114,7 +190,21 @@ PUBLIC void context_cpu_handle_exit_to(struct context_cpu* ctx)
 
 
 /*========================================================================
- * Affichage d un context
+ * Trampoline
+ *========================================================================*/
+
+
+PRIVATE void context_cpu_trampoline(cpu_ctx_func_t func, void* arg)
+{
+  func(arg);
+  while(1){};
+  return;
+}
+
+
+
+/*========================================================================
+ * Affichage d un contexte
  *========================================================================*/
 
 PRIVATE void print_context(struct context_cpu* ctx)

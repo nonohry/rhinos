@@ -36,4 +36,7 @@ typedef unsigned int   virtaddr_t;
 typedef unsigned int   reg32_t;
 typedef unsigned short reg16_t;
 
+/* Contexte */
+typedef void (*cpu_ctx_func_t)(void*);
+
 #endif
