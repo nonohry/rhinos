@@ -10,8 +10,8 @@ global klib_flush_tlb
 global klib_invlpg	
 global klib_mem_set
 global klib_mem_copy	
-global random
-global idle_task
+global klib_int50
+global klib_int51
 
 	
 	;;======================================================================== 
@@ -281,6 +281,43 @@ klib_mem_copy:
 	pop	ebp		; Restaure EBP
 	ret
 
+
+
+	;;========================================================================
+	;; klib_int50
+	;;========================================================================
+	
+
+klib_int50:
+	push 	ebp         	; Sauvegarde de EBP
+	mov  	ebp,esp 	; Mise en place de la base
+	push	esi		; Sauvegarde ESI (Requis par GCC)
+	push	edi		; Sauvegarde EDI (Requis par GCC)
+	int	50		; Interruption 50
+	pop	edi		; Restaure EDI
+	pop	esi		; Restaure ESI
+	mov	esp,ebp		; Restaure la pile
+	pop	ebp		; Restaure EBP
+	ret
+
+
+	;;========================================================================
+	;; klib_int51
+	;;========================================================================
+	
+
+klib_int51:
+	push 	ebp         	; Sauvegarde de EBP
+	mov  	ebp,esp 	; Mise en place de la base
+	push	esi		; Sauvegarde ESI (Requis par GCC)
+	push	edi		; Sauvegarde EDI (Requis par GCC)
+	int	51		; Interruption 50
+	pop	edi		; Restaure EDI
+	pop	esi		; Restaure ESI
+	mov	esp,ebp		; Restaure la pile
+	pop	ebp		; Restaure EBP
+	ret
+	
 	
 	;;========================================================================
 	;; Donnees
