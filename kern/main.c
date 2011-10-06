@@ -27,7 +27,19 @@ struct context_cpu* ctx_titi;
 
 void toto(char* s)
 {
-  klib_bochs_print(s);
+  char t[2];
+
+  t[1]=0;
+  while(s[0])
+    {
+      t[0]=s[0];
+      klib_bochs_print("toto: ");
+      klib_bochs_print(t);
+      klib_bochs_print("\n");
+      s++;
+      context_cpu_switch_to(ctx_titi);
+    }
+
   context_cpu_switch_to(ctx_titi);
   return;
 }
@@ -35,7 +47,19 @@ void toto(char* s)
 
 void titi(char* s)
 {
-  klib_bochs_print(s);
+  char t[2];
+
+  t[1]=0;
+  while(s[0])
+    {
+      t[0]=s[0];
+      klib_bochs_print("titi: ");
+      klib_bochs_print(t);
+      klib_bochs_print("\n");
+      s++;
+      context_cpu_switch_to(ctx_toto);
+    }
+ 
   context_cpu_switch_to(kern_ctx);
   return;
 }
@@ -80,8 +104,10 @@ PUBLIC int main()
   stack_toto = (virtaddr_t)virt_alloc(4096);
   stack_titi = (virtaddr_t)virt_alloc(4096);
 
-  ctx_toto = context_cpu_create((virtaddr_t)toto,(void*)"coucou \n",stack_toto,4096);
-  ctx_titi = context_cpu_create((virtaddr_t)titi,(void*)"le monde \n",stack_titi,4096);
+  ctx_toto = context_cpu_create((virtaddr_t)toto,(void*)"cuo emne",stack_toto,4096);
+  ctx_titi = context_cpu_create((virtaddr_t)titi,(void*)"ocul od!",stack_titi,4096);
+
+  klib_bochs_print("Ping pong toto/titi\n");
 
   context_cpu_switch_to(ctx_toto);
 
