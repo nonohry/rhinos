@@ -49,7 +49,6 @@ extern	excep_handle			; Handlers pour les exceptions en C
 extern	cur_ctx				; Contexte courant
 extern	context_cpu_postsave		; Pretraitement de la sauvegarde de context en C
 extern	context_cpu_handle_switch_to 	; Gestion du changement de contexte
-extern	context_cpu_handle_exit_to   	; Gestion de la sorite de contexte
 	
 
 	;;========================================================================
@@ -227,12 +226,15 @@ swint_switch_to:
 	call	restore_ctx	; Restaure les registres	
 
 	
-swint_exit_to:	
-	push	FAKE_ERROR	; Faux erreur code	
-	call	save_ctx	; Sauvegarde des registres
+swint_exit_to:
+	mov	esp, int_stack_top 	; Positionne la pile d interruption
+	mov	ax,DS_SELECTOR		; Ajuste les segments noyau (CS & SS sont deja positionnes)
+	mov	ds,ax
+	mov	ax,ES_SELECTOR
+	mov	es,ax	
 	push	dword [cur_ctx]	; Empile le contexte courant
-	call	context_cpu_handle_exit_to ; Handler
-	add	esp,4		; Depile le contexte courant	
+	call	context_cpu_handle_switch_to ; Handler
+	add	esp,4		; Depile le contexte courant
 	call	restore_ctx	; Restaure les registres
 	
 	

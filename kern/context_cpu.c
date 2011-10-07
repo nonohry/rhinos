@@ -78,6 +78,9 @@ PUBLIC struct context_cpu* context_cpu_create(virtaddr_t entry, void* arg, virta
   ctx->es = CONST_ES_SELECTOR;
   ctx->ss = CONST_SS_SELECTOR;
 
+  /* Positionne un faux code d erreur */
+  ctx->error_code = CTX_CPU_FEC;
+
   /* Active les interruptions */
   ctx->eflags = (1<<CTX_CPU_INTFLAG_SHIFT);
 
@@ -88,14 +91,14 @@ PUBLIC struct context_cpu* context_cpu_create(virtaddr_t entry, void* arg, virta
   /* Empile les arguments */
   *(--esp) = (virtaddr_t)arg;
   *(--esp) = entry;
-  /* Fausse adresse de retour pour la fonction de trampoline*/
+  /* Fausse adresse de retour pour la fonction de trampoline */
   *(--esp) = 0;
 
   /* Simule une pile interrompue (le switch passe par une interruption logicielle) */
   *(--esp) = ctx->eflags;
   *(--esp) = CONST_CS_SELECTOR;
   *(--esp) = ctx->eip;
-  *(--esp) = 0xFEC;
+  *(--esp) = ctx->error_code;
   *(--esp) = 0;
 
   /* Installe la pile */
@@ -182,18 +185,6 @@ PUBLIC void context_cpu_exit_to(struct context_cpu* ctx)
 {
   /* Interruption pour forcer le changement de contexte */
   klib_int51();
-  return;
-}
-
-
-/*========================================================================
- * Traite la sortie d un contexte
- *========================================================================*/
-
-
-PUBLIC void context_cpu_handle_exit_to(struct context_cpu* ctx)
-{
-  klib_bochs_print("exit_to\n");
   return;
 }
 

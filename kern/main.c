@@ -40,7 +40,7 @@ void toto(char* s)
       context_cpu_switch_to(ctx_titi);
     }
 
-  context_cpu_switch_to(ctx_titi);
+  context_cpu_exit_to(ctx_titi);
   return;
 }
 
@@ -60,7 +60,7 @@ void titi(char* s)
       context_cpu_switch_to(ctx_toto);
     }
  
-  context_cpu_switch_to(kern_ctx);
+  context_cpu_exit_to(kern_ctx);
   return;
 }
 
@@ -104,8 +104,8 @@ PUBLIC int main()
   stack_toto = (virtaddr_t)virt_alloc(4096);
   stack_titi = (virtaddr_t)virt_alloc(4096);
 
-  ctx_toto = context_cpu_create((virtaddr_t)toto,(void*)"cuo emne",stack_toto,4096);
-  ctx_titi = context_cpu_create((virtaddr_t)titi,(void*)"ocul od!",stack_titi,4096);
+  ctx_toto = context_cpu_create((virtaddr_t)toto,(void*)"pn og!",stack_toto,4096);
+  ctx_titi = context_cpu_create((virtaddr_t)titi,(void*)"igpn \n",stack_titi,4096);
 
   klib_bochs_print("Ping pong toto/titi\n");
 
@@ -113,6 +113,10 @@ PUBLIC int main()
 
   klib_bochs_print("Back in main\n");
 
+  context_cpu_destroy(ctx_toto);
+  context_cpu_destroy(ctx_titi);
+  virt_free((void*)stack_toto);
+  virt_free((void*)stack_titi);
  
   /* On ne doit plus arriver ici (sauf DEBUG) */
   while(1)
