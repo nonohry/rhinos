@@ -21,6 +21,7 @@
  * Constantes
  *========================================================================*/
 
+#define CTX_CPU_MIN_STACK         32
 #define CTX_CPU_INTFLAG_SHIFT     9
 #define CTX_CPU_FEC               0xFEC
 

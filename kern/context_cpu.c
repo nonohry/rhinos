@@ -61,7 +61,7 @@ PUBLIC struct context_cpu* context_cpu_create(virtaddr_t entry, void* arg, virta
   virtaddr_t* esp;
   
   /* Petite verification */
-  ASSERT_RETURN( (entry != 0)&&(stack_base!=0)&&(stack_size!=0) , NULL);
+  ASSERT_RETURN( (entry != 0)&&(stack_base!=0)&&(stack_size>CTX_CPU_MIN_STACK) , NULL);
 
   /* Alloue le contexte */
   ctx = (struct context_cpu*)virtmem_cache_alloc(ctx_cache,VIRT_CACHE_DEFAULT);
