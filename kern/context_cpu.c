@@ -138,7 +138,7 @@ PUBLIC void context_cpu_postsave(reg32_t ss, reg32_t* esp)
       cur_ctx->cs = *(esp+3);
       cur_ctx->eflags = *(esp+4);
       cur_ctx->esp = (reg32_t)(esp);
-      cur_ctx->ss = ss;
+      cur_ctx->ss = CONST_SS_SELECTOR;
     }
   
   return;
@@ -168,7 +168,6 @@ PUBLIC void context_cpu_switch_to(struct context_cpu* ctx)
 
 PUBLIC void context_cpu_handle_switch_to(struct context_cpu* ctx)
 {
-
   /* Definit le nouveau contexte */
   cur_ctx = next_ctx;
 
@@ -197,6 +196,7 @@ PUBLIC void context_cpu_exit_to(struct context_cpu* ctx)
 PRIVATE void context_cpu_trampoline(cpu_ctx_func_t func, void* arg)
 {
   func(arg);
+  /* En attendant un ordonnancement ... */
   while(1){};
   return;
 }

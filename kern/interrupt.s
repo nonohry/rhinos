@@ -249,7 +249,7 @@ save_ctx:
 	mov dword [save_esp],esp	; Sauvegarde ESP
 	mov esp, [cur_ctx] 		; Placement de ESP sur le contexte courant
 	add esp,CONTEXT_RET_OFFSET	; Placement a ret_addr
-	
+
 	pushad			; Sauve les registres generaux 32bits
 	o16 push	ds	; Sauve les registres de segments (empile en 16bits)
 	o16 push	es
