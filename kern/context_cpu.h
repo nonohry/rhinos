@@ -21,7 +21,7 @@
  * Constantes
  *========================================================================*/
 
-#define CTX_CPU_MIN_STACK         32
+#define CTX_CPU_MIN_STACK         64
 #define CTX_CPU_INTFLAG_SHIFT     9
 #define CTX_CPU_FEC               0xFEC
 
@@ -62,7 +62,7 @@ PUBLIC	struct context_cpu* kern_ctx;
 PUBLIC	struct context_cpu* cur_ctx;
 
 PUBLIC void context_cpu_init(void);
-PUBLIC struct context_cpu* context_cpu_create(virtaddr_t entry, void* arg, virtaddr_t stack_base, u32_t stack_size);
+PUBLIC struct context_cpu* context_cpu_create(virtaddr_t start_entry, void* start_arg, virtaddr_t exit_entry, void* exit_arg, virtaddr_t stack_base, u32_t stack_size);
 PUBLIC u8_t context_cpu_destroy(struct context_cpu* ctx);
 PUBLIC void context_cpu_postsave(reg32_t ss, reg32_t* esp);
 PUBLIC void context_cpu_switch_to(struct context_cpu* ctx);

@@ -20,7 +20,7 @@
  * Declaration Private
  *========================================================================*/
 
-PRIVATE void context_cpu_trampoline(cpu_ctx_func_t func, void* arg);
+PRIVATE void context_cpu_trampoline(cpu_ctx_func_t start_func, void* start_arg, cpu_ctx_func_t exit_func, void* exit_arg);
 PRIVATE void print_context(struct context_cpu* ctx);
 
 PRIVATE struct vmem_cache* ctx_cache;
@@ -55,13 +55,13 @@ PUBLIC void context_cpu_init(void)
  *========================================================================*/
 
 
-PUBLIC struct context_cpu* context_cpu_create(virtaddr_t entry, void* arg, virtaddr_t stack_base, u32_t stack_size)
+PUBLIC struct context_cpu* context_cpu_create(virtaddr_t start_entry, void* start_arg, virtaddr_t exit_entry, void* exit_arg, virtaddr_t stack_base, u32_t stack_size)
 {
   struct context_cpu* ctx;
   virtaddr_t* esp;
   
   /* Petite verification */
-  ASSERT_RETURN( (entry != 0)&&(stack_base!=0)&&(stack_size>CTX_CPU_MIN_STACK) , NULL);
+  ASSERT_RETURN( (start_entry!=0)&&(exit_entry!=0)&&(stack_base!=0)&&(stack_size>CTX_CPU_MIN_STACK) , NULL);
 
   /* Alloue le contexte */
   ctx = (struct context_cpu*)virtmem_cache_alloc(ctx_cache,VIRT_CACHE_DEFAULT);
@@ -89,8 +89,10 @@ PUBLIC struct context_cpu* context_cpu_create(virtaddr_t entry, void* arg, virta
   ctx->eip = (reg32_t)context_cpu_trampoline;
 
   /* Empile les arguments */
-  *(--esp) = (virtaddr_t)arg;
-  *(--esp) = entry;
+  *(--esp) = (virtaddr_t)exit_arg;
+  *(--esp) = exit_entry;
+  *(--esp) = (virtaddr_t)start_arg;
+  *(--esp) = start_entry;
   /* Fausse adresse de retour pour la fonction de trampoline */
   *(--esp) = 0;
 
@@ -182,6 +184,8 @@ PUBLIC void context_cpu_handle_switch_to(struct context_cpu* ctx)
 
 PUBLIC void context_cpu_exit_to(struct context_cpu* ctx)
 {
+  /* Contexte vers lequel sortir */
+  next_ctx = ctx;
   /* Interruption pour forcer le changement de contexte */
   klib_int51();
   return;
@@ -193,11 +197,15 @@ PUBLIC void context_cpu_exit_to(struct context_cpu* ctx)
  *========================================================================*/
 
 
-PRIVATE void context_cpu_trampoline(cpu_ctx_func_t func, void* arg)
+PRIVATE void context_cpu_trampoline(cpu_ctx_func_t start_func, void* start_arg, cpu_ctx_func_t exit_func, void* exit_arg)
 {
-  func(arg);
-  /* En attendant un ordonnancement ... */
-  while(1){};
+  /* Trampline ! */
+  start_func(start_arg);
+  exit_func(exit_arg);
+
+  /* Pas de retour */
+  ASSERT_FATAL( 0 );
+
   return;
 }
 
