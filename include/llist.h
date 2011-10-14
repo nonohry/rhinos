@@ -52,10 +52,10 @@
       }						\
     else					\
       {						\
-	(e)->next = (l)->next;			\
-	(e)->prev = (l);			\
-	((l)->next)->prev = (e);		\
-	(l)->next = (e);			\
+	(e)->prev = (l)->prev;			\
+	(e)->next = (l);			\
+	((l)->prev)->next = (e);		\
+	(l)->prev = (e);			\
       }						\
 }
 

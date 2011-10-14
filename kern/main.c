@@ -64,10 +64,10 @@ void titi(char* s)
 }
 
 
-
 /*========================================================================
  * Fonction principale 
  *========================================================================*/
+
 
 PUBLIC int main()
 {
@@ -116,6 +116,7 @@ PUBLIC int main()
   context_cpu_destroy(ctx_titi);
   virt_free((void*)stack_toto);
   virt_free((void*)stack_titi);
+
  
   /* On ne doit plus arriver ici (sauf DEBUG) */
   while(1)
