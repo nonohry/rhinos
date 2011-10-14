@@ -10,13 +10,17 @@
 #include "interrupt.h"
 #include "irq.h"
 #include "pit.h"
+#include "thread.h"
+
 
 /*======================================================================== 
  * Declarations PRIVATE 
  *========================================================================*/
 
+
 PRIVATE void pit_handler(struct context_cpu* ctx);
 PRIVATE struct int_node pit_irq_node;
+
 
 /*========================================================================
  * Initialise l'horloge avec une frequence
@@ -58,16 +62,20 @@ PUBLIC void pit_init()
  * Handler (flih) 
  *========================================================================*/
 
+
 PRIVATE void pit_handler(struct context_cpu* ctx)
 {
   klib_bochs_print("tick ! ");
+  thread_switch(cur_thread,THREAD_READY);
 
   return;
 }
 
+
 /*========================================================================
  * Lit l horloge
  *========================================================================*/
+
 
 PUBLIC u16_t pit_read()
 {

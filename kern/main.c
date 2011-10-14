@@ -19,6 +19,7 @@
 #include "virtmem.h"
 #include "context_cpu.h"
 #include "thread.h"
+#include "sched.h"
 #include "irq.h"
 #include "pit.h"
 
@@ -34,12 +35,26 @@ void toto(char c)
 
   while(1)
     {
-      klib_bochs_print(t);
+      //klib_bochs_print(t);
     }
 
   return;
 }
 
+void titi(char c)
+{
+  char t[2];
+
+  t[0]=c;
+  t[1]=0;
+
+  while(1)
+    {
+      //klib_bochs_print(t);
+    }
+
+  return;
+}
 
 /*========================================================================
  * Fonction principale 
@@ -69,16 +84,18 @@ PUBLIC int main()
   thread_init();
   klib_bochs_print("Kernel Threads initialized\n");
 
+  /* Initialisation de l ordonannceur */
+  sched_init();
+  klib_bochs_print("Scheduler initialized\n");
 
-  struct thread* t;
+  struct thread* to;
+  struct thread* ti;
 
-  t = thread_create("Test_thread",(virtaddr_t)toto,(void*)'#',(virtaddr_t)toto,(void*)'#',THREAD_STACK_SIZE);
+  to = thread_create("Toto_thread",(virtaddr_t)toto,(void*)'#',(virtaddr_t)toto,(void*)'#',THREAD_STACK_SIZE);
+  ti = thread_create("Titi_thread",(virtaddr_t)titi,(void*)'-',(virtaddr_t)titi,(void*)'-',THREAD_STACK_SIZE);
 
-  klib_bochs_print(t->name);
-  klib_bochs_print("\nStack: 0x%x\n",t->stack_base);
-
-  thread_destroy(t);
-
+  // thread_destroy(to);
+  // thread_destroy(ti);
 
   /* Initialisation du gestionnaire des IRQ */
   irq_init();
@@ -87,6 +104,10 @@ PUBLIC int main()
   pit_init();
   klib_bochs_print("Clock initialized (100Hz)\n");
 
+  cur_thread = to;
+  LLIST_REMOVE(sched_ready,cur_thread);
+  LLIST_ADD(sched_running,cur_thread);
+  context_cpu_switch_to(cur_thread->ctx);
  
   /* On ne doit plus arriver ici (sauf DEBUG) */
   while(1)

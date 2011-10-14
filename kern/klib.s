@@ -293,6 +293,7 @@ klib_int50:
 	mov  	ebp,esp 	; Mise en place de la base
 	push	esi		; Sauvegarde ESI (Requis par GCC)
 	push	edi		; Sauvegarde EDI (Requis par GCC)
+	sti			; Restaure les interruptions
 	int	50		; Interruption 50
 	pop	edi		; Restaure EDI
 	pop	esi		; Restaure ESI
@@ -311,6 +312,7 @@ klib_int51:
 	mov  	ebp,esp 	; Mise en place de la base
 	push	esi		; Sauvegarde ESI (Requis par GCC)
 	push	edi		; Sauvegarde EDI (Requis par GCC)
+	sti			; Restaure les interruptions	
 	int	51		; Interruption 50
 	pop	edi		; Restaure EDI
 	pop	esi		; Restaure ESI

@@ -28,5 +28,7 @@ PUBLIC struct thread* sched_running;
 PUBLIC struct thread* sched_blocked;
 PUBLIC struct thread* sched_dead;
 
+void sched_init(void);
+struct thread* sched_run(void);
 
 #endif

@@ -25,7 +25,6 @@
  *========================================================================*/
 
 
-PRIVATE struct thread* cur_thread;
 PRIVATE struct vmem_cache* thread_cache;
 
 
@@ -117,6 +116,8 @@ PUBLIC struct thread* thread_create(const char* name, virtaddr_t start_entry, vo
 
 PUBLIC u8_t thread_destroy(struct thread* th)
 {
+  /* Controle */
+  ASSERT_RETURN( th!=NULL , EXIT_FAILURE);
 
   /* Libere simplement les parties allouees */
   return virt_free((void*)th->stack_base) 
@@ -125,3 +126,88 @@ PUBLIC u8_t thread_destroy(struct thread* th)
 
 }
 
+
+/*========================================================================
+ * Sortie d un thread
+ *========================================================================*/
+
+
+PUBLIC u8_t thread_exit(struct thread* th)
+{
+  struct thread* new_th;
+
+  /* Controle */
+  ASSERT_RETURN( th!=NULL , EXIT_FAILURE);
+
+  /* Etat */
+  th->state = THREAD_DEAD;
+
+  /* Chainage a la liste des threads supprimes */
+  LLIST_ADD(sched_dead,th);
+
+  /* Choix du futur thread */
+  new_th = sched_run();
+  ASSERT_RETURN( new_th!=NULL , EXIT_FAILURE);
+
+  /* Affecte le thread courant */
+  THREAD_SET_CURRENT(new_th);
+ 
+  /* Changement de listes */
+  LLIST_REMOVE(sched_ready,new_th);
+  LLIST_ADD(sched_running,new_th);
+ 
+  /* Switch vers le nouveau contexte */
+  context_cpu_exit_to(new_th->ctx);
+
+  return EXIT_SUCCESS;
+}
+
+
+/*========================================================================
+ * Switch d un thread
+ *========================================================================*/
+
+
+PUBLIC u8_t thread_switch(struct thread* th, enum  thread_state switch_state)
+{
+  struct thread* new_th;
+
+  /* Recuperation du contexte courant */
+  ASSERT_RETURN( th!=NULL , EXIT_FAILURE);
+
+  /* Choix du futur thread */
+  new_th = sched_run();
+  ASSERT_RETURN( new_th!=NULL , EXIT_FAILURE);
+
+  /* Changement de listes */
+  LLIST_REMOVE(sched_running,th);
+
+  /* Differenciation des cas en fonction de l etat de bascule */
+  if (switch_state == THREAD_BLOCKED)
+    {
+      th->state = THREAD_BLOCKED;
+      LLIST_ADD(sched_blocked,th);
+    }
+  else if (switch_state == THREAD_READY)
+    {
+      th->state = THREAD_READY;
+      LLIST_ADD(sched_ready,th);
+    }
+  else
+    {
+      /* On sort sinon */
+      thread_exit(th);
+    }
+
+  /* Changement de listes */
+  LLIST_REMOVE(sched_ready,new_th);
+  LLIST_ADD(sched_running,new_th);
+
+  /* Affecte le thread courant */
+  THREAD_SET_CURRENT(new_th);
+
+  /* Switch vers le nouveau contexte */
+  context_cpu_switch_to(cur_thread->ctx);  
+
+  return EXIT_SUCCESS;
+}
