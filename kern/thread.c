@@ -45,7 +45,7 @@ PUBLIC void thread_init(void)
 
 
 /*========================================================================
- * Creation
+ * Creation d un thread
  *========================================================================*/
 
 
@@ -108,3 +108,20 @@ PUBLIC struct thread* thread_create(const char* name, virtaddr_t start_entry, vo
   return NULL;
 
 }
+
+
+/*========================================================================
+ * Destruction d un thread
+ *========================================================================*/
+
+
+PUBLIC u8_t thread_destroy(struct thread* th)
+{
+
+  /* Libere simplement les parties allouees */
+  return virt_free((void*)th->stack_base) 
+    && context_cpu_destroy(th->ctx) 
+    &&  virtmem_cache_free(thread_cache,th);
+
+}
+

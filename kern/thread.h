@@ -64,6 +64,7 @@ PUBLIC struct thread
 
 PUBLIC void thread_init(void);
 PUBLIC struct thread* thread_create(const char* nom, virtaddr_t start_entry, void* start_arg, virtaddr_t exit_entry, void* exit_arg, u32_t stack_size);
+PUBLIC u8_t thread_destroy(struct thread* th);
 
 #endif
 

@@ -77,6 +77,7 @@ PUBLIC int main()
   klib_bochs_print(t->name);
   klib_bochs_print("\nStack: 0x%x\n",t->stack_base);
 
+  thread_destroy(t);
 
 
   /* Initialisation du gestionnaire des IRQ */
