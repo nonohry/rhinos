@@ -35,7 +35,8 @@ void toto(char c)
 
   while(1)
     {
-      //klib_bochs_print(t);
+      klib_bochs_print(t);
+      thread_switch(cur_thread,THREAD_READY);
     }
 
   return;
@@ -50,7 +51,8 @@ void titi(char c)
 
   while(1)
     {
-      //klib_bochs_print(t);
+      klib_bochs_print(t);
+      thread_switch(cur_thread,THREAD_READY);
     }
 
   return;

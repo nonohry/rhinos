@@ -66,8 +66,6 @@ PUBLIC void pit_init()
 PRIVATE void pit_handler(struct context_cpu* ctx)
 {
   klib_bochs_print("tick ! ");
-  thread_switch(cur_thread,THREAD_READY);
-
   return;
 }
 
