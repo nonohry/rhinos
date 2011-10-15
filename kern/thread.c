@@ -27,6 +27,7 @@
 
 PRIVATE struct vmem_cache* thread_cache;
 
+PRIVATE void thread_exit(struct thread* th);
 
 /*========================================================================
  * Initialisation
@@ -48,13 +49,13 @@ PUBLIC void thread_init(void)
  *========================================================================*/
 
 
-PUBLIC struct thread* thread_create(const char* name, virtaddr_t start_entry, void* start_arg, virtaddr_t exit_entry, void* exit_arg, u32_t stack_size)
+PUBLIC struct thread* thread_create(const char* name, virtaddr_t start_entry, void* start_arg, u32_t stack_size)
 {
   struct thread* th;
   u8_t i;
 
   /* Controles */
-  ASSERT_RETURN( (start_entry!=0)&&(exit_entry!=0)&&(stack_size>CTX_CPU_MIN_STACK) , NULL);
+  ASSERT_RETURN( (start_entry!=0)&&(stack_size>CTX_CPU_MIN_STACK) , NULL);
 
   /* Allocation dans le cache */
   th = (struct thread*)virtmem_cache_alloc(thread_cache,VIRT_CACHE_DEFAULT);
@@ -71,7 +72,7 @@ PUBLIC struct thread* thread_create(const char* name, virtaddr_t start_entry, vo
   th->stack_size = stack_size;
 
   /* Alloue le contexte */
-  th->ctx = context_cpu_create(start_entry,start_arg,exit_entry,exit_arg,th->stack_base,stack_size);
+  th->ctx = context_cpu_create(start_entry,start_arg,(virtaddr_t)thread_exit,(void*)th,th->stack_base,stack_size);
   if (th->ctx == NULL)
     {
       goto err02;
@@ -128,42 +129,6 @@ PUBLIC u8_t thread_destroy(struct thread* th)
 
 
 /*========================================================================
- * Sortie d un thread
- *========================================================================*/
-
-
-PUBLIC u8_t thread_exit(struct thread* th)
-{
-  struct thread* new_th;
-
-  /* Controle */
-  ASSERT_RETURN( th!=NULL , EXIT_FAILURE);
-
-  /* Etat */
-  th->state = THREAD_DEAD;
-
-  /* Chainage a la liste des threads supprimes */
-  LLIST_ADD(sched_dead,th);
-
-  /* Choix du futur thread */
-  new_th = sched_run();
-  ASSERT_RETURN( new_th!=NULL , EXIT_FAILURE);
-
-  /* Affecte le thread courant */
-  THREAD_SET_CURRENT(new_th);
- 
-  /* Changement de listes */
-  LLIST_REMOVE(sched_ready,new_th);
-  LLIST_ADD(sched_running,new_th);
- 
-  /* Switch vers le nouveau contexte */
-  context_cpu_exit_to(new_th->ctx);
-
-  return EXIT_SUCCESS;
-}
-
-
-/*========================================================================
  * Switch d un thread
  *========================================================================*/
 
@@ -210,4 +175,40 @@ PUBLIC u8_t thread_switch(struct thread* th, enum  thread_state switch_state)
   context_cpu_switch_to(cur_thread->ctx);  
 
   return EXIT_SUCCESS;
+}
+
+
+/*========================================================================
+ * Sortie d un thread
+ *========================================================================*/
+
+
+PRIVATE void thread_exit(struct thread* th)
+{
+  struct thread* new_th;
+
+  /* Controle */
+  ASSERT_RETURN_VOID( th!=NULL );
+
+  /* Etat */
+  th->state = THREAD_DEAD;
+
+  /* Chainage a la liste des threads supprimes */
+  LLIST_ADD(sched_dead,th);
+
+  /* Choix du futur thread */
+  new_th = sched_run();
+  ASSERT_RETURN_VOID( new_th!=NULL );
+
+  /* Affecte le thread courant */
+  THREAD_SET_CURRENT(new_th);
+ 
+  /* Changement de listes */
+  LLIST_REMOVE(sched_ready,new_th);
+  LLIST_ADD(sched_running,new_th);
+ 
+  /* Switch vers le nouveau contexte */
+  context_cpu_exit_to(new_th->ctx);
+
+  return;
 }

@@ -93,8 +93,8 @@ PUBLIC int main()
   struct thread* to;
   struct thread* ti;
 
-  to = thread_create("Toto_thread",(virtaddr_t)toto,(void*)'#',(virtaddr_t)toto,(void*)'#',THREAD_STACK_SIZE);
-  ti = thread_create("Titi_thread",(virtaddr_t)titi,(void*)'-',(virtaddr_t)titi,(void*)'-',THREAD_STACK_SIZE);
+  to = thread_create("Toto_thread",(virtaddr_t)toto,(void*)'#',THREAD_STACK_SIZE);
+  ti = thread_create("Titi_thread",(virtaddr_t)titi,(void*)'-',THREAD_STACK_SIZE);
 
   // thread_destroy(to);
   // thread_destroy(ti);
