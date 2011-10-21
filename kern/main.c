@@ -24,7 +24,8 @@
 #include "pit.h"
 
 
-
+struct thread* to;
+struct thread* ti;
 
 void toto(char c)
 {
@@ -36,7 +37,7 @@ void toto(char c)
   while(1)
     {
       klib_bochs_print(t);
-      thread_switch(cur_thread,THREAD_READY);
+      thread_switch(ti,THREAD_READY);
     }
 
   return;
@@ -52,7 +53,7 @@ void titi(char c)
   while(1)
     {
       klib_bochs_print(t);
-      thread_switch(cur_thread,THREAD_READY);
+      thread_switch(to,THREAD_READY);
     }
 
   return;
@@ -90,9 +91,6 @@ PUBLIC int main()
   sched_init();
   klib_bochs_print("Scheduler initialized\n");
 
-  struct thread* to;
-  struct thread* ti;
-
   to = thread_create("Toto_thread",(virtaddr_t)toto,(void*)'#',THREAD_STACK_SIZE);
   ti = thread_create("Titi_thread",(virtaddr_t)titi,(void*)'-',THREAD_STACK_SIZE);
 
@@ -106,11 +104,11 @@ PUBLIC int main()
   pit_init();
   klib_bochs_print("Clock initialized (100Hz)\n");
 
-  cur_thread = to;
-  LLIST_REMOVE(sched_ready,cur_thread);
-  LLIST_ADD(sched_running,cur_thread);
-  context_cpu_switch_to(cur_thread->ctx);
- 
+  /* Simule un ordonnancement */
+  sched_dequeue(SCHED_READY_QUEUE,to);
+  sched_enqueue(SCHED_RUNNING_QUEUE,to);
+  context_cpu_exit_to(to->ctx);
+
   /* On ne doit plus arriver ici (sauf DEBUG) */
   while(1)
     {

@@ -13,6 +13,8 @@
 #include "klib.h"
 #include "assert.h"
 #include "virtmem_slab.h"
+#include "sched.h"
+#include "thread.h"
 #include "context_cpu.h"
 
 
@@ -24,7 +26,7 @@ PRIVATE void context_cpu_trampoline(cpu_ctx_func_t start_func, void* start_arg, 
 PRIVATE void print_context(struct context_cpu* ctx);
 
 PRIVATE struct vmem_cache* ctx_cache;
-PRIVATE struct context_cpu* next_ctx;
+PRIVATE  struct context_cpu* next_ctx;
 
 
 /*========================================================================
@@ -170,7 +172,6 @@ PUBLIC void context_cpu_switch_to(struct context_cpu* ctx)
 
 PUBLIC void context_cpu_handle_switch_to(struct context_cpu* ctx)
 {
-  /* Definit le nouveau contexte */
   cur_ctx = next_ctx;
 
   return;

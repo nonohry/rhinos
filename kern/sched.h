@@ -19,16 +19,23 @@
 
 
 /*========================================================================
- * Prototypes
+ * Constantes
  *========================================================================*/
 
 
-PUBLIC struct thread* sched_ready;
-PUBLIC struct thread* sched_running;
-PUBLIC struct thread* sched_blocked;
-PUBLIC struct thread* sched_dead;
+#define SCHED_RUNNING_QUEUE          1
+#define SCHED_READY_QUEUE            2
+#define SCHED_BLOCKED_QUEUE          3
+#define SCHED_DEAD_QUEUE             4
+
+
+/*========================================================================
+ * Prototypes
+ *========================================================================*/
 
 void sched_init(void);
+u8_t sched_enqueue(u8_t queue, struct thread* th);
+u8_t sched_dequeue(u8_t queue, struct thread* th);
 struct thread* sched_run(void);
 
 #endif

@@ -57,24 +57,10 @@ PUBLIC struct thread
 };
 
 
-/*========================================================================
- * Macros "Private"
- *========================================================================*/
-
-
-#define THREAD_SET_CURRENT(_th)			\
-  (_th)->state = THREAD_RUNNING;		\
-  (cur_thread) = (_th);
-
-#define THREAD_GET_CURRENT(_th)			\
-  (_th) = (cur_thread);
-
 
 /*========================================================================
  * Prototypes
  *========================================================================*/
-
-PUBLIC struct thread* cur_thread;
 
 PUBLIC void thread_init(void);
 PUBLIC struct thread* thread_create(const char* nom, virtaddr_t start_entry, void* start_arg, u32_t stack_size);

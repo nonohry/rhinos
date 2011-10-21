@@ -4,13 +4,17 @@
  */
 
 #include <types.h>
+#include "assert.h"
 #include "const.h"
 #include "klib.h"
 #include "tables.h"
 #include "interrupt.h"
 #include "irq.h"
-#include "pit.h"
+#include "context_cpu.h"
 #include "thread.h"
+#include "sched.h"
+#include "pit.h"
+
 
 
 /*======================================================================== 
@@ -65,7 +69,8 @@ PUBLIC void pit_init()
 
 PRIVATE void pit_handler(struct context_cpu* ctx)
 {
-  klib_bochs_print("tick ! ");
+  klib_bochs_print("tick !");
+
   return;
 }
 
