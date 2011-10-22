@@ -26,6 +26,9 @@
 #define THREAD_NAMELEN        32
 #define THREAD_STACK_SIZE     4096
 
+#define THREAD_SWITCH_DEFAULT 0
+#define THREAD_SWITCH_NO_INT  1
+
 
 /*========================================================================
  * Structures
@@ -65,7 +68,7 @@ PUBLIC struct thread
 PUBLIC void thread_init(void);
 PUBLIC struct thread* thread_create(const char* nom, virtaddr_t start_entry, void* start_arg, u32_t stack_size);
 PUBLIC u8_t thread_destroy(struct thread* th);
-PUBLIC u8_t thread_switch(struct thread* th, enum thread_state switch_state);
+PUBLIC u8_t thread_switch(struct thread* th, enum thread_state switch_state, u8_t flags);
 
 #endif
 

@@ -129,3 +129,14 @@ struct thread* sched_run(void)
 {
   return LLIST_GETHEAD(sched_ready);
 }
+
+
+/*========================================================================
+ * Thread courant
+ *========================================================================*/
+
+
+struct thread* sched_get_running_thread(void)
+{
+  return LLIST_GETHEAD(sched_running);
+}

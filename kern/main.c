@@ -24,9 +24,6 @@
 #include "pit.h"
 
 
-struct thread* to;
-struct thread* ti;
-
 void toto(char c)
 {
   char t[2];
@@ -36,8 +33,13 @@ void toto(char c)
 
   while(1)
     {
+      u32_t i=0;
       klib_bochs_print(t);
-      thread_switch(ti,THREAD_READY);
+      while(i < (1<<12))
+	{
+	  i++;
+	}
+      
     }
 
   return;
@@ -52,12 +54,40 @@ void titi(char c)
 
   while(1)
     {
+      u32_t i=0;
       klib_bochs_print(t);
-      thread_switch(to,THREAD_READY);
+      while(i < (1<<12))
+	{
+	  i++;
+	}
     }
 
   return;
 }
+
+
+void tata(char c)
+{
+  char t[2];
+  int j=2048;
+
+  t[0]=c;
+  t[1]=0;
+
+  while(j)
+    {
+      u32_t i=0;
+      klib_bochs_print(t);
+      while(i < (1<<12))
+	{
+	  i++;
+	}
+      j--;
+    }
+
+  return;
+}
+
 
 /*========================================================================
  * Fonction principale 
@@ -91,11 +121,15 @@ PUBLIC int main()
   sched_init();
   klib_bochs_print("Scheduler initialized\n");
 
-  to = thread_create("Toto_thread",(virtaddr_t)toto,(void*)'#',THREAD_STACK_SIZE);
-  ti = thread_create("Titi_thread",(virtaddr_t)titi,(void*)'-',THREAD_STACK_SIZE);
+  /* Tests threads */
 
-  // thread_destroy(to);
-  // thread_destroy(ti);
+  struct thread* to;
+  struct thread* ti;
+  struct thread* ta;
+
+  to = thread_create("Toto_thread",(virtaddr_t)toto,(void*)'1',THREAD_STACK_SIZE);
+  ti = thread_create("Titi_thread",(virtaddr_t)titi,(void*)'2',THREAD_STACK_SIZE);
+  ta = thread_create("Tata_thread",(virtaddr_t)tata,(void*)'3',THREAD_STACK_SIZE);
 
   /* Initialisation du gestionnaire des IRQ */
   irq_init();

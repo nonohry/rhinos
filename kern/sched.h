@@ -37,5 +37,6 @@ void sched_init(void);
 u8_t sched_enqueue(u8_t queue, struct thread* th);
 u8_t sched_dequeue(u8_t queue, struct thread* th);
 struct thread* sched_run(void);
+struct thread* sched_get_running_thread(void);
 
 #endif

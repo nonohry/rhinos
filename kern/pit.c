@@ -10,7 +10,6 @@
 #include "tables.h"
 #include "interrupt.h"
 #include "irq.h"
-#include "context_cpu.h"
 #include "thread.h"
 #include "sched.h"
 #include "pit.h"
@@ -69,7 +68,13 @@ PUBLIC void pit_init()
 
 PRIVATE void pit_handler(struct context_cpu* ctx)
 {
-  klib_bochs_print("tick !");
+  struct thread* th;
+
+  th = sched_get_running_thread();
+  ASSERT_RETURN_VOID( th!=NULL );
+  ASSERT_RETURN_VOID( th->ctx==ctx );
+
+  thread_switch(th, THREAD_READY, THREAD_SWITCH_NO_INT);
 
   return;
 }

@@ -63,7 +63,7 @@ virtmem_slab.o: start.h physmem.h virtmem_slab.h virtmem_buddy.h paging.h
 virtmem.o: ../include/types.h const.h assert.h klib.h virtmem_buddy.h
 virtmem.o: virtmem_slab.h virtmem.h
 context_cpu.o: ../include/types.h const.h klib.h assert.h virtmem_slab.h
-context_cpu.o: sched.h thread.h context_cpu.h
+context_cpu.o: context_cpu.h
 thread.o: ../include/types.h ../include/llist.h const.h klib.h assert.h
 thread.o: virtmem_slab.h virtmem.h context_cpu.h sched.h thread.h
 sched.o: ../include/types.h ../include/llist.h assert.h klib.h const.h

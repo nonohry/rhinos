@@ -133,7 +133,7 @@ PUBLIC u8_t thread_destroy(struct thread* th)
  *========================================================================*/
 
 
-PUBLIC u8_t thread_switch(struct thread* th, enum  thread_state switch_state)
+PUBLIC u8_t thread_switch(struct thread* th, enum  thread_state switch_state, u8_t flags)
 {
   struct thread* new_th;
 
@@ -169,7 +169,15 @@ PUBLIC u8_t thread_switch(struct thread* th, enum  thread_state switch_state)
   sched_enqueue(SCHED_RUNNING_QUEUE,new_th);
 
   /* Switch vers le nouveau contexte */
-  context_cpu_switch_to(new_th->ctx);  
+  if (flags == THREAD_SWITCH_NO_INT)
+    {
+      context_cpu_handle_switch_to(new_th->ctx); 
+    }
+  else
+    {
+      context_cpu_switch_to(new_th->ctx);
+    } 
+
 
   return EXIT_SUCCESS;
 }
