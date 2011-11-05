@@ -23,11 +23,20 @@
  *========================================================================*/
 
 
-#define THREAD_NAMELEN        32
-#define THREAD_STACK_SIZE     4096
+#define THREAD_NAMELEN               32
+#define THREAD_STACK_SIZE            4096
 
-#define THREAD_SWITCH_DEFAULT 0
-#define THREAD_SWITCH_NO_INT  1
+#define THREAD_SWITCH_DEFAULT        0
+#define THREAD_SWITCH_NO_INT         1
+   
+#define THREAD_PRIO_NUM              64  
+#define THREAD_NORMAL_PRIO_MAX       63
+#define THREAD_NORMAL_PRIO_MIN       24
+#define THREAD_RT_PRIO_MAX           23
+#define THREAD_RT_PRIO_MIN           0 
+
+#define THREAD_NORMAL_PRIO_DEFAULT   ( (THREAD_NORMAL_PRIO_MAX-THREAD_NORMAL_PRIO_MIN)/2 )
+#define THREAD_RT_PRIO_DEFAULT       ( (THREAD_RT_PRIO_MAX - THREAD_RT_PRIO_MIN)/2 )
 
 
 /*========================================================================
@@ -55,6 +64,10 @@ PUBLIC struct thread
   virtaddr_t stack_base;
   u32_t stack_size;
   enum thread_state state;
+  u8_t static_prio;
+  u8_t dynamic_prio;
+  u8_t static_quantum;
+  u8_t dynamic_quantum;
   struct thread* prev;
   struct thread* next;
 };
