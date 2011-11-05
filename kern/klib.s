@@ -153,6 +153,24 @@ klib_msb:
 
 	
 	;;========================================================================
+	;; u32_t klib_msb(u32_t)
+	;;========================================================================
+
+klib_lsb:
+	push 	ebp         	; Sauvegarde de EBP
+	mov  	ebp,esp 	; Mise en place de la base
+	push	esi		; Sauvegarde ESI (Requis par GCC)
+	push	edi		; Sauvegarde EDI (Requis par GCC)
+	mov  	edx,[ebp+8]	; Recupere le nombre dans edx
+	bsf     eax,edx		; Instruction bsr
+	pop	edi		; Restaure EDI
+	pop	esi		; Restaure ESI
+	mov	esp,ebp		; Restaure la pile
+	pop	ebp		; Restaure EBP
+	ret
+
+	
+	;;========================================================================
 	;; klib_load_CR3(u32_t cr3)
 	;;========================================================================
 
