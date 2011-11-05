@@ -127,13 +127,13 @@ PUBLIC int main()
   struct thread* ti;
   struct thread* ta;
 
-  to = thread_create("Toto_thread",(virtaddr_t)toto,(void*)'1',THREAD_STACK_SIZE);
-  ti = thread_create("Titi_thread",(virtaddr_t)titi,(void*)'2',THREAD_STACK_SIZE);
-  ta = thread_create("Tata_thread",(virtaddr_t)tata,(void*)'3',THREAD_STACK_SIZE);
+  to = thread_create("Toto_thread",(virtaddr_t)toto,(void*)'1',THREAD_STACK_SIZE,THREAD_RT_PRIO_DEFAULT,THREAD_QUANTUM_DEFAULT);
+  ti = thread_create("Titi_thread",(virtaddr_t)titi,(void*)'2',THREAD_STACK_SIZE,THREAD_RT_PRIO_DEFAULT,THREAD_QUANTUM_DEFAULT);
+  ta = thread_create("Tata_thread",(virtaddr_t)tata,(void*)'3',THREAD_STACK_SIZE,THREAD_RT_PRIO_DEFAULT,THREAD_QUANTUM_DEFAULT);
 
   /* Initialisation du gestionnaire des IRQ */
   irq_init();
-
+  
   /* Initialisation Horloge */
   pit_init();
   klib_bochs_print("Clock initialized (100Hz)\n");
@@ -142,6 +142,8 @@ PUBLIC int main()
   sched_dequeue(SCHED_READY_QUEUE,to);
   sched_enqueue(SCHED_RUNNING_QUEUE,to);
   context_cpu_exit_to(to->ctx);
+  
+
 
   /* On ne doit plus arriver ici (sauf DEBUG) */
   while(1)

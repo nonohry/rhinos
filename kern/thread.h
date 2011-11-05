@@ -31,12 +31,16 @@
    
 #define THREAD_PRIO_NUM              64  
 #define THREAD_NORMAL_PRIO_MAX       63
-#define THREAD_NORMAL_PRIO_MIN       24
-#define THREAD_RT_PRIO_MAX           23
+#define THREAD_NORMAL_PRIO_MIN       23
+#define THREAD_RT_PRIO_MAX           22
 #define THREAD_RT_PRIO_MIN           0 
 
-#define THREAD_NORMAL_PRIO_DEFAULT   ( (THREAD_NORMAL_PRIO_MAX-THREAD_NORMAL_PRIO_MIN)/2 )
-#define THREAD_RT_PRIO_DEFAULT       ( (THREAD_RT_PRIO_MAX - THREAD_RT_PRIO_MIN)/2 )
+#define THREAD_RT_AMPLITUDE          11
+#define THREAD_NORMAL_AMPLITUDE      20
+
+#define THREAD_NORMAL_PRIO_DEFAULT   0
+#define THREAD_RT_PRIO_DEFAULT       0
+#define THREAD_QUANTUM_DEFAULT       20
 
 
 /*========================================================================
@@ -79,7 +83,7 @@ PUBLIC struct thread
  *========================================================================*/
 
 PUBLIC void thread_init(void);
-PUBLIC struct thread* thread_create(const char* nom, virtaddr_t start_entry, void* start_arg, u32_t stack_size);
+PUBLIC struct thread* thread_create(const char* nom, virtaddr_t start_entry, void* start_arg, u32_t stack_size, char prio, u8_t quantum);
 PUBLIC u8_t thread_destroy(struct thread* th);
 PUBLIC u8_t thread_switch(struct thread* th, enum thread_state switch_state, u8_t flags);
 

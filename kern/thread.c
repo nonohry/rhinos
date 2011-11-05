@@ -49,13 +49,15 @@ PUBLIC void thread_init(void)
  *========================================================================*/
 
 
-PUBLIC struct thread* thread_create(const char* name, virtaddr_t start_entry, void* start_arg, u32_t stack_size)
+PUBLIC struct thread* thread_create(const char* name, virtaddr_t start_entry, void* start_arg, u32_t stack_size, char prio, u8_t quantum)
 {
   struct thread* th;
   u8_t i;
 
   /* Controles */
   ASSERT_RETURN( (start_entry!=0)&&(stack_size>CTX_CPU_MIN_STACK) , NULL);
+  ASSERT_RETURN( (prio<=THREAD_RT_AMPLITUDE)&&(prio>=(-THREAD_RT_AMPLITUDE)) ,NULL)
+
 
   /* Allocation dans le cache */
   th = (struct thread*)virtmem_cache_alloc(thread_cache,VIRT_CACHE_DEFAULT);
@@ -92,6 +94,14 @@ PUBLIC struct thread* thread_create(const char* name, virtaddr_t start_entry, vo
 
   /* Chainage */
   sched_enqueue(SCHED_READY_QUEUE,th);
+
+  /* Priorite */
+  th->static_prio = THREAD_RT_PRIO_MIN + ( (THREAD_RT_PRIO_MAX - THREAD_RT_PRIO_MIN)/2 ) + prio;
+  th->dynamic_prio = th->static_prio;
+
+  /* Quantum */
+  th->static_quantum = 0;
+  th->dynamic_quantum = th->static_quantum;
 
   /* Retour */
   return th;

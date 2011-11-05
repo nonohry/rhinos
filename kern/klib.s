@@ -4,6 +4,7 @@ global klib_bochs_print
 global klib_outb
 global klib_inb
 global klib_msb
+global klib_lsb
 global klib_load_CR3
 global klib_set_pg_cr0
 global klib_flush_tlb
