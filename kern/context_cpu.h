@@ -66,8 +66,5 @@ PUBLIC struct context_cpu* context_cpu_create(virtaddr_t start_entry, void* star
 PUBLIC u8_t context_cpu_destroy(struct context_cpu* ctx);
 PUBLIC void context_cpu_postsave(reg32_t ss, reg32_t* esp);
 PUBLIC void context_cpu_switch_to(struct context_cpu* ctx);
-PUBLIC void context_cpu_handle_switch_to(struct context_cpu* ctx);
-PUBLIC void context_cpu_exit_to(struct context_cpu* ctx);
-PUBLIC void context_cpu_handle_exit_to(struct context_cpu* ctx);
 
 #endif

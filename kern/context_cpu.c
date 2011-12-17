@@ -23,7 +23,6 @@
 PRIVATE void context_cpu_trampoline(cpu_ctx_func_t start_func, void* start_arg, cpu_ctx_func_t exit_func, void* exit_arg);
 
 PRIVATE struct vmem_cache* ctx_cache;
-PRIVATE  struct context_cpu* next_ctx;
 
 
 /*========================================================================
@@ -147,56 +146,19 @@ PUBLIC void context_cpu_postsave(reg32_t ss, reg32_t* esp)
 
 
 /*========================================================================
- * Changement de contexte
+ * Traite un changement de contexte
  *========================================================================*/
 
 
 PUBLIC void context_cpu_switch_to(struct context_cpu* ctx)
 {
-  /* Contexte surlequel switcher */
-  next_ctx = ctx;
-  /* Interruption pour changer le contexte */
-  klib_int50();
+
+  /* Definit le contexte courant */
+  cur_ctx = ctx;
 
   return;
 }
 
-
-/*========================================================================
- * Traite un changement de contexte
- *========================================================================*/
-
-
-PUBLIC void context_cpu_handle_switch_to(struct context_cpu* ctx)
-{
-
-  /* Affecte le nouveau contexte */
-  if (ctx == cur_ctx)
-    {
-      cur_ctx = next_ctx;
-    }
-  else
-    {
-      cur_ctx = ctx;
-    }
-
-  return;
-}
-
-
-/*========================================================================
- * Sortie d un contexte
- *========================================================================*/
-
-
-PUBLIC void context_cpu_exit_to(struct context_cpu* ctx)
-{
-  /* Contexte vers lequel sortir */
-  next_ctx = ctx;
-  /* Interruption pour forcer le changement de contexte */
-  klib_int51();
-  return;
-}
 
 
 /*========================================================================

@@ -23,9 +23,6 @@ global	hwint_13
 global	hwint_14
 global	hwint_15
 
-global	swint_switch_to
-global 	swint_exit_to	
-
 global	excep_00
 global	excep_01
 global	excep_02
@@ -49,7 +46,6 @@ extern	irq_handle_flih			; Handlers pour les IRQ en C
 extern	excep_handle			; Handlers pour les exceptions en C
 extern	cur_ctx				; Contexte courant
 extern	context_cpu_postsave		; Pretraitement de la sauvegarde de context en C
-extern	context_cpu_handle_switch_to 	; Gestion du changement de contexte
 	
 
 	;;========================================================================
@@ -211,32 +207,6 @@ hwint_14:
 
 hwint_15:
 	hwint_generic1	15
-
-
-	;;========================================================================
-	;; Soft Interrupt Handlers
-	;;========================================================================
-
-
-swint_switch_to:
-	push	FAKE_ERROR	; Faux erreur code	
-	call	save_ctx	; Sauvegarde des registres
-	push	dword [cur_ctx]	; Empile le contexte courant
-	call	context_cpu_handle_switch_to ; Handler
-	add	esp,4		; Depile le contexte courant
-	call	restore_ctx	; Restaure les registres	
-
-	
-swint_exit_to:
-	mov	esp, int_stack_top 	; Positionne la pile d interruption
-	mov	ax,DS_SELECTOR		; Ajuste les segments noyau (CS & SS sont deja positionnes)
-	mov	ds,ax
-	mov	ax,ES_SELECTOR
-	mov	es,ax	
-	push	dword [cur_ctx]	; Empile le contexte courant
-	call	context_cpu_handle_switch_to ; Handler
-	add	esp,4		; Depile le contexte courant
-	call	restore_ctx	; Restaure les registres
 	
 	
 	

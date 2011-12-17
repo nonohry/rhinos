@@ -89,8 +89,9 @@ PUBLIC struct thread* thread_create(const char* name, virtaddr_t start_entry, vo
     }
   th->name[i]=0;
 
-  /* Etat */
+  /* Etats */
   th->state = THREAD_READY;
+  th->next_state = THREAD_READY;
 
   /* Chainage */
   sched_enqueue(SCHED_READY_QUEUE,th);
@@ -139,88 +140,20 @@ PUBLIC u8_t thread_destroy(struct thread* th)
 
 
 /*========================================================================
- * Switch d un thread
- *========================================================================*/
-
-
-PUBLIC u8_t thread_switch(struct thread* th, enum  thread_state switch_state, u8_t flags)
-{
-  struct thread* new_th;
-
-  /* Recuperation du contexte courant */
-  ASSERT_RETURN( th!=NULL , EXIT_FAILURE);
-
-  /* Enleve le thread courant de la file d execution */
-  sched_dequeue(SCHED_RUNNING_QUEUE,th);
-
-  /* Ajoute le threrad ou il faut en fonction du futur etat */
-  if (switch_state == THREAD_READY)
-    {
-      sched_enqueue(SCHED_READY_QUEUE,th);
-    }
-  else if (switch_state == THREAD_BLOCKED)
-    {
-      sched_enqueue(SCHED_BLOCKED_QUEUE,th);
-    }
-  else
-    {
-      thread_exit(th);
-    }
-
-  /* Maj de l etat */
-  th->state = switch_state;
-
-  /* Choix du futur thread */
-  new_th = sched_run();
-  ASSERT_RETURN( new_th!=NULL , EXIT_FAILURE);
-
-  /* Change le nouveau thread de queue */
-  sched_dequeue(SCHED_READY_QUEUE,new_th);
-  sched_enqueue(SCHED_RUNNING_QUEUE,new_th);
-
-  /* Switch vers le nouveau contexte */
-  if (flags == THREAD_SWITCH_NO_INT)
-    {
-      context_cpu_handle_switch_to(new_th->ctx); 
-    }
-  else
-    {
-      context_cpu_switch_to(new_th->ctx);
-    } 
-
-
-  return EXIT_SUCCESS;
-}
-
-
-/*========================================================================
  * Sortie d un thread
  *========================================================================*/
 
 
 PRIVATE void thread_exit(struct thread* th)
 {
-  struct thread* new_th;
-
   /* Controle */
   ASSERT_RETURN_VOID( th!=NULL );
 
-  /* Choix du futur thread */
-  new_th = sched_run();
-  ASSERT_RETURN_VOID( new_th!=NULL );
+  /* Nouvel etat */
+  th->next_state = THREAD_DEAD;
 
- /* Enleve le thread courant de la file d execution */
-  sched_dequeue(SCHED_RUNNING_QUEUE,th);
-
-  /* Ajoute le thread dans la queue adequate */
-  sched_enqueue(SCHED_DEAD_QUEUE,th);
- 
-  /* Change le nouveau thread de queue */
-  sched_dequeue(SCHED_READY_QUEUE,new_th);
-  sched_enqueue(SCHED_RUNNING_QUEUE,new_th);
-
-  /* Switch vers le nouveau contexte */
-  context_cpu_exit_to(new_th->ctx);
+  /* DEBUG TEMPORAIRE: Attend une interruption ... */
+  while(1){}
 
   return;
 }

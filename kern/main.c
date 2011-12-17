@@ -69,7 +69,7 @@ void titi(char c)
 void tata(char c)
 {
   char t[2];
-  int j=2048;
+  int j=1048;
 
   t[0]=c;
   t[1]=0;
@@ -84,7 +84,7 @@ void tata(char c)
 	}
       j--;
     }
-
+  klib_bochs_print(" [Quit....] ");
   return;
 }
 
@@ -141,7 +141,7 @@ PUBLIC int main()
   /* Simule un ordonnancement */
   sched_dequeue(SCHED_READY_QUEUE,to);
   sched_enqueue(SCHED_RUNNING_QUEUE,to);
-  context_cpu_exit_to(to->ctx);
+  //context_cpu_exit_to(to->ctx);
   
 
 

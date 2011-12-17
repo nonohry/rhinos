@@ -27,14 +27,6 @@ PRIVATE struct thread* sched_running;
 PRIVATE struct thread* sched_blocked;
 PRIVATE struct thread* sched_dead;
 
-PRIVATE u64_t sched_bitmap;
-
-PRIVATE void sched_set_queue(u8_t qid);
-PRIVATE void sched_unset_queue(u8_t qid);
-PRIVATE u8_t sched_enqueue_readyq(struct thread* th);
-PRIVATE u8_t sched_dequeue_readyq(struct thread* th);
-PRIVATE u8_t sched_get_prio_queue(void);
-
 
 /*========================================================================
  * Initialisation
@@ -48,9 +40,6 @@ PUBLIC void sched_init(void)
   LLIST_NULLIFY(sched_running);
   LLIST_NULLIFY(sched_blocked);
   LLIST_NULLIFY(sched_dead);
-
-  /* Bitmap */
-  sched_bitmap = 0;
 
   return;
 }
@@ -70,18 +59,22 @@ PUBLIC u8_t sched_enqueue(u8_t queue, struct thread* th)
     
     case SCHED_RUNNING_QUEUE:
       LLIST_ADD(sched_running, th);
+      th->state = THREAD_RUNNING;
       break;
 
     case SCHED_READY_QUEUE:
       LLIST_ADD(sched_ready, th);
+      th->state = THREAD_READY;
       break;
 
     case SCHED_BLOCKED_QUEUE:
       LLIST_ADD(sched_blocked, th);
+      th->state = THREAD_BLOCKED;
       break;
 
     case SCHED_DEAD_QUEUE:
       LLIST_ADD(sched_dead, th);
+      th->state = THREAD_DEAD;
       break;
 
     default:
@@ -137,9 +130,44 @@ PUBLIC u8_t sched_dequeue(u8_t queue, struct thread* th)
  *========================================================================*/
 
 
-PUBLIC struct thread* sched_run(void)
+PUBLIC void sched_run(void)
 {
-  return LLIST_GETHEAD(sched_ready);
+
+  struct thread* cur_th;
+  struct thread* new_th;
+
+  /* Le thread courant */
+  cur_th = LLIST_GETHEAD(sched_running);
+
+  /* Enleve le thread courant de la file d execution */
+  sched_dequeue(SCHED_RUNNING_QUEUE,cur_th);
+  
+  /* Ajoute le thread ou il faut en fonction du futur etat */
+  if (cur_th->next_state == THREAD_READY)
+    {
+      sched_enqueue(SCHED_READY_QUEUE,cur_th);
+    }
+  else if (cur_th->next_state == THREAD_BLOCKED)
+    {
+      sched_enqueue(SCHED_BLOCKED_QUEUE,cur_th);
+    }
+  else
+    {
+      sched_enqueue(SCHED_DEAD_QUEUE,cur_th);
+    }
+
+  /* Choisis un nouveau thread */
+  new_th = LLIST_GETHEAD(sched_ready);
+  ASSERT_RETURN_VOID( new_th!=NULL );
+
+  /* Change le nouveau thread de queue */
+  sched_dequeue(SCHED_READY_QUEUE,new_th);
+  sched_enqueue(SCHED_RUNNING_QUEUE,new_th);
+
+  /* Switch vers le nouveau contexte */
+  context_cpu_switch_to(new_th->ctx); 
+
+  return;
 }
 
 
@@ -151,55 +179,4 @@ PUBLIC struct thread* sched_run(void)
 PUBLIC struct thread* sched_get_running_thread(void)
 {
   return LLIST_GETHEAD(sched_running);
-}
-
-
-/*========================================================================
- * Ajoute a la ready queue
- *========================================================================*/
-
-PRIVATE u8_t sched_enqueue_readyq(struct thread* th)
-{
-  return EXIT_SUCCESS;
-}
-
-
-/*========================================================================
- * Enleve de la ready queue
- *========================================================================*/
-
-
-PRIVATE u8_t sched_dequeue_readyq(struct thread* th)
-{
-  return EXIT_SUCCESS;
-}
-
-
-/*========================================================================
- * Active/Desactive une queue
- *========================================================================*/
-
-
-PRIVATE void sched_set_queue(u8_t qid)
-{
-  sched_bitmap |= (1<<qid);
-  return;
-}
-
-
-PRIVATE void sched_unset_queue(u8_t qid)
-{ 
-  sched_bitmap &= ~(1<<qid);
-  return;
-}
-
-
-/*========================================================================
- * Renvoie la queue de plus basse priorite
- *========================================================================*/
-
-
-PRIVATE u8_t sched_get_prio_queue()
-{
-  return klib_lsb(sched_bitmap);
 }

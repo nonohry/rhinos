@@ -68,13 +68,8 @@ PUBLIC void pit_init()
 
 PRIVATE void pit_handler(struct context_cpu* ctx)
 {
-  struct thread* th;
-
-  th = sched_get_running_thread();
-  ASSERT_RETURN_VOID( th!=NULL );
-  ASSERT_RETURN_VOID( th->ctx==ctx );
-
-  thread_switch(th, THREAD_READY, THREAD_SWITCH_NO_INT);
+  /* Ordonnaceur */
+  sched_run();
 
   return;
 }
