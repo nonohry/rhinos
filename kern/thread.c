@@ -56,6 +56,7 @@ PUBLIC struct thread* thread_create(const char* name, virtaddr_t start_entry, vo
 
   /* Controles */
   ASSERT_RETURN( (start_entry!=0)&&(stack_size>CTX_CPU_MIN_STACK) , NULL);
+  ASSERT_RETURN( (nice_level<=THREAD_NICE_TOP)&&(nice_level>=THREAD_NICE_BOTTOM) , NULL);
 
   /* Allocation dans le cache */
   th = (struct thread*)virtmem_cache_alloc(thread_cache,VIRT_CACHE_DEFAULT);
@@ -98,7 +99,7 @@ PUBLIC struct thread* thread_create(const char* name, virtaddr_t start_entry, vo
   th->nice = nice_level;
 
   /* Priorite */
-  th->sched.static_prio = SCHED_NICE2PRIO(nice_level);
+  th->sched.static_prio = THREAD_NICE2PRIO(nice_level);
   th->sched.dynamic_prio = th->sched.static_prio;
 
   /* Quantum */

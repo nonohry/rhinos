@@ -27,7 +27,10 @@
 #define THREAD_STACK_SIZE            4096
 
 #define THREAD_QUANTUM_DEFAULT       20
+#define THREAD_NICE_DEFAULT          0
 
+#define THREAD_NICE_TOP              19
+#define THREAD_NICE_BOTTOM           -24
 
 /*========================================================================
  * Structures
@@ -72,6 +75,14 @@ PUBLIC struct thread
   struct thread* next;
 };
 
+
+/*========================================================================
+ * Macros
+ *========================================================================*/
+
+
+#define THREAD_NICE2PRIO(__nice)			\
+  ( THREAD_NICE_TOP - (__nice) )
 
 
 /*========================================================================

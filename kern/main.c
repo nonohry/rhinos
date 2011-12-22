@@ -127,9 +127,9 @@ PUBLIC int main()
   struct thread* ti;
   struct thread* ta;
 
-  to = thread_create("Toto_thread",(virtaddr_t)toto,(void*)'1',THREAD_STACK_SIZE,0,THREAD_QUANTUM_DEFAULT);
-  ti = thread_create("Titi_thread",(virtaddr_t)titi,(void*)'2',THREAD_STACK_SIZE,0,THREAD_QUANTUM_DEFAULT);
-  ta = thread_create("Tata_thread",(virtaddr_t)tata,(void*)'3',THREAD_STACK_SIZE,0,THREAD_QUANTUM_DEFAULT);
+  to = thread_create("Toto_thread",(virtaddr_t)toto,(void*)'1',THREAD_STACK_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
+  ti = thread_create("Titi_thread",(virtaddr_t)titi,(void*)'2',THREAD_STACK_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
+  ta = thread_create("Tata_thread",(virtaddr_t)tata,(void*)'3',THREAD_STACK_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
 
   /* Initialisation du gestionnaire des IRQ */
   irq_init();
