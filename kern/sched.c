@@ -27,6 +27,8 @@ PRIVATE struct thread* sched_running;
 PRIVATE struct thread* sched_blocked;
 PRIVATE struct thread* sched_dead;
 
+PRIVATE void sched_enqueue_roundrobin(struct thread* th);
+
 
 /*========================================================================
  * Initialisation
@@ -63,7 +65,7 @@ PUBLIC u8_t sched_enqueue(u8_t queue, struct thread* th)
       break;
 
     case SCHED_READY_QUEUE:
-      LLIST_ADD(sched_ready, th);
+      sched_enqueue_roundrobin(th);
       th->state = THREAD_READY;
       break;
 
@@ -146,9 +148,6 @@ PUBLIC void sched_run(void)
     {
       /* Enleve le thread courant de la file d execution */
       sched_dequeue(SCHED_RUNNING_QUEUE,cur_th);
-
-      /* DEBUG: Reajuste son quantum */
-      cur_th->sched.dynamic_quantum = cur_th->sched.static_quantum;
       
       /* Ajoute le thread ou il faut en fonction du futur etat */
       if (cur_th->next_state == THREAD_READY)
@@ -189,4 +188,24 @@ PUBLIC void sched_run(void)
 PUBLIC struct thread* sched_get_running_thread(void)
 {
   return LLIST_GETHEAD(sched_running);
+}
+
+
+/*========================================================================
+ * Enfile dans la la ready queue en RoundRobin
+ *========================================================================*/
+
+
+PRIVATE void sched_enqueue_roundrobin(struct thread* th)
+{
+  if (th->sched.dynamic_quantum < 0)
+    {
+      /* Reajuste son quantum */
+      th->sched.dynamic_quantum = th->sched.static_quantum;
+    }
+
+  /* Enfile en fin de queue */
+  LLIST_ADD(sched_ready, th);
+
+  return;
 }
