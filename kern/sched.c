@@ -75,7 +75,6 @@ PUBLIC u8_t sched_enqueue(u8_t queue, struct thread* th)
       /* Enfile selon le niveau de priorite */
       if (th->sched.static_prio < SCHED_PRIO_RR)
 	{
-	  /* DEBUG temporaire */
 	  sched_enqueue_staircase(th);
 	}
       else
@@ -159,7 +158,8 @@ PUBLIC void sched_run(void)
   ASSERT_RETURN_VOID( !LLIST_ISNULL(sched_running) );
 
   /* Le thread courant */
-  cur_th = LLIST_GETHEAD(sched_running);
+  cur_th = sched_get_running_thread();
+  ASSERT_RETURN_VOID( cur_th != NULL );
 
   /* Decremente son quantum dynamique */
   cur_th->sched.dynamic_quantum--;
@@ -167,7 +167,8 @@ PUBLIC void sched_run(void)
   /* Trouve la file de plus haute priorite */
   high_prio = sched_get_higher_prio_queue();
 
-  if ( (cur_th->sched.dynamic_quantum<0) || (high_prio>cur_th->sched.dynamic_prio) || (cur_th->next_state != THREAD_READY) )
+  /* Avec cette condition, une tache de plus haute priorite est qd meme stoppee en fin de quantum  */
+  if ( (cur_th->sched.dynamic_quantum<0) || (high_prio > cur_th->sched.dynamic_prio) || (cur_th->next_state != THREAD_READY) )
     {
       /* Enleve le thread courant de la file d execution */
       sched_dequeue(SCHED_RUNNING_QUEUE,cur_th);
@@ -186,7 +187,7 @@ PUBLIC void sched_run(void)
 	  sched_enqueue(SCHED_DEAD_QUEUE,cur_th);
 	}
       
-      /* Choisis un nouveau thread DEBUG*/
+      /* Choisis un nouveau thread */
       new_th = LLIST_GETHEAD(sched_ready[high_prio]);
       ASSERT_RETURN_VOID( new_th!=NULL );
       
@@ -248,6 +249,7 @@ PRIVATE void sched_enqueue_staircase(struct thread* th)
       if (th->sched.dynamic_prio > 0)
 	{
 	  th->sched.dynamic_prio--;
+	  /* Reaffecte un quantum */
 	  th->sched.dynamic_quantum=th->sched.static_quantum;
 	}
       else
@@ -287,7 +289,8 @@ PRIVATE void sched_enqueue_staircase(struct thread* th)
 PRIVATE u8_t sched_get_higher_prio_queue(void)
 {
   u8_t i;
-  
+
+  /* Parcourt simplement les files de la ready queue */  
   for(i=SCHED_PRIO_MAX;(i!=0)&&(LLIST_ISNULL(sched_ready[i]));i--)
     {}
 
