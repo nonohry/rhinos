@@ -28,6 +28,7 @@ PRIVATE struct thread* sched_blocked;
 PRIVATE struct thread* sched_dead;
 
 PRIVATE void sched_enqueue_roundrobin(struct thread* th);
+PRIVATE void sched_enqueue_staircase(struct thread* th);
 PRIVATE u8_t sched_get_higher_prio_queue(void);
 
 
@@ -75,7 +76,7 @@ PUBLIC u8_t sched_enqueue(u8_t queue, struct thread* th)
       if (th->sched.static_prio < SCHED_PRIO_RR)
 	{
 	  /* DEBUG temporaire */
-	  sched_enqueue_roundrobin(th);
+	  sched_enqueue_staircase(th);
 	}
       else
 	{
@@ -154,6 +155,9 @@ PUBLIC void sched_run(void)
   struct thread* new_th;
   u8_t high_prio;
 
+  /* Controle */
+  ASSERT_RETURN_VOID( !LLIST_ISNULL(sched_running) );
+
   /* Le thread courant */
   cur_th = LLIST_GETHEAD(sched_running);
 
@@ -189,7 +193,7 @@ PUBLIC void sched_run(void)
       /* Change le nouveau thread de queue */
       sched_dequeue(SCHED_READY_QUEUE,new_th);
       sched_enqueue(SCHED_RUNNING_QUEUE,new_th);
-      
+ 
       /* Switch vers le nouveau contexte */
       context_cpu_switch_to(new_th->ctx); 
 
@@ -228,6 +232,51 @@ PRIVATE void sched_enqueue_roundrobin(struct thread* th)
 
   return;
 }
+
+
+
+/*========================================================================
+ * Enfile dans une file de la ready queue en Staircase
+ *========================================================================*/
+
+
+PRIVATE void sched_enqueue_staircase(struct thread* th)
+{
+  if (th->sched.dynamic_quantum < 0)
+    {
+      /* Decremente la priorite dynamique */
+      if (th->sched.dynamic_prio > 0)
+	{
+	  th->sched.dynamic_prio--;
+	  th->sched.dynamic_quantum=th->sched.static_quantum;
+	}
+      else
+	{
+	  /* Ici, le thread est en fin de plus basse priorite, on decremente la priorite de tete */
+	  th->sched.head_prio--;
+
+	  if (th->sched.head_prio < 0)
+	    {
+	      /* Remet la priorite de tete a l originale en cas de fin de cycle */
+	      th->sched.head_prio = th->sched.static_prio;
+	    }
+
+	  /* Ajuste le priorite dynamique sur la priorite de tete */
+	  th->sched.dynamic_prio = th->sched.head_prio;
+	  /* Ajuste le quantum en fonction de la priorite */
+	  th->sched.dynamic_quantum = (th->sched.static_prio - th->sched.head_prio)*th->sched.static_quantum;
+
+	}
+
+    }
+
+  /* Enfile en fin de queue */
+  LLIST_ADD(sched_ready[th->sched.dynamic_prio], th);  
+
+  return;
+}
+
+
 
 
 /*========================================================================

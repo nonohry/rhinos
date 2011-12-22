@@ -26,7 +26,7 @@
 #define THREAD_NAMELEN               32
 #define THREAD_STACK_SIZE            4096
 
-#define THREAD_QUANTUM_DEFAULT       20
+#define THREAD_QUANTUM_DEFAULT       2
 #define THREAD_NICE_DEFAULT          0
 
 #define THREAD_NICE_TOP              19
@@ -54,6 +54,7 @@ PUBLIC struct sched_info
 {
   u8_t static_prio;
   u8_t dynamic_prio;
+  s8_t head_prio;
   u8_t static_quantum;
   s8_t dynamic_quantum;
 };

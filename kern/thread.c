@@ -98,6 +98,7 @@ PUBLIC struct thread* thread_create(const char* name, virtaddr_t start_entry, vo
   /* Priorite */
   th->sched.static_prio = THREAD_NICE2PRIO(nice_level);
   th->sched.dynamic_prio = th->sched.static_prio;
+  th->sched.head_prio = th->sched.static_prio;
 
   /* Quantum */
   th->sched.static_quantum = quantum;
