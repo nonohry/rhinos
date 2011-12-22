@@ -139,33 +139,43 @@ PUBLIC void sched_run(void)
   /* Le thread courant */
   cur_th = LLIST_GETHEAD(sched_running);
 
-  /* Enleve le thread courant de la file d execution */
-  sched_dequeue(SCHED_RUNNING_QUEUE,cur_th);
-  
-  /* Ajoute le thread ou il faut en fonction du futur etat */
-  if (cur_th->next_state == THREAD_READY)
-    {
-      sched_enqueue(SCHED_READY_QUEUE,cur_th);
-    }
-  else if (cur_th->next_state == THREAD_BLOCKED)
-    {
-      sched_enqueue(SCHED_BLOCKED_QUEUE,cur_th);
-    }
-  else
-    {
-      sched_enqueue(SCHED_DEAD_QUEUE,cur_th);
-    }
+  /* Decremente son quantum dynamique */
+  cur_th->sched.dynamic_quantum--;
 
-  /* Choisis un nouveau thread */
-  new_th = LLIST_GETHEAD(sched_ready);
-  ASSERT_RETURN_VOID( new_th!=NULL );
+  if (cur_th->sched.dynamic_quantum<0)
+    {
+      /* Enleve le thread courant de la file d execution */
+      sched_dequeue(SCHED_RUNNING_QUEUE,cur_th);
 
-  /* Change le nouveau thread de queue */
-  sched_dequeue(SCHED_READY_QUEUE,new_th);
-  sched_enqueue(SCHED_RUNNING_QUEUE,new_th);
+      /* DEBUG: Reajuste son quantum */
+      cur_th->sched.dynamic_quantum = cur_th->sched.static_quantum;
+      
+      /* Ajoute le thread ou il faut en fonction du futur etat */
+      if (cur_th->next_state == THREAD_READY)
+	{
+	  sched_enqueue(SCHED_READY_QUEUE,cur_th);
+	}
+      else if (cur_th->next_state == THREAD_BLOCKED)
+	{
+	  sched_enqueue(SCHED_BLOCKED_QUEUE,cur_th);
+	}
+      else
+	{
+	  sched_enqueue(SCHED_DEAD_QUEUE,cur_th);
+	}
+      
+      /* Choisis un nouveau thread */
+      new_th = LLIST_GETHEAD(sched_ready);
+      ASSERT_RETURN_VOID( new_th!=NULL );
+      
+      /* Change le nouveau thread de queue */
+      sched_dequeue(SCHED_READY_QUEUE,new_th);
+      sched_enqueue(SCHED_RUNNING_QUEUE,new_th);
+      
+      /* Switch vers le nouveau contexte */
+      context_cpu_switch_to(new_th->ctx); 
 
-  /* Switch vers le nouveau contexte */
-  context_cpu_switch_to(new_th->ctx); 
+    }
 
   return;
 }
