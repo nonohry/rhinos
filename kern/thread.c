@@ -92,9 +92,6 @@ PUBLIC struct thread* thread_create(const char* name, virtaddr_t start_entry, vo
   th->state = THREAD_READY;
   th->next_state = THREAD_READY;
 
-  /* Chainage */
-  sched_enqueue(SCHED_READY_QUEUE,th);
-
   /* Nice Level */
   th->nice = nice_level;
 
@@ -105,6 +102,9 @@ PUBLIC struct thread* thread_create(const char* name, virtaddr_t start_entry, vo
   /* Quantum */
   th->sched.static_quantum = quantum;
   th->sched.dynamic_quantum = quantum;
+
+  /* Chainage */
+  sched_enqueue(SCHED_READY_QUEUE,th);
 
   /* Retour */
   return th;

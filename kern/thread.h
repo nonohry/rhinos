@@ -53,7 +53,7 @@ PUBLIC enum thread_state
 PUBLIC struct sched_info
 {
   u8_t static_prio;
-  s8_t dynamic_prio;
+  u8_t dynamic_prio;
   u8_t static_quantum;
   s8_t dynamic_quantum;
 };

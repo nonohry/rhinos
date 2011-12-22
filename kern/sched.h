@@ -28,6 +28,10 @@
 #define SCHED_BLOCKED_QUEUE          3
 #define SCHED_DEAD_QUEUE             4
 
+#define SCHED_QUEUE_SIZE             (THREAD_NICE_TOP-THREAD_NICE_BOTTOM+1)
+#define SCHED_PRIO_MIN               THREAD_NICE2PRIO(THREAD_NICE_TOP)
+#define SCHED_PRIO_MAX               THREAD_NICE2PRIO(THREAD_NICE_BOTTOM)
+#define SCHED_PRIO_RR                THREAD_NICE2PRIO(-21)
 
 
 /*========================================================================

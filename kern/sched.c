@@ -22,12 +22,13 @@
  * Declaration Private
  *========================================================================*/
 
-PRIVATE struct thread* sched_ready;
+PRIVATE struct thread* sched_ready[SCHED_QUEUE_SIZE];
 PRIVATE struct thread* sched_running;
 PRIVATE struct thread* sched_blocked;
 PRIVATE struct thread* sched_dead;
 
 PRIVATE void sched_enqueue_roundrobin(struct thread* th);
+PRIVATE u8_t sched_get_higher_prio_queue(void);
 
 
 /*========================================================================
@@ -37,8 +38,13 @@ PRIVATE void sched_enqueue_roundrobin(struct thread* th);
 
 PUBLIC void sched_init(void)
 {
+  u8_t i;
+
   /* Initialisation des listes */
-  LLIST_NULLIFY(sched_ready);
+  for(i=0;i<SCHED_QUEUE_SIZE;i++)
+    {
+      LLIST_NULLIFY(sched_ready[i]);
+    }
   LLIST_NULLIFY(sched_running);
   LLIST_NULLIFY(sched_blocked);
   LLIST_NULLIFY(sched_dead);
@@ -65,7 +71,16 @@ PUBLIC u8_t sched_enqueue(u8_t queue, struct thread* th)
       break;
 
     case SCHED_READY_QUEUE:
-      sched_enqueue_roundrobin(th);
+      /* Enfile selon le niveau de priorite */
+      if (th->sched.static_prio < SCHED_PRIO_RR)
+	{
+	  /* DEBUG temporaire */
+	  sched_enqueue_roundrobin(th);
+	}
+      else
+	{
+	  sched_enqueue_roundrobin(th);
+	}
       th->state = THREAD_READY;
       break;
 
@@ -106,7 +121,7 @@ PUBLIC u8_t sched_dequeue(u8_t queue, struct thread* th)
       break;
 
     case SCHED_READY_QUEUE:
-      LLIST_REMOVE(sched_ready, th);
+      LLIST_REMOVE(sched_ready[th->sched.dynamic_prio], th);
       break;
 
     case SCHED_BLOCKED_QUEUE:
@@ -137,6 +152,7 @@ PUBLIC void sched_run(void)
 
   struct thread* cur_th;
   struct thread* new_th;
+  u8_t high_prio;
 
   /* Le thread courant */
   cur_th = LLIST_GETHEAD(sched_running);
@@ -144,7 +160,10 @@ PUBLIC void sched_run(void)
   /* Decremente son quantum dynamique */
   cur_th->sched.dynamic_quantum--;
 
-  if (cur_th->sched.dynamic_quantum<0)
+  /* Trouve la file de plus haute priorite */
+  high_prio = sched_get_higher_prio_queue();
+
+  if ( (cur_th->sched.dynamic_quantum<0) || (high_prio>cur_th->sched.dynamic_prio) || (cur_th->next_state != THREAD_READY) )
     {
       /* Enleve le thread courant de la file d execution */
       sched_dequeue(SCHED_RUNNING_QUEUE,cur_th);
@@ -163,8 +182,8 @@ PUBLIC void sched_run(void)
 	  sched_enqueue(SCHED_DEAD_QUEUE,cur_th);
 	}
       
-      /* Choisis un nouveau thread */
-      new_th = LLIST_GETHEAD(sched_ready);
+      /* Choisis un nouveau thread DEBUG*/
+      new_th = LLIST_GETHEAD(sched_ready[high_prio]);
       ASSERT_RETURN_VOID( new_th!=NULL );
       
       /* Change le nouveau thread de queue */
@@ -192,7 +211,7 @@ PUBLIC struct thread* sched_get_running_thread(void)
 
 
 /*========================================================================
- * Enfile dans la la ready queue en RoundRobin
+ * Enfile dans une file de la ready queue en RoundRobin
  *========================================================================*/
 
 
@@ -205,7 +224,23 @@ PRIVATE void sched_enqueue_roundrobin(struct thread* th)
     }
 
   /* Enfile en fin de queue */
-  LLIST_ADD(sched_ready, th);
+  LLIST_ADD(sched_ready[th->sched.dynamic_prio], th);
 
   return;
+}
+
+
+/*========================================================================
+ * Trouve la file de la ready queue de plus haute priorite
+ *========================================================================*/
+
+
+PRIVATE u8_t sched_get_higher_prio_queue(void)
+{
+  u8_t i;
+  
+  for(i=SCHED_PRIO_MAX;(i!=0)&&(LLIST_ISNULL(sched_ready[i]));i--)
+    {}
+
+  return i;
 }
