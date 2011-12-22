@@ -26,20 +26,6 @@
 #define THREAD_NAMELEN               32
 #define THREAD_STACK_SIZE            4096
 
-#define THREAD_SWITCH_DEFAULT        0
-#define THREAD_SWITCH_NO_INT         1
-   
-#define THREAD_PRIO_NUM              64  
-#define THREAD_NORMAL_PRIO_MAX       63
-#define THREAD_NORMAL_PRIO_MIN       23
-#define THREAD_RT_PRIO_MAX           22
-#define THREAD_RT_PRIO_MIN           0 
-
-#define THREAD_RT_AMPLITUDE          11
-#define THREAD_NORMAL_AMPLITUDE      20
-
-#define THREAD_NORMAL_PRIO_DEFAULT   0
-#define THREAD_RT_PRIO_DEFAULT       0
 #define THREAD_QUANTUM_DEFAULT       20
 
 
@@ -59,6 +45,17 @@ PUBLIC enum thread_state
 };
 
 
+/* Donnees Ordonnanceur */
+
+PUBLIC struct sched_info
+{
+  u8_t static_prio;
+  s8_t dynamic_prio;
+  u8_t static_quantum;
+  s8_t dynamic_quantum;
+};
+
+
 /* Structure thread */
 
 PUBLIC struct thread
@@ -69,10 +66,8 @@ PUBLIC struct thread
   u32_t stack_size;
   enum thread_state state;
   enum thread_state next_state;
-  u8_t static_prio;
-  u8_t dynamic_prio;
-  u8_t static_quantum;
-  u8_t dynamic_quantum;
+  s8_t nice;
+  struct sched_info sched;
   struct thread* prev;
   struct thread* next;
 };
@@ -84,7 +79,7 @@ PUBLIC struct thread
  *========================================================================*/
 
 PUBLIC void thread_init(void);
-PUBLIC struct thread* thread_create(const char* nom, virtaddr_t start_entry, void* start_arg, u32_t stack_size, char prio, u8_t quantum);
+PUBLIC struct thread* thread_create(const char* nom, virtaddr_t start_entry, void* start_arg, u32_t stack_size, s8_t nice_level, u8_t quantum);
 PUBLIC u8_t thread_destroy(struct thread* th);
 
 #endif
