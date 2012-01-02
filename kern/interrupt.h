@@ -38,9 +38,6 @@ EXTERN void hwint_13(void);
 EXTERN void hwint_14(void);
 EXTERN void hwint_15(void);
 
-EXTERN void swint_switch_to(void);
-EXTERN void swint_exit_to(void);
-
 EXTERN void excep_00(void);
 EXTERN void excep_01(void);
 EXTERN void excep_02(void);
