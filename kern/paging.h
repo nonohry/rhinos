@@ -73,20 +73,20 @@ PUBLIC struct pte
  *========================================================================*/
 
 /* Directory d'une adresse virtuelle */
-#define PAGING_GET_PDE(addr)				\
-  ( (addr) >> PAGING_DIRSHIFT )
+#define PAGING_GET_PDE(__addr)				\
+  ( (__addr) >> PAGING_DIRSHIFT )
 
 /* Table d'une adresse virtuelle */
-#define PAGING_GET_PTE(addr)				\
-  ( ((addr) >> PAGING_TBLSHIFT)&PAGING_TBLMASK )
+#define PAGING_GET_PTE(__addr)				\
+  ( ((__addr) >> PAGING_TBLSHIFT)&PAGING_TBLMASK )
 
 /* Alignement inferieur sur CONST_PAGE_SIZE */
-#define PAGING_ALIGN_INF(addr)			\
-  ( ((addr) >> CONST_PAGE_SHIFT) << CONST_PAGE_SHIFT )
+#define PAGING_ALIGN_INF(__addr)			\
+  ( ((__addr) >> CONST_PAGE_SHIFT) << CONST_PAGE_SHIFT )
 
 /* Alignement superieur sur CONST_PAGE_SIZE */
-#define PAGING_ALIGN_SUP(addr)						\
-  ( (((addr)&0xFFFFF000) == (addr))?((addr) >> CONST_PAGE_SHIFT) << CONST_PAGE_SHIFT:(((addr) >> CONST_PAGE_SHIFT)+1) << CONST_PAGE_SHIFT )
+#define PAGING_ALIGN_SUP(__addr)						\
+  ( (((__addr)&0xFFFFF000) == (__addr))?((__addr) >> CONST_PAGE_SHIFT) << CONST_PAGE_SHIFT:(((__addr) >> CONST_PAGE_SHIFT)+1) << CONST_PAGE_SHIFT )
 
 /* Self Mapping: Page Directory courant */
 #define PAGING_GET_PD()							\

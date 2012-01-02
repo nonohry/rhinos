@@ -43,20 +43,20 @@
  *========================================================================*/
 
 /* Alignement inferieur sur PPAGE_SIZE */
-#define PHYS_ALIGN_INF(addr)			\
-  ( ((addr) >> CONST_PAGE_SHIFT) << CONST_PAGE_SHIFT )
+#define PHYS_ALIGN_INF(__addr)			\
+  ( ((__addr) >> CONST_PAGE_SHIFT) << CONST_PAGE_SHIFT )
 
 /* Alignement superieur sur PPAGE_SIZE */
-#define PHYS_ALIGN_SUP(addr)						\
-  ( (((addr)&0xFFFFF000) == (addr))?((addr) >> CONST_PAGE_SHIFT) << CONST_PAGE_SHIFT:(((addr) >> CONST_PAGE_SHIFT)+1) << CONST_PAGE_SHIFT )
+#define PHYS_ALIGN_SUP(__addr)						\
+  ( (((__addr)&0xFFFFF000) == (__addr))?((__addr) >> CONST_PAGE_SHIFT) << CONST_PAGE_SHIFT:(((__addr) >> CONST_PAGE_SHIFT)+1) << CONST_PAGE_SHIFT )
 
 /* Description de page d une adresse donnee */
-#define PHYS_GET_DESC(addr)						\
-  ( (struct ppage_desc*)(PHYS_POOL_AREA_START + ((addr) >> CONST_PAGE_SHIFT)*sizeof(struct ppage_desc)) )
+#define PHYS_GET_DESC(__addr)						\
+  ( (struct ppage_desc*)(PHYS_POOL_AREA_START + ((__addr) >> CONST_PAGE_SHIFT)*sizeof(struct ppage_desc)) )
 
 /* Existence d une page description */
-#define PHYS_PDESC_ISNULL(pdescaddr)		\
-  ( ((physaddr_t)(pdescaddr)) == PHYS_POOL_AREA_START )
+#define PHYS_PDESC_ISNULL(__pdescaddr)		\
+  ( ((physaddr_t)(__pdescaddr)) == PHYS_POOL_AREA_START )
 
 
 /* Zeroing d un ppage_desc */
