@@ -147,7 +147,7 @@ PUBLIC u8_t sched_dequeue(u8_t queue, struct thread* th)
  *========================================================================*/
 
 
-PUBLIC void sched_run(void)
+PUBLIC void sched_run(u8_t flag)
 {
 
   struct thread* cur_th;
@@ -161,8 +161,11 @@ PUBLIC void sched_run(void)
   cur_th = sched_get_running_thread();
   ASSERT_RETURN_VOID( cur_th != NULL );
 
-  /* Decremente son quantum dynamique */
-  cur_th->sched.dynamic_quantum--;
+  /* Decremente son quantum dynamique si appel par le PIT */
+  if (flag == SCHED_FROM_PIT)
+    {
+      cur_th->sched.dynamic_quantum--;
+    }
 
   /* Trouve la file de plus haute priorite */
   high_prio = sched_get_higher_prio_queue();

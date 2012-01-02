@@ -7,10 +7,8 @@
 #include "assert.h"
 #include "const.h"
 #include "klib.h"
-#include "tables.h"
 #include "interrupt.h"
 #include "irq.h"
-#include "thread.h"
 #include "sched.h"
 #include "pit.h"
 
@@ -69,7 +67,7 @@ PUBLIC void pit_init()
 PRIVATE void pit_handler(struct context_cpu* ctx)
 {
   /* Ordonnanceur */
-  sched_run();
+  sched_run(SCHED_FROM_PIT);
 
   return;
 }
