@@ -67,7 +67,7 @@ PUBLIC void pit_init()
 PRIVATE void pit_handler(struct context_cpu* ctx)
 {
   /* Ordonnanceur */
-  sched_run(SCHED_FROM_PIT);
+  sched_schedule(SCHED_FROM_PIT);
 
   return;
 }
