@@ -60,17 +60,17 @@
 
 
 /* Zeroing d un ppage_desc */
-#define PHYS_NULLIFY_DESC(desc)			\
-  {						\
-    (desc)->start = 0;				\
-    (desc)->size = 0;				\
-    (desc)->maps = 0;				\
-    (desc)->index = 0;				\
-    (desc)->cache = NULL;			\
-    (desc)->bufctl = NULL;			\
-    (desc)->area = NULL;			\
-    (desc)->prev = NULL;			\
-    (desc)->next = NULL;			\
+#define PHYS_NULLIFY_DESC(__desc)			\
+  {							\
+    (__desc)->start = 0;				\
+    (__desc)->size = 0;					\
+    (__desc)->maps = 0;					\
+    (__desc)->index = 0;				\
+    (__desc)->cache = NULL;				\
+    (__desc)->bufctl = NULL;				\
+    (__desc)->area = NULL;				\
+    (__desc)->prev = NULL;				\
+    (__desc)->next = NULL;				\
   }
 
 

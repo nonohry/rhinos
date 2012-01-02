@@ -10,7 +10,7 @@
 #include "klib.h"
 
 /* Convertit une expression en chaine */
-#define TO_STRING(X)  #X
+#define TO_STRING(__X)  #__X
 
 
 /* Verifie une assertion */

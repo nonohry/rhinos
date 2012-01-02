@@ -93,8 +93,8 @@ PUBLIC struct pte
   ( (virtaddr_t)(PAGING_SELFMAP<<PAGING_DIRSHIFT) + (virtaddr_t)(PAGING_SELFMAP<<PAGING_TBLSHIFT) )
 
 /* Self Mapping: Page Table i du PD courant */
-#define PAGING_GET_PT(i)						\
-  ( (virtaddr_t)(PAGING_SELFMAP<<PAGING_DIRSHIFT) + (virtaddr_t)((i)<<PAGING_TBLSHIFT) )
+#define PAGING_GET_PT(__i)						\
+  ( (virtaddr_t)(PAGING_SELFMAP<<PAGING_DIRSHIFT) + (virtaddr_t)((__i)<<PAGING_TBLSHIFT) )
 
 
 /*========================================================================
