@@ -11,7 +11,7 @@
 	%assign BOOT1_SEG		0x80
 
 	%assign KERN_LBA_START		3
-	%assign	KERN_SIZE		80
+	%assign	KERN_SIZE		100
 	%assign KERN_LBA_END		(KERN_LBA_START+KERN_SIZE-1)
 	%assign	KERN_ABS_ADDR		0x1000
 

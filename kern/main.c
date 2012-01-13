@@ -22,7 +22,7 @@
 #include "sched.h"
 #include "irq.h"
 #include "pit.h"
-
+#include "ipc.h"
 
 void toto(char c)
 {
@@ -34,7 +34,8 @@ void toto(char c)
   while(1)
     {
       u32_t i=0;
-      klib_bochs_print(t);
+      ipc_test(40,51);
+      //klib_bochs_print(t);
       while(i < (1<<12))
 	{
 	  i++;
@@ -142,6 +143,7 @@ PUBLIC int main()
   /* Initialisation Horloge */
   pit_init();
   klib_bochs_print("Clock initialized (100Hz)\n");
+
 
 
   /* On ne doit plus arriver ici (sauf DEBUG) */

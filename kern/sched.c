@@ -67,12 +67,13 @@ PUBLIC u8_t sched_enqueue(u8_t queue, struct thread* th)
     {
     
     case SCHED_RUNNING_QUEUE:
-      LLIST_ADD(sched_running, th);
+      
+       LLIST_ADD(sched_running, th);
       th->state = THREAD_RUNNING;
       break;
 
     case SCHED_READY_QUEUE:
-      /* Enfile selon le niveau de priorite */
+       /* Enfile selon le niveau de priorite */
       if (th->sched.static_prio < SCHED_PRIO_RR)
 	{
 	  sched_enqueue_staircase(th);
@@ -85,21 +86,21 @@ PUBLIC u8_t sched_enqueue(u8_t queue, struct thread* th)
       break;
 
     case SCHED_BLOCKED_QUEUE:
-      LLIST_ADD(sched_blocked, th);
+       LLIST_ADD(sched_blocked, th);
       th->state = THREAD_BLOCKED;
       break;
 
     case SCHED_DEAD_QUEUE:
-      LLIST_ADD(sched_dead, th);
+       LLIST_ADD(sched_dead, th);
       th->state = THREAD_DEAD;
       break;
 
     default:
-      return EXIT_FAILURE;
+       return EXIT_FAILURE;
       
     }
 
-  return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 
 }
 
@@ -113,27 +114,28 @@ PUBLIC u8_t sched_dequeue(u8_t queue, struct thread* th)
 {
   ASSERT_RETURN( th!=NULL, EXIT_FAILURE);
 
+
   switch(queue)
     {
     
     case SCHED_RUNNING_QUEUE:
-      LLIST_REMOVE(sched_running, th);
+       LLIST_REMOVE(sched_running, th);
       break;
 
     case SCHED_READY_QUEUE:
-      LLIST_REMOVE(sched_ready[th->sched.dynamic_prio], th);
+       LLIST_REMOVE(sched_ready[th->sched.dynamic_prio], th);
       break;
 
     case SCHED_BLOCKED_QUEUE:
-      LLIST_REMOVE(sched_blocked, th);
+       LLIST_REMOVE(sched_blocked, th);
       break;
 
     case SCHED_DEAD_QUEUE:
-      LLIST_REMOVE(sched_dead, th);
+       LLIST_REMOVE(sched_dead, th);
       break;
 
     default:
-      return EXIT_FAILURE;
+       return EXIT_FAILURE;
       
     }
 
@@ -166,6 +168,7 @@ PUBLIC void sched_schedule(u8_t flag)
     {
       cur_th->sched.dynamic_quantum--;
     }
+  
 
   /* Trouve la file de plus haute priorite */
   high_prio = sched_get_higher_prio_queue();
@@ -175,7 +178,7 @@ PUBLIC void sched_schedule(u8_t flag)
     {
       /* Enleve le thread courant de la file d execution */
       sched_dequeue(SCHED_RUNNING_QUEUE,cur_th);
-      
+
       /* Ajoute le thread ou il faut en fonction du futur etat */
       if (cur_th->next_state == THREAD_READY)
 	{

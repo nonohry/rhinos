@@ -128,8 +128,8 @@ PUBLIC u8_t context_cpu_destroy(struct context_cpu* ctx)
 
 PUBLIC void context_cpu_postsave(reg32_t ss, reg32_t* esp)
 {
-  /* Traitement si pas changement de privileges */
-  if (ss == CONST_SS_SELECTOR)
+  /* Traitement si pas changement de privileges (Note: SS est sur 16bits) */
+  if ((ss & 0xFF) == CONST_SS_SELECTOR)
     {
       /* Recupere les registres oublies */
       cur_ctx->ret_addr = *(esp);
@@ -139,6 +139,7 @@ PUBLIC void context_cpu_postsave(reg32_t ss, reg32_t* esp)
       cur_ctx->eflags = *(esp+4);
       cur_ctx->esp = (reg32_t)(esp);
       cur_ctx->ss = CONST_SS_SELECTOR;
+
     }
   
   return;

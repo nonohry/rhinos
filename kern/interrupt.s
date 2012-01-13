@@ -23,6 +23,8 @@ global	hwint_13
 global	hwint_14
 global	hwint_15
 
+global	swint_syscall
+	
 global	excep_00
 global	excep_01
 global	excep_02
@@ -46,6 +48,7 @@ extern	irq_handle_flih			; Handlers pour les IRQ en C
 extern	excep_handle			; Handlers pour les exceptions en C
 extern	cur_ctx				; Contexte courant
 extern	context_cpu_postsave		; Pretraitement de la sauvegarde de context en C
+extern	syscall_handle			; Gestion des appels systemes en C
 	
 
 	;;========================================================================
@@ -74,7 +77,7 @@ extern	context_cpu_postsave		; Pretraitement de la sauvegarde de context en C
 	;; Fake Error Code
 	;;
 %assign		FAKE_ERROR		0xFEC	
-
+%assign		FAKE_ERROR2		0xFEB
 	;;
 	;; Offset dans struct context_cpu
 	;;
@@ -209,6 +212,17 @@ hwint_15:
 	hwint_generic1	15
 	
 	
+	;;========================================================================
+	;; Software Interrupt Handlers
+	;;========================================================================
+
+
+swint_syscall:
+        push    FAKE_ERROR2      ; Faux erreur code      
+        call    save_ctx        ; Sauvegarde des registres
+        call    syscall_handle  ; Handler syscall()
+        call    restore_ctx     ; Restaure les registres
+	
 	
 	;;========================================================================
 	;; Sauvegarde du contexte pour les IRQ et les exceptions
@@ -254,12 +268,12 @@ restore_ctx:
 	o16 pop	es		; en 16bits
 	o16 pop	ds
 	popad		    	; Restaure les registre generaux
-	 
+	
 	cmp 	dword [esp+CONTEXT_CS_OFFSET], CS_SELECTOR 	; Teste si le contexte est un contexte noyau
 	jne 	restore_ctx_next	    			; Saute a la suite si ce n'est pas le cas
 	mov 	esp, dword [esp+CONTEXT_ESP_OFFSET]	    	; Retourne sur la pile interrompue (qui contient les bonnes infos pour iret) sinon
 
-restore_ctx_next:	
+restore_ctx_next:
 	add 	esp,4		; Depile l adresse de retour de save_ctx
 	add 	esp,4		; Depile le code d erreur
 	iretd
