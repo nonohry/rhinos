@@ -22,7 +22,7 @@
 #include "sched.h"
 #include "irq.h"
 #include "pit.h"
-#include "ipc.h"
+#include <ipc.h>
 
 void toto(char c)
 {

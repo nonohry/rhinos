@@ -18,7 +18,7 @@ CFLAGS	=	-I../include
 
 # Fichiers source et de sortie
 
-ASM_SRC	=	khead.s klib.s interrupt.s ipc.s
+ASM_SRC	=	khead.s klib.s interrupt.s
 ASM_OUT	=	${ASM_SRC:.s=.o}
 C_SRC	=	start.c seg.c tables.c pic.c pit.c irq.c exceptions.c physmem.c paging.c virtmem_buddy.c virtmem_slab.c virtmem.c context_cpu.c thread.c sched.c syscall.c main.c 
 C_OUT	=	${C_SRC:.c=.o}
@@ -26,8 +26,8 @@ OBJ	=	$(ASM_OUT) $(C_OUT)
 
 # Cibles
 
-kern: $(OBJ)
-	$(LD) $(CFLAGS) -o kern $(OBJ)
+all: $(OBJ)
+
 
 asm:	$(ASM_OUT)
 
@@ -72,4 +72,5 @@ syscall.o: ../include/types.h ../include/llist.h const.h klib.h assert.h
 syscall.o: thread.h context_cpu.h sched.h syscall.h
 main.o: ../include/types.h const.h ../include/llist.h start.h klib.h assert.h
 main.o: physmem.h virtmem_slab.h virtmem_buddy.h paging.h virtmem.h
-main.o: context_cpu.h thread.h sched.h irq.h interrupt.h pit.h ipc.h
+main.o: context_cpu.h thread.h sched.h irq.h interrupt.h pit.h
+main.o: ../include/ipc.h
