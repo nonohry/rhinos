@@ -32,6 +32,9 @@
 #define THREAD_NICE_TOP              19
 #define THREAD_NICE_BOTTOM           -24
 
+#define THREAD_HASH_SIZE             1024
+
+
 /*========================================================================
  * Structures
  *========================================================================*/
@@ -57,6 +60,17 @@ PUBLIC struct sched_info
   s8_t head_prio;
   u8_t static_quantum;
   s8_t dynamic_quantum;
+};
+
+
+/* Donnees d identification */
+
+PUBLIC struct threadID
+{
+  s32_t id;
+  struct thread * thread;
+  struct threadID* prev;
+  struct threadID* next;
 };
 
 
@@ -89,6 +103,9 @@ PUBLIC struct thread
 /*========================================================================
  * Prototypes
  *========================================================================*/
+
+
+PUBLIC struct threadID* thread_hashID[THREAD_HASH_SIZE];
 
 PUBLIC void thread_init(void);
 PUBLIC struct thread* thread_create(const char* nom, virtaddr_t start_entry, void* start_arg, u32_t stack_size, s8_t nice_level, u8_t quantum);

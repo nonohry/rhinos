@@ -26,6 +26,7 @@
 
 
 PRIVATE struct vmem_cache* thread_cache;
+PRIVATE struct vmem_cache* threadID_cache;
 
 PRIVATE void thread_exit(struct thread* th);
 
@@ -36,9 +37,12 @@ PRIVATE void thread_exit(struct thread* th);
 
 PUBLIC void thread_init(void)
 {
-  /* Alloue un cache */
+  /* Alloue des caches */
   thread_cache = virtmem_cache_create("thread_cache",sizeof(struct thread),0,0,VIRT_CACHE_DEFAULT,NULL,NULL);
   ASSERT_FATAL( thread_cache!=NULL );
+
+  threadID_cache = virtmem_cache_create("threadID_cache",sizeof(struct threadID),0,0,VIRT_CACHE_DEFAULT,NULL,NULL);
+  ASSERT_FATAL( threadID_cache!=NULL );
 
   return;
 }

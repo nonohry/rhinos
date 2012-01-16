@@ -39,16 +39,16 @@ kern: 	sub
 	$(LD) $(CFLAGS) -o $(KERN) $(OBJ_KERN) $(OBJ_IPC)	
 
 hd:	sub kern
-	echo yes | bximage -q -hd -mode=flat -size=$(SIZE) $(IMG) 
-	cat $(BOOT0) | $(DD) of=$(IMG) bs=512 conv=notrunc
-	cat $(BOOT1) | $(DD) of=$(IMG) bs=512 seek=$(BOOTSEEK) conv=notrunc
-	cat $(KERN)  | $(DD) of=$(IMG) bs=512 seek=$(KERNSEEK) conv=notrunc
+	@echo yes | bximage -q -hd -mode=flat -size=$(SIZE) $(IMG) 1>/dev/null 
+	@cat $(BOOT0) | $(DD) of=$(IMG) bs=512 conv=notrunc 2>/dev/null
+	@cat $(BOOT1) | $(DD) of=$(IMG) bs=512 seek=$(BOOTSEEK) conv=notrunc 2>/dev/null
+	@cat $(KERN)  | $(DD) of=$(IMG) bs=512 seek=$(KERNSEEK) conv=notrunc 2>/dev/null
 
 fd:	sub kern
-	echo yes | bximage -q -fd  -size=1.44 $(IMG) 
-	cat $(BOOT0) | $(DD) of=$(IMG) bs=512 conv=notrunc
-	cat $(BOOT1) | $(DD) of=$(IMG) bs=512 seek=$(BOOTSEEK) conv=notrunc
-	cat $(KERN)  | $(DD) of=$(IMG) bs=512 seek=$(KERNSEEK) conv=notrunc
+	@echo yes | bximage -q -fd  -size=1.44 $(IMG) 1>/dev/null
+	@cat $(BOOT0) | $(DD) of=$(IMG) bs=512 conv=notrunc 2>/dev/null
+	@cat $(BOOT1) | $(DD) of=$(IMG) bs=512 seek=$(BOOTSEEK) conv=notrunc 2>/dev/null
+	@cat $(KERN)  | $(DD) of=$(IMG) bs=512 seek=$(KERNSEEK) conv=notrunc 2>/dev/null
 
 clean:
 	@for dir in $(SUBDIRS) ; do \
