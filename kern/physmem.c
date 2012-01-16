@@ -28,7 +28,7 @@ PRIVATE struct ppage_desc* ppage_free[PHYS_PAGE_MAX_BUDDY];
 
 PUBLIC void phys_init(void)
 {
-  int i;
+  s32_t i;
   u32_t pool_size;
   struct boot_mmap_e820* entry;
 
@@ -86,7 +86,7 @@ PUBLIC void* phys_alloc(u32_t size)
 {
 
   u32_t i,j;
-  int ind;
+  s32_t ind;
   struct ppage_desc* pdesc;
   
   /* trouve la puissance de 2 superieure */
