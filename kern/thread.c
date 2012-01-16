@@ -27,6 +27,7 @@
 
 PRIVATE struct vmem_cache* thread_cache;
 PRIVATE struct vmem_cache* threadID_cache;
+PRIVATE s32_t thread_IDs;
 
 PRIVATE void thread_exit(struct thread* th);
 
@@ -37,12 +38,23 @@ PRIVATE void thread_exit(struct thread* th);
 
 PUBLIC void thread_init(void)
 {
+  u16_t i;
+
   /* Alloue des caches */
   thread_cache = virtmem_cache_create("thread_cache",sizeof(struct thread),0,0,VIRT_CACHE_DEFAULT,NULL,NULL);
   ASSERT_FATAL( thread_cache!=NULL );
 
   threadID_cache = virtmem_cache_create("threadID_cache",sizeof(struct threadID),0,0,VIRT_CACHE_DEFAULT,NULL,NULL);
   ASSERT_FATAL( threadID_cache!=NULL );
+
+  /* Nullifie la hashtable */
+  for(i=0;i<THREAD_HASH_SIZE;i++)
+    {
+      LLIST_NULLIFY(thread_hashID[i]);
+    }
+
+  /* Initialise le compteur d ID global */
+  thread_IDs = 1;
 
   return;
 }
@@ -53,18 +65,25 @@ PUBLIC void thread_init(void)
  *========================================================================*/
 
 
-PUBLIC struct thread* thread_create(const char* name, virtaddr_t start_entry, void* start_arg, u32_t stack_size, s8_t nice_level, u8_t quantum)
+PUBLIC struct thread* thread_create(const char* name, s32_t id, virtaddr_t start_entry, void* start_arg, u32_t stack_size, s8_t nice_level, u8_t quantum)
 {
   struct thread* th;
+  struct threadID* thID;
   u8_t i;
 
   /* Controles */
   ASSERT_RETURN( (start_entry!=0)&&(stack_size>CTX_CPU_MIN_STACK) , NULL);
   ASSERT_RETURN( (nice_level<=THREAD_NICE_TOP)&&(nice_level>=THREAD_NICE_BOTTOM) , NULL);
 
-  /* Allocation dans le cache */
+  /* Allocation dans les cache */
   th = (struct thread*)virtmem_cache_alloc(thread_cache,VIRT_CACHE_DEFAULT);
   ASSERT_RETURN( th!=NULL , NULL);
+
+  thID = (struct threadID*)virtmem_cache_alloc(threadID_cache,VIRT_CACHE_DEFAULT);
+  if (thID == NULL)
+    {
+      goto err00;
+    }
   
   /* Alloue la pile */
   th->stack_base = (virtaddr_t)virt_alloc(stack_size);
@@ -111,6 +130,24 @@ PUBLIC struct thread* thread_create(const char* name, virtaddr_t start_entry, vo
   /* Chainage */
   sched_enqueue(SCHED_READY_QUEUE,th);
 
+  /* ID */
+  if (id == THREAD_ID_DEFAULT)
+    {
+      thID->id = thread_IDs;
+      thread_IDs++;
+     }
+  else
+    {
+      thID->id = id;
+    }
+  thID->thread = th;
+
+  /* Back pointer ID */
+  th->id = thID;
+
+  /* Chainage ID */
+  LLIST_ADD(thread_hashID[ thID->id%THREAD_HASH_SIZE],thID);
+
   /* Retour */
   return th;
 
@@ -119,6 +156,10 @@ PUBLIC struct thread* thread_create(const char* name, virtaddr_t start_entry, vo
   virt_free((void*)th->stack_base);
 
  err01:
+  /* Libere le threadID */
+  virtmem_cache_free(threadID_cache,thID);
+
+ err00:
   /* Libere le thread */
   virtmem_cache_free(thread_cache,th);
 
@@ -135,8 +176,28 @@ PUBLIC struct thread* thread_create(const char* name, virtaddr_t start_entry, vo
 
 PUBLIC u8_t thread_destroy(struct thread* th)
 {
+  u16_t i;
+  struct threadID* thID;
+
   /* Controle */
   ASSERT_RETURN( th!=NULL , EXIT_FAILURE);
+
+  /* Libere le threadID correspondant */
+  i=th->id->id%THREAD_HASH_SIZE;
+  if (!LLIST_ISNULL(thread_hashID[i]))
+    {
+      thID = LLIST_GETHEAD(thread_hashID[i]);
+      do
+	{
+	  if (thID->thread == th)
+	    {
+	      LLIST_REMOVE(thread_hashID[i],thID);
+	      virtmem_cache_free(threadID_cache,thID);
+	      break;
+	    }
+	  thID = LLIST_NEXT(thread_hashID[i],thID);
+	}while(!LLIST_ISHEAD(thread_hashID[i],thID));
+    }
 
   /* Libere simplement les parties allouees */
   return virt_free((void*)th->stack_base) 

@@ -128,9 +128,9 @@ PUBLIC int main()
   struct thread* ti;
   struct thread* ta;
 
-  to = thread_create("Toto_thread",(virtaddr_t)toto,(void*)'1',THREAD_STACK_SIZE,THREAD_NICE_DEFAULT-5,THREAD_QUANTUM_DEFAULT);
-  ti = thread_create("Titi_thread",(virtaddr_t)titi,(void*)'2',THREAD_STACK_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
-  ta = thread_create("Tata_thread",(virtaddr_t)tata,(void*)'3',THREAD_STACK_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
+  to = thread_create("Toto_thread",THREAD_ID_DEFAULT,(virtaddr_t)toto,(void*)'1',THREAD_STACK_SIZE,THREAD_NICE_DEFAULT-5,THREAD_QUANTUM_DEFAULT);
+  ti = thread_create("Titi_thread",THREAD_ID_DEFAULT,(virtaddr_t)titi,(void*)'2',THREAD_STACK_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
+  ta = thread_create("Tata_thread",THREAD_ID_DEFAULT,(virtaddr_t)tata,(void*)'3',THREAD_STACK_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
 
   /* Simule un ordonnancement */
   sched_dequeue(SCHED_READY_QUEUE,ta);
@@ -144,9 +144,7 @@ PUBLIC int main()
   pit_init();
   klib_bochs_print("Clock initialized (100Hz)\n");
 
-
-
-  /* On ne doit plus arriver ici (sauf DEBUG) */
+   /* On ne doit plus arriver ici (sauf DEBUG) */
   while(1)
     {
     }

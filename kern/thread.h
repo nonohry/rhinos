@@ -32,7 +32,8 @@
 #define THREAD_NICE_TOP              19
 #define THREAD_NICE_BOTTOM           -24
 
-#define THREAD_HASH_SIZE             1024
+#define THREAD_ID_DEFAULT            0
+#define THREAD_HASH_SIZE             2//1024
 
 
 /*========================================================================
@@ -80,6 +81,7 @@ PUBLIC struct thread
 {
   char name[THREAD_NAMELEN];
   struct context_cpu* ctx;
+  struct threadID* id;
   virtaddr_t stack_base;
   u32_t stack_size;
   enum thread_state state;
@@ -108,7 +110,7 @@ PUBLIC struct thread
 PUBLIC struct threadID* thread_hashID[THREAD_HASH_SIZE];
 
 PUBLIC void thread_init(void);
-PUBLIC struct thread* thread_create(const char* nom, virtaddr_t start_entry, void* start_arg, u32_t stack_size, s8_t nice_level, u8_t quantum);
+PUBLIC struct thread* thread_create(const char* name, s32_t id, virtaddr_t start_entry, void* start_arg, u32_t stack_size, s8_t nice_level, u8_t quantum);
 PUBLIC u8_t thread_destroy(struct thread* th);
 
 #endif
