@@ -146,7 +146,7 @@ PUBLIC struct thread* thread_create(const char* name, s32_t id, virtaddr_t start
   th->id = thID;
 
   /* Chainage ID */
-  LLIST_ADD(thread_hashID[ thID->id%THREAD_HASH_SIZE],thID);
+  LLIST_ADD(thread_hashID[THREAD_HASHID_FUNC(thID->id)],thID);
 
   /* Retour */
   return th;
@@ -183,7 +183,7 @@ PUBLIC u8_t thread_destroy(struct thread* th)
   ASSERT_RETURN( th!=NULL , EXIT_FAILURE);
 
   /* Libere le threadID correspondant */
-  i=th->id->id%THREAD_HASH_SIZE;
+  i=THREAD_HASHID_FUNC(th->id->id);
   if (!LLIST_ISNULL(thread_hashID[i]))
     {
       thID = LLIST_GETHEAD(thread_hashID[i]);

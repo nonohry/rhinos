@@ -33,7 +33,7 @@
 #define THREAD_NICE_BOTTOM           -24
 
 #define THREAD_ID_DEFAULT            0
-#define THREAD_HASH_SIZE             2//1024
+#define THREAD_HASH_SIZE             1024
 
 
 /*========================================================================
@@ -98,8 +98,12 @@ PUBLIC struct thread
  *========================================================================*/
 
 
-#define THREAD_NICE2PRIO(__nice)			\
+#define THREAD_NICE2PRIO(__nice)		\
   ( THREAD_NICE_TOP - (__nice) )
+
+
+#define THREAD_HASHID_FUNC(__id)		\
+  ( (__id)%THREAD_HASH_SIZE )
 
 
 /*========================================================================
