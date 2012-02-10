@@ -34,9 +34,9 @@ void toto(char c)
   while(1)
     {
       u32_t i=0;
-      ipc_send(40,NULL);
+      ipc_send(2,NULL);
       //klib_bochs_print(t);
-      while(i < (1<<12))
+      while(i < (1<<19))
 	{
 	  i++;
 	}
@@ -57,8 +57,8 @@ void titi(char c)
     {
       u32_t i=0;
       //klib_bochs_print(t);
-      ipc_receive(45,NULL);
-      while(i < (1<<12))
+      ipc_receive(IPC_ANY,NULL);
+      while(i < (1<<19))
 	{
 	  i++;
 	}
@@ -79,9 +79,9 @@ void tata(char c)
   while(j)
     {
       u32_t i=0;
-      ipc_notify(450);
+      ipc_send(2,NULL);
       //klib_bochs_print(t);
-      while(i < (1<<12))
+      while(i < (1<<19))
 	{
 	  i++;
 	}

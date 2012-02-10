@@ -207,6 +207,42 @@ PUBLIC u8_t thread_destroy(struct thread* th)
 }
 
 
+
+/*========================================================================
+ * Recherche d un thread via son threadID
+ *========================================================================*/
+
+
+PUBLIC struct thread* thread_id2thread(s32_t n)
+{
+  u16_t i;
+  struct threadID* thID;
+
+  /* Controle */
+  ASSERT_RETURN( n!=0 , NULL);
+
+
+  /* Parcours de la hashtable */
+  i=THREAD_HASHID_FUNC(n);
+  if (!LLIST_ISNULL(thread_hashID[i]))
+    {
+      thID = LLIST_GETHEAD(thread_hashID[i]);
+      do
+	{
+	  /* On trouve le bon ID, on renvoie le thread */
+	  if (thID->id == n)
+	    {
+	      return thID->thread;
+	    }
+	  thID = LLIST_NEXT(thread_hashID[i],thID);
+	}while(!LLIST_ISHEAD(thread_hashID[i],thID));
+    }
+  
+  /* Ici, on ne trouve rien, on retourn NULL */
+  return NULL;
+}
+
+
 /*========================================================================
  * Sortie d un thread
  *========================================================================*/
@@ -225,3 +261,6 @@ PRIVATE void thread_exit(struct thread* th)
 
   return;
 }
+
+
+
