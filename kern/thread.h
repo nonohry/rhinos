@@ -14,6 +14,7 @@
  *========================================================================*/
 
 #include <types.h>
+#include <ipc.h>
 #include "const.h"
 #include "context_cpu.h"
 
@@ -75,6 +76,18 @@ PUBLIC struct threadID
 };
 
 
+/* Donnees IPC */
+PUBLIC struct ipc_info
+{
+  u8_t state;
+  struct thread* send_to;
+  struct ipc_message* send_message;
+  struct thread* receive_from;
+  struct ipc_message* receive_message;
+  struct thread* receive_waitlist;
+};
+
+
 /* Structure thread */
 
 PUBLIC struct thread
@@ -88,6 +101,7 @@ PUBLIC struct thread
   enum thread_state next_state;
   s8_t nice;
   struct sched_info sched;
+  struct ipc_info ipc;
   struct thread* prev;
   struct thread* next;
 };

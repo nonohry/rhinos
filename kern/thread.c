@@ -148,6 +148,13 @@ PUBLIC struct thread* thread_create(const char* name, s32_t id, virtaddr_t start
   /* Chainage ID */
   LLIST_ADD(thread_hashID[THREAD_HASHID_FUNC(thID->id)],thID);
 
+  /* IPC */
+  th->ipc.send_to = NULL;
+  th->ipc.send_message = NULL;
+  th->ipc.receive_from = NULL;
+  th->ipc.receive_message = NULL;
+  LLIST_NULLIFY(th->ipc.receive_waitlist);
+
   /* Retour */
   return th;
 
