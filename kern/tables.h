@@ -44,6 +44,11 @@
 #define TABLES_KERN_LIMIT_4G     0x0        /* Limite de l'espace Noyau (4G) */
 
 
+/*========================================================================
+ * Structures
+ *========================================================================*/
+
+
 /* Descripteur de Table (GDT & LDT) */
 
 PUBLIC struct table_desc

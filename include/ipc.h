@@ -1,6 +1,32 @@
 #ifndef IPC_H
 #define IPC_H
 
-EXTERN void ipc_test(int a, int b);
+
+/*========================================================================
+ * Includes
+ *========================================================================*/
+
+#include <types.h>
+
+
+/*========================================================================
+ * Structures
+ *========================================================================*/
+
+
+PUBLIC struct ipc_message
+{
+  u32_t len;
+  void* data;
+};
+
+
+/*========================================================================
+ * Prototypes
+ *========================================================================*/
+
+EXTERN void ipc_send(int to, struct ipc_message* msg);
+EXTERN void ipc_receive(int from, struct ipc_message* msg);
+EXTERN void ipc_test(int to);
 
 #endif

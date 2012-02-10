@@ -43,7 +43,7 @@ void syscall_handle()
 
   /* Affiche pour le moment */
   //klib_bochs_print("[(%d)%d-%d]",num, arg_1, arg_2);
-  klib_bochs_print("1");
+  klib_bochs_print("%d", num);
 
   return;
 }
