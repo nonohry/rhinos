@@ -21,11 +21,21 @@
 
 
 /*========================================================================
+ * Declaration PRIVATE
+ *========================================================================*/
+
+
+PRIVATE void syscall_send(struct thread* th_sender, struct thread* th_receiver, struct ipc_message* message);
+PRIVATE void syscall_receive(struct thread* th_receiver, struct thread* th_sender, struct ipc_message* message);
+PRIVATE void syscall_notify(struct thread* th_from, struct thread* th_to);
+
+
+/*========================================================================
  * Point d entree
  *========================================================================*/
 
 
-void syscall_handle()
+PUBLIC void syscall_handle()
 {
   struct thread* cur_th;
   struct thread* target_th;
@@ -54,7 +64,7 @@ void syscall_handle()
     }
   else
     {
-      /* TODO Recherche le thread via son threadID */
+      /* Recherche le thread via son threadID */
       target_th = thread_id2thread(arg_id);
       ASSERT_RETURN_VOID( target_th != NULL );
     }
@@ -64,34 +74,69 @@ void syscall_handle()
     {
     case SYSCALL_SEND:
       {
-	klib_bochs_print(cur_th->name);
-	klib_bochs_print(" sending to ");
-	(target_th==NULL)?klib_bochs_print("ANY"):klib_bochs_print(target_th->name);
-	klib_bochs_print(" ");
+	syscall_send(cur_th, target_th, arg_msg);
 	break;
       }
 
     case SYSCALL_RECEIVE:
       {
-	klib_bochs_print(cur_th->name);
-	klib_bochs_print(" receiving from ");
-	(target_th==NULL)?klib_bochs_print("ANY"):klib_bochs_print(target_th->name);
-	klib_bochs_print(" ");
+	syscall_receive(cur_th, target_th, arg_msg);
 	break;
       }
 
     case SYSCALL_NOTIFY:
       {
-	klib_bochs_print(cur_th->name);
-	klib_bochs_print(" notifying to ");
-	(target_th==NULL)?klib_bochs_print("ANY"):klib_bochs_print(target_th->name);
-	klib_bochs_print(" ");
+	syscall_notify(cur_th, target_th);
 	break;
       }
       
     default:
       break;  
     }
+
+  return;
+}
+
+
+/*========================================================================
+ * Send
+ *========================================================================*/
+
+PRIVATE void syscall_send(struct thread* th_sender, struct thread* th_receiver, struct ipc_message* message)
+{
+  klib_bochs_print(th_sender->name);
+  klib_bochs_print(" sending to ");
+  (th_receiver==NULL)?klib_bochs_print("ANY"):klib_bochs_print(th_receiver->name);
+  klib_bochs_print(" ");
+
+  return;
+}
+
+
+/*========================================================================
+ * Receive
+ *========================================================================*/
+
+PRIVATE void syscall_receive(struct thread* th_receiver, struct thread* th_sender, struct ipc_message* message)
+{
+  klib_bochs_print(th_receiver->name);
+  klib_bochs_print(" receiving from ");
+  (th_sender==NULL)?klib_bochs_print("ANY"):klib_bochs_print(th_sender->name);
+  klib_bochs_print(" ");
+
+  return;
+}
+
+/*========================================================================
+ * Notify
+ *========================================================================*/
+
+PRIVATE void syscall_notify(struct thread* th_from, struct thread* th_to)
+{
+  klib_bochs_print(th_from->name);
+  klib_bochs_print(" notifying to ");
+  (th_to==NULL)?klib_bochs_print("ANY"):klib_bochs_print(th_to->name);
+  klib_bochs_print(" ");
 
   return;
 }
