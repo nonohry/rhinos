@@ -79,7 +79,7 @@ void tata(char c)
   while(j)
     {
       u32_t i=0;
-      ipc_notify(450,NULL);
+      ipc_notify(450);
       //klib_bochs_print(t);
       while(i < (1<<12))
 	{
