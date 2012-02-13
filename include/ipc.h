@@ -37,7 +37,7 @@ PUBLIC struct ipc_message
  *========================================================================*/
 
 EXTERN void ipc_send(int to, struct ipc_message* msg);
-EXTERN void ipc_receive(int from, struct ipc_message* msg);
+EXTERN void ipc_receive(int from, struct ipc_message** msg);
 EXTERN void ipc_notify(int to);
 
 #endif

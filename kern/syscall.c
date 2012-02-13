@@ -26,7 +26,7 @@
 
 
 PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, struct ipc_message* message);
-PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sender, struct ipc_message* message);
+PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sender, struct ipc_message** message);
 PRIVATE u8_t syscall_notify(struct thread* th_from, struct thread* th_to);
 
 
@@ -41,7 +41,6 @@ PUBLIC u8_t syscall_handle()
   struct thread* target_th;
   u32_t syscall_num;
   s32_t arg_id;
-  struct ipc_message* arg_msg;
   u8_t res;
 
   /* Le thread courant */
@@ -53,10 +52,6 @@ PUBLIC u8_t syscall_handle()
 
   /* Les arguments dans les registres */
   arg_id = (s32_t)(cur_th->ctx->ebx);
-  if (syscall_num != SYSCALL_NOTIFY)
-    {
-      arg_msg = (struct ipc_message*)(cur_th->ctx->ecx);
-    }
 
   /* Le thread cible */
   if (arg_id == IPC_ANY)
@@ -75,13 +70,13 @@ PUBLIC u8_t syscall_handle()
     {
     case SYSCALL_SEND:
       {
-	res = syscall_send(cur_th, target_th, arg_msg);
+	res = syscall_send(cur_th, target_th, (struct ipc_message*)(cur_th->ctx->ecx));
 	break;
       }
 
     case SYSCALL_RECEIVE:
       {
-	res = syscall_receive(cur_th, target_th, arg_msg);
+	res = syscall_receive(cur_th, target_th, (struct ipc_message**)(cur_th->ctx->ecx));
 	break;
       }
 
@@ -123,9 +118,9 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
   th_sender->ipc.send_to = th_receiver;
 
   /* Precise l envoi */
-  th_sender->ipc.state &= SYSCALL_IPC_SENDING;
+  th_sender->ipc.state |= SYSCALL_IPC_SENDING;
 
-  /* Si la reception envoie, alors on s'assure qu on ne boucle pas */
+  /* Si le destinataire envoie, alors on s'assure qu on ne boucle pas */
   if (th_receiver->ipc.state & SYSCALL_IPC_SENDING)
     {
       th_tmp = th_receiver->ipc.send_to;
@@ -144,7 +139,9 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
   /* Pas de deadlock, le message est recupere (dans l espace d adressage de l emetteur)  */
   th_sender->ipc.send_message = message;
 
-  /* Regarde si la reception receptionne uniquement et de la part de l emetteur */
+  klib_bochs_print("%d ",th_receiver->ipc.state);
+
+  /* Regarde si le destinataire receptionne uniquement et de la part de l emetteur */
   if ( ( (th_receiver->ipc.state & (SYSCALL_IPC_SENDING|SYSCALL_IPC_RECEIVING)) == SYSCALL_IPC_RECEIVING)
        && ( (th_receiver->ipc.receive_from == th_sender)||(th_receiver->ipc.receive_from == NULL) ) )
     {
@@ -161,7 +158,7 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
 	  /* TODO : Espace different non noyau */
 	}
 
-      /* Debloque la reception au besoin */
+      /* Debloque le destinataire au besoin */
       if (th_receiver->state == THREAD_BLOCKED)
 	{
 	  th_receiver->next_state = THREAD_READY;
@@ -174,7 +171,7 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
     }
   else
     {
-      /* Bloque l emetteur dans la wait list de la reception */
+      /* Bloque l emetteur dans la wait list du destinataire */
       th_sender->next_state = THREAD_BLOCKED_SENDING;
     }
 
@@ -189,24 +186,76 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
  * Receive
  *========================================================================*/
 
-PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sender, struct ipc_message* message)
+PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sender, struct ipc_message** message)
 {
+  struct thread* th_available = NULL;
+
   klib_bochs_print(th_receiver->name);
   klib_bochs_print(" receiving from ");
   (th_sender==NULL)?klib_bochs_print("ANY"):klib_bochs_print(th_sender->name);
   klib_bochs_print(" ");
 
+  /* Indique de qui recevoir */
+  th_receiver->ipc.receive_from = th_sender;
+
+  /* Precise la reception */
+  th_receiver->ipc.state |= SYSCALL_IPC_RECEIVING;
+
+  /* Cherche un thread disponible dans la waitlist */
   if (!LLIST_ISNULL(th_receiver->ipc.receive_waitlist))
     {
-      u8_t n=0;
-      struct thread* th_tmp = LLIST_GETHEAD(th_receiver->ipc.receive_waitlist);
-      do
+      if (th_sender == NULL)
 	{
-	  n++;
-	  th_tmp = LLIST_NEXT(th_receiver->ipc.receive_waitlist, th_tmp);
-	}while(!LLIST_ISHEAD(th_receiver->ipc.receive_waitlist, th_tmp));
-      klib_bochs_print(" (Got %d messages !) ",n);      
+	  th_available = LLIST_GETHEAD(th_receiver->ipc.receive_waitlist);
+	}
+      else
+	{
+	  struct thread* th_tmp = LLIST_GETHEAD(th_receiver->ipc.receive_waitlist);
+	  do
+	    {
+	      if (th_tmp == th_sender)
+		{
+		  th_available = th_tmp;
+		}
+	      th_tmp = LLIST_NEXT(th_receiver->ipc.receive_waitlist, th_tmp);
+	    }while(!LLIST_ISHEAD(th_receiver->ipc.receive_waitlist, th_tmp));
+	}
     }
+
+
+  /* Pas de message ni de thread disponible */
+  if ( (th_receiver->ipc.receive_message == NULL) && (th_available == NULL) )
+    {
+      th_receiver->next_state = THREAD_BLOCKED;
+      /* Ordonnance */
+      sched_schedule(SCHED_FROM_RECEIVE);
+      
+    }
+
+  /* Pas de message mais un thread disponible */
+  if ( (th_receiver->ipc.receive_message == NULL) && (th_available != NULL) )
+    {
+       /* Differencie les cas d'espace d'adressage noyau ou non */
+      if ( (th_receiver->ctx->cs == th_available->ctx->cs)
+	   && (th_receiver->ctx->cs == CONST_CS_SELECTOR) )
+	{
+	  /* Espace noyau commun, simple reference memoire */
+	  th_receiver->ipc.receive_message = th_available->ipc.send_message;
+	}
+      else
+	{
+	  /* TODO : Espace different non noyau */
+	}
+    }
+
+  /* Nous avons necessairement un receive_message non nul */
+  *message = th_receiver->ipc.receive_message;
+
+  /* Nullifie le receive_message */
+  th_receiver->ipc.receive_message = NULL;
+  
+  /* Fin de reception */
+  th_receiver->ipc.state &= ~SYSCALL_IPC_RECEIVING;
 
   return IPC_SUCCESS;
 }

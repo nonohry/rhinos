@@ -86,12 +86,12 @@ PUBLIC u8_t sched_enqueue(u8_t queue, struct thread* th)
       break;
 
     case SCHED_BLOCKED_QUEUE:
-       LLIST_ADD(sched_blocked, th);
+      LLIST_ADD(sched_blocked, th);
       th->state = THREAD_BLOCKED;
       break;
-
+      
     case SCHED_DEAD_QUEUE:
-       LLIST_ADD(sched_dead, th);
+      LLIST_ADD(sched_dead, th);
       th->state = THREAD_DEAD;
       break;
 

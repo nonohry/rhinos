@@ -36,7 +36,7 @@
 #define SCHED_DEFAULT                0
 #define SCHED_FROM_PIT               1
 #define SCHED_FROM_SEND              2
-
+#define SCHED_FROM_RECEIVE           4
 
 /*========================================================================
  * Prototypes
