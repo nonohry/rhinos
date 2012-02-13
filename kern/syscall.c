@@ -104,10 +104,22 @@ PUBLIC void syscall_handle()
 
 PRIVATE void syscall_send(struct thread* th_sender, struct thread* th_receiver, struct ipc_message* message)
 {
+
+  /* Pas de broadcast */
+  ASSERT_RETURN_VOID( th_receiver!=NULL );
+
+  /* DEBUG */
   klib_bochs_print(th_sender->name);
   klib_bochs_print(" sending to ");
-  (th_receiver==NULL)?klib_bochs_print("ANY"):klib_bochs_print(th_receiver->name);
+  klib_bochs_print(th_receiver->name);
   klib_bochs_print(" ");
+
+  /* Indique a qui envoyer */
+  th_sender->ipc.send_to = th_receiver;
+
+  /* Bloque l envoyeur et ordonnance */
+  th_sender->next_state = THREAD_BLOCKED_SENDING;
+  sched_schedule(SCHED_FROM_SEND);
 
   return;
 }

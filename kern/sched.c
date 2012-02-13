@@ -180,18 +180,34 @@ PUBLIC void sched_schedule(u8_t flag)
       sched_dequeue(SCHED_RUNNING_QUEUE,cur_th);
 
       /* Ajoute le thread ou il faut en fonction du futur etat */
-      if (cur_th->next_state == THREAD_READY)
+      switch(cur_th->next_state)
 	{
+	case THREAD_READY:
 	  sched_enqueue(SCHED_READY_QUEUE,cur_th);
-	}
-      else if (cur_th->next_state == THREAD_BLOCKED)
-	{
+	  break;
+
+	case THREAD_BLOCKED:
 	  sched_enqueue(SCHED_BLOCKED_QUEUE,cur_th);
-	}
-      else
-	{
+	  break;
+
+	case THREAD_BLOCKED_SENDING:
+	  {
+	    /* Ajoute la thread a la liste d attente du receveur */
+	    klib_bochs_print("Putting ");
+	    klib_bochs_print(cur_th->name);
+	    klib_bochs_print(" in ");
+	    klib_bochs_print((cur_th->ipc.send_to)->name);
+	    klib_bochs_print(" waiting list ");
+	    LLIST_ADD((cur_th->ipc.send_to)->ipc.receive_waitlist, cur_th);
+	    cur_th->state = THREAD_BLOCKED_SENDING;
+	    break;
+	  }
+
+	default:
 	  sched_enqueue(SCHED_DEAD_QUEUE,cur_th);
+	  break;
 	}
+
       
       /* Choisis un nouveau thread */
       new_th = LLIST_GETHEAD(sched_ready[high_prio]);

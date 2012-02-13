@@ -11,7 +11,8 @@ global klib_flush_tlb
 global klib_invlpg	
 global klib_mem_set
 global klib_mem_copy	
-
+global klib_idle
+	
 	
 	;;======================================================================== 
 	;; Affichage dans bochs (%d et %x supporte)
@@ -298,6 +299,16 @@ klib_mem_copy:
 	pop	ebp		; Restaure EBP
 	ret
 
+	
+	;;========================================================================
+	;; Idle thread
+	;;========================================================================
+
+	
+klib_idle:	
+	hlt			; Repose le processeur
+	jmp	klib_idle
+	
 	
 	;;========================================================================
 	;; Donnees

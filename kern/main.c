@@ -79,7 +79,7 @@ void tata(char c)
   while(j)
     {
       u32_t i=0;
-      ipc_send(2,NULL);
+      ipc_send(2, NULL);
       //klib_bochs_print(t);
       while(i < (1<<19))
 	{
@@ -99,6 +99,7 @@ void tata(char c)
 
 PUBLIC int main()
 {
+  struct thread* thread_idle;
 
   /* Initialisation de la memoire physique */
   phys_init();
@@ -124,11 +125,18 @@ PUBLIC int main()
   sched_init();
   klib_bochs_print("Scheduler initialized\n");
 
+
+  /* Idle Thread */
+  thread_idle = thread_create("[Idle]",THREAD_ID_DEFAULT,(virtaddr_t)klib_idle,NULL,THREAD_STACK_SIZE,THREAD_NICE_TOP,THREAD_QUANTUM_DEFAULT);
+  ASSERT_FATAL( thread_idle != NULL );
+  klib_bochs_print("Idle thread initialized\n");
+
   /* Tests threads */
 
   struct thread* to;
   struct thread* ti;
   struct thread* ta;
+
 
   to = thread_create("Toto_thread",THREAD_ID_DEFAULT,(virtaddr_t)toto,(void*)'1',THREAD_STACK_SIZE,THREAD_NICE_DEFAULT-5,THREAD_QUANTUM_DEFAULT);
   ti = thread_create("Titi_thread",THREAD_ID_DEFAULT,(virtaddr_t)titi,(void*)'2',THREAD_STACK_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);

@@ -15,5 +15,6 @@ EXTERN void klib_flush_tlb(void);
 EXTERN void klib_invlpg(virtaddr_t);
 EXTERN void klib_mem_set(u32_t, physaddr_t, u32_t);
 EXTERN void klib_mem_copy(physaddr_t, physaddr_t, u32_t);
+EXTERN void klib_idle(void);
 
 #endif
