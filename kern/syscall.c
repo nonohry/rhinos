@@ -227,10 +227,19 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
   if ( (th_receiver->ipc.receive_message == NULL) && (th_available == NULL) )
     {
       th_receiver->next_state = THREAD_BLOCKED;
-      /* Ordonnance */
+      /* Ordonnance  */
       sched_schedule(SCHED_FROM_RECEIVE);
-      
     }
+
+
+
+
+  /*************************************************************************************************************************
+   * PB: ON REVIENT ICI QUOIQU IL ARRIVE: IL FAUT SWITCHER A UN AUTRE CONTEXTE DANS SCHED_SCHEDULE POUR NE PAS REVENIR ICI
+   *************************************************************************************************************************/
+
+
+
 
   /* Pas de message mais un thread disponible */
   if ( (th_receiver->ipc.receive_message == NULL) && (th_available != NULL) )
