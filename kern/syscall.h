@@ -29,6 +29,6 @@
  * Prototypes 
  *========================================================================*/
 
-PUBLIC void syscall_handle();
+PUBLIC u8_t syscall_handle();
 
 #endif

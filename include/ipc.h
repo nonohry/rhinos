@@ -15,6 +15,10 @@
 
 #define IPC_ANY    0
 
+#define IPC_SUCCESS   0
+#define IPC_FAILURE   1
+#define IPC_DEADLOCK  2
+
 
 /*========================================================================
  * Structures
