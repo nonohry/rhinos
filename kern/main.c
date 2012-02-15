@@ -24,7 +24,7 @@
 #include "pit.h"
 #include <ipc.h>
 
-void titi(char c)
+void toto(char c)
 {
   char t[2];
   struct ipc_message m;
@@ -33,12 +33,12 @@ void titi(char c)
   t[1]=0;
 
   m.len = 2;
-  m.data = "o";
+  m.code = 4;
 
   while(1)
     {
       u32_t i=0;
-      ipc_send(2,&m);
+      ipc_send(3,&m);
       //klib_bochs_print(t);
       while(i < (1<<19))
 	{
@@ -50,10 +50,10 @@ void titi(char c)
   return;
 }
 
-void toto(char c)
+void titi(char c)
 {
   char t[2];
-  struct ipc_message* m;
+  struct ipc_message m;
 
   t[0]=c;
   t[1]=0;
@@ -63,9 +63,7 @@ void toto(char c)
       u32_t i=0;
       //klib_bochs_print(t);
       ipc_receive(IPC_ANY,&m);
-      klib_bochs_print("Message len: %d",m->len);
-      klib_bochs_print("Message data: ");
-      klib_bochs_print((char*)m->data);
+      klib_bochs_print("\nDATA RECEIVED\n   Message len: %d code :%d",m.len,m.code);
       while(i < (1<<19))
 	{
 	  i++;
@@ -86,12 +84,12 @@ void tata(char c)
   t[1]=0;
 
   m.len = 2;
-  m.data = "a";
+  m.code = 67;
 
   while(j)
     {
       u32_t i=0;
-      ipc_send(2, &m);
+      ipc_send(3, &m);
       //klib_bochs_print(t);
       while(i < (1<<19))
 	{

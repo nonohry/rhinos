@@ -70,7 +70,8 @@ thread.o: ../include/ipc.h
 sched.o: ../include/types.h ../include/llist.h assert.h klib.h const.h
 sched.o: thread.h ../include/ipc.h context_cpu.h sched.h
 syscall.o: ../include/types.h ../include/llist.h ../include/ipc.h const.h
-syscall.o: klib.h assert.h thread.h context_cpu.h sched.h syscall.h
+syscall.o: klib.h assert.h thread.h context_cpu.h sched.h physmem.h
+syscall.o: virtmem_slab.h virtmem_buddy.h virtmem.h paging.h syscall.h
 main.o: ../include/types.h const.h ../include/llist.h start.h klib.h assert.h
 main.o: physmem.h virtmem_slab.h virtmem_buddy.h paging.h virtmem.h
 main.o: context_cpu.h thread.h ../include/ipc.h sched.h irq.h interrupt.h

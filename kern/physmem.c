@@ -88,7 +88,8 @@ PUBLIC void* phys_alloc(u32_t size)
   u32_t i,j;
   s32_t ind;
   struct ppage_desc* pdesc;
-  
+
+
   /* trouve la puissance de 2 superieure */
   size = size - 1;
   size = size | (size >> 1);

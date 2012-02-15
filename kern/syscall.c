@@ -17,6 +17,9 @@
 #include "assert.h"
 #include "thread.h"
 #include "sched.h"
+#include "physmem.h"
+#include "virtmem.h"
+#include "paging.h"
 #include "syscall.h"
 
 
@@ -26,7 +29,7 @@
 
 
 PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, struct ipc_message* message);
-PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sender, struct ipc_message** message);
+PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sender, struct ipc_message* message);
 PRIVATE u8_t syscall_notify(struct thread* th_from, struct thread* th_to);
 
 
@@ -76,7 +79,7 @@ PUBLIC u8_t syscall_handle()
 
     case SYSCALL_RECEIVE:
       {
-	res = syscall_receive(cur_th, target_th, (struct ipc_message**)(cur_th->ctx->ecx));
+	res = syscall_receive(cur_th, target_th, (struct ipc_message*)(cur_th->ctx->ecx));
 	break;
       }
 
@@ -108,12 +111,6 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
   /* Pas de broadcast */
   ASSERT_RETURN( th_receiver!=NULL , IPC_FAILURE);
 
-  /* DEBUG */
-  klib_bochs_print(th_sender->name);
-  klib_bochs_print(" sending to ");
-  klib_bochs_print(th_receiver->name);
-  klib_bochs_print(" ");
-
   /* Indique a qui envoyer */
   th_sender->ipc.send_to = th_receiver;
 
@@ -137,9 +134,10 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
     }
 
   /* Pas de deadlock, le message est recupere (dans l espace d adressage de l emetteur)  */
+ 
   th_sender->ipc.send_message = message;
-
-  klib_bochs_print("%d ",th_receiver->ipc.state);
+  th_sender->ipc.send_phys_message = paging_virt2phys((virtaddr_t)message);
+  ASSERT_RETURN( th_sender->ipc.send_phys_message , IPC_FAILURE);
 
   /* Regarde si le destinataire receptionne uniquement et de la part de l emetteur */
   if ( ( (th_receiver->ipc.state & (SYSCALL_IPC_SENDING|SYSCALL_IPC_RECEIVING)) == SYSCALL_IPC_RECEIVING)
@@ -150,8 +148,34 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
       if ( (th_sender->ctx->cs == th_receiver->ctx->cs)
 	   && (th_sender->ctx->cs == CONST_CS_SELECTOR) )
 	{
-	  /* Espace noyau commun, simple reference memoire */
-	  th_receiver->ipc.receive_message = message;
+	  /* Espace noyau commun  */
+	  physaddr_t phys_page;
+	  virtaddr_t virt_page;
+	  virtaddr_t virt_message;
+
+	  /* Alloue une page virtuelle */
+	  virt_page = (virtaddr_t)virt_alloc(CONST_PAGE_SIZE);
+	  ASSERT_RETURN( (void*)virt_page != NULL , IPC_FAILURE);
+
+	  /* Demap la page */
+	  paging_unmap(virt_page);
+
+	  /* Determine la page physique du receive_message */
+	  phys_page = PHYS_ALIGN_INF(th_receiver->ipc.receive_phys_message);
+
+	  /* Map la page physique du message avec la page virtuelle */
+	  ASSERT_RETURN( paging_map(virt_page, phys_page, TRUE) != EXIT_FAILURE , IPC_FAILURE );
+
+	  /* Determine l adresse virtuelle du message */
+	  virt_message = virt_page + (th_receiver->ipc.receive_phys_message - phys_page);
+
+	  /* Copie le message */
+	  klib_mem_copy((virtaddr_t)message, virt_message, sizeof(struct ipc_message));
+
+	  /* Liberation */
+	  paging_unmap(virt_page);
+	  virt_free((void*)virt_page);
+
 	}
       else
 	{
@@ -162,12 +186,15 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
       if (th_receiver->state == THREAD_BLOCKED)
 	{
 	  th_receiver->next_state = THREAD_READY;
+	  /* Fin de reception */
+	  th_receiver->ipc.state &= ~SYSCALL_IPC_RECEIVING;
 	  ASSERT_RETURN( sched_dequeue(SCHED_BLOCKED_QUEUE, th_receiver)==EXIT_SUCCESS, IPC_FAILURE);
 	  ASSERT_RETURN( sched_enqueue(SCHED_READY_QUEUE, th_receiver)==EXIT_SUCCESS, IPC_FAILURE);
 	}
 
-      /* Bloque l emetteur naturellement */
-      th_sender->next_state = THREAD_BLOCKED;
+      /* Fin d envoi */
+      th_sender->ipc.state &= ~SYSCALL_IPC_SENDING;
+     
     }
   else
     {
@@ -186,20 +213,19 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
  * Receive
  *========================================================================*/
 
-PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sender, struct ipc_message** message)
+PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sender, struct ipc_message* message)
 {
   struct thread* th_available = NULL;
-
-  klib_bochs_print(th_receiver->name);
-  klib_bochs_print(" receiving from ");
-  (th_sender==NULL)?klib_bochs_print("ANY"):klib_bochs_print(th_sender->name);
-  klib_bochs_print(" ");
 
   /* Indique de qui recevoir */
   th_receiver->ipc.receive_from = th_sender;
 
   /* Precise la reception */
   th_receiver->ipc.state |= SYSCALL_IPC_RECEIVING;
+
+  /* Le message de reception */
+  th_receiver->ipc.receive_message = message;
+  th_receiver->ipc.receive_phys_message = paging_virt2phys((virtaddr_t)message);  
 
   /* Cherche un thread disponible dans la waitlist */
   if (!LLIST_ISNULL(th_receiver->ipc.receive_waitlist))
@@ -223,48 +249,69 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
     }
 
 
-  /* Pas de message ni de thread disponible */
-  if ( (th_receiver->ipc.receive_message == NULL) && (th_available == NULL) )
-    {
-      th_receiver->next_state = THREAD_BLOCKED;
-      /* Ordonnance  */
-      sched_schedule(SCHED_FROM_RECEIVE);
-    }
-
-
-
-
-  /*************************************************************************************************************************
-   * PB: ON REVIENT ICI QUOIQU IL ARRIVE: IL FAUT SWITCHER A UN AUTRE CONTEXTE DANS SCHED_SCHEDULE POUR NE PAS REVENIR ICI
-   *************************************************************************************************************************/
-
-
-
-
-  /* Pas de message mais un thread disponible */
-  if ( (th_receiver->ipc.receive_message == NULL) && (th_available != NULL) )
+  /* Un thread disponible */
+  if ( th_available != NULL )
     {
        /* Differencie les cas d'espace d'adressage noyau ou non */
       if ( (th_receiver->ctx->cs == th_available->ctx->cs)
 	   && (th_receiver->ctx->cs == CONST_CS_SELECTOR) )
 	{
-	  /* Espace noyau commun, simple reference memoire */
-	  th_receiver->ipc.receive_message = th_available->ipc.send_message;
+	  /* Espace noyau commun  */
+	  physaddr_t phys_page;
+	  virtaddr_t virt_page;
+	  virtaddr_t virt_message;
+
+	  /* Alloue une page virtuelle */
+	  virt_page = (virtaddr_t)virt_alloc(CONST_PAGE_SIZE);
+	  ASSERT_RETURN( (void*)virt_page != NULL , IPC_FAILURE);
+
+	  /* Demap la page */
+	  paging_unmap(virt_page);
+
+	  /* Determine la page physique du receive_message */
+	  phys_page = PHYS_ALIGN_INF(th_available->ipc.send_phys_message);
+
+	  /* Map la page physique du message avec la page virtuelle */
+	  ASSERT_RETURN( paging_map(virt_page, phys_page, TRUE) != EXIT_FAILURE , IPC_FAILURE );
+
+	  /* Determine l adresse virtuelle du message */
+	  virt_message = virt_page + (th_available->ipc.send_phys_message - phys_page);
+
+	  /* Copie le message */
+	  klib_mem_copy(virt_message, (virtaddr_t)message, sizeof(struct ipc_message));
+
+	  /* Liberation */
+	  paging_unmap(virt_page);
+	  virt_free((void*)virt_page);
+
 	}
       else
 	{
 	  /* TODO : Espace different non noyau */
 	}
+
+
+      /* Debloque le sender au besoin */
+      if (th_available->state == THREAD_BLOCKED_SENDING)
+	{
+	  th_available->next_state = THREAD_READY;
+	  /* Fin d'envoi */
+	  th_available->ipc.state &= ~SYSCALL_IPC_SENDING;
+	  LLIST_REMOVE(th_receiver->ipc.receive_waitlist, th_available);
+	  ASSERT_RETURN( sched_enqueue(SCHED_READY_QUEUE, th_available)==EXIT_SUCCESS, IPC_FAILURE);
+	}
+
+      /* Fin de reception */
+      th_receiver->ipc.state &= ~SYSCALL_IPC_RECEIVING;
+
     }
-
-  /* Nous avons necessairement un receive_message non nul */
-  *message = th_receiver->ipc.receive_message;
-
-  /* Nullifie le receive_message */
-  th_receiver->ipc.receive_message = NULL;
-  
-  /* Fin de reception */
-  th_receiver->ipc.state &= ~SYSCALL_IPC_RECEIVING;
+  else
+    {
+      /* Pas de message ni de thread disponible */
+      th_receiver->next_state = THREAD_BLOCKED;
+      /* Ordonnance  */
+      sched_schedule(SCHED_FROM_RECEIVE);
+    }
 
   return IPC_SUCCESS;
 }
