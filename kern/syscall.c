@@ -106,6 +106,10 @@ PUBLIC u8_t syscall_handle()
 
 PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, struct ipc_message* message)
 {
+
+      klib_bochs_print(th_sender->name);
+      klib_bochs_print(" called SEND\n");
+
   struct thread* th_tmp;
 
   /* Pas de broadcast */
@@ -126,6 +130,7 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
 	  /* Deadlock */
 	  if (th_tmp == th_sender)
 	    {
+	      klib_bochs_print("DEADLOCK");
 	      return IPC_DEADLOCK;
 	    }
 	  th_tmp = th_tmp->ipc.send_to;
@@ -144,43 +149,54 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
        && ( (th_receiver->ipc.receive_from == th_sender)||(th_receiver->ipc.receive_from == NULL) ) )
     {
 
-      /* Differencie les cas d'espace d'adressage noyau ou non */
-      if ( (th_sender->ctx->cs == th_receiver->ctx->cs)
-	   && (th_sender->ctx->cs == CONST_CS_SELECTOR) )
+      physaddr_t phys_page;
+      virtaddr_t virt_page;
+      virtaddr_t virt_message;
+
+      /* Alloue une page virtuelle */
+      // virt_page = (virtaddr_t)virt_alloc(CONST_PAGE_SIZE);
+      
+      virt_page = (virtaddr_t)virtmem_buddy_alloc(CONST_PAGE_SIZE,VIRT_BUDDY_NOMAP);
+      //ASSERT_RETURN( (void*)virt_page != NULL , IPC_FAILURE);
+      if ((void*)virt_page == NULL)
 	{
-	  /* Espace noyau commun  */
-	  physaddr_t phys_page;
-	  virtaddr_t virt_page;
-	  virtaddr_t virt_message;
-
-	  /* Alloue une page virtuelle */
-	  virt_page = (virtaddr_t)virt_alloc(CONST_PAGE_SIZE);
-	  ASSERT_RETURN( (void*)virt_page != NULL , IPC_FAILURE);
-
-	  /* Demap la page */
-	  paging_unmap(virt_page);
-
-	  /* Determine la page physique du receive_message */
-	  phys_page = PHYS_ALIGN_INF(th_receiver->ipc.receive_phys_message);
-
-	  /* Map la page physique du message avec la page virtuelle */
-	  ASSERT_RETURN( paging_map(virt_page, phys_page, TRUE) != EXIT_FAILURE , IPC_FAILURE );
-
-	  /* Determine l adresse virtuelle du message */
-	  virt_message = virt_page + (th_receiver->ipc.receive_phys_message - phys_page);
-
-	  /* Copie le message */
-	  klib_mem_copy((virtaddr_t)message, virt_message, sizeof(struct ipc_message));
-
-	  /* Liberation */
-	  paging_unmap(virt_page);
-	  virt_free((void*)virt_page);
-
+	  klib_bochs_print("ERREUR ALLOC\n");
+	  return IPC_FAILURE;
 	}
-      else
+
+
+      /* Demap la page */
+      //paging_unmap(virt_page);
+      
+      /* Determine la page physique du receive_message */
+      phys_page = PHYS_ALIGN_INF(th_receiver->ipc.receive_phys_message);
+      
+      /* Map la page physique du message avec la page virtuelle */
+      if (paging_map(virt_page, phys_page, TRUE) == EXIT_FAILURE)
 	{
-	  /* TODO : Espace different non noyau */
+	  klib_bochs_print("ERREUR MAP\n");
+	  virtmem_buddy_free((void*)virt_page);
+	  return IPC_FAILURE;
 	}
+      
+      /* Determine l adresse virtuelle du message */
+      virt_message = virt_page + (th_receiver->ipc.receive_phys_message - phys_page);
+      
+      /* Copie le message */
+      klib_mem_copy((virtaddr_t)message, virt_message, sizeof(struct ipc_message));
+      
+      /* Liberation */
+      if (paging_unmap(virt_page)==EXIT_FAILURE)
+	{
+	  klib_bochs_print("ERREUR UNMAP\n");
+	}
+
+      if (virtmem_buddy_free((void*)virt_page)==EXIT_FAILURE)
+	{
+	  klib_bochs_print("ERREUR FREE\n");
+	}
+      
+
 
       /* Debloque le destinataire au besoin */
       if (th_receiver->state == THREAD_BLOCKED)
@@ -188,18 +204,26 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
 	  th_receiver->next_state = THREAD_READY;
 	  /* Fin de reception */
 	  th_receiver->ipc.state &= ~SYSCALL_IPC_RECEIVING;
+
 	  ASSERT_RETURN( sched_dequeue(SCHED_BLOCKED_QUEUE, th_receiver)==EXIT_SUCCESS, IPC_FAILURE);
 	  ASSERT_RETURN( sched_enqueue(SCHED_READY_QUEUE, th_receiver)==EXIT_SUCCESS, IPC_FAILURE);
 	}
 
       /* Fin d envoi */
       th_sender->ipc.state &= ~SYSCALL_IPC_SENDING;
+
+      klib_bochs_print(th_sender->name);
+      klib_bochs_print(" blocked by send\n");
+      th_sender->next_state = THREAD_BLOCKED;
      
     }
   else
     {
       /* Bloque l emetteur dans la wait list du destinataire */
+      klib_bochs_print(th_sender->name);
+      klib_bochs_print(" blocked sending\n");
       th_sender->next_state = THREAD_BLOCKED_SENDING;
+
     }
 
   /* Ordonnance */
@@ -215,6 +239,9 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
 
 PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sender, struct ipc_message* message)
 {
+      klib_bochs_print(th_receiver->name);
+      klib_bochs_print(" called RECEIVE\n");
+
   struct thread* th_available = NULL;
 
   /* Indique de qui recevoir */
@@ -252,63 +279,79 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
   /* Un thread disponible */
   if ( th_available != NULL )
     {
-       /* Differencie les cas d'espace d'adressage noyau ou non */
-      if ( (th_receiver->ctx->cs == th_available->ctx->cs)
-	   && (th_receiver->ctx->cs == CONST_CS_SELECTOR) )
+      physaddr_t phys_page;
+      virtaddr_t virt_page;
+      virtaddr_t virt_message;
+      
+      /* Alloue une page virtuelle */
+      //virt_page = (virtaddr_t)virt_alloc(CONST_PAGE_SIZE);
+      virt_page = (virtaddr_t)virtmem_buddy_alloc(CONST_PAGE_SIZE,VIRT_BUDDY_NOMAP); 
+      // ASSERT_RETURN( (void*)virt_page != NULL , IPC_FAILURE);
+      if ((void*)virt_page == NULL)
 	{
-	  /* Espace noyau commun  */
-	  physaddr_t phys_page;
-	  virtaddr_t virt_page;
-	  virtaddr_t virt_message;
-
-	  /* Alloue une page virtuelle */
-	  virt_page = (virtaddr_t)virt_alloc(CONST_PAGE_SIZE);
-	  ASSERT_RETURN( (void*)virt_page != NULL , IPC_FAILURE);
-
-	  /* Demap la page */
-	  paging_unmap(virt_page);
-
-	  /* Determine la page physique du receive_message */
-	  phys_page = PHYS_ALIGN_INF(th_available->ipc.send_phys_message);
-
-	  /* Map la page physique du message avec la page virtuelle */
-	  ASSERT_RETURN( paging_map(virt_page, phys_page, TRUE) != EXIT_FAILURE , IPC_FAILURE );
-
-	  /* Determine l adresse virtuelle du message */
-	  virt_message = virt_page + (th_available->ipc.send_phys_message - phys_page);
-
-	  /* Copie le message */
-	  klib_mem_copy(virt_message, (virtaddr_t)message, sizeof(struct ipc_message));
-
-	  /* Liberation */
-	  paging_unmap(virt_page);
-	  virt_free((void*)virt_page);
-
-	}
-      else
-	{
-	  /* TODO : Espace different non noyau */
+	  klib_bochs_print("ERREUR ALLOC2\n");
+	  return IPC_FAILURE;
 	}
 
+      /* Demap la page */
+      //paging_unmap(virt_page);
+      
+      /* Determine la page physique du receive_message */
+      phys_page = PHYS_ALIGN_INF(th_available->ipc.send_phys_message);
+      
+      /* Map la page physique du message avec la page virtuelle */
+      if( paging_map(virt_page, phys_page, TRUE) == EXIT_FAILURE)
+      	{
+	  klib_bochs_print("ERREUR MAP2\n");
+	  virtmem_buddy_free((void*)virt_page);
+	  return IPC_FAILURE;
+	}
+      
+      /* Determine l adresse virtuelle du message */
+      virt_message = virt_page + (th_available->ipc.send_phys_message - phys_page);
+      
+      /* Copie le message */
+      klib_mem_copy(virt_message, (virtaddr_t)message, sizeof(struct ipc_message));
+      
+      /* Liberation */
+      if (paging_unmap(virt_page)==EXIT_FAILURE)
+	{
+	  klib_bochs_print("ERREUR UNMAP2\n");
+	}
 
+      if (virtmem_buddy_free((void*)virt_page)==EXIT_FAILURE)
+	{
+	  klib_bochs_print("ERREUR FREE2\n");
+	}
+           
       /* Debloque le sender au besoin */
       if (th_available->state == THREAD_BLOCKED_SENDING)
 	{
 	  th_available->next_state = THREAD_READY;
 	  /* Fin d'envoi */
 	  th_available->ipc.state &= ~SYSCALL_IPC_SENDING;
+
+            klib_bochs_print(" Removing ");
+            klib_bochs_print(th_available->name);
+            klib_bochs_print(" from ");
+            klib_bochs_print(th_receiver->name);
+            klib_bochs_print(" waiting list \n");
+
 	  LLIST_REMOVE(th_receiver->ipc.receive_waitlist, th_available);
 	  ASSERT_RETURN( sched_enqueue(SCHED_READY_QUEUE, th_available)==EXIT_SUCCESS, IPC_FAILURE);
 	}
 
       /* Fin de reception */
       th_receiver->ipc.state &= ~SYSCALL_IPC_RECEIVING;
-
+      
     }
   else
     {
       /* Pas de message ni de thread disponible */
       th_receiver->next_state = THREAD_BLOCKED;
+      klib_bochs_print(th_receiver->name);
+      klib_bochs_print(" blocked receiving\n");
+
       /* Ordonnance  */
       sched_schedule(SCHED_FROM_RECEIVE);
     }
@@ -316,16 +359,30 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
   return IPC_SUCCESS;
 }
 
+
 /*========================================================================
  * Notify
  *========================================================================*/
 
 PRIVATE u8_t syscall_notify(struct thread* th_from, struct thread* th_to)
 {
-  klib_bochs_print(th_from->name);
-  klib_bochs_print(" notifying to ");
-  (th_to==NULL)?klib_bochs_print("ANY"):klib_bochs_print(th_to->name);
-  klib_bochs_print(" ");
+  
+   if (th_to->state == THREAD_BLOCKED)
+	{
+	  th_to->next_state = THREAD_READY;
+	  /* Fin d'envoi */
+	  th_to->ipc.state &= ~SYSCALL_IPC_SENDING;
+
+            klib_bochs_print(" Deblocking ");
+            klib_bochs_print(th_to->name);
+            klib_bochs_print("\n");
+
+	    sched_dequeue(SCHED_BLOCKED_QUEUE,th_to);
+	    sched_enqueue(SCHED_READY_QUEUE,th_to);
+ 
+ 
+
+	}
 
   return IPC_SUCCESS;
 }

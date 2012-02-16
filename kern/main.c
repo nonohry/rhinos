@@ -28,23 +28,26 @@ void toto(char c)
 {
   char t[2];
   struct ipc_message m;
-
+  u32_t k=1;
+  u32_t i;
+ 
   t[0]=c;
   t[1]=0;
 
   m.len = 2;
-  m.code = 4;
 
-  while(1)
+  while(k)
     {
-      u32_t i=0;
+      i=0;
+      m.code = k;
       ipc_send(3,&m);
       //klib_bochs_print(t);
-      while(i < (1<<19))
+      while(i < (1<<9))
 	{
 	  i++;
 	}
-      
+      k++;
+      klib_bochs_print(   "Incrementing m.code\n");
     }
 
   return;
@@ -62,9 +65,11 @@ void titi(char c)
     {
       u32_t i=0;
       //klib_bochs_print(t);
-      ipc_receive(IPC_ANY,&m);
-      klib_bochs_print("\nDATA RECEIVED\n   Message len: %d code :%d",m.len,m.code);
-      while(i < (1<<19))
+      ipc_receive(2,&m);
+      klib_bochs_print("DATA RECEIVED =>   Message len: %d code :%d\n",m.len,m.code);
+
+      ipc_notify(2);
+      while(i < (1<<9))
 	{
 	  i++;
 	}
@@ -79,6 +84,7 @@ void tata(char c)
   char t[2];
   int j=1048;
   struct ipc_message m;
+  u32_t i;
 
   t[0]=c;
   t[1]=0;
@@ -88,14 +94,14 @@ void tata(char c)
 
   while(j)
     {
-      u32_t i=0;
-      ipc_send(3, &m);
-      //klib_bochs_print(t);
-      while(i < (1<<19))
+       i=0;
+       //ipc_send(3, &m);
+      klib_bochs_print(t);
+      while(i < (1<<9))
 	{
 	  i++;
 	}
-      j--;
+      //j--;
     }
   klib_bochs_print(" [Quit....] ");
   return;

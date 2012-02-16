@@ -82,6 +82,10 @@ PUBLIC u8_t sched_enqueue(u8_t queue, struct thread* th)
 	{
 	  sched_enqueue_roundrobin(th);
 	}
+            klib_bochs_print(" Putting ");
+            klib_bochs_print(th->name);
+            klib_bochs_print(" in ");
+	    klib_bochs_print(" READY QUEUE \n");
       th->state = THREAD_READY;
       break;
 
@@ -166,6 +170,7 @@ PUBLIC void sched_schedule(u8_t flag)
   /* Decremente son quantum dynamique si appel par le PIT */
   if (flag == SCHED_FROM_PIT)
     {
+      klib_bochs_print(" PIT ! \n");
       cur_th->sched.dynamic_quantum--;
     }
   
@@ -193,6 +198,14 @@ PUBLIC void sched_schedule(u8_t flag)
 	case THREAD_BLOCKED_SENDING:
 	  {
 	    /* Ajoute la thread a la liste d attente du receveur */
+            /* Ajoute la thread a la liste d attente du receveur */
+            klib_bochs_print(" Putting ");
+            klib_bochs_print(cur_th->name);
+            klib_bochs_print(" in ");
+            klib_bochs_print((cur_th->ipc.send_to)->name);
+            klib_bochs_print(" waiting list \n");
+
+
 	    LLIST_ADD((cur_th->ipc.send_to)->ipc.receive_waitlist, cur_th);
 	    cur_th->state = THREAD_BLOCKED_SENDING;
 	    break;
@@ -212,6 +225,11 @@ PUBLIC void sched_schedule(u8_t flag)
       sched_dequeue(SCHED_READY_QUEUE,new_th);
       sched_enqueue(SCHED_RUNNING_QUEUE,new_th);
  
+
+      klib_bochs_print(" ELECTING: ");
+      klib_bochs_print(new_th->name);
+      klib_bochs_print(" (prio: %d)\n", new_th->sched.dynamic_prio);
+
       /* Switch vers le nouveau contexte */
       context_cpu_switch_to(new_th->ctx); 
 

@@ -76,8 +76,8 @@ extern	syscall_handle			; Gestion des appels systemes en C
 	;;
 	;; Fake Error Code
 	;;
-%assign		FAKE_ERROR		0xFEC	
-%assign		FAKE_ERROR2		0xFEB
+%assign		FAKE_ERROR		0xFEC
+	
 	;;
 	;; Offset dans struct context_cpu
 	;;
@@ -218,7 +218,7 @@ hwint_15:
 
 
 swint_syscall:
-        push    FAKE_ERROR2      ; Faux erreur code      
+        push    FAKE_ERROR      ; Faux erreur code      
         call    save_ctx        ; Sauvegarde des registres
         call    syscall_handle  ; Handler syscall()
         call    restore_ctx     ; Restaure les registres
