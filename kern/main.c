@@ -65,10 +65,11 @@ void titi(char c)
     {
       u32_t i=0;
       //klib_bochs_print(t);
-      ipc_receive(2,&m);
-      klib_bochs_print("DATA RECEIVED =>   Message len: %d code :%d\n",m.len,m.code);
+      ipc_receive(IPC_ANY,&m);
+      klib_bochs_print("DATA RECEIVED from %d =>   Message len: %d code :%d\n",m.from,m.len,m.code);
 
-      ipc_notify(2);
+      ipc_notify(m.from);
+
       while(i < (1<<9))
 	{
 	  i++;
@@ -95,13 +96,13 @@ void tata(char c)
   while(j)
     {
        i=0;
-       //ipc_send(3, &m);
-      klib_bochs_print(t);
+      ipc_send(3, &m);
+      //klib_bochs_print(t);
       while(i < (1<<9))
 	{
 	  i++;
 	}
-      //j--;
+      j--;
     }
   klib_bochs_print(" [Quit....] ");
   return;

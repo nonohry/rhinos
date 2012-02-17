@@ -42,6 +42,7 @@ PUBLIC u8_t syscall_handle()
 {
   struct thread* cur_th;
   struct thread* target_th;
+  struct ipc_message* arg_message;
   u32_t syscall_num;
   s32_t arg_id;
   u8_t res;
@@ -55,6 +56,16 @@ PUBLIC u8_t syscall_handle()
 
   /* Les arguments dans les registres */
   arg_id = (s32_t)(cur_th->ctx->ebx);
+
+  if (syscall_num != SYSCALL_NOTIFY)
+    {
+      arg_message = (struct ipc_message*)(cur_th->ctx->ecx);
+       /* Indique le createur du message */
+      arg_message->from = cur_th->id->id;
+    }
+
+ 
+  
 
   /* Le thread cible */
   if (arg_id == IPC_ANY)
@@ -73,13 +84,13 @@ PUBLIC u8_t syscall_handle()
     {
     case SYSCALL_SEND:
       {
-	res = syscall_send(cur_th, target_th, (struct ipc_message*)(cur_th->ctx->ecx));
+	res = syscall_send(cur_th, target_th, arg_message);
 	break;
       }
 
     case SYSCALL_RECEIVE:
       {
-	res = syscall_receive(cur_th, target_th, (struct ipc_message*)(cur_th->ctx->ecx));
+	res = syscall_receive(cur_th, target_th, arg_message);
 	break;
       }
 
@@ -143,7 +154,7 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
   th_sender->ipc.send_message = message;
   th_sender->ipc.send_phys_message = paging_virt2phys((virtaddr_t)message);
 
-  klib_bochs_print("   send message (0x%x) len: %d code :%d\n",th_sender->ipc.send_phys_message,((struct ipc_message*)message)->len,((struct ipc_message*)message)->code);
+  klib_bochs_print("   send message (0x%x) from: %d len: %d code :%d\n",th_sender->ipc.send_phys_message,((struct ipc_message*)message)->from,((struct ipc_message*)message)->len,((struct ipc_message*)message)->code);
   ASSERT_RETURN( th_sender->ipc.send_phys_message , IPC_FAILURE);
 
   /* Regarde si le destinataire receptionne uniquement et de la part de l emetteur */
