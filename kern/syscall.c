@@ -195,6 +195,9 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
 	{
 	  klib_bochs_print("ERREUR UNMAP\n");
 	}
+      
+      /* Nettoie le cache pour la page */
+      klib_invlpg(virt_page);
 
       if (virtmem_buddy_free((void*)virt_page)==EXIT_FAILURE)
 	{
@@ -335,6 +338,9 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
 	{
 	  klib_bochs_print("ERREUR UNMAP2\n");
 	}
+
+      /* Nettoie le cache pour la page */
+      klib_invlpg(virt_page);
 
       if (virtmem_buddy_free((void*)virt_page)==EXIT_FAILURE)
 	{
