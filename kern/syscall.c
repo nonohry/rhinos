@@ -142,6 +142,8 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
  
   th_sender->ipc.send_message = message;
   th_sender->ipc.send_phys_message = paging_virt2phys((virtaddr_t)message);
+
+  klib_bochs_print("   send message (0x%x) len: %d code :%d\n",th_sender->ipc.send_phys_message,((struct ipc_message*)message)->len,((struct ipc_message*)message)->code);
   ASSERT_RETURN( th_sender->ipc.send_phys_message , IPC_FAILURE);
 
   /* Regarde si le destinataire receptionne uniquement et de la part de l emetteur */
@@ -179,6 +181,9 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
 	  return IPC_FAILURE;
 	}
       
+      /* Nettoie le cache pour la page */
+      klib_invlpg(virt_page);
+
       /* Determine l adresse virtuelle du message */
       virt_message = virt_page + (th_receiver->ipc.receive_phys_message - phys_page);
       
@@ -269,6 +274,7 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
 	      if (th_tmp == th_sender)
 		{
 		  th_available = th_tmp;
+		  break;
 		}
 	      th_tmp = LLIST_NEXT(th_receiver->ipc.receive_waitlist, th_tmp);
 	    }while(!LLIST_ISHEAD(th_receiver->ipc.receive_waitlist, th_tmp));
@@ -306,11 +312,22 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
 	  virtmem_buddy_free((void*)virt_page);
 	  return IPC_FAILURE;
 	}
+
+      /* Nettoie le cache pour la page */
+      klib_invlpg(virt_page);
       
       /* Determine l adresse virtuelle du message */
       virt_message = virt_page + (th_available->ipc.send_phys_message - phys_page);
       
       /* Copie le message */
+      klib_bochs_print("   copy message (phys 0x%x, virt 0x%x) len: %d code :%d -- VPage 0x%x, PPage 0x%x, Phys Offset 0x%x\n",th_available->ipc.send_phys_message,virt_message,((struct ipc_message*)virt_message)->len,((struct ipc_message*)virt_message)->code, virt_page, phys_page, th_available->ipc.send_phys_message - phys_page);
+
+      if (((struct ipc_message*)virt_message)->len != 2)
+	{
+	  while(51){}
+	}
+
+
       klib_mem_copy(virt_message, (virtaddr_t)message, sizeof(struct ipc_message));
       
       /* Liberation */

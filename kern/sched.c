@@ -170,7 +170,7 @@ PUBLIC void sched_schedule(u8_t flag)
   /* Decremente son quantum dynamique si appel par le PIT */
   if (flag == SCHED_FROM_PIT)
     {
-      klib_bochs_print(" PIT ! \n");
+      klib_bochs_print(" PIT ! (%d) \n", cur_th->sched.dynamic_quantum);
       cur_th->sched.dynamic_quantum--;
     }
   

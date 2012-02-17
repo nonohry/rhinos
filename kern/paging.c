@@ -70,7 +70,7 @@ PUBLIC u8_t paging_map(virtaddr_t vaddr, physaddr_t paddr, u8_t super)
 
   /* Interdit le pde du self map */
   ASSERT_RETURN( pde!=PAGING_SELFMAP , EXIT_FAILURE);
-
+      
   /* Si le pde n'existe pas, on le cree */
   if (!(pd[pde].present))
     {
@@ -86,7 +86,6 @@ PUBLIC u8_t paging_map(virtaddr_t vaddr, physaddr_t paddr, u8_t super)
 
       /* Nullifie le page table */
       klib_mem_set(0,PAGING_GET_PT(pde),PAGING_ENTRIES*sizeof(struct pte));
-
     }
 
   /* Ici, la table existe forcement */
