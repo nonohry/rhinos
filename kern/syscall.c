@@ -350,6 +350,8 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
 	  klib_bochs_print("ERREUR UNMAP2\n");
 	}
 
+      klib_bochs_print("paging_unmap passe\n");
+
       /* Nettoie le cache pour la page */
       klib_invlpg(virt_page);
 
@@ -358,6 +360,8 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
 	  klib_bochs_print("ERREUR FREE2\n");
 	}
            
+      klib_bochs_print("virtmem_buddy_free passe\n");
+
       /* Debloque le sender au besoin */
       if (th_available->state == THREAD_BLOCKED_SENDING)
 	{

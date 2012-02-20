@@ -18,7 +18,12 @@
   {									\
     if ( !(__expr) )							\
       {									\
-	klib_bochs_print(" ");					\
+	klib_bochs_print("Assertion [ ");				\
+	klib_bochs_print(TO_STRING(__expr));				\
+	klib_bochs_print(" ] failed ! file ");				\
+	klib_bochs_print(__FILE__);					\
+	klib_bochs_print(", line %d\n",__LINE__);			\
+									\
       }									\
   }
 
@@ -28,6 +33,11 @@
   {									\
     if ( !(__expr) )							\
       {									\
+	klib_bochs_print("Assertion [ ");					\
+	klib_bochs_print(TO_STRING(__expr));					\
+	klib_bochs_print(" ] failed ! file ");				\
+	klib_bochs_print(__FILE__);						\
+	klib_bochs_print(", line %d\n",__LINE__);				\
 	return  __ret;							\
       }									\
   }
