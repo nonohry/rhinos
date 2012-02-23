@@ -77,16 +77,27 @@ PUBLIC u8_t virtmem_cache_init(void)
       vaddr_init = i*CONST_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT;
       paddr_init = (physaddr_t)phys_alloc(CONST_PAGE_SIZE);
       paging_map(vaddr_init, paddr_init, TRUE);
+
       /* Fait grossir cache_cache dans cette page */
-      ASSERT_RETURN( virtmem_cache_grow(&cache_cache,vaddr_init)==EXIT_SUCCESS , EXIT_FAILURE );
+      if ( virtmem_cache_grow(&cache_cache,vaddr_init) != EXIT_SUCCESS )
+	{
+	  return EXIT_FAILURE;
+	}
+     
     }
 
   /* Les caches des structures de base */
   slab_cache = virtmem_cache_create("slab_cache",sizeof(struct vmem_slab),0,0,VIRT_CACHE_NOREAP,NULL,NULL);
-  ASSERT_RETURN( slab_cache!=NULL , EXIT_FAILURE);
+  if ( slab_cache == NULL )
+    {
+      return EXIT_FAILURE;
+    }
 
   bufctl_cache = virtmem_cache_create("bufctl_cache",sizeof(struct vmem_bufctl),0,0,VIRT_CACHE_NOREAP,NULL,NULL);
-  ASSERT_RETURN( bufctl_cache!=NULL , EXIT_FAILURE);
+  if ( bufctl_cache == NULL )
+    {
+      return EXIT_FAILURE;
+    }
 
   return EXIT_SUCCESS;
 }
@@ -104,7 +115,10 @@ PUBLIC struct vmem_cache* virtmem_cache_create(const char* name, u16_t size, u16
 
   /* Allocation du cache */
   cache = (struct vmem_cache*)virtmem_cache_alloc(&cache_cache, VIRT_CACHE_DEFAULT);
-  ASSERT_RETURN( cache!=NULL , NULL);
+  if ( cache == NULL )
+    {
+      return NULL;
+    }
 
   /* Copie du nom */
   i=0;
@@ -149,16 +163,26 @@ PUBLIC u8_t virtmem_cache_free(struct vmem_cache* cache, void* buf)
 
   /* Recupere la page physique */
   pdesc = PHYS_GET_DESC( paging_virt2phys((virtaddr_t)buf) );
-  ASSERT_RETURN( !PHYS_PDESC_ISNULL(pdesc) , EXIT_FAILURE);
-
+  if ( PHYS_PDESC_ISNULL(pdesc) )
+    {
+      return EXIT_FAILURE;
+    }
+ 
   /* Parcours de la liste des bufctl */
-  ASSERT_RETURN( !LLIST_ISNULL(pdesc->bufctl) , EXIT_FAILURE);
+  if ( LLIST_ISNULL(pdesc->bufctl) )
+    {
+      return EXIT_FAILURE;
+    }
+
   bc = LLIST_GETHEAD(pdesc->bufctl);
   while( bc->base != (virtaddr_t)buf )
     {
       bc = LLIST_NEXT(pdesc->bufctl,bc);
       /* Retour si on ne trouve pas le bufctl */
-      ASSERT_RETURN( !LLIST_ISHEAD(pdesc->bufctl,bc) , EXIT_FAILURE);
+      if ( LLIST_ISHEAD(pdesc->bufctl,bc) )
+	{
+	  return EXIT_FAILURE;
+	}
     }
 
 
@@ -224,7 +248,11 @@ PUBLIC void* virtmem_cache_alloc(struct vmem_cache* cache, u8_t flags)
   if ( (LLIST_ISNULL(cache->slabs_free)) && (LLIST_ISNULL(cache->slabs_partial)) )
     {
       /* Appel de la fonction  */
-      ASSERT_RETURN( virtmem_cache_grow(cache, VIRT_CACHE_NOADDR)==EXIT_SUCCESS , NULL);
+      if ( virtmem_cache_grow(cache, VIRT_CACHE_NOADDR) != EXIT_SUCCESS )
+	{
+	  return NULL;
+	}
+
     }
 
   /* Trouve la liste de slabs de travail */
@@ -239,7 +267,10 @@ PUBLIC void* virtmem_cache_alloc(struct vmem_cache* cache, u8_t flags)
 
   /* Lie le bufctl a sa page physique */
   pdesc = PHYS_GET_DESC( paging_virt2phys(bufctl->base)  );
-  ASSERT_RETURN( !PHYS_PDESC_ISNULL(pdesc) , NULL);
+  if ( PHYS_PDESC_ISNULL(pdesc) )
+    {
+      return NULL;
+    }
 
   LLIST_ADD(pdesc->bufctl,bufctl);
   /* Lie la page physique au cache */
@@ -312,8 +343,12 @@ PUBLIC u8_t virtmem_cache_destroy(struct vmem_cache* cache)
   u8_t i;
 
   /* Petit controle */
-  ASSERT_RETURN( LLIST_ISNULL(cache->slabs_partial)&&LLIST_ISNULL(cache->slabs_full) , EXIT_FAILURE);
-
+  if ( (!LLIST_ISNULL(cache->slabs_partial))
+       || (!LLIST_ISNULL(cache->slabs_full)) )
+    {
+      return EXIT_FAILURE;
+    }
+ 
   /* Parcourt la liste des slabs */
   while(!LLIST_ISNULL(cache->slabs_free))
     {
@@ -325,7 +360,10 @@ PUBLIC u8_t virtmem_cache_destroy(struct vmem_cache* cache)
       /* Libere le slab au besoin */
        if (cache->size > (CONST_PAGE_SIZE >> VIRT_CACHE_GROWSHIFT))
 	{
-	  ASSERT_RETURN( virtmem_cache_free(slab_cache,slab)==EXIT_SUCCESS, EXIT_FAILURE) ;
+	  if ( virtmem_cache_free(slab_cache,slab) != EXIT_SUCCESS )
+	    {
+	      return EXIT_FAILURE;
+	    }
 	}
     }
   
@@ -341,8 +379,11 @@ PUBLIC u8_t virtmem_cache_destroy(struct vmem_cache* cache)
   LLIST_REMOVE(cache_list,cache);
 
   /* Liberation */
-  ASSERT_RETURN( virtmem_cache_free(&cache_cache,cache)==EXIT_SUCCESS, EXIT_FAILURE);
-
+  if ( virtmem_cache_free(&cache_cache,cache) != EXIT_SUCCESS )
+    {
+      return EXIT_FAILURE;
+    }
+ 
   return EXIT_SUCCESS;
 }
 
@@ -361,7 +402,10 @@ PUBLIC u32_t virtmem_cache_reap(u8_t flags)
   u32_t pages, max_pages,i;
 
   /* Controle */
-  ASSERT_RETURN( !LLIST_ISNULL(cache_list) , 0);
+  if ( LLIST_ISNULL(cache_list) )
+    {
+      return 0;
+    }
 
   /* Initialise le parcours des caches */
   cache = LLIST_GETHEAD(cache_list);
@@ -408,23 +452,32 @@ PUBLIC u32_t virtmem_cache_reap(u8_t flags)
   cache_list = cache;
 
   /* S'assure qu on libere des pages */
-  ASSERT_RETURN( max_pages , 0);
-
+  if ( !max_pages )
+    {
+      return 0;
+    }
+ 
   /* Detruit les slabs du cache selectionne*/
   while(!LLIST_ISNULL(cache_reap->slabs_free))
     {
       slab = LLIST_GETHEAD(cache_reap->slabs_free);
 
       /* Detruit le slab */
-      ASSERT_RETURN( virtmem_slab_destroy(cache_reap,slab)==EXIT_SUCCESS, 0);
-
+      if ( virtmem_slab_destroy(cache_reap,slab) != EXIT_SUCCESS )
+	{
+	  return 0;
+	}
+     
       /* Detruit le chainage */
       LLIST_REMOVE(cache_reap->slabs_free,slab);
 
       /* Libere le slab au besoin */
        if (cache_reap->size > (CONST_PAGE_SIZE >> VIRT_CACHE_GROWSHIFT))
 	{
-	  ASSERT_RETURN( virtmem_cache_free(slab_cache,slab)==EXIT_SUCCESS, 0);
+	  if ( virtmem_cache_free(slab_cache,slab) != EXIT_SUCCESS )
+	    {
+	      return 0;
+	    }
 	}
 
     }
@@ -478,8 +531,11 @@ PRIVATE u8_t virtmem_slab_destroy(struct vmem_cache* cache,struct vmem_slab* sla
   virtaddr_t page;
 
   /* Petit controle */
-  ASSERT_RETURN( !slab->count , EXIT_FAILURE);
-
+  if ( slab->count )
+    {
+      return EXIT_FAILURE;
+    }
+ 
   /* Destruction des objets et des bufctl */
   while(!LLIST_ISNULL(slab->free_buf))
     {
@@ -499,14 +555,20 @@ PRIVATE u8_t virtmem_slab_destroy(struct vmem_cache* cache,struct vmem_slab* sla
       /* Libere le bufctl si off slab */
       if (cache->size > (CONST_PAGE_SIZE >> VIRT_CACHE_GROWSHIFT))
 	{
-	  ASSERT_RETURN( virtmem_cache_free(bufctl_cache,bc)==EXIT_SUCCESS, EXIT_FAILURE);
+	  if ( virtmem_cache_free(bufctl_cache,bc) != EXIT_SUCCESS )
+	    {
+	      return EXIT_FAILURE;
+	    }
 	}
 
     }
 
   /* Libere les pages virtuelles */
   page = PAGING_ALIGN_INF((virtaddr_t)slab->start);
-  ASSERT_RETURN( virtmem_buddy_free((void*)page)==EXIT_SUCCESS , EXIT_FAILURE);
+  if ( virtmem_buddy_free((void*)page) != EXIT_SUCCESS )
+    {
+      return EXIT_FAILURE;
+    }
 
   /* Remise a zero */
   slab->max_objects = 0;
@@ -540,13 +602,19 @@ PRIVATE u8_t virtmem_cache_grow_little(struct vmem_cache* cache, virtaddr_t addr
   if (addr == VIRT_CACHE_NOADDR)
     {
       page = (virtaddr_t)virtmem_buddy_alloc(np*CONST_PAGE_SIZE, VIRT_BUDDY_MAP | VIRT_BUDDY_NOMINCHECK);
-      ASSERT_RETURN( ((void*)page) != NULL , EXIT_FAILURE);
+      if ( ((void*)page) == NULL )
+	{
+	  return EXIT_FAILURE;
+	}
     }
   else
     {
       /* Verifie que l adresse est bien mappee */
       struct ppage_desc* pdesc = PHYS_GET_DESC( paging_virt2phys(addr)  );
-      ASSERT_RETURN( !PHYS_PDESC_ISNULL(pdesc) , EXIT_FAILURE);
+      if ( PHYS_PDESC_ISNULL(pdesc) )
+	{
+	  return EXIT_FAILURE;
+	}
       page = addr;
     }
   
@@ -624,13 +692,19 @@ PRIVATE u8_t virtmem_cache_grow_big(struct vmem_cache* cache, virtaddr_t addr)
   if (addr == VIRT_CACHE_NOADDR)
     {
       page = (virtaddr_t)virtmem_buddy_alloc(np*CONST_PAGE_SIZE, VIRT_BUDDY_MAP | VIRT_BUDDY_NOMINCHECK);
-      ASSERT_RETURN( ((void*)page)!=NULL , EXIT_FAILURE);
+      if ( ((void*)page) == NULL )
+	{
+	  return EXIT_FAILURE;
+	}
     }
   else
     {
       /* Verifie que l adresse est bien mappee */
       struct ppage_desc* pdesc = PHYS_GET_DESC( paging_virt2phys(addr)  );
-      ASSERT_RETURN( !PHYS_PDESC_ISNULL(pdesc) , EXIT_FAILURE);
+      if ( PHYS_PDESC_ISNULL(pdesc) )
+	{
+	  return EXIT_FAILURE;
+	}
       page = addr;
 
     }
@@ -638,7 +712,10 @@ PRIVATE u8_t virtmem_cache_grow_big(struct vmem_cache* cache, virtaddr_t addr)
   
   /* Obtention d un slab */
   slab = (struct vmem_slab*)virtmem_cache_alloc(slab_cache, VIRT_CACHE_DEFAULT);
-  ASSERT_RETURN( slab!=NULL , EXIT_FAILURE);
+  if ( slab == NULL )
+    {
+      return EXIT_FAILURE;
+    }
 
   /* Initialisation du slab */
   slab->count = 0;
@@ -666,8 +743,11 @@ PRIVATE u8_t virtmem_cache_grow_big(struct vmem_cache* cache, virtaddr_t addr)
   for(i=0; i<slab->max_objects; i++)
     {
       bc = (struct vmem_bufctl*)virtmem_cache_alloc(bufctl_cache, VIRT_CACHE_DEFAULT);
-      ASSERT_RETURN( bc!=NULL , EXIT_FAILURE);
-
+      if ( bc == NULL )
+	{
+	  return EXIT_FAILURE;
+	}
+    
       /* Initialise le bufctl */
       bc->base = slab->start + i*cache->size;
       bc->slab = slab;
