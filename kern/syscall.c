@@ -49,7 +49,10 @@ PUBLIC u8_t syscall_handle()
 
   /* Le thread courant */
   cur_th = sched_get_running_thread();
-  ASSERT_RETURN( cur_th != NULL , IPC_FAILURE);
+  if (cur_th == NULL)
+    {
+      return IPC_FAILURE;
+    }
 
   /* Le numero d appel dans les registres */
   syscall_num = (u32_t)(cur_th->ctx->edx);
@@ -76,7 +79,10 @@ PUBLIC u8_t syscall_handle()
     {
       /* Recherche le thread via son threadID */
       target_th = thread_id2thread(arg_id);
-      ASSERT_RETURN( target_th != NULL , IPC_FAILURE);
+      if ( target_th == NULL )
+	{
+	  return IPC_FAILURE;
+	}
     }
 
   /* Redirection vers les fonction effectives */
@@ -124,7 +130,10 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
   struct thread* th_tmp;
 
   /* Pas de broadcast */
-  ASSERT_RETURN( th_receiver!=NULL , IPC_FAILURE);
+  if ( th_receiver == NULL )
+    {
+      return IPC_FAILURE;
+    }
 
   /* Indique a qui envoyer */
   th_sender->ipc.send_to = th_receiver;
@@ -155,8 +164,13 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
   th_sender->ipc.send_phys_message = paging_virt2phys((virtaddr_t)message);
 
   klib_bochs_print("   send message (0x%x) from: %d len: %d code :%d\n",th_sender->ipc.send_phys_message,((struct ipc_message*)message)->from,((struct ipc_message*)message)->len,((struct ipc_message*)message)->code);
-  ASSERT_RETURN( th_sender->ipc.send_phys_message , IPC_FAILURE);
 
+  /* Pas de message mappe en memoire physique, on retourne */
+  if ( !th_sender->ipc.send_phys_message )
+    {
+      return IPC_FAILURE;
+    }
+ 
   /* Regarde si le destinataire receptionne uniquement et de la part de l emetteur */
   if ( ( (th_receiver->ipc.state & (SYSCALL_IPC_SENDING|SYSCALL_IPC_RECEIVING)) == SYSCALL_IPC_RECEIVING)
        && ( (th_receiver->ipc.receive_from == th_sender)||(th_receiver->ipc.receive_from == NULL) ) )
@@ -170,7 +184,6 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
       // virt_page = (virtaddr_t)virt_alloc(CONST_PAGE_SIZE);
       
       virt_page = (virtaddr_t)virtmem_buddy_alloc(CONST_PAGE_SIZE,VIRT_BUDDY_NOMAP);
-      //ASSERT_RETURN( (void*)virt_page != NULL , IPC_FAILURE);
       if ((void*)virt_page == NULL)
 	{
 	  klib_bochs_print("ERREUR ALLOC\n");
@@ -224,8 +237,16 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
 	  /* Fin de reception */
 	  th_receiver->ipc.state &= ~SYSCALL_IPC_RECEIVING;
 
-	  ASSERT_RETURN( sched_dequeue(SCHED_BLOCKED_QUEUE, th_receiver)==EXIT_SUCCESS, IPC_FAILURE);
-	  ASSERT_RETURN( sched_enqueue(SCHED_READY_QUEUE, th_receiver)==EXIT_SUCCESS, IPC_FAILURE);
+	  if ( sched_dequeue(SCHED_BLOCKED_QUEUE, th_receiver) != EXIT_SUCCESS )
+	    {
+	      return IPC_FAILURE;
+	    }
+
+	  if ( sched_enqueue(SCHED_READY_QUEUE, th_receiver) != EXIT_SUCCESS )
+	    {
+	      return IPC_FAILURE;
+	    }
+
 	}
 
       /* Fin d envoi */
@@ -306,7 +327,6 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
       /* Alloue une page virtuelle */
       //virt_page = (virtaddr_t)virt_alloc(CONST_PAGE_SIZE);
       virt_page = (virtaddr_t)virtmem_buddy_alloc(CONST_PAGE_SIZE,VIRT_BUDDY_NOMAP); 
-      // ASSERT_RETURN( (void*)virt_page != NULL , IPC_FAILURE);
       if ((void*)virt_page == NULL)
 	{
 	  klib_bochs_print("ERREUR ALLOC2\n");
@@ -376,7 +396,10 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
             klib_bochs_print(" waiting list \n");
 
 	  LLIST_REMOVE(th_receiver->ipc.receive_waitlist, th_available);
-	  ASSERT_RETURN( sched_enqueue(SCHED_READY_QUEUE, th_available)==EXIT_SUCCESS, IPC_FAILURE);
+	  if ( sched_enqueue(SCHED_READY_QUEUE, th_available) != EXIT_SUCCESS )
+	    {
+	      return IPC_FAILURE;
+	    }
 	}
 
       /* Fin de reception */
