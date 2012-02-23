@@ -61,7 +61,11 @@ PUBLIC void sched_init(void)
 
 PUBLIC u8_t sched_enqueue(u8_t queue, struct thread* th)
 {
-  ASSERT_RETURN( th!=NULL, EXIT_FAILURE);
+  /* Controle */
+  if ( th == NULL)
+    {
+      return EXIT_FAILURE;
+    }
 
   switch(queue)
     {
@@ -116,8 +120,11 @@ PUBLIC u8_t sched_enqueue(u8_t queue, struct thread* th)
 
 PUBLIC u8_t sched_dequeue(u8_t queue, struct thread* th)
 {
-  ASSERT_RETURN( th!=NULL, EXIT_FAILURE);
-
+  /* Controle */
+  if ( th == NULL)
+    {
+      return EXIT_FAILURE;
+    }
 
   switch(queue)
     {
@@ -161,12 +168,18 @@ PUBLIC void sched_schedule(u8_t flag)
   u8_t high_prio;
 
   /* Controle */
-  ASSERT_RETURN_VOID( !LLIST_ISNULL(sched_running) );
+  if ( LLIST_ISNULL(sched_running) )
+    {
+      return;
+    }
 
   /* Le thread courant */
   cur_th = sched_get_running_thread();
-  ASSERT_RETURN_VOID( cur_th != NULL );
-
+  if (cur_th == NULL)
+    {
+      return;
+    }
+ 
   /* Decremente son quantum dynamique si appel par le PIT */
   if (flag == SCHED_FROM_PIT)
     {
@@ -219,8 +232,11 @@ PUBLIC void sched_schedule(u8_t flag)
       
       /* Choisis un nouveau thread */
       new_th = LLIST_GETHEAD(sched_ready[high_prio]);
-      ASSERT_RETURN_VOID( new_th!=NULL );
-      
+      if (new_th == NULL)
+	{
+	  return;
+	}
+         
       /* Change le nouveau thread de queue */
       sched_dequeue(SCHED_READY_QUEUE,new_th);
       sched_enqueue(SCHED_RUNNING_QUEUE,new_th);

@@ -106,7 +106,12 @@ PUBLIC void* phys_alloc(u32_t size)
   for(i=ind;LLIST_ISNULL(ppage_free[i])&&(i<PHYS_PAGE_MAX_BUDDY);i++)
     {}
 
-  ASSERT_RETURN( i<PHYS_PAGE_MAX_BUDDY , NULL);
+  /* Pas de niveau superieur ou egal disponible, on retourne */
+  if ( i > PHYS_PAGE_MAX_BUDDY )
+    {
+      return NULL;
+    }
+
   
   /* Scinde "recursivement" les niveaux superieurs */
   for(j=i;j>ind;j--)
@@ -153,10 +158,16 @@ PUBLIC u8_t phys_free(void* addr)
 
   /* Cherche la description associee a l adresse */
   pdesc = PHYS_GET_DESC((physaddr_t)addr);
-  ASSERT_RETURN( !PHYS_PDESC_ISNULL(pdesc) , EXIT_FAILURE);
+  if ( PHYS_PDESC_ISNULL(pdesc) )
+    {
+      return EXIT_FAILURE;
+    }
 
   /* Si la taille est nulle, on sort */
-  ASSERT_RETURN( pdesc->size , EXIT_FAILURE);
+  if ( !pdesc->size )
+    {
+      return EXIT_FAILURE;
+    }
 
   /* Insere "recursivement" le noeud */
   while((pdesc->index < PHYS_PAGE_MAX_BUDDY-1)&&(!LLIST_ISNULL(ppage_free[pdesc->index])))
@@ -229,8 +240,11 @@ PUBLIC u8_t phys_unmap(physaddr_t addr)
   
   /* Cherche la description associee a l adresse */
   pdesc = PHYS_GET_DESC(addr);
-  ASSERT_RETURN( !PHYS_PDESC_ISNULL(pdesc) , PHYS_UNMAP_NONE);
-
+  if ( PHYS_PDESC_ISNULL(pdesc) )
+    {
+      return PHYS_UNMAP_NONE;
+    }
+ 
   if ((pdesc->size)&&(pdesc->maps))
     {
       /* Decremente le nombre de mappages */
