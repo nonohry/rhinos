@@ -107,7 +107,7 @@ PUBLIC void* phys_alloc(u32_t size)
     {}
 
   /* Pas de niveau superieur ou egal disponible, on retourne */
-  if ( i > PHYS_PAGE_MAX_BUDDY )
+  if ( i >= PHYS_PAGE_MAX_BUDDY )
     {
       return NULL;
     }

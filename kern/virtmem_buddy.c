@@ -52,7 +52,10 @@ PUBLIC u8_t virtmem_buddy_init()
 
   /* Cree le cache des noeuds du buddy */
   area_cache = virtmem_cache_create("area_cache",sizeof(struct vmem_area),0,VIRT_BUDDY_MINSLABS,VIRT_CACHE_NOREAP,NULL,NULL);
-  ASSERT_RETURN( area_cache!=NULL , EXIT_FAILURE);
+  if ( area_cache == NULL)
+    {
+      return EXIT_FAILURE;
+    }
 
   /* Initialisation manuelle du cache */
   for(i=0;i<VIRT_BUDDY_STARTSLABS;i++)
@@ -61,15 +64,24 @@ PUBLIC u8_t virtmem_buddy_init()
       vaddr_init = (i+VIRT_CACHE_STARTSLABS)*CONST_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT;
       paddr_init = (physaddr_t)phys_alloc(CONST_PAGE_SIZE);
       paging_map(vaddr_init, paddr_init, TRUE);
+
       /* Fait grossir cache_cache dans cette page */
-      ASSERT_RETURN( virtmem_cache_grow(area_cache,vaddr_init)==EXIT_SUCCESS , EXIT_FAILURE);
+      if ( virtmem_cache_grow(area_cache,vaddr_init) != EXIT_SUCCESS )
+	{
+	  return EXIT_FAILURE;
+	}
+
     }
 
   /* Entre les pages des initialisations manuelles dans buddy_used */
   for(i=0;i<VIRT_CACHE_STARTSLABS+VIRT_BUDDY_STARTSLABS;i++)
     {
       area=(struct vmem_area*)virtmem_cache_alloc(area_cache, VIRT_CACHE_DEFAULT);
-      ASSERT_RETURN( area!=NULL , EXIT_FAILURE);
+      if ( area == NULL ) 
+	{ 
+	  return EXIT_FAILURE;
+	}
+     
       area->base = i*CONST_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT;
       area->size = CONST_PAGE_SIZE;
       area->index = 0;
@@ -77,8 +89,11 @@ PUBLIC u8_t virtmem_buddy_init()
     }
 
   /* Initialise la memoire virtuelle disponible pour le noyau */
-  ASSERT_RETURN( virtmem_buddy_init_area( (VIRT_CACHE_STARTSLABS+VIRT_BUDDY_STARTSLABS)*CONST_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT, 
-					  VIRT_BUDDY_HIGHTMEM - ((VIRT_CACHE_STARTSLABS+VIRT_BUDDY_STARTSLABS)*CONST_PAGE_SIZE+VIRT_BUDDY_POOLLIMIT) )==EXIT_SUCCESS , EXIT_FAILURE);
+  if ( virtmem_buddy_init_area( (VIRT_CACHE_STARTSLABS+VIRT_BUDDY_STARTSLABS)*CONST_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT,
+				VIRT_BUDDY_HIGHTMEM - ((VIRT_CACHE_STARTSLABS+VIRT_BUDDY_STARTSLABS)*CONST_PAGE_SIZE+VIRT_BUDDY_POOLLIMIT) ) != EXIT_SUCCESS )
+    {
+      return EXIT_FAILURE;
+    }
 
   return EXIT_SUCCESS;
 }
@@ -101,8 +116,11 @@ PUBLIC void* virtmem_buddy_alloc(u32_t size, u8_t flags)
 
   /* Allocation dans le buddy */
   area = virtmem_buddy_alloc_area(size, flags);
-  ASSERT_RETURN( area!=NULL , NULL);
-
+  if ( area == NULL)
+    {
+      return NULL;
+    }
+ 
   /* Mapping physique selon flags */
   if ( flags & VIRT_BUDDY_MAP )
     {
@@ -191,8 +209,11 @@ PUBLIC u8_t  virtmem_buddy_free(void* addr)
 	}
       
       /* Reintegre l area dans le buddy */
-      ASSERT_RETURN( virtmem_buddy_free_area(area)==EXIT_SUCCESS, EXIT_FAILURE);
-
+      if ( virtmem_buddy_free_area(area) != EXIT_SUCCESS )
+	{
+	  return EXIT_FAILURE;
+	}
+     
       /* Retourne */
       return EXIT_SUCCESS;
       
@@ -230,7 +251,11 @@ PRIVATE struct vmem_area* virtmem_buddy_alloc_area(u32_t size, u8_t flags)
   for(i=ind;LLIST_ISNULL(buddy_free[i])&&(i<VIRT_BUDDY_MAX);i++)
     {}
 
-  ASSERT_RETURN( i<VIRT_BUDDY_MAX , NULL);
+  /* Sors si on ne trouve pas de niveau disponible */
+  if ( i>=VIRT_BUDDY_MAX )
+    {
+      return NULL;
+    }
   
   /* Scinde "recursivement" les niveaux superieurs */
   for(j=i;j>ind;j--)
@@ -242,8 +267,11 @@ PRIVATE struct vmem_area* virtmem_buddy_alloc_area(u32_t size, u8_t flags)
 
       /* Prend un vmem_area dans le cache */
       ar1 = (struct vmem_area*)virtmem_cache_alloc(area_cache, (flags&VIRT_BUDDY_NOMINCHECK?VIRT_CACHE_NOMINCHECK:VIRT_CACHE_DEFAULT));
-      ASSERT_RETURN( ar1 != NULL , NULL);
-
+      if ( ar1 == NULL )
+	{
+	  return NULL;
+	}
+      
       /* Scinde le noeud en 2 noeuds */
 
       ar1->base = area->base + (area->size >> 1);
@@ -342,8 +370,11 @@ PRIVATE u8_t virtmem_buddy_init_area(u32_t base, u32_t size)
 
       /* Prend un vmem_area dans le cache */
       area = (struct vmem_area*)virtmem_cache_alloc(area_cache, VIRT_CACHE_DEFAULT);
-      ASSERT_RETURN( area!=NULL, EXIT_FAILURE);
-
+      if ( area == NULL )
+	{
+	  return EXIT_FAILURE;
+	}
+    
       /* Remplit le vmem_area */
       area->base = base;
       area->size = power;
