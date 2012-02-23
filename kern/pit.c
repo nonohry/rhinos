@@ -4,7 +4,6 @@
  */
 
 #include <types.h>
-#include "assert.h"
 #include "const.h"
 #include "klib.h"
 #include "interrupt.h"

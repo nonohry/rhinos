@@ -14,7 +14,6 @@
 #include <ipc.h>
 #include "const.h"
 #include "klib.h"
-#include "assert.h"
 #include "thread.h"
 #include "sched.h"
 #include "physmem.h"

@@ -12,7 +12,7 @@
 
 #include <types.h>
 #include <llist.h>
-#include "assert.h"
+#include "klib.h"
 #include "const.h"
 #include "thread.h"
 #include "sched.h"

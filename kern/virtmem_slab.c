@@ -13,7 +13,6 @@
 #include "const.h"
 #include <llist.h>
 #include "klib.h"
-#include "assert.h"
 #include "start.h"
 #include "physmem.h"
 #include "paging.h"
