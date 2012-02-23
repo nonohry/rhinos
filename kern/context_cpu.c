@@ -59,11 +59,21 @@ PUBLIC struct context_cpu* context_cpu_create(virtaddr_t start_entry, void* star
   virtaddr_t* esp;
   
   /* Petite verification */
-  ASSERT_RETURN( (start_entry!=0)&&(exit_entry!=0)&&(stack_base!=0)&&(stack_size>CTX_CPU_MIN_STACK) , NULL);
+  if ( (start_entry == 0)
+       || (exit_entry == 0)
+       || (stack_base == 0)
+       || (stack_size < CTX_CPU_MIN_STACK) )
+    {
+      return NULL;
+    }
+  
 
   /* Alloue le contexte */
   ctx = (struct context_cpu*)virtmem_cache_alloc(ctx_cache,VIRT_CACHE_DEFAULT);
-  ASSERT_RETURN( ctx != NULL , NULL );
+  if (ctx == NULL)
+    {
+      return NULL;
+    }
 
   /* Nettoie la pile */
   klib_mem_set(0,stack_base,stack_size);

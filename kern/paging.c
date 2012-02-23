@@ -69,14 +69,21 @@ PUBLIC u8_t paging_map(virtaddr_t vaddr, physaddr_t paddr, u8_t super)
   pd = (struct pde*)PAGING_GET_PD();
 
   /* Interdit le pde du self map */
-  ASSERT_RETURN( pde!=PAGING_SELFMAP , EXIT_FAILURE);
+  if ( pde == PAGING_SELFMAP )
+    {
+      return EXIT_FAILURE;
+    }
+      
       
   /* Si le pde n'existe pas, on le cree */
   if (!(pd[pde].present))
     {
       /* Alloue une page physique */
       table = (struct pte*)phys_alloc(PAGING_ENTRIES*sizeof(struct pte));
-      ASSERT_RETURN( table!=NULL , EXIT_FAILURE);
+      if( table == NULL)
+	{
+	  return EXIT_FAILURE;
+	}
 
       /* Fait pointer le pde sur la nouvelle page */
       pd[pde].present = 1;
@@ -92,8 +99,11 @@ PUBLIC u8_t paging_map(virtaddr_t vaddr, physaddr_t paddr, u8_t super)
   table = (struct pte*)(PAGING_GET_PT(pde));
 
   /* Si le pte est present, l adresse est deja mappee */
-  ASSERT_RETURN( !table[pte].present , EXIT_FAILURE);
-
+  if (table[pte].present)
+    {
+      return EXIT_FAILURE;
+    }
+ 
   /* Fait pointer le pte sur la page physique */
   table[pte].present = 1;
   table[pte].rw = 1;
@@ -126,18 +136,21 @@ PUBLIC u8_t paging_unmap(virtaddr_t vaddr)
   pte = PAGING_GET_PTE(vaddr);
   pd = (struct pde*)PAGING_GET_PD();
 
-  /* Interdit le pde du self map */
-  ASSERT_RETURN( pde!=PAGING_SELFMAP , EXIT_FAILURE);
-
-  /* Si le pde n'existe pas, on retourne */
-  ASSERT_RETURN( pd[pde].present , EXIT_FAILURE);
+  /* Interdit le pde du self map et verifie l'existence du pde*/
+  if ( (pde == PAGING_SELFMAP)||(!pd[pde].present) )
+    {
+      return EXIT_FAILURE;
+    }
 
   /* Recupere la table */
   table = (struct pte*)(PAGING_GET_PT(pde));
 
   /* Si le pte n'existe pas, on retourne */
-  ASSERT_RETURN( table[pte].present , EXIT_FAILURE);
-
+  if (!table[pte].present)
+    {
+      return EXIT_FAILURE;
+    }
+ 
   /* Demap/Libere la page physique */
   phys_unmap(table[pte].baseaddr<<PAGING_BASESHIFT);
 
@@ -183,14 +196,20 @@ PUBLIC physaddr_t paging_virt2phys(virtaddr_t vaddr)
   offset = vaddr & PAGING_OFFMASK;
 
   /* Si le pde n'existe pas, on retourne */
-  ASSERT_RETURN( pd[pde].present , 0);
-
+  if ( !pd[pde].present )
+    {
+      return 0;
+    }
+ 
   /* Recupere la table */
   table = (struct pte*)(PAGING_GET_PT(pde));
 
   /* Si le pte n'existe pas, on retourne */
-  ASSERT_RETURN( table[pte].present , 0);
-
+  if ( !table[pte].present )
+    {
+      return 0;
+    }
+ 
   /* Retourne l'adresse physique */
   return (((table[pte].baseaddr)<<PAGING_BASESHIFT)+offset);
 
@@ -221,8 +240,11 @@ PRIVATE u8_t paging_identityMapping(physaddr_t start, physaddr_t end)
 	  /* La table vers laquelle pointer */
 	  table = (struct pte*)phys_alloc(PAGING_ENTRIES*sizeof(struct pte));
 	  /* Validite de l allocation */
-	  ASSERT_RETURN( table!=NULL , EXIT_FAILURE);
-
+	  if (table == NULL)
+	    {
+	      return EXIT_FAILURE;
+	    }
+	 
 	  /* Nullifie la page */
 	  klib_mem_set(0,(u32_t)table,PAGING_ENTRIES*sizeof(struct pte));
 
