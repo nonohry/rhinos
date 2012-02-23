@@ -72,13 +72,21 @@ PUBLIC struct thread* thread_create(const char* name, s32_t id, virtaddr_t start
   u8_t i;
 
   /* Controles */
-  ASSERT_RETURN( (start_entry!=0)&&(stack_size>CTX_CPU_MIN_STACK) , NULL);
-  ASSERT_RETURN( (nice_level<=THREAD_NICE_TOP)&&(nice_level>=THREAD_NICE_BOTTOM) , NULL);
+  if ( (start_entry == 0)
+       || (stack_size < CTX_CPU_MIN_STACK)
+       || (nice_level > THREAD_NICE_TOP)
+       || (nice_level < THREAD_NICE_BOTTOM) )
+    {
+      return NULL;
+    }
 
-  /* Allocation dans les cache */
+   /* Allocation dans les cache */
   th = (struct thread*)virtmem_cache_alloc(thread_cache,VIRT_CACHE_DEFAULT);
-  ASSERT_RETURN( th!=NULL , NULL);
-
+  if ( th == NULL )
+    {
+      return NULL;
+    }
+ 
   thID = (struct threadID*)virtmem_cache_alloc(threadID_cache,VIRT_CACHE_DEFAULT);
   if (thID == NULL)
     {
@@ -187,8 +195,11 @@ PUBLIC u8_t thread_destroy(struct thread* th)
   struct threadID* thID;
 
   /* Controle */
-  ASSERT_RETURN( th!=NULL , EXIT_FAILURE);
-
+  if ( th == NULL )
+    {
+      return EXIT_FAILURE;
+    }
+ 
   /* Libere le threadID correspondant */
   i=THREAD_HASHID_FUNC(th->id->id);
   if (!LLIST_ISNULL(thread_hashID[i]))
@@ -226,8 +237,10 @@ PUBLIC struct thread* thread_id2thread(s32_t n)
   struct threadID* thID;
 
   /* Controle */
-  ASSERT_RETURN( n!=0 , NULL);
-
+  if ( n == 0 )
+    {
+      return NULL;
+    }
 
   /* Parcours de la hashtable */
   i=THREAD_HASHID_FUNC(n);
@@ -258,7 +271,10 @@ PUBLIC struct thread* thread_id2thread(s32_t n)
 PRIVATE void thread_exit(struct thread* th)
 {
   /* Controle */
-  ASSERT_RETURN_VOID( th!=NULL );
+  if ( th == NULL )
+    {
+      return;
+    }
 
   /* Nouvel etat */
   th->next_state = THREAD_DEAD;
