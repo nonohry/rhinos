@@ -61,7 +61,7 @@ PUBLIC struct context_cpu
 PUBLIC	struct context_cpu* kern_ctx;
 PUBLIC	struct context_cpu* cur_ctx;
 
-PUBLIC void context_cpu_init(void);
+PUBLIC u8_t context_cpu_init(void);
 PUBLIC struct context_cpu* context_cpu_create(virtaddr_t start_entry, void* start_arg, virtaddr_t exit_entry, void* exit_arg, virtaddr_t stack_base, u32_t stack_size);
 PUBLIC u8_t context_cpu_destroy(struct context_cpu* ctx);
 PUBLIC void context_cpu_postsave(reg32_t ss, reg32_t* esp);

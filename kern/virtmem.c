@@ -11,7 +11,6 @@
 
 #include <types.h>
 #include "const.h"
-#include "assert.h"
 #include "virtmem_buddy.h"
 #include "virtmem_slab.h"
 #include "virtmem.h"
@@ -44,22 +43,33 @@ PRIVATE struct virtmem_caches virt_caches[] =
  * Initilisation
  *========================================================================*/
 
-PUBLIC void  virt_init(void)
+PUBLIC u8_t virt_init(void)
 {
   u8_t i;
 
   /* Initialise les backends de memoire virtuelle */
-  ASSERT_FATAL( virtmem_cache_init()==EXIT_SUCCESS);
-  ASSERT_FATAL( virtmem_buddy_init()==EXIT_SUCCESS);
+   if ( virtmem_cache_init() != EXIT_SUCCESS )
+    {
+      return EXIT_FAILURE;
+    }
+
+  if ( virtmem_buddy_init() != EXIT_SUCCESS )
+    {
+      return EXIT_FAILURE;
+    }
+
 
   /* Cree les caches d allocation */
   for(i=0;virt_caches[i].size;i++)
     {
       virt_caches[i].cache = virtmem_cache_create(virt_caches[i].name,virt_caches[i].size,0,0,virt_caches[i].flags,NULL,NULL);
-      ASSERT_FATAL( virt_caches[i].cache != NULL );
+      if ( virt_caches[i].cache == NULL )
+	{
+	  return EXIT_FAILURE;
+	}
     }
 
-  return;
+  return EXIT_SUCCESS;
 }
 
 

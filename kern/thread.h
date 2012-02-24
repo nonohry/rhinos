@@ -130,7 +130,7 @@ PUBLIC struct thread
 
 PUBLIC struct threadID* thread_hashID[THREAD_HASH_SIZE];
 
-PUBLIC void thread_init(void);
+PUBLIC u8_t thread_init(void);
 PUBLIC struct thread* thread_create(const char* name, s32_t id, virtaddr_t start_entry, void* start_arg, u32_t stack_size, s8_t nice_level, u8_t quantum);
 PUBLIC u8_t thread_destroy(struct thread* th);
 PUBLIC struct thread* thread_id2thread(s32_t n);

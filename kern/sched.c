@@ -37,7 +37,7 @@ PRIVATE u8_t sched_get_higher_prio_queue(void);
  *========================================================================*/
 
 
-PUBLIC void sched_init(void)
+PUBLIC u8_t sched_init(void)
 {
   u8_t i;
 
@@ -50,7 +50,7 @@ PUBLIC void sched_init(void)
   LLIST_NULLIFY(sched_blocked);
   LLIST_NULLIFY(sched_dead);
 
-  return;
+  return EXIT_SUCCESS;
 }
 
 

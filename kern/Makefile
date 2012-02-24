@@ -53,25 +53,23 @@ irq.o: context_cpu.h pic.h irq.h
 exceptions.o: ../include/types.h const.h klib.h exceptions.h context_cpu.h
 physmem.o: ../include/types.h const.h ../include/llist.h klib.h start.h
 physmem.o: physmem.h virtmem_slab.h virtmem_buddy.h
-paging.o: ../include/types.h const.h klib.h assert.h start.h physmem.h
-paging.o: virtmem_slab.h virtmem_buddy.h paging.h
+paging.o: ../include/types.h const.h klib.h start.h physmem.h virtmem_slab.h
+paging.o: virtmem_buddy.h paging.h
 virtmem_buddy.o: ../include/types.h const.h ../include/llist.h klib.h start.h
 virtmem_buddy.o: physmem.h virtmem_slab.h virtmem_buddy.h paging.h
 virtmem_slab.o: ../include/types.h const.h ../include/llist.h klib.h start.h
 virtmem_slab.o: physmem.h virtmem_slab.h virtmem_buddy.h paging.h
-virtmem.o: ../include/types.h const.h assert.h klib.h virtmem_buddy.h
-virtmem.o: virtmem_slab.h virtmem.h
-context_cpu.o: ../include/types.h const.h klib.h assert.h virtmem_slab.h
-context_cpu.o: context_cpu.h
-thread.o: ../include/types.h ../include/llist.h const.h klib.h assert.h
-thread.o: virtmem_slab.h virtmem.h context_cpu.h sched.h thread.h
-thread.o: ../include/ipc.h
+virtmem.o: ../include/types.h const.h virtmem_buddy.h virtmem_slab.h
+virtmem.o: virtmem.h
+context_cpu.o: ../include/types.h const.h klib.h virtmem_slab.h context_cpu.h
+thread.o: ../include/types.h ../include/llist.h const.h klib.h virtmem_slab.h
+thread.o: virtmem.h context_cpu.h sched.h thread.h ../include/ipc.h
 sched.o: ../include/types.h ../include/llist.h klib.h const.h thread.h
 sched.o: ../include/ipc.h context_cpu.h sched.h
 syscall.o: ../include/types.h ../include/llist.h ../include/ipc.h const.h
 syscall.o: klib.h thread.h context_cpu.h sched.h physmem.h virtmem_slab.h
 syscall.o: virtmem_buddy.h virtmem.h paging.h syscall.h
-main.o: ../include/types.h const.h ../include/llist.h start.h klib.h assert.h
+main.o: ../include/types.h const.h ../include/llist.h start.h klib.h
 main.o: physmem.h virtmem_slab.h virtmem_buddy.h paging.h virtmem.h
 main.o: context_cpu.h thread.h ../include/ipc.h sched.h irq.h interrupt.h
 main.o: pit.h

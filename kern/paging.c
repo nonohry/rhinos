@@ -6,7 +6,6 @@
 #include <types.h>
 #include "const.h"
 #include "klib.h"
-#include "assert.h"
 #include "start.h"
 #include "physmem.h"
 #include "paging.h"
@@ -23,12 +22,15 @@ PRIVATE u8_t paging_identityMapping(physaddr_t start, physaddr_t end);
  * Initialisation
  *========================================================================*/
 
-PUBLIC void paging_init(void)
+PUBLIC u8_t paging_init(void)
 {
   /* PD Noyau */
   kern_PD = (struct pde*)phys_alloc(PAGING_ENTRIES*sizeof(struct pde));
   /* Validite de l allocation */
-  ASSERT_FATAL(kern_PD != NULL);
+  if ( kern_PD == NULL)
+    {
+      return EXIT_FAILURE;
+    }
 
   /* Nullifie la page */
   klib_mem_set(0,(u32_t)kern_PD,PAGING_ENTRIES*sizeof(struct pde));
@@ -40,8 +42,16 @@ PUBLIC void paging_init(void)
   kern_PD[PAGING_SELFMAP].baseaddr = (physaddr_t)kern_PD >> PAGING_BASESHIFT;
   
   /* Identity Mapping */
-  ASSERT_FATAL( paging_identityMapping(0,bootinfo->kern_end)==EXIT_SUCCESS );
-  ASSERT_FATAL( paging_identityMapping(0x9FC00,CONST_PAGE_NODE_POOL_ADDR+((bootinfo->mem_total) >> CONST_PAGE_SHIFT)*sizeof(struct ppage_desc))==EXIT_SUCCESS );
+  if ( paging_identityMapping(0,bootinfo->kern_end) == EXIT_FAILURE )
+    {
+      return EXIT_FAILURE;
+    }
+
+  if ( paging_identityMapping(0x9FC00,CONST_PAGE_NODE_POOL_ADDR+((bootinfo->mem_total) >> CONST_PAGE_SHIFT)*sizeof(struct ppage_desc)) == EXIT_FAILURE )
+    {
+      return EXIT_FAILURE;
+    }
+
 
   /* Charge le Kernel  Page Directory */
   klib_load_CR3((physaddr_t)kern_PD);
@@ -49,7 +59,7 @@ PUBLIC void paging_init(void)
   /* Activation de la pagination */
   klib_set_pg_cr0();
 
-  return;
+  return EXIT_SUCCESS;
 }
 
 

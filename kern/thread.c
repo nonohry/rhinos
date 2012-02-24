@@ -12,7 +12,6 @@
 #include <llist.h>
 #include "const.h"
 #include "klib.h"
-#include "assert.h"
 #include "virtmem_slab.h"
 #include "virtmem.h"
 #include "context_cpu.h"
@@ -36,16 +35,22 @@ PRIVATE void thread_exit(struct thread* th);
  *========================================================================*/
 
 
-PUBLIC void thread_init(void)
+PUBLIC u8_t thread_init(void)
 {
   u16_t i;
 
   /* Alloue des caches */
   thread_cache = virtmem_cache_create("thread_cache",sizeof(struct thread),0,0,VIRT_CACHE_DEFAULT,NULL,NULL);
-  ASSERT_FATAL( thread_cache!=NULL );
-
+  if (thread_cache == NULL)
+    {
+      return EXIT_FAILURE;
+    }
+ 
   threadID_cache = virtmem_cache_create("threadID_cache",sizeof(struct threadID),0,0,VIRT_CACHE_DEFAULT,NULL,NULL);
-  ASSERT_FATAL( threadID_cache!=NULL );
+  if (threadID_cache == NULL)
+    {
+      return EXIT_FAILURE;
+    }
 
   /* Nullifie la hashtable */
   for(i=0;i<THREAD_HASH_SIZE;i++)
@@ -56,7 +61,7 @@ PUBLIC void thread_init(void)
   /* Initialise le compteur d ID global */
   thread_IDs = 1;
 
-  return;
+  return EXIT_SUCCESS;
 }
 
 

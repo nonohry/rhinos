@@ -98,7 +98,7 @@ PUBLIC struct ppage_desc
  * Prototypes 
  *========================================================================*/
 
-PUBLIC void phys_init(void);
+PUBLIC u8_t phys_init(void);
 PUBLIC void* phys_alloc(u32_t size);
 PUBLIC u8_t phys_free(void* addr);
 PUBLIC u8_t phys_map(physaddr_t addr);

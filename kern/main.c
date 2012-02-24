@@ -13,7 +13,6 @@
 #include <llist.h>
 #include "start.h"
 #include "klib.h"
-#include "assert.h"
 #include "physmem.h"
 #include "paging.h"
 #include "virtmem.h"
@@ -119,33 +118,54 @@ PUBLIC int main()
   struct thread* thread_idle;
 
   /* Initialisation de la memoire physique */
-  phys_init();
+  if ( phys_init() != EXIT_SUCCESS )
+    {
+      goto err00;
+    }
   klib_bochs_print("Physical Memory Manager initialized\n");
 
   /* Initialisation de la pagination */
-  paging_init();
+  if ( paging_init() != EXIT_SUCCESS )
+    {
+      goto err00;
+    }
   klib_bochs_print("Paging enabled\n");
 
   /* Initialisation de la memoire virtuelle */
-  virt_init();
+  if ( virt_init() != EXIT_SUCCESS )
+    {
+      goto err00;
+    }
   klib_bochs_print("Virtual Memory Manager initialized\n");
 
   /* Initialisation des contextes */
-  context_cpu_init();
+  if ( context_cpu_init() != EXIT_SUCCESS )
+    {
+      goto err00;
+    }
   klib_bochs_print("Kernel Contexts initialized\n");
 
   /* Initialisation des thread */
-  thread_init();
+  if ( thread_init() != EXIT_SUCCESS )
+    {
+      goto err00;
+    }
   klib_bochs_print("Kernel Threads initialized\n");
 
   /* Initialisation de l ordonannceur */
-  sched_init();
+  if ( sched_init() != EXIT_SUCCESS )
+    {
+      goto err00;
+    }
   klib_bochs_print("Scheduler initialized\n");
 
 
   /* Idle Thread */
   thread_idle = thread_create("[Idle]",THREAD_ID_DEFAULT,(virtaddr_t)klib_idle,NULL,THREAD_STACK_SIZE,THREAD_NICE_TOP,THREAD_QUANTUM_DEFAULT);
-  ASSERT_FATAL( thread_idle != NULL );
+  if ( thread_idle == NULL )
+    {
+      goto err00;
+    }
   klib_bochs_print("Idle thread initialized\n");
 
   /* Tests threads */
@@ -171,7 +191,9 @@ PUBLIC int main()
   pit_init();
   klib_bochs_print("Clock initialized (100Hz)\n");
 
-   /* On ne doit plus arriver ici (sauf DEBUG) */
+   /* On ne doit plus arriver ici (sauf DEBUG ou erreur) */
+ err00:
+
   while(1)
     {
     }

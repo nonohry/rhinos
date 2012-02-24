@@ -25,7 +25,7 @@ PRIVATE struct ppage_desc* ppage_free[PHYS_PAGE_MAX_BUDDY];
  * Initialisation
  *========================================================================*/
 
-PUBLIC void phys_init(void)
+PUBLIC u8_t phys_init(void)
 {
   s32_t i;
   u32_t pool_size;
@@ -73,7 +73,7 @@ PUBLIC void phys_init(void)
 	}
     }
 
-  return;
+  return EXIT_SUCCESS;
 }
 
 

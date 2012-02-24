@@ -11,7 +11,6 @@
 #include <types.h>
 #include "const.h"
 #include "klib.h"
-#include "assert.h"
 #include "virtmem_slab.h"
 #include "context_cpu.h"
 
@@ -30,21 +29,27 @@ PRIVATE struct vmem_cache* ctx_cache;
  *========================================================================*/
 
 
-PUBLIC void context_cpu_init(void)
+PUBLIC u8_t context_cpu_init(void)
 {
 
   /* Initialise un cache */
   ctx_cache = virtmem_cache_create("ctx_cpu_cache",sizeof(struct context_cpu),0,0,VIRT_CACHE_DEFAULT,NULL,NULL);
-  ASSERT_FATAL( ctx_cache!=NULL );
+  if ( ctx_cache == NULL)
+    {
+      return EXIT_FAILURE;
+    }
 
   /* Alloue le contexte noyau */
   kern_ctx = (struct context_cpu*)virtmem_cache_alloc(ctx_cache,VIRT_CACHE_DEFAULT);
-  ASSERT_FATAL( kern_ctx != NULL );
+  if ( kern_ctx == NULL )
+    {
+      return EXIT_FAILURE;
+    }
 
   /* Le noyau devient le contexte courant */
   cur_ctx = kern_ctx;
 
-  return;
+  return EXIT_SUCCESS;
 }
 
 
@@ -183,9 +188,7 @@ PRIVATE void context_cpu_trampoline(cpu_ctx_func_t start_func, void* start_arg, 
   start_func(start_arg);
   exit_func(exit_arg);
 
-  /* Pas de retour */
-  ASSERT_FATAL( 0 );
-
+  /* Pas de retour normalement*/
   return;
 }
 

@@ -42,7 +42,7 @@
  * Prototypes
  *========================================================================*/
 
-PUBLIC void sched_init(void);
+PUBLIC u8_t sched_init(void);
 PUBLIC u8_t sched_enqueue(u8_t queue, struct thread* th);
 PUBLIC u8_t sched_dequeue(u8_t queue, struct thread* th);
 PUBLIC void sched_schedule(u8_t flag);
