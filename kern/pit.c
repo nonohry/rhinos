@@ -26,7 +26,7 @@ PRIVATE struct int_node pit_irq_node;
  * Initialise l'horloge avec une frequence
  *========================================================================*/
 
-PUBLIC void pit_init()
+PUBLIC u8_t pit_init()
 {
   u32_t ticks;
 
@@ -54,7 +54,7 @@ PUBLIC void pit_init()
   pit_irq_node.flih = pit_handler;
   irq_add_flih(0,&pit_irq_node);
 
-  return;
+  return EXIT_SUCCESS;
 }
 
 

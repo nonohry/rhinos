@@ -166,7 +166,7 @@ PUBLIC int main()
     {
       goto err00;
     }
-  klib_bochs_print("Idle thread initialized\n");
+  klib_bochs_print("Idle Thread initialized\n");
 
   /* Tests threads */
 
@@ -185,11 +185,18 @@ PUBLIC int main()
   
 
   /* Initialisation du gestionnaire des IRQ */
-  irq_init();
+  if ( irq_init() != EXIT_SUCCESS )
+    {
+      goto err00;
+    }
+  klib_bochs_print("IRQ System initialized\n");
   
   /* Initialisation Horloge */
-  pit_init();
-  klib_bochs_print("Clock initialized (100Hz)\n");
+  if ( pit_init() != EXIT_SUCCESS )
+    {
+      goto err00;
+    }
+  klib_bochs_print("Clock (100Hz) initialized\n");
 
    /* On ne doit plus arriver ici (sauf DEBUG ou erreur) */
  err00:

@@ -23,7 +23,7 @@ PRIVATE struct int_node* irq_flih[IRQ_VECTORS];
  * Initialisation
  *========================================================================*/
 
-PUBLIC void irq_init(void)
+PUBLIC u8_t irq_init(void)
 {
   u8_t i;
 
@@ -34,7 +34,7 @@ PUBLIC void irq_init(void)
       LLIST_NULLIFY(irq_flih[i]);
     }
 
-  return;
+  return EXIT_SUCCESS;
 }
 
 

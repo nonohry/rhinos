@@ -26,7 +26,7 @@
  * Prototypes
  *========================================================================*/
 
-PUBLIC void irq_init(void);
+PUBLIC u8_t irq_init(void);
 PUBLIC void irq_enable(u8_t irq);
 PUBLIC void irq_disable(u8_t irq);
 PUBLIC void irq_add_flih(u8_t irq, struct int_node* node);

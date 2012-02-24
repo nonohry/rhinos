@@ -28,7 +28,7 @@
 
 /* Prototypes */
 
-PUBLIC void pit_init();
+PUBLIC u8_t pit_init();
 PUBLIC u16_t pit_read();
 
 #endif
