@@ -15,7 +15,6 @@
  *========================================================================*/
 
 
-#define START_MEM_LIMIT         4294967295UL
 #define START_MEM_SIZE_0        1048576
 
 /* Type pour boot_mmap_e820 */
@@ -55,8 +54,10 @@ PUBLIC struct boot_info
 
 PUBLIC struct boot_mmap_e820
 {
-  u64_t addr;           /* Adresse de la zone */
-  u64_t size;           /* Taille de la zone */
+  u32_t addr_l;           /* Adresse de la zone */
+  u32_t addr_h;
+  u32_t size_l;           /* Taille de la zone */
+  u32_t size_h;
   u32_t type;           /* Type de memoire */
 }__attribute__((packed));
 
