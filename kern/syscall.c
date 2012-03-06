@@ -217,7 +217,7 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
       klib_mem_copy((virtaddr_t)message, virt_message, sizeof(struct ipc_message));
       
       /* Liberation */
-      if (paging_unmap(virt_page)==EXIT_FAILURE)
+      if (paging_unmap(pd,virt_page)==EXIT_FAILURE)
 	{
 	  klib_bochs_print("ERREUR UNMAP\n");
 	}
@@ -371,7 +371,7 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
       klib_mem_copy(virt_message, (virtaddr_t)message, sizeof(struct ipc_message));
       
       /* Liberation */
-      if (paging_unmap(virt_page)==EXIT_FAILURE)
+      if (paging_unmap(pd,virt_page)==EXIT_FAILURE)
 	{
 	  klib_bochs_print("ERREUR UNMAP2\n");
 	}

@@ -157,10 +157,13 @@ PUBLIC void* virtmem_buddy_alloc(u32_t size, u8_t flags)
 
 PUBLIC u8_t  virtmem_buddy_free(void* addr)
 {
-  
+  struct pde* pd;
   struct vmem_area* area;
   struct ppage_desc* pdesc;
   virtaddr_t va;
+
+  /* Recupere le page directory courant */
+  pd = (struct pde*)PAGING_GET_PD();
 
   /* Cherche la vmem_area associee a l adresse via le descripteur physique */
   area = NULL;
@@ -208,7 +211,7 @@ PUBLIC u8_t  virtmem_buddy_free(void* addr)
       /* Demappe physiquement (aucun effet si non mappee) */
       for(va=area->base;va<(area->base+area->size);va+=CONST_PAGE_SIZE)
 	{
-	  paging_unmap(va);
+	  paging_unmap(pd,va);
 	}
       
       /* Reintegre l area dans le buddy */
@@ -451,7 +454,7 @@ PRIVATE u8_t virtmem_buddy_map_area(struct vmem_area* area)
     {
       for(va=area->base;va<(area->base+area->size);va+=CONST_PAGE_SIZE)
 	{
-	  paging_unmap(va);
+	  paging_unmap(pd,va);
 	}
       return EXIT_FAILURE;
     }

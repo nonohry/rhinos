@@ -145,17 +145,21 @@ PUBLIC u8_t paging_map(struct pde* pd, virtaddr_t vaddr, physaddr_t paddr, u8_t 
  * Unmapping
  *========================================================================*/
 
-PUBLIC u8_t paging_unmap(virtaddr_t vaddr)
+PUBLIC u8_t paging_unmap(struct pde* pd, virtaddr_t vaddr)
 {
-  struct pde* pd;
-  struct pte* table;
+   struct pte* table;
   u16_t pde,pte;
+
+  if (pd == NULL)
+    {
+      return EXIT_FAILURE;
+    }
+
 
   /* Recupere le pd, pde et pte associe */
   pde = PAGING_GET_PDE(vaddr);
   pte = PAGING_GET_PTE(vaddr);
-  pd = (struct pde*)PAGING_GET_PD();
-
+ 
   /* Interdit le pde du self map et verifie l'existence du pde*/
   if ( (pde == PAGING_SELFMAP)||(!pd[pde].present) )
     {
