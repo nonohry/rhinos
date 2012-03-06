@@ -12,18 +12,13 @@
 
 
 /*========================================================================
- * Definitions PRIVATE
- *========================================================================*/
-
-PRIVATE u8_t paging_identityMapping(physaddr_t start, physaddr_t end);
-
-
-/*========================================================================
  * Initialisation
  *========================================================================*/
 
 PUBLIC u8_t paging_init(void)
 {
+  physaddr_t p;
+
   /* PD Noyau */
   kern_PD = (struct pde*)phys_alloc(PAGING_ENTRIES*sizeof(struct pde));
   /* Validite de l allocation */
@@ -41,16 +36,28 @@ PUBLIC u8_t paging_init(void)
   kern_PD[PAGING_SELFMAP].user = 0;
   kern_PD[PAGING_SELFMAP].baseaddr = (physaddr_t)kern_PD >> PAGING_BASESHIFT;
   
-  /* Identity Mapping */
-  if ( paging_identityMapping(0,bootinfo->kern_end) == EXIT_FAILURE )
+
+  for(p=PAGING_ALIGN_INF(0);
+      p<PAGING_ALIGN_SUP(bootinfo->kern_end);
+      p+=CONST_PAGE_SIZE)
     {
-      return EXIT_FAILURE;
+      if (paging_map(kern_PD, (virtaddr_t)p, p, PAGING_SUPER|PAGING_IDENTITY) == EXIT_FAILURE)
+	{
+	  return EXIT_FAILURE;
+	}
     }
 
-  if ( paging_identityMapping(0x9FC00,CONST_PAGE_NODE_POOL_ADDR+((bootinfo->mem_total) >> CONST_PAGE_SHIFT)*sizeof(struct ppage_desc)) == EXIT_FAILURE )
+  for(p=PAGING_ALIGN_INF(0x9FC00);
+      p<PAGING_ALIGN_SUP(CONST_PAGE_NODE_POOL_ADDR+((bootinfo->mem_total) >> CONST_PAGE_SHIFT)*sizeof(struct ppage_desc));
+      p+=CONST_PAGE_SIZE)
     {
-      return EXIT_FAILURE;
+      if (paging_map(kern_PD,(virtaddr_t)p, p, PAGING_SUPER|PAGING_IDENTITY) == EXIT_FAILURE)
+	{
+	  return EXIT_FAILURE;
+	}
     }
+
+
 
 
   /* Charge le Kernel  Page Directory */
@@ -67,16 +74,19 @@ PUBLIC u8_t paging_init(void)
  * Mapping
  *========================================================================*/
 
-PUBLIC u8_t paging_map(virtaddr_t vaddr, physaddr_t paddr, u8_t super)
+PUBLIC u8_t paging_map(struct pde* pd, virtaddr_t vaddr, physaddr_t paddr, u8_t flags)
 {
-  struct pde* pd;
   struct pte* table;
   u16_t pde,pte;
+
+  if (pd == NULL)
+    {
+      return EXIT_FAILURE;
+    }
 
   /* Recupere le pd, pde et pte associe */
   pde = PAGING_GET_PDE(vaddr);
   pte = PAGING_GET_PTE(vaddr);
-  pd = (struct pde*)PAGING_GET_PD();
 
   /* Interdit le pde du self map */
   if ( pde == PAGING_SELFMAP )
@@ -98,15 +108,15 @@ PUBLIC u8_t paging_map(virtaddr_t vaddr, physaddr_t paddr, u8_t super)
       /* Fait pointer le pde sur la nouvelle page */
       pd[pde].present = 1;
       pd[pde].rw = 1;
-      pd[pde].user = (super?0:1);
+      pd[pde].user = (flags&PAGING_SUPER?0:1);
       pd[pde].baseaddr = (((physaddr_t)table)>>PAGING_BASESHIFT);
 
       /* Nullifie le page table */
-      klib_mem_set(0,PAGING_GET_PT(pde),PAGING_ENTRIES*sizeof(struct pte));
+      klib_mem_set(0,(flags&PAGING_IDENTITY?(u32_t)table:PAGING_GET_PT(pde)),PAGING_ENTRIES*sizeof(struct pte));
     }
 
   /* Ici, la table existe forcement */
-  table = (struct pte*)(PAGING_GET_PT(pde));
+  table = (struct pte*)(flags&PAGING_IDENTITY?pd[pde].baseaddr<<PAGING_BASESHIFT:PAGING_GET_PT(pde));
 
   /* Si le pte est present, l adresse est deja mappee */
   if (table[pte].present)
@@ -117,7 +127,7 @@ PUBLIC u8_t paging_map(virtaddr_t vaddr, physaddr_t paddr, u8_t super)
   /* Fait pointer le pte sur la page physique */
   table[pte].present = 1;
   table[pte].rw = 1;
-  table[pte].user = (super?0:1);
+  table[pte].user = (flags&PAGING_SUPER?0:1);
   table[pte].baseaddr = paddr >> PAGING_BASESHIFT;
 
   /* Indique un mappage de notre adresse physique */
@@ -223,62 +233,4 @@ PUBLIC physaddr_t paging_virt2phys(virtaddr_t vaddr)
   /* Retourne l'adresse physique */
   return (((table[pte].baseaddr)<<PAGING_BASESHIFT)+offset);
 
-}
-
-
-/*========================================================================
- * Identity Mapping d une zone
- *========================================================================*/
-
-PRIVATE u8_t paging_identityMapping(physaddr_t start, physaddr_t end)
-{
-
-  physaddr_t p;
-
-  /* Parcours les adresses de CONST_PAGE_SIZE en CONST_PAGE_SIZE */
-  for(p=PAGING_ALIGN_INF(start);p<PAGING_ALIGN_SUP(end);p+=CONST_PAGE_SIZE)
-    {
-      struct pte* table;
-
-      /* Recupere les supposes PDE et PTE */
-      u16_t pde = PAGING_GET_PDE(p);
-      u16_t pte = PAGING_GET_PTE(p);
-     
-      /* Cree le PDE s il n existe pas */
-      if (!kern_PD[pde].present)
-	{
-	  /* La table vers laquelle pointer */
-	  table = (struct pte*)phys_alloc(PAGING_ENTRIES*sizeof(struct pte));
-	  /* Validite de l allocation */
-	  if (table == NULL)
-	    {
-	      return EXIT_FAILURE;
-	    }
-	 
-	  /* Nullifie la page */
-	  klib_mem_set(0,(u32_t)table,PAGING_ENTRIES*sizeof(struct pte));
-
-	  /* Attributs du PDE */
-	  kern_PD[pde].baseaddr = (((physaddr_t)table)>>PAGING_BASESHIFT);
-	  kern_PD[pde].present = 1;
-	  kern_PD[pde].rw = 1;
-	  kern_PD[pde].user = 0;
-	}
-
-      /* Recupere la table du PDE */
-      table = (struct pte*)(kern_PD[pde].baseaddr<<PAGING_BASESHIFT);
-      /* Ajuste les attributs et l'adresse pointee par le PTE */
-      table[pte].present = 1;
-      table[pte].rw = 1;
-      table[pte].user = 0;
-      table[pte].baseaddr = (p>>PAGING_BASESHIFT);
-
-      /* Indique le mappage de notre adresse physique */
-      phys_map(p);
-
-      /* Indique un mappage present sur la page de la table */
-      phys_map(kern_PD[pde].baseaddr<<PAGING_BASESHIFT);
-    }
-
-  return EXIT_SUCCESS;
 }

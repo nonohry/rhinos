@@ -174,11 +174,14 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
   if ( ( (th_receiver->ipc.state & (SYSCALL_IPC_SENDING|SYSCALL_IPC_RECEIVING)) == SYSCALL_IPC_RECEIVING)
        && ( (th_receiver->ipc.receive_from == th_sender)||(th_receiver->ipc.receive_from == NULL) ) )
     {
-
+      struct pde* pd;
       physaddr_t phys_page;
       virtaddr_t virt_page;
       virtaddr_t virt_message;
 
+      /* Recupere le page directory courant */
+      pd = (struct pde*)PAGING_GET_PD();
+      
       /* Alloue une page virtuelle */
       // virt_page = (virtaddr_t)virt_alloc(CONST_PAGE_SIZE);
       
@@ -197,7 +200,7 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
       phys_page = PHYS_ALIGN_INF(th_receiver->ipc.receive_phys_message);
       
       /* Map la page physique du message avec la page virtuelle */
-      if (paging_map(virt_page, phys_page, TRUE) == EXIT_FAILURE)
+      if (paging_map(pd,virt_page, phys_page, PAGING_SUPER) == EXIT_FAILURE)
 	{
 	  klib_bochs_print("ERREUR MAP\n");
 	  virtmem_buddy_free((void*)virt_page);
@@ -319,9 +322,13 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
   /* Un thread disponible */
   if ( th_available != NULL )
     {
+      struct pde* pd;
       physaddr_t phys_page;
       virtaddr_t virt_page;
       virtaddr_t virt_message;
+      
+      /* Recupere le page directory courant */
+      pd = (struct pde*)PAGING_GET_PD();
       
       /* Alloue une page virtuelle */
       //virt_page = (virtaddr_t)virt_alloc(CONST_PAGE_SIZE);
@@ -339,7 +346,7 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
       phys_page = PHYS_ALIGN_INF(th_available->ipc.send_phys_message);
       
       /* Map la page physique du message avec la page virtuelle */
-      if( paging_map(virt_page, phys_page, TRUE) == EXIT_FAILURE)
+      if( paging_map(pd,virt_page, phys_page, PAGING_SUPER) == EXIT_FAILURE)
       	{
 	  klib_bochs_print("ERREUR MAP2\n");
 	  virtmem_buddy_free((void*)virt_page);
