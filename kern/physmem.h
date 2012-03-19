@@ -27,12 +27,7 @@
 #define PHYS_SHIFT64               6        /* 2^6 = 64    */
 
 #define PHYS_KERN_AREA_START       0
-#define PHYS_ROM_AREA_START        0x9FC00
-#define PHYS_ROM_AREA_SIZE         0x603FF
 #define PHYS_POOL_AREA_START       CONST_PAGE_NODE_POOL_ADDR
-#define PHYS_ACPI_AREA_START       0xFEC00000
-#define PHYS_ACPI_AREA_SIZE        0x13FFFFF
-
 
 #define PHYS_UNMAP_NONE       0
 #define PHYS_UNMAP_UNMAP      1

@@ -68,7 +68,7 @@ PUBLIC void cstart(struct boot_info* binfo)
 
       entry[0] = (struct boot_mmap_e820*)bootinfo->mem_map_addr;
       entry[0]->addr_l = 0;
-      entry[0]->size_l = 0x9FC00;
+      entry[0]->size_l = CONST_ROM_AREA_START;
       entry[0]->addr_h = 0;
       entry[0]->size_h = 0;
       entry[0]->type = START_E820_AVAILABLE;
@@ -100,7 +100,7 @@ PUBLIC void cstart(struct boot_info* binfo)
 
       entry[0] = (struct boot_mmap_e820*)bootinfo->mem_map_addr;
       entry[0]->addr_l = 0;
-      entry[0]->size_l = (bootinfo->mem_0x0 < 0x9FC00 ? bootinfo->mem_0x0 : 0x9FC00) ;
+      entry[0]->size_l = (bootinfo->mem_0x0 < CONST_ROM_AREA_START ? bootinfo->mem_0x0 : CONST_ROM_AREA_START) ;
       entry[0]->addr_h = 0;
       entry[0]->size_h = 0;
       entry[0]->type = START_E820_AVAILABLE;

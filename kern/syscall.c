@@ -226,8 +226,6 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
 	  klib_bochs_print("ERREUR FREE\n");
 	}
       
-
-
       /* Debloque le destinataire au besoin */
       if (th_receiver->state == THREAD_BLOCKED)
 	{
