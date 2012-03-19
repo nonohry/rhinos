@@ -22,11 +22,6 @@
  *========================================================================*/
 
 #define PHYS_PAGE_MAX_BUDDY      21        /* 32 - 12 + 1 = 21 */
-
-#define PHYS_SHIFT1024            10        /* 2^10 = 1024  */
-#define PHYS_SHIFT64               6        /* 2^6 = 64    */
-
-#define PHYS_KERN_AREA_START       0
 #define PHYS_POOL_AREA_START       CONST_PAGE_NODE_POOL_ADDR
 
 #define PHYS_UNMAP_NONE       0
