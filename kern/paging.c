@@ -41,7 +41,7 @@ PUBLIC u8_t paging_init(void)
       p<PAGING_ALIGN_SUP(bootinfo->kern_end);
       p+=CONST_PAGE_SIZE)
     {
-      if (paging_map(kern_PD, (virtaddr_t)p, p, PAGING_SUPER|PAGING_IDENTITY) == EXIT_FAILURE)
+      if (paging_map((virtaddr_t)p, p, PAGING_SUPER|PAGING_IDENTITY) == EXIT_FAILURE)
 	{
 	  return EXIT_FAILURE;
 	}
@@ -51,7 +51,7 @@ PUBLIC u8_t paging_init(void)
       p<PAGING_ALIGN_SUP(CONST_PAGE_NODE_POOL_ADDR+((bootinfo->mem_total) >> CONST_PAGE_SHIFT)*sizeof(struct ppage_desc));
       p+=CONST_PAGE_SIZE)
     {
-      if (paging_map(kern_PD,(virtaddr_t)p, p, PAGING_SUPER|PAGING_IDENTITY) == EXIT_FAILURE)
+      if (paging_map((virtaddr_t)p, p, PAGING_SUPER|PAGING_IDENTITY) == EXIT_FAILURE)
 	{
 	  return EXIT_FAILURE;
 	}
@@ -74,19 +74,17 @@ PUBLIC u8_t paging_init(void)
  * Mapping
  *========================================================================*/
 
-PUBLIC u8_t paging_map(struct pde* pd, virtaddr_t vaddr, physaddr_t paddr, u8_t flags)
+PUBLIC u8_t paging_map(virtaddr_t vaddr, physaddr_t paddr, u8_t flags)
 {
+  struct pde* pd;
   struct pte* table;
   u16_t pde,pte;
 
-  if (pd == NULL)
-    {
-      return EXIT_FAILURE;
-    }
 
   /* Recupere le pd, pde et pte associe */
   pde = PAGING_GET_PDE(vaddr);
   pte = PAGING_GET_PTE(vaddr);
+  pd = (flags&PAGING_IDENTITY?kern_PD:(struct pde*)PAGING_GET_PD());
 
   /* Interdit le pde du self map */
   if ( pde == PAGING_SELFMAP )
@@ -145,21 +143,18 @@ PUBLIC u8_t paging_map(struct pde* pd, virtaddr_t vaddr, physaddr_t paddr, u8_t 
  * Unmapping
  *========================================================================*/
 
-PUBLIC u8_t paging_unmap(struct pde* pd, virtaddr_t vaddr)
+PUBLIC u8_t paging_unmap(virtaddr_t vaddr)
 {
-   struct pte* table;
+  struct pde* pd;
+  struct pte* table;
   u16_t pde,pte;
-
-  if (pd == NULL)
-    {
-      return EXIT_FAILURE;
-    }
 
 
   /* Recupere le pd, pde et pte associe */
   pde = PAGING_GET_PDE(vaddr);
   pte = PAGING_GET_PTE(vaddr);
- 
+  pd = (struct pde*)PAGING_GET_PD();
+
   /* Interdit le pde du self map et verifie l'existence du pde*/
   if ( (pde == PAGING_SELFMAP)||(!pd[pde].present) )
     {

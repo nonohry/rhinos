@@ -61,7 +61,6 @@ static struct vmem_cache cache_cache =
 
 PUBLIC u8_t virtmem_cache_init(void)
 {
-  struct pde* pd;
   virtaddr_t vaddr_init;
   physaddr_t paddr_init;
   u32_t i;
@@ -71,16 +70,13 @@ PUBLIC u8_t virtmem_cache_init(void)
   LLIST_NULLIFY(cache_list);
   LLIST_SETHEAD(&cache_cache);
       
-  /* Recupere le page directory courant */
-  pd = (struct pde*)PAGING_GET_PD();
-
   /* Initialisation manuelle de cache_cache */
   for(i=0;i<VIRT_CACHE_STARTSLABS;i++)
     {
       /* Cree une adresse virtuelle mappee pour les initialisations */
       vaddr_init = i*CONST_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT;
       paddr_init = (physaddr_t)phys_alloc(CONST_PAGE_SIZE);
-      paging_map(pd,vaddr_init, paddr_init, PAGING_SUPER);
+      paging_map(vaddr_init, paddr_init, PAGING_SUPER);
 
       /* Fait grossir cache_cache dans cette page */
       if ( virtmem_cache_grow(&cache_cache,vaddr_init) != EXIT_SUCCESS )

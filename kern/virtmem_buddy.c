@@ -38,13 +38,10 @@ PRIVATE u8_t virtmem_buddy_map_area(struct vmem_area* area);
 PUBLIC u8_t virtmem_buddy_init()
 {
   struct vmem_area* area;
-  struct pde* pd;
   virtaddr_t vaddr_init;
   physaddr_t paddr_init;
   u32_t i;
 
-  /* Recupere le page directory courant */
-  pd = (struct pde*)PAGING_GET_PD();
 
   /* Initialise les listes */
   for(i=0;i<VIRT_BUDDY_MAX;i++)
@@ -66,7 +63,7 @@ PUBLIC u8_t virtmem_buddy_init()
        /* Cree une adresse virtuelle mappee pour les initialisations */
       vaddr_init = (i+VIRT_CACHE_STARTSLABS)*CONST_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT;
       paddr_init = (physaddr_t)phys_alloc(CONST_PAGE_SIZE);
-      paging_map(pd, vaddr_init, paddr_init, PAGING_SUPER);
+      paging_map(vaddr_init, paddr_init, PAGING_SUPER);
 
       /* Fait grossir cache_cache dans cette page */
       if ( virtmem_cache_grow(area_cache,vaddr_init) != EXIT_SUCCESS )
@@ -157,13 +154,10 @@ PUBLIC void* virtmem_buddy_alloc(u32_t size, u8_t flags)
 
 PUBLIC u8_t  virtmem_buddy_free(void* addr)
 {
-  struct pde* pd;
   struct vmem_area* area;
   struct ppage_desc* pdesc;
   virtaddr_t va;
 
-  /* Recupere le page directory courant */
-  pd = (struct pde*)PAGING_GET_PD();
 
   /* Cherche la vmem_area associee a l adresse via le descripteur physique */
   area = NULL;
@@ -211,7 +205,7 @@ PUBLIC u8_t  virtmem_buddy_free(void* addr)
       /* Demappe physiquement (aucun effet si non mappee) */
       for(va=area->base;va<(area->base+area->size);va+=CONST_PAGE_SIZE)
 	{
-	  paging_unmap(pd,va);
+	  paging_unmap(va);
 	}
       
       /* Reintegre l area dans le buddy */
@@ -407,15 +401,12 @@ PRIVATE u8_t virtmem_buddy_map_area(struct vmem_area* area)
   u32_t n,base,sum;
   physaddr_t paddr,pa;
   virtaddr_t va;
-  struct pde* pd;
-  
+   
   n = area->size;
   base = area->base;
   sum = 0;
 
-  /* Le page directory courant */
-  pd = (struct pde*)PAGING_GET_PD();
-  
+   
   while( (sum < area->size)&&(n) )
     {
       while (sum < area->size)
@@ -432,7 +423,7 @@ PRIVATE u8_t virtmem_buddy_map_area(struct vmem_area* area)
 		  va<base+n;
 		  va+=CONST_PAGE_SIZE,pa+=CONST_PAGE_SIZE)
 		{
-		  paging_map(pd,va,pa,PAGING_SUPER);
+		  paging_map(va,pa,PAGING_SUPER);
 		}
 	      
 	      /* Deplace la base a mapper */
@@ -454,7 +445,7 @@ PRIVATE u8_t virtmem_buddy_map_area(struct vmem_area* area)
     {
       for(va=area->base;va<(area->base+area->size);va+=CONST_PAGE_SIZE)
 	{
-	  paging_unmap(pd,va);
+	  paging_unmap(va);
 	}
       return EXIT_FAILURE;
     }
