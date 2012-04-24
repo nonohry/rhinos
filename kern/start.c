@@ -9,51 +9,57 @@
  * Includes 
  *========================================================================*/
 
+
 #include "klib.h"
 #include "tables.h"
 #include "start.h"
 
 
 /*========================================================================
+ * Macros 
+ *========================================================================*/
+
+
+#define SET_VALUE(_i,_x)                            \
+    {                                               \
+        frame_array[(_i)>>1] &= 0xF0 >> (4*((_i)&0x1));      \
+        frame_array[(_i)>>1] |= (_x) << (4*((_i)&0x1));     \
+    }
+    
+#define GET_VALUE(_i)                            \
+        ( ((_i)&0x1) ? frame_array[(_i)>>1]>>4 : frame_array[(_i)>>1] & 0xF )
+
+
+
+/*========================================================================
+ * Declarations Private 
+ *========================================================================*/
+
+
+PRIVATE u8_t frame_array[START_FRAME_MAX>>1];
+PRIVATE u8_t start_e820_check(struct boot_info* bootinfo);
+PRIVATE u8_t start_e820_sanitize(struct boot_info* bootinfo);
+
+
+/*========================================================================
  * Fonction cstart
  *========================================================================*/
 
+
 PUBLIC void cstart(struct boot_info* binfo)
 { 
-  u16_t i;
-  u64_t mem;
-
   /* Recopie les informations de demarrage */
   bootinfo = binfo;
-  mem = 0;
 
-  /* Calcul la taille de la memoire */
+  /* Genere ou corrige un memory map */
   if (bootinfo->mem_map_count)
     {
-      struct boot_mmap_e820* entry;
-
-      /* Taille selon int 15/AX=E820 */
-      for(entry=(struct boot_mmap_e820*)bootinfo->mem_map_addr,i=0;i<bootinfo->mem_map_count;i++,entry++)
-	{
-	  /* Evite la memoire au dela de 4G */
-	  if ( (entry->addr_h)||(entry->size_h) )
-	    {
-	      entry->type = START_E820_RESERVED;
-	    }
-	  
-	  /* Retrecit si la taille est au dela de 4G (check via wrap around sur entier non signe) */
-	  if ( (entry->type == START_E820_AVAILABLE)&&(entry->addr_l+entry->size_l < entry->addr_l) )
-	    {
-	      entry->size_l = -1 - entry->addr_l ;
-	    }
-
-	  /* Calcul la taille totale corrigee */
-	  mem += entry->size_l;
-	 
-	}
       
-      /* Limite a 4G (-1 en unsigned int) */
-      bootinfo->mem_total = ( mem > (u32_t)(-1) ? (u32_t)(-1) : (u32_t)mem ); 
+      if (start_e820_check(bootinfo) != EXIT_SUCCESS)
+	{
+	  klib_bochs_print("Buggy Memory Map ! Aborting...\n");
+	  while(1){}
+	}
 
     }
   else if ( (bootinfo->mem_upper)&&(bootinfo->mem_lower) )
@@ -127,4 +133,144 @@ PUBLIC void cstart(struct boot_info* binfo)
 
   return;
 
+}
+
+
+/************************************************
+ * Verifie le memory map e820 (limites, overlap) 
+ ************************************************/
+
+PRIVATE u8_t start_e820_check(struct boot_info* bootinfo)
+{
+  u16_t i,j;
+  u64_t mem=0;
+  u8_t overlap = 0;
+  struct boot_mmap_e820* entry;
+  struct boot_mmap_e820* next_entry;
+
+  /* Calcul la taille de la memoire  */
+  for(entry=(struct boot_mmap_e820*)bootinfo->mem_map_addr,i=0;i<bootinfo->mem_map_count;i++,entry++)
+    {
+      /* Quitte si 64bits */
+      if (entry->addr_h || entry->size_h)
+        {
+	  return EXIT_FAILURE;
+        }
+      
+      mem += entry->size_l;
+    }
+  
+  /* Retourne selon la taille memoire totale */
+  if ( mem > (u32_t)(-1) )
+    {
+      return EXIT_FAILURE;
+    }
+  
+  /* Affecte la memoire calculee */
+  bootinfo->mem_total = (u32_t)mem;
+
+  /* Detection d'overlap */
+  for(entry=(struct boot_mmap_e820*)bootinfo->mem_map_addr,i=0;(i<bootinfo->mem_map_count-1)&&(!overlap);i++,entry++)
+    {
+      for(next_entry=entry+1,j=i+1;j<bootinfo->mem_map_count;j++,next_entry++)
+	{
+	  if ( ((next_entry->addr_l < entry->addr_l)&&(entry->addr_l < next_entry->addr_l+next_entry->size_l))
+	       || ((next_entry->addr_l < entry->addr_l)&&(entry->addr_l < next_entry->addr_l+next_entry->size_l)) )
+	    {
+	      overlap = 1;
+	      break;
+	    }
+	}
+    }
+  
+  return  (overlap ? start_e820_sanitize(bootinfo) : EXIT_SUCCESS);
+}
+
+    
+/******************************
+ * Assainit le memory map e820 
+ ******************************/
+   
+  
+PRIVATE u8_t start_e820_sanitize(struct boot_info* bootinfo)
+{     
+  u32_t frame_size=0;
+  u32_t i,j;
+  struct boot_mmap_e820* entry;
+  
+  /* Taille des frames */
+  while(frame_size<<START_SHIFT < bootinfo->mem_total)
+    {
+      frame_size++;
+      
+      /* Cas de la comparaison avec 4G */
+      if (frame_size > 1048576)
+        {
+	  frame_size = 1048576;
+	  break;
+        }
+      
+    }
+  
+  /* Construit le frame_array */
+  for(entry=(struct boot_mmap_e820*)bootinfo->mem_map_addr,i=0;i<bootinfo->mem_map_count;i++,entry++)
+    {
+      
+      for(j=entry->addr_l;j<entry->addr_l+entry->size_l;j+=frame_size)
+        {
+	  
+	  if (GET_VALUE(j/frame_size) < entry->type)
+            {
+	      SET_VALUE(j/frame_size,entry->type);
+            }
+	  
+        }
+      
+    }
+  
+  /* Modifie le mmap... */
+
+  entry=(struct boot_mmap_e820*)bootinfo->mem_map_addr;
+  
+  /* Initialise le premier item */
+  bootinfo->mem_map_count=1;
+  entry->addr_l = 0*frame_size;
+  entry->size_l = frame_size;
+  entry->type = GET_VALUE(0);
+  
+  /* Parcourt le frame_array tout en creant une entree a chaque changement de type */
+  for(j=1;j<START_FRAME_MAX;j++)
+    {
+      
+      if (GET_VALUE(j)!=GET_VALUE(j-1))
+	{
+	  bootinfo->mem_map_count++;
+	  if (bootinfo->mem_map_count > START_E820_MAX)
+	    {
+	      return EXIT_FAILURE;
+	    }
+	  
+	  entry++;
+	  entry->size_l = 0;
+	  entry->addr_l = j*frame_size;
+	  entry->type = GET_VALUE(j);
+          
+	}
+      
+      entry->size_l += frame_size;
+      
+    }
+  
+  /* Recalcul de la memoire totale */
+  bootinfo->mem_total = 0;
+  for(entry=(struct boot_mmap_e820*)bootinfo->mem_map_addr,i=0;i<bootinfo->mem_map_count;i++,entry++)
+    {
+      if (entry->type)
+	{
+	  bootinfo->mem_total+=entry->size_l;
+	}
+    }
+  
+  
+  return EXIT_SUCCESS;
 }

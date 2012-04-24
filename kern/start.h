@@ -25,6 +25,12 @@
 #define START_E820_ACPI_NVS     0x4
 
 
+/* Constantes sanitize */
+
+#define START_E820_MAX              50
+#define START_FRAME_MAX             4096
+#define START_SHIFT                 12
+
 
 /*======================================================================== 
  * Structure boot_info
