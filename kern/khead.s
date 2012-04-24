@@ -6,7 +6,7 @@
 
 	
 extern	klib_bochs_print
-extern	cstart			; Fonction d'initialisation en C
+extern	start_main		; Fonction d'initialisation en C
 extern  gdt_desc		; Descripteur de la GDT en C
 extern  idt_desc		; Descripteur de l'IDT en C
 extern  main			; RhinOS Main en C
@@ -26,7 +26,7 @@ _start:
 	mov	dword [ebx], kernel_start 	; Champs kern_start de boot_info
 	mov	dword [ebx+4], kernel_end 	; Champs kern_end de boot_info
 	push	ebx
-	call	cstart		; Appelle cstart
+	call	start_main	; Appelle start_main
 	add 	esp,4
 	
 	lgdt	[gdt_desc]	; Charge la nouvelle GDT

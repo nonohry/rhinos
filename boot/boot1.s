@@ -248,7 +248,7 @@ mem_e820:
 
 	;; Sauve les informations
 	mov	word [boot1_info+mem_map_count],si
-	jmp	next02
+	jmp	next02		
 
 mem_e801:
 	mov	dword [boot1_info+mem_map_addr],0x0
@@ -259,7 +259,7 @@ mem_e801:
 
 	;; Sauve les informations	
 	mov	word [boot1_info+mem_lower],cx
-	mov	word [boot1_info+mem_upper],dx	
+	mov	word [boot1_info+mem_upper],dx
 	jmp	next02
 	
 mem_e881:

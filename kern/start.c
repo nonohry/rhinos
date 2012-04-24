@@ -39,14 +39,17 @@
 PRIVATE u8_t frame_array[START_FRAME_MAX>>1];
 PRIVATE u8_t start_e820_check(struct boot_info* bootinfo);
 PRIVATE u8_t start_e820_sanitize(struct boot_info* bootinfo);
+PRIVATE u8_t start_e801_generate(struct boot_info* bootinfo);
+PRIVATE u8_t start_e88_generate(struct boot_info* bootinfo);
+
 
 
 /*========================================================================
- * Fonction cstart
+ * Fonction start_main
  *========================================================================*/
 
 
-PUBLIC void cstart(struct boot_info* binfo)
+PUBLIC void start_main(struct boot_info* binfo)
 { 
   /* Recopie les informations de demarrage */
   bootinfo = binfo;
@@ -57,74 +60,29 @@ PUBLIC void cstart(struct boot_info* binfo)
       
       if (start_e820_check(bootinfo) != EXIT_SUCCESS)
 	{
-	  klib_bochs_print("Buggy Memory Map ! Aborting...\n");
-	  while(1){}
+	  goto err_mem;
 	}
 
     }
   else if ( (bootinfo->mem_upper)&&(bootinfo->mem_lower) )
-    {
-      struct boot_mmap_e820* entry[3];
-
-      /* Taille totale */
-      bootinfo->mem_total = START_MEM_SIZE_0 + (bootinfo->mem_lower << 10) + (bootinfo->mem_upper << 16);
-
-      /* Cree un faux memory map */
-      bootinfo->mem_map_count = 3;
-
-      entry[0] = (struct boot_mmap_e820*)bootinfo->mem_map_addr;
-      entry[0]->addr_l = 0;
-      entry[0]->size_l = CONST_ROM_AREA_START;
-      entry[0]->addr_h = 0;
-      entry[0]->size_h = 0;
-      entry[0]->type = START_E820_AVAILABLE;
-      
-      entry[1] = (struct boot_mmap_e820*)(bootinfo->mem_map_addr+sizeof(struct boot_mmap_e820));
-      entry[1]->addr_l = 0x100000;
-      entry[1]->size_l = bootinfo->mem_lower << 10;
-      entry[1]->addr_h = 0;
-      entry[1]->size_h = 0;
-      entry[1]->type = START_E820_AVAILABLE;
-
-      entry[2] = (struct boot_mmap_e820*)(bootinfo->mem_map_addr+2*sizeof(struct boot_mmap_e820));
-      entry[2]->addr_l = 0x1000000;
-      entry[2]->size_l = bootinfo->mem_upper << 16;
-      entry[2]->addr_h = 0;
-      entry[2]->size_h = 0;
-      entry[2]->type = START_E820_AVAILABLE;
-      
+    {      
+      if (start_e801_generate(bootinfo) != EXIT_SUCCESS)
+	{
+	  goto err_mem;
+	}
     }
   else if ( (bootinfo->mem_0x0)&&(bootinfo->mem_0x100000) )
     {
-      struct boot_mmap_e820* entry[2];
-
-      /* Taille totale */
-      bootinfo->mem_total = (bootinfo->mem_0x0 + bootinfo->mem_0x100000) << 10;
-
-      /* Cree un faux memory map */
-      bootinfo->mem_map_count = 2;
-
-      entry[0] = (struct boot_mmap_e820*)bootinfo->mem_map_addr;
-      entry[0]->addr_l = 0;
-      entry[0]->size_l = (bootinfo->mem_0x0 < CONST_ROM_AREA_START ? bootinfo->mem_0x0 : CONST_ROM_AREA_START) ;
-      entry[0]->addr_h = 0;
-      entry[0]->size_h = 0;
-      entry[0]->type = START_E820_AVAILABLE;
-      
-      entry[1] = (struct boot_mmap_e820*)(bootinfo->mem_map_addr+sizeof(struct boot_mmap_e820));
-      entry[1]->addr_l = 0x100000;
-      entry[1]->size_l = bootinfo->mem_0x100000 << 10;
-      entry[1]->addr_h = 0;
-      entry[2]->size_h = 0;
-      entry[1]->type = START_E820_AVAILABLE;
-
+      if (start_e88_generate(bootinfo) != EXIT_SUCCESS)
+	{
+	  goto err_mem;
+	}
     }
   else
     {
-      /* Erreur memoire  */
-      klib_bochs_print("Memory Error ! Aborting...\n");
-      while(1){}
+      goto err_mem;
     }
+
 
   /* Initialise les tables du mode protege */
   gdt_init();
@@ -133,12 +91,18 @@ PUBLIC void cstart(struct boot_info* binfo)
 
   return;
 
+ err_mem:
+  klib_bochs_print("Memory Error ! Aborting...\n");
+  while(1){}
+  return;
 }
+
 
 
 /************************************************
  * Verifie le memory map e820 (limites, overlap) 
  ************************************************/
+
 
 PRIVATE u8_t start_e820_check(struct boot_info* bootinfo)
 {
@@ -234,7 +198,7 @@ PRIVATE u8_t start_e820_sanitize(struct boot_info* bootinfo)
   
   /* Initialise le premier item */
   bootinfo->mem_map_count=1;
-  entry->addr_l = 0*frame_size;
+  entry->addr_l = 0;
   entry->size_l = frame_size;
   entry->type = GET_VALUE(0);
   
@@ -271,6 +235,81 @@ PRIVATE u8_t start_e820_sanitize(struct boot_info* bootinfo)
 	}
     }
   
+  
+  return EXIT_SUCCESS;
+}
+
+
+
+/************************************************
+ * Genere un memory map depuis int 0x15 ax=0e801 
+ ************************************************/
+
+
+PRIVATE u8_t start_e801_generate(struct boot_info* bootinfo)
+{
+  struct boot_mmap_e820* entry;
+  
+  /* Taille totale */
+  bootinfo->mem_total = START_MEM_SIZE_0 + (bootinfo->mem_lower << 10) + (bootinfo->mem_upper << 16);
+  
+  /* Cree un faux memory map */
+  bootinfo->mem_map_count = 3;
+  
+  entry = (struct boot_mmap_e820*)bootinfo->mem_map_addr;
+  entry->addr_l = 0;
+  entry->size_l = CONST_ROM_AREA_START;
+  entry->addr_h = 0;
+  entry->size_h = 0;
+  entry->type = START_E820_AVAILABLE;
+  
+  entry = (struct boot_mmap_e820*)(bootinfo->mem_map_addr+sizeof(struct boot_mmap_e820));
+  entry->addr_l = 0x100000;
+  entry->size_l = bootinfo->mem_lower << 10;
+  entry->addr_h = 0;
+  entry->size_h = 0;
+  entry->type = START_E820_AVAILABLE;
+  
+  entry = (struct boot_mmap_e820*)(bootinfo->mem_map_addr+2*sizeof(struct boot_mmap_e820));
+  entry->addr_l = 0x1000000;
+  entry->size_l = bootinfo->mem_upper << 16;
+  entry->addr_h = 0;
+  entry->size_h = 0;
+  entry->type = START_E820_AVAILABLE;
+  
+  return EXIT_SUCCESS;
+}
+
+
+
+/************************************************
+ * Genere un memory map depuis int 0x15 ax=0e88 
+ ************************************************/
+
+
+PRIVATE u8_t start_e88_generate(struct boot_info* bootinfo)
+{
+  struct boot_mmap_e820* entry;
+  
+  /* Taille totale */
+  bootinfo->mem_total = (bootinfo->mem_0x0 + bootinfo->mem_0x100000) << 10;
+  
+  /* Cree un faux memory map */
+  bootinfo->mem_map_count = 2;
+  
+  entry = (struct boot_mmap_e820*)bootinfo->mem_map_addr;
+  entry->addr_l = 0;
+  entry->size_l = (bootinfo->mem_0x0 < CONST_ROM_AREA_START ? bootinfo->mem_0x0 : CONST_ROM_AREA_START) ;
+  entry->addr_h = 0;
+  entry->size_h = 0;
+  entry->type = START_E820_AVAILABLE;
+  
+  entry = (struct boot_mmap_e820*)(bootinfo->mem_map_addr+sizeof(struct boot_mmap_e820));
+  entry->addr_l = 0x100000;
+  entry->size_l = bootinfo->mem_0x100000 << 10;
+  entry->addr_h = 0;
+  entry->size_h = 0;
+  entry->type = START_E820_AVAILABLE;
   
   return EXIT_SUCCESS;
 }
