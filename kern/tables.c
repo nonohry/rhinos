@@ -22,7 +22,7 @@
  * Initialisation de la GDT 
  *========================================================================*/
  
-PUBLIC void gdt_init()
+PUBLIC u8_t gdt_init()
 {
   /* Descripteur de GDT */
 
@@ -34,18 +34,22 @@ PUBLIC void gdt_init()
   init_code_seg(&gdt[TABLES_CS_INDEX],(lineaddr_t) TABLES_KERN_BASE, TABLES_KERN_LIMIT_4G, TABLES_RING0);
   init_data_seg(&gdt[TABLES_XS_INDEX],(lineaddr_t) TABLES_KERN_BASE, TABLES_KERN_LIMIT_4G, TABLES_RING0);
 
-  return;
+  return EXIT_SUCCESS;
 }
 
 /*========================================================================
  * Initialisation de l IDT 
  *========================================================================*/
 
-PUBLIC void idt_init()
+PUBLIC u8_t idt_init()
 {
 
   /* Initialisation du PIC i8259 */
-  pic_init();
+  if (pic_init() != EXIT_SUCCESS)
+    {
+      return EXIT_FAILURE;
+    }
+
 
   /* Descripteur de IDT */
 
@@ -94,7 +98,7 @@ PUBLIC void idt_init()
 
   init_int_gate(&idt[50], CONST_CS_SELECTOR, (lineaddr_t)swint_syscall, SEG_PRESENT | SEG_DPL_3);
 
-  return;
+  return EXIT_SUCCESS;
 }
 
 

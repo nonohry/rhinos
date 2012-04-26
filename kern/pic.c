@@ -18,7 +18,7 @@
  * Initialisation du PIC i8259
  *========================================================================*/
 
-PUBLIC void pic_init()
+PUBLIC u8_t pic_init()
 {
 
   /* Envoie ICW1 sue les ports maitre et esclave */
@@ -45,7 +45,7 @@ PUBLIC void pic_init()
   klib_outb(PIC_MASTER_PORT+1,0xFB);
   klib_outb(PIC_SLAVE_PORT+1,0xFF);
 
-  return;
+  return EXIT_SUCCESS;
 }
 
 

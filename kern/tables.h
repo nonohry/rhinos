@@ -111,7 +111,7 @@ PUBLIC struct gate_desc idt[TABLES_IDT_SIZE]; /* IDT */
 PUBLIC struct table_desc gdt_desc;     /* Descripteur de la GDT */
 PUBLIC struct table_desc idt_desc;     /* Descripteur de l'IDT */
 
-PUBLIC void gdt_init();
-PUBLIC void idt_init();
+PUBLIC  u8_t gdt_init();
+PUBLIC  u8_t idt_init();
 
 #endif

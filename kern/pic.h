@@ -34,7 +34,7 @@
  * Prototypes
  *========================================================================*/
 
-PUBLIC void pic_init();
+PUBLIC u8_t pic_init();
 PUBLIC void pic_enable_irq(u8_t n);
 PUBLIC void pic_disable_irq(u8_t n);
 

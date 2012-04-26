@@ -85,14 +85,20 @@ PUBLIC void start_main(struct boot_info* binfo)
 
 
   /* Initialise les tables du mode protege */
-  gdt_init();
-  idt_init();
+  if ( (gdt_init() != EXIT_SUCCESS)||(idt_init() != EXIT_SUCCESS) ) 
+    {
+      goto err_tables;
+    }
   klib_bochs_print("GDT & IDT initialized\n");
 
   return;
 
  err_mem:
   klib_bochs_print("Memory Error ! Aborting...\n");
+
+ err_tables:
+  klib_bochs_print("GDT & IDT Error\n");
+
   while(1){}
   return;
 }
