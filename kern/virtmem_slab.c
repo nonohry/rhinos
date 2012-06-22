@@ -76,7 +76,14 @@ PUBLIC u8_t virtmem_cache_init(void)
       /* Cree une adresse virtuelle mappee pour les initialisations */
       vaddr_init = i*CONST_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT;
       paddr_init = (physaddr_t)phys_alloc(CONST_PAGE_SIZE);
-      paging_map(vaddr_init, paddr_init, PAGING_SUPER);
+      if (!paddr_init)
+	{
+	  return EXIT_FAILURE;
+	}
+      if (paging_map(vaddr_init, paddr_init, PAGING_SUPER) != EXIT_SUCCESS)
+	{
+	  return EXIT_FAILURE;
+	}
 
       /* Fait grossir cache_cache dans cette page */
       if ( virtmem_cache_grow(&cache_cache,vaddr_init) != EXIT_SUCCESS )
@@ -321,7 +328,10 @@ PUBLIC void* virtmem_cache_alloc(struct vmem_cache* cache, u8_t flags)
       /* Grossit le cache autant que necessaire */
       while (count < cache->min_slab_free )
 	{
-	  virtmem_cache_grow(cache, VIRT_CACHE_NOADDR);
+	  if (virtmem_cache_grow(cache, VIRT_CACHE_NOADDR) != EXIT_SUCCESS)
+	    {
+	      break;
+	    }
 	  count++;
 	}
     }
@@ -341,6 +351,7 @@ PUBLIC void* virtmem_cache_alloc(struct vmem_cache* cache, u8_t flags)
 PUBLIC u8_t virtmem_cache_destroy(struct vmem_cache* cache)
 {
   u8_t i;
+  struct vmem_slab* slab;
 
   /* Petit controle */
   if ( (!LLIST_ISNULL(cache->slabs_partial))
@@ -352,7 +363,7 @@ PUBLIC u8_t virtmem_cache_destroy(struct vmem_cache* cache)
   /* Parcourt la liste des slabs */
   while(!LLIST_ISNULL(cache->slabs_free))
     {
-      struct vmem_slab* slab = LLIST_GETHEAD(cache->slabs_free);
+      slab = LLIST_GETHEAD(cache->slabs_free);
       /* Detruit le slab */
       virtmem_slab_destroy(cache,slab);
       /* Detruit le chainage */

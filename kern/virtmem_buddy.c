@@ -63,7 +63,14 @@ PUBLIC u8_t virtmem_buddy_init()
        /* Cree une adresse virtuelle mappee pour les initialisations */
       vaddr_init = (i+VIRT_CACHE_STARTSLABS)*CONST_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT;
       paddr_init = (physaddr_t)phys_alloc(CONST_PAGE_SIZE);
-      paging_map(vaddr_init, paddr_init, PAGING_SUPER);
+      if (!paddr_init)
+	{
+	  return EXIT_FAILURE;
+	}
+      if (paging_map(vaddr_init, paddr_init, PAGING_SUPER) != EXIT_SUCCESS)
+	{
+	  return EXIT_FAILURE;
+	}
 
       /* Fait grossir cache_cache dans cette page */
       if ( virtmem_cache_grow(area_cache,vaddr_init) != EXIT_SUCCESS )
