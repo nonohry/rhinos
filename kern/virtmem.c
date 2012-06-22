@@ -101,7 +101,7 @@ PUBLIC void* virt_alloc(u32_t size)
  *========================================================================*/
 
 
-PUBLIC u8_t  virt_free(void* addr)
+PUBLIC u8_t virt_free(void* addr)
 {
   u8_t i;
 
