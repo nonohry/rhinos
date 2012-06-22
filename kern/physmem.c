@@ -260,12 +260,7 @@ PUBLIC u8_t phys_unmap(physaddr_t addr)
 	    {
 	      /* Erreur, on remet dans l etat d origine */
 	      pdesc->maps++;
-	      return PHYS_UNMAP_NONE;
 	    }
-	}
-      else
-	{
-	  return PHYS_UNMAP_UNMAP;
 	}
     }
 
