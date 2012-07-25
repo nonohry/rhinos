@@ -9,8 +9,8 @@
  *========================================================================*/
 
 #include <types.h>
-#include "const.h"
 #include <llist.h>
+#include "const.h"
 #include "start.h"
 #include "klib.h"
 #include "physmem.h"
@@ -207,3 +207,4 @@ PUBLIC int main()
 
   return EXIT_SUCCESS;
 }
+
