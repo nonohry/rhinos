@@ -5,7 +5,7 @@ boot/Makefile.bak
 boot/boot0
 boot/boot1
 debugger.out
-disk.img
+*.img
 kern/Makefile.bak
 kern/kern
 lib/ipc/Makefile.bak
