@@ -1,6 +1,6 @@
 /*
  * Gestion des threads
- * A FUSIONNER AVEC LE CONTEXT_CPU
+ * 
  */
 
 
@@ -312,7 +312,11 @@ PUBLIC u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* 
 PUBLIC void thread_switch_to(struct thread* th)
 {
   /* Affecte le thread courant */
-  cur_th = th;
+  if (th != NULL)
+    {
+      cur_th = th;
+    }
+
   return;
 }
 
