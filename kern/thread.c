@@ -355,7 +355,7 @@ PUBLIC void thread_cpu_postsave(reg32_t ss, reg32_t* esp)
 
 PRIVATE void thread_cpu_trampoline(cpu_ctx_func_t start_func, void* start_arg, cpu_ctx_func_t exit_func, void* exit_arg)
 {
-  /* Trampline ! */
+  /* Trampoline ! */
   start_func(start_arg);
   exit_func(exit_arg);
 
