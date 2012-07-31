@@ -8,6 +8,7 @@
 #include "klib.h"
 #include "interrupt.h"
 #include "irq.h"
+#include "thread.h"
 #include "sched.h"
 #include "pit.h"
 
@@ -18,7 +19,7 @@
  *========================================================================*/
 
 
-PRIVATE void pit_handler(struct context_cpu* ctx);
+PRIVATE void pit_handler(struct thread* th);
 PRIVATE struct int_node pit_irq_node;
 
 
@@ -63,7 +64,7 @@ PUBLIC u8_t pit_init()
  *========================================================================*/
 
 
-PRIVATE void pit_handler(struct context_cpu* ctx)
+PRIVATE void pit_handler(struct thread* th)
 {
   /* Ordonnanceur */
   sched_schedule(SCHED_FROM_PIT);

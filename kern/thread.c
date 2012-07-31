@@ -90,7 +90,7 @@ PUBLIC struct thread* thread_create(const char* name, s32_t id, virtaddr_t start
 
   /* Controles */
   if ( (start_entry == 0)
-       || (stack_size < CTX_CPU_MIN_STACK)
+       || (stack_size < THREAD_CPU_MIN_STACK)
        || (nice_level > THREAD_NICE_TOP)
        || (nice_level < THREAD_NICE_BOTTOM) )
     {
@@ -263,7 +263,7 @@ PUBLIC u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* 
   if ( (start_entry == 0)
        || (exit_entry == 0)
        || (stack_base == 0)
-       || (stack_size < CTX_CPU_MIN_STACK)
+       || (stack_size < THREAD_CPU_MIN_STACK)
        || (ctx == NULL) )
     {
       return EXIT_FAILURE;
@@ -281,10 +281,10 @@ PUBLIC u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* 
   ctx->ss = CONST_SS_SELECTOR;
 
   /* Positionne un faux code d erreur */
-  ctx->error_code = CTX_CPU_FEC;
+  ctx->error_code = THREAD_CPU_FEC;
 
   /* Active les interruptions */
-  ctx->eflags = (1<<CTX_CPU_INTFLAG_SHIFT);
+  ctx->eflags = (1<<THREAD_CPU_INTFLAG_SHIFT);
 
 
   /* Pointe EIP sur la fonction trampoline */
@@ -313,6 +313,18 @@ PUBLIC u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* 
 }
 
 
+/*========================================================================
+ * Bascule de thread courant
+ *========================================================================*/
+
+
+PUBLIC void thread_switch_to(struct thread* th)
+{
+  /* Affecte le thread courant */
+  cur_th = th;
+  return;
+}
+
 
 /*========================================================================
  * Post traitement de la sauvegarde du contexte
@@ -321,17 +333,19 @@ PUBLIC u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* 
 
 PUBLIC void thread_cpu_postsave(reg32_t ss, reg32_t* esp)
 {
+
+  
   /* Traitement si pas changement de privileges (Note: SS est sur 16bits) */
   if ((ss & 0xFF) == CONST_SS_SELECTOR)
     {
       /* Recupere les registres oublies */
-      cur_ctx->ret_addr = *(esp);
-      cur_ctx->error_code = *(esp+1);
-      cur_ctx->eip = *(esp+2);
-      cur_ctx->cs = *(esp+3);
-      cur_ctx->eflags = *(esp+4);
-      cur_ctx->esp = (reg32_t)(esp);
-      cur_ctx->ss = CONST_SS_SELECTOR;
+      cur_th->cpu.ret_addr = *(esp);
+      cur_th->cpu.error_code = *(esp+1);
+      cur_th->cpu.eip = *(esp+2);
+      cur_th->cpu.cs = *(esp+3);
+      cur_th->cpu.eflags = *(esp+4);
+      cur_th->cpu.esp = (reg32_t)(esp);
+      cur_th->cpu.ss = CONST_SS_SELECTOR;
 
     }
   

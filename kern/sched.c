@@ -246,8 +246,8 @@ PUBLIC void sched_schedule(u8_t flag)
       klib_bochs_print(new_th->name);
       klib_bochs_print(" (prio: %d)\n", new_th->sched.dynamic_prio);
 
-      /* Switch vers le nouveau contexte */
-      context_cpu_switch_to(new_th->ctx); 
+      /* Switch vers le nouveau thread */
+      thread_switch_to(new_th);
 
     }
 

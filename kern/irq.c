@@ -101,7 +101,7 @@ PUBLIC void irq_remove_flih(u8_t irq, struct int_node* node)
  * Execution des flih
  *========================================================================*/
 
-PUBLIC void irq_handle_flih(u8_t irq, struct context_cpu* ctx)
+PUBLIC void irq_handle_flih(u8_t irq, struct thread* th)
 {
   if (irq < IRQ_VECTORS)
     {
@@ -114,7 +114,7 @@ PUBLIC void irq_handle_flih(u8_t irq, struct context_cpu* ctx)
 	   do
 	     {
 	       /* Execute le flih */
-	       node->flih(ctx);
+	       node->flih(th);
 	       /* Suite du parcours */
 	       node = LLIST_NEXT(irq_flih[irq],node);
 

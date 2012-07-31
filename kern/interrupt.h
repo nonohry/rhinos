@@ -14,7 +14,7 @@
 
 #include <types.h>
 #include "const.h"
-#include "context_cpu.h"
+#include "thread.h"
 
 
 /*========================================================================
@@ -68,7 +68,7 @@ EXTERN void excep_18(void);
 /* Structure int_node */
 PUBLIC struct int_node
 {
-  void (*flih)(struct context_cpu* ctx);      /* First Level Interrupt Handler */
+  void (*flih)(struct thread* th);      /* First Level Interrupt Handler */
   struct int_node* prev;   /* Noeud precedent */
   struct int_node* next;   /* Noeud suivant */
 };

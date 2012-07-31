@@ -84,9 +84,9 @@ extern	syscall_handle			; Gestion des appels systemes en C
 	;; Offset dans struct context_cpu
 	;;
 
-%assign		CONTEXT_RET_OFFSET		40
-%assign		CONTEXT_CS_OFFSET		12
-%assign		CONTEXT_ESP_OFFSET		20
+%assign		THREAD_RET_OFFSET		40
+%assign		THREAD_CS_OFFSET		12
+%assign		THREAD_ESP_OFFSET		20
 	
 	;;
 	;; Taille de la pile d interruption
@@ -131,7 +131,7 @@ extern	syscall_handle			; Gestion des appels systemes en C
 %macro	hwint_generic0	1
 	push	FAKE_ERROR	; Faux erreur code
    	call	save_ctx	; Sauvegarde des registres
-	push	dword [cur_ctx]	; Empile le contexte courant
+	push	dword [cur_th]	; Empile le contexte courant
 	push	%1		; Empile l'IRQ
  	call	irq_handle_flih	; Appel les handles C
 	add	esp,8		; Depile l'IRQ
@@ -147,7 +147,7 @@ extern	syscall_handle			; Gestion des appels systemes en C
 %macro	hwint_generic1	1
 	push	FAKE_ERROR	; Faux erreur code	
 	call	save_ctx	; Sauvegarde des registres
-	push	dword [cur_ctx]	; Empile le contexte courant
+	push	dword [cur_th]	; Empile le contexte courant
 	push	%1		; Empile l'IRQ
 	call	irq_handle_flih	; Appel les handles C
 	add	esp,8		; Depile l'IRQ
@@ -234,8 +234,8 @@ save_ctx:
 	cld		        ; Positionne le sens d empilement
 	
 	mov dword [save_esp],esp	; Sauvegarde ESP
-	mov esp, [cur_ctx] 		; Placement de ESP sur le contexte courant
-	add esp,CONTEXT_RET_OFFSET	; Placement a ret_addr
+	mov esp, [cur_th] 		; Placement de ESP sur le contexte courant
+	add esp,THREAD_RET_OFFSET	; Placement a ret_addr
 
 	pushad			; Sauve les registres generaux 32bits
 	o16 push	ds	; Sauve les registres de segments (empile en 16bits)
@@ -270,16 +270,16 @@ save_ctx:
 
 	
 restore_ctx:	
-	mov 	esp, [cur_ctx]
+	mov 	esp, [cur_th]
 	o16 pop gs		; Restaure les registres
 	o16 pop fs		; sauves par save_ctx
 	o16 pop	es		; en 16bits
 	o16 pop	ds
 	popad		    	; Restaure les registre generaux
 	
-	cmp 	dword [esp+CONTEXT_CS_OFFSET], CS_SELECTOR 	; Teste si le contexte est un contexte noyau
+	cmp 	dword [esp+THREAD_CS_OFFSET], CS_SELECTOR 	; Teste si le contexte est un contexte noyau
 	jne 	restore_ctx_next	    			; Saute a la suite si ce n'est pas le cas
-	mov 	esp, dword [esp+CONTEXT_ESP_OFFSET]	    	; Retourne sur la pile interrompue (qui contient les bonnes infos pour iret) sinon
+	mov 	esp, dword [esp+THREAD_ESP_OFFSET]	    	; Retourne sur la pile interrompue (qui contient les bonnes infos pour iret) sinon
 
 restore_ctx_next:
 	add 	esp,4		; Depile l adresse de retour de save_ctx
@@ -384,7 +384,7 @@ excep_18:
 excep_next:
 	pop	dword [excep_num] 	; Recupere le vecteur
 	call	save_ctx		; Sauve le contexte
-	push	dword [cur_ctx]		; Empile le contexte courant	
+	push	dword [cur_th]		; Empile le contexte courant	
 	push	dword [excep_num]	; Argument 1 de excep_handle
 	call	excep_handle		; Gestion de l exception en C
 	add	esp,8			; Depile les arguments

@@ -41,15 +41,15 @@ clean:
 # DO NOT DELETE
 
 start.o: klib.h ../include/types.h const.h tables.h seg.h irq.h interrupt.h
-start.o: context_cpu.h start.h
+start.o: thread.h ../include/ipc.h context_cpu.h start.h
 seg.o: ../include/types.h const.h seg.h
-tables.o: ../include/types.h const.h klib.h pic.h seg.h interrupt.h
-tables.o: context_cpu.h tables.h irq.h
+tables.o: ../include/types.h const.h klib.h pic.h seg.h interrupt.h thread.h
+tables.o: ../include/ipc.h context_cpu.h tables.h irq.h
 pic.o: ../include/types.h const.h klib.h pic.h
-pit.o: ../include/types.h const.h klib.h interrupt.h context_cpu.h irq.h
-pit.o: sched.h thread.h ../include/ipc.h pit.h
+pit.o: ../include/types.h const.h klib.h interrupt.h thread.h
+pit.o: ../include/ipc.h context_cpu.h irq.h sched.h pit.h
 irq.o: ../include/types.h const.h ../include/llist.h klib.h interrupt.h
-irq.o: context_cpu.h pic.h irq.h
+irq.o: thread.h ../include/ipc.h context_cpu.h pic.h irq.h
 exceptions.o: ../include/types.h const.h klib.h exceptions.h context_cpu.h
 physmem.o: ../include/types.h const.h ../include/llist.h klib.h start.h
 physmem.o: physmem.h virtmem_slab.h virtmem_buddy.h

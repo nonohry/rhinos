@@ -31,7 +31,7 @@ PUBLIC void irq_enable(u8_t irq);
 PUBLIC void irq_disable(u8_t irq);
 PUBLIC void irq_add_flih(u8_t irq, struct int_node* node);
 PUBLIC void irq_remove_flih(u8_t irq, struct int_node* node);
-PUBLIC void irq_handle_flih(u8_t irq, struct context_cpu* ctx);
+PUBLIC void irq_handle_flih(u8_t irq, struct thread* th);
 
 #endif
 
