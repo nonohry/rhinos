@@ -281,8 +281,6 @@ PRIVATE void sched_enqueue_staircase(struct thread* th)
       /* Decremente la priorite dynamique */
       if (th->sched.dynamic_prio > 0)
 	{
-	  klib_bochs_print("PWET %d", th->sched.dynamic_prio);
-	  klib_bochs_print(th->name);
 	  th->sched.dynamic_prio--;
 	  /* Reaffecte un quantum */
 	  th->sched.dynamic_quantum=th->sched.static_quantum;
@@ -296,8 +294,6 @@ PRIVATE void sched_enqueue_staircase(struct thread* th)
 	    {
 	      /* Remet la priorite de tete a l originale en cas de fin de cycle */
 	      th->sched.head_prio = th->sched.static_prio;
-	      klib_bochs_print("PROUT ");
-	      klib_bochs_print(th->name);
 	    }
 
 	  /* Ajuste le priorite dynamique sur la priorite de tete */

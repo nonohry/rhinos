@@ -33,21 +33,26 @@ void toto(char c)
   t[1]=0;
 
   m.len = 2;
+  m.code = 1;
 
-  while(k)
+  while(k<11)
     {
       i=0;
-      m.code = k;
+ 
+      m.arg1 = k;
+      m.arg2 = k;
+      klib_bochs_print("toto - Sending %d + %d\n",m.arg1,m.arg2);
       ipc_send(3,&m);
-      //klib_bochs_print(t);
+      ipc_receive(3,&m);
+      klib_bochs_print("toto - Receiving : %d\n",m.res);
+
       while(i < (1<<9))
 	{
 	  i++;
 	}
       k++;
-      klib_bochs_print(   "Incrementing m.code\n");
     }
-
+  klib_bochs_print(" [Quit toto....]\n");
   return;
 }
 
@@ -62,11 +67,23 @@ void titi(char c)
   while(1)
     {
       u32_t i=0;
-      //klib_bochs_print(t);
       ipc_receive(IPC_ANY,&m);
-      klib_bochs_print("DATA RECEIVED from %d =>   Message len: %d code :%d\n",m.from,m.len,m.code);
 
+      switch(m.code)
+	{     
+	case 1:
+	  m.res = m.arg1 + m.arg2;
+	  break;
+	case 2:
+	  m.res = m.arg1 * m.arg2;
+	  break;
+	default:
+	  m.res = 0;
+	}
+      
+      //klib_bochs_print("Received operation code %d with %d and %d from %d. Result: %d\n",m.code,m.arg1,m.arg2,m.from,m.res);
       ipc_notify(m.from);
+      ipc_send(m.from,&m);
 
       while(i < (1<<9))
 	{
@@ -81,7 +98,7 @@ void titi(char c)
 void tata(char c)
 {
   char t[2];
-  int j=1048;
+  int j=13;
   struct ipc_message m;
   u32_t i;
 
@@ -89,20 +106,25 @@ void tata(char c)
   t[1]=0;
 
   m.len = 2;
-  m.code = 67;
+  m.code = 2;
 
   while(j)
     {
       i=0;
-      ipc_send(3, &m);
-      //klib_bochs_print(t);
+      m.arg1 = j;
+      m.arg2 = j;
+      klib_bochs_print("tata - Sending %d * %d\n",m.arg1,m.arg2);
+      ipc_send(3,&m);
+      ipc_receive(3,&m);
+      klib_bochs_print("tata - Receiving : %d\n",m.res);
+      
       while(i < (1<<9))
 	{
 	  i++;
 	}
-      //j--;
+      j--;
     }
-  klib_bochs_print(" [Quit....] ");
+  klib_bochs_print(" [Quit tata....]\n");
   return;
 }
 

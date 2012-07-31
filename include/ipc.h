@@ -30,6 +30,9 @@ PUBLIC struct ipc_message
   s32_t from;
   u32_t len;
   u32_t code;
+  u16_t arg1;
+  u16_t arg2;
+  u32_t res;
 } __attribute ((packed))__ ;
 
 
