@@ -22,52 +22,35 @@
 #include "pit.h"
 #include <ipc.h>
 
-void Add(char c)
+void Add(u16_t max)
 {
-  char t[2];
   struct ipc_message m;
-  u32_t k=1;
-  u32_t i;
- 
-  t[0]=c;
-  t[1]=0;
+  u32_t k=0;
 
   m.len = 2;
   m.code = 1;
 
-  while(k<11)
+  while(k<max)
     {
-      i=0;
- 
       m.arg1 = k;
       m.arg2 = k;
       klib_bochs_print("Add - Sending %d + %d\n",m.arg1,m.arg2);
       ipc_send(3,&m);
       ipc_receive(3,&m);
       klib_bochs_print("Add - Receiving : %d\n",m.res);
-
-      while(i < (1<<9))
-	{
-	  i++;
-	}
       k++;
     }
   klib_bochs_print(" [Quit Add....]\n");
   return;
 }
 
-void Calc(char c)
+void Calc(u8_t who)
 {
-  char t[2];
   struct ipc_message m;
-
-  t[0]=c;
-  t[1]=0;
 
   while(1)
     {
-      u32_t i=0;
-      ipc_receive(IPC_ANY,&m);
+      ipc_receive(who,&m);
 
       switch(m.code)
 	{     
@@ -81,47 +64,32 @@ void Calc(char c)
 	  m.res = 0;
 	}
       
-      //klib_bochs_print("Received operation code %d with %d and %d from %d. Result: %d\n",m.code,m.arg1,m.arg2,m.from,m.res);
       ipc_notify(m.from);
       ipc_send(m.from,&m);
 
-      while(i < (1<<9))
-	{
-	  i++;
-	}
     }
 
   return;
 }
 
 
-void Mult(char c)
+void Mult(u8_t max)
 {
-  char t[2];
-  int j=13;
+  int j;
   struct ipc_message m;
-  u32_t i;
-
-  t[0]=c;
-  t[1]=0;
 
   m.len = 2;
   m.code = 2;
+  j=max;
 
   while(j)
     {
-      i=0;
       m.arg1 = j;
       m.arg2 = j;
       klib_bochs_print("Mult - Sending %d * %d\n",m.arg1,m.arg2);
       ipc_send(3,&m);
       ipc_receive(3,&m);
       klib_bochs_print("Mult - Receiving : %d\n",m.res);
-      
-      while(i < (1<<9))
-	{
-	  i++;
-	}
       j--;
     }
   klib_bochs_print(" [Quit Mult....]\n");
@@ -190,9 +158,9 @@ PUBLIC int main()
   struct thread* ta;
 
 
-  to = thread_create("Add_thread",THREAD_ID_DEFAULT,(virtaddr_t)Add,(void*)'1',THREAD_STACK_SIZE,THREAD_NICE_DEFAULT-5,THREAD_QUANTUM_DEFAULT);
-  ti = thread_create("Calc_thread",THREAD_ID_DEFAULT,(virtaddr_t)Calc,(void*)'2',THREAD_STACK_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
-  ta = thread_create("Mult_thread",THREAD_ID_DEFAULT,(virtaddr_t)Mult,(void*)'3',THREAD_STACK_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
+  to = thread_create("Add_thread",THREAD_ID_DEFAULT,(virtaddr_t)Add,(void*)12,THREAD_STACK_SIZE,THREAD_NICE_DEFAULT-5,THREAD_QUANTUM_DEFAULT);
+  ti = thread_create("Calc_thread",THREAD_ID_DEFAULT,(virtaddr_t)Calc,(void*)IPC_ANY,THREAD_STACK_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
+  ta = thread_create("Mult_thread",THREAD_ID_DEFAULT,(virtaddr_t)Mult,(void*)15,THREAD_STACK_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
 
   /* Simule un ordonnancement */
   sched_dequeue(SCHED_READY_QUEUE,ta);
