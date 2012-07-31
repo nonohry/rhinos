@@ -25,10 +25,12 @@
 
 
 PRIVATE struct vmem_cache* thread_cache;
-PRIVATE struct vmem_cache* threadID_cache;
+PRIVATE struct vmem_cache* id_info_cache;
 PRIVATE s32_t thread_IDs;
 
 PRIVATE void thread_exit(struct thread* th);
+PRIVATE void thread_cpu_trampoline(cpu_ctx_func_t start_func, void* start_arg, cpu_ctx_func_t exit_func, void* exit_arg);
+
 
 /*========================================================================
  * Initialisation
@@ -46,8 +48,8 @@ PUBLIC u8_t thread_init(void)
       return EXIT_FAILURE;
     }
  
-  threadID_cache = virtmem_cache_create("threadID_cache",sizeof(struct threadID),0,0,VIRT_CACHE_DEFAULT,NULL,NULL);
-  if (threadID_cache == NULL)
+  id_info_cache = virtmem_cache_create("id_info_cache",sizeof(struct id_info),0,0,VIRT_CACHE_DEFAULT,NULL,NULL);
+  if (id_info_cache == NULL)
     {
       return EXIT_FAILURE;
     }
@@ -57,6 +59,16 @@ PUBLIC u8_t thread_init(void)
     {
       LLIST_NULLIFY(thread_hashID[i]);
     }
+
+  /* Cree une coquille de thread pour le noyau */
+  kern_th = (struct thread*)virtmem_cache_alloc(thread_cache,VIRT_CACHE_DEFAULT);
+  if ( kern_th == NULL )
+    {
+      return EXIT_FAILURE;
+    }
+
+  /* la coquille noyau devient le thread courant */
+  cur_th = kern_th;
 
   /* Initialise le compteur d ID global */
   thread_IDs = 1;
@@ -73,7 +85,7 @@ PUBLIC u8_t thread_init(void)
 PUBLIC struct thread* thread_create(const char* name, s32_t id, virtaddr_t start_entry, void* start_arg, u32_t stack_size, s8_t nice_level, u8_t quantum)
 {
   struct thread* th;
-  struct threadID* thID;
+  struct id_info* thID;
   u8_t i;
 
   /* Controles */
@@ -92,7 +104,7 @@ PUBLIC struct thread* thread_create(const char* name, s32_t id, virtaddr_t start
       return NULL;
     }
  
-  thID = (struct threadID*)virtmem_cache_alloc(threadID_cache,VIRT_CACHE_DEFAULT);
+  thID = (struct id_info*)virtmem_cache_alloc(id_info_cache,VIRT_CACHE_DEFAULT);
   if (thID == NULL)
     {
       goto err00;
@@ -114,7 +126,14 @@ PUBLIC struct thread* thread_create(const char* name, s32_t id, virtaddr_t start
     {
       goto err02;
     }
-  
+
+
+  if (thread_cpu_init((struct cpu_info*)th,start_entry,start_arg,(virtaddr_t)thread_exit,(void*)th,th->stack_base,stack_size) != EXIT_SUCCESS)
+    {
+      goto err02;
+    }
+
+
   /* Copie du nom */
   i=0;
   while( (name[i]!=0)&&(i<THREAD_NAMELEN-1) )
@@ -176,8 +195,8 @@ PUBLIC struct thread* thread_create(const char* name, s32_t id, virtaddr_t start
   virt_free((void*)th->stack_base);
 
  err01:
-  /* Libere le threadID */
-  virtmem_cache_free(threadID_cache,thID);
+  /* Libere le id_info */
+  virtmem_cache_free(id_info_cache,thID);
 
  err00:
   /* Libere le thread */
@@ -197,7 +216,7 @@ PUBLIC struct thread* thread_create(const char* name, s32_t id, virtaddr_t start
 PUBLIC u8_t thread_destroy(struct thread* th)
 {
   u16_t i;
-  struct threadID* thID;
+  struct id_info* thID;
 
   /* Controle */
   if ( th == NULL )
@@ -205,7 +224,7 @@ PUBLIC u8_t thread_destroy(struct thread* th)
       return EXIT_FAILURE;
     }
  
-  /* Libere le threadID correspondant */
+  /* Libere le id_info correspondant */
   i=THREAD_HASHID_FUNC(th->id->id);
   if (!LLIST_ISNULL(thread_hashID[i]))
     {
@@ -215,7 +234,7 @@ PUBLIC u8_t thread_destroy(struct thread* th)
 	  if (thID->thread == th)
 	    {
 	      LLIST_REMOVE(thread_hashID[i],thID);
-	      virtmem_cache_free(threadID_cache,thID);
+	      virtmem_cache_free(id_info_cache,thID);
 	      break;
 	    }
 	  thID = LLIST_NEXT(thread_hashID[i],thID);
@@ -230,16 +249,121 @@ PUBLIC u8_t thread_destroy(struct thread* th)
 }
 
 
+/*========================================================================
+ * Initialisation du contexte cpu
+ *========================================================================*/
+
+
+PUBLIC u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* start_arg, virtaddr_t exit_entry, void* exit_arg, virtaddr_t stack_base, u32_t stack_size)
+{
+  
+  virtaddr_t* esp;
+  
+  /* Petite verification */
+  if ( (start_entry == 0)
+       || (exit_entry == 0)
+       || (stack_base == 0)
+       || (stack_size < CTX_CPU_MIN_STACK)
+       || (ctx == NULL) )
+    {
+      return EXIT_FAILURE;
+    }
+
+  /* Nettoie la pile */
+  klib_mem_set(0,stack_base,stack_size);
+  /* Recupere l'adresse de pile pour empiler les arguments */
+  esp = (virtaddr_t*)(stack_base+stack_size);
+ 
+  /* Installe les registres de segments */
+  ctx->cs = CONST_CS_SELECTOR;
+  ctx->ds = CONST_DS_SELECTOR;
+  ctx->es = CONST_ES_SELECTOR;
+  ctx->ss = CONST_SS_SELECTOR;
+
+  /* Positionne un faux code d erreur */
+  ctx->error_code = CTX_CPU_FEC;
+
+  /* Active les interruptions */
+  ctx->eflags = (1<<CTX_CPU_INTFLAG_SHIFT);
+
+
+  /* Pointe EIP sur la fonction trampoline */
+  ctx->eip = (reg32_t)thread_cpu_trampoline;
+
+  /* Empile les arguments */
+  *(--esp) = (virtaddr_t)exit_arg;
+  *(--esp) = exit_entry;
+  *(--esp) = (virtaddr_t)start_arg;
+  *(--esp) = start_entry;
+  /* Fausse adresse de retour pour la fonction de trampoline */
+  *(--esp) = 0;
+
+  /* Simule une pile interrompue (le switch passe par une interruption logicielle) */
+  *(--esp) = ctx->eflags;
+  *(--esp) = CONST_CS_SELECTOR;
+  *(--esp) = ctx->eip;
+  *(--esp) = ctx->error_code;
+  *(--esp) = 0;
+
+  /* Installe la pile */
+  ctx->esp = (reg32_t)esp;
+
+
+  return EXIT_SUCCESS;
+}
+
+
 
 /*========================================================================
- * Recherche d un thread via son threadID
+ * Post traitement de la sauvegarde du contexte
+ *========================================================================*/
+
+
+PUBLIC void thread_cpu_postsave(reg32_t ss, reg32_t* esp)
+{
+  /* Traitement si pas changement de privileges (Note: SS est sur 16bits) */
+  if ((ss & 0xFF) == CONST_SS_SELECTOR)
+    {
+      /* Recupere les registres oublies */
+      cur_ctx->ret_addr = *(esp);
+      cur_ctx->error_code = *(esp+1);
+      cur_ctx->eip = *(esp+2);
+      cur_ctx->cs = *(esp+3);
+      cur_ctx->eflags = *(esp+4);
+      cur_ctx->esp = (reg32_t)(esp);
+      cur_ctx->ss = CONST_SS_SELECTOR;
+
+    }
+  
+  return;
+}
+
+
+/*========================================================================
+ * Trampoline de lancement
+ *========================================================================*/
+
+
+PRIVATE void thread_cpu_trampoline(cpu_ctx_func_t start_func, void* start_arg, cpu_ctx_func_t exit_func, void* exit_arg)
+{
+  /* Trampline ! */
+  start_func(start_arg);
+  exit_func(exit_arg);
+
+  /* Pas de retour normalement*/
+  return;
+}
+
+
+/*========================================================================
+ * Recherche d un thread via son id_info
  *========================================================================*/
 
 
 PUBLIC struct thread* thread_id2thread(s32_t n)
 {
   u16_t i;
-  struct threadID* thID;
+  struct id_info* thID;
 
   /* Controle */
   if ( n == 0 )

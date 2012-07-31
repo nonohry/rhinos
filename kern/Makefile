@@ -69,7 +69,7 @@ sched.o: ../include/ipc.h context_cpu.h sched.h
 syscall.o: ../include/types.h ../include/llist.h ../include/ipc.h const.h
 syscall.o: klib.h thread.h context_cpu.h sched.h physmem.h virtmem_slab.h
 syscall.o: virtmem_buddy.h virtmem.h paging.h syscall.h
-main.o: ../include/types.h const.h ../include/llist.h start.h klib.h
+main.o: ../include/types.h ../include/llist.h const.h start.h klib.h
 main.o: physmem.h virtmem_slab.h virtmem_buddy.h paging.h virtmem.h
 main.o: context_cpu.h thread.h ../include/ipc.h sched.h irq.h interrupt.h
 main.o: pit.h

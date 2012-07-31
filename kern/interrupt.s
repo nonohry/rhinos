@@ -47,7 +47,9 @@ global	excep_18
 extern	irq_handle_flih			; Handlers pour les IRQ en C
 extern	excep_handle			; Handlers pour les exceptions en C
 extern	cur_ctx				; Contexte courant
-extern	context_cpu_postsave		; Pretraitement de la sauvegarde de context en C
+extern	cur_th				; Thread courant	
+extern	context_cpu_postsave		; Posttraitement de la sauvegarde de context en C
+extern	thread_cpu_postsave		; Posttraitement de la sauvegarde de context en C	
 extern	syscall_handle			; Gestion des appels systemes en C
 	
 
@@ -252,6 +254,12 @@ save_ctx:
 	call	context_cpu_postsave 	; Passe par le C pour finaliser le contexte
 	add	esp,8			; Depile les arguments
 
+	push	dword [save_esp]	; Empile le pointeur de pile
+	push	ss			; Empile le stack segment
+	call	thread_cpu_postsave 	; Passe par le C pour finaliser le contexte
+	add	esp,8			; Depile les arguments
+
+	
 	mov	eax,dword [save_esp] 	; La pile sauvee pointe sur l adresse de retour
 	jmp	[eax]		     	; Saute a l adresse de retour
 

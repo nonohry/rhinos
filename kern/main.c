@@ -152,6 +152,7 @@ PUBLIC int main()
     }
   klib_bochs_print("Kernel Threads initialized\n");
 
+
   /* Initialisation de l ordonannceur */
   if ( sched_init() != EXIT_SUCCESS )
     {

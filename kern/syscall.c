@@ -76,7 +76,7 @@ PUBLIC u8_t syscall_handle()
     }
   else
     {
-      /* Recherche le thread via son threadID */
+      /* Recherche le thread via son id_info */
       target_th = thread_id2thread(arg_id);
       if ( target_th == NULL )
 	{
