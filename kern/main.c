@@ -22,7 +22,7 @@
 #include "pit.h"
 #include <ipc.h>
 
-void toto(char c)
+void Add(char c)
 {
   char t[2];
   struct ipc_message m;
@@ -41,10 +41,10 @@ void toto(char c)
  
       m.arg1 = k;
       m.arg2 = k;
-      klib_bochs_print("toto - Sending %d + %d\n",m.arg1,m.arg2);
+      klib_bochs_print("Add - Sending %d + %d\n",m.arg1,m.arg2);
       ipc_send(3,&m);
       ipc_receive(3,&m);
-      klib_bochs_print("toto - Receiving : %d\n",m.res);
+      klib_bochs_print("Add - Receiving : %d\n",m.res);
 
       while(i < (1<<9))
 	{
@@ -52,11 +52,11 @@ void toto(char c)
 	}
       k++;
     }
-  klib_bochs_print(" [Quit toto....]\n");
+  klib_bochs_print(" [Quit Add....]\n");
   return;
 }
 
-void titi(char c)
+void Calc(char c)
 {
   char t[2];
   struct ipc_message m;
@@ -95,7 +95,7 @@ void titi(char c)
 }
 
 
-void tata(char c)
+void Mult(char c)
 {
   char t[2];
   int j=13;
@@ -113,10 +113,10 @@ void tata(char c)
       i=0;
       m.arg1 = j;
       m.arg2 = j;
-      klib_bochs_print("tata - Sending %d * %d\n",m.arg1,m.arg2);
+      klib_bochs_print("Mult - Sending %d * %d\n",m.arg1,m.arg2);
       ipc_send(3,&m);
       ipc_receive(3,&m);
-      klib_bochs_print("tata - Receiving : %d\n",m.res);
+      klib_bochs_print("Mult - Receiving : %d\n",m.res);
       
       while(i < (1<<9))
 	{
@@ -124,7 +124,7 @@ void tata(char c)
 	}
       j--;
     }
-  klib_bochs_print(" [Quit tata....]\n");
+  klib_bochs_print(" [Quit Mult....]\n");
   return;
 }
 
@@ -190,9 +190,9 @@ PUBLIC int main()
   struct thread* ta;
 
 
-  to = thread_create("Toto_thread",THREAD_ID_DEFAULT,(virtaddr_t)toto,(void*)'1',THREAD_STACK_SIZE,THREAD_NICE_DEFAULT-5,THREAD_QUANTUM_DEFAULT);
-  ti = thread_create("Titi_thread",THREAD_ID_DEFAULT,(virtaddr_t)titi,(void*)'2',THREAD_STACK_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
-  ta = thread_create("Tata_thread",THREAD_ID_DEFAULT,(virtaddr_t)tata,(void*)'3',THREAD_STACK_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
+  to = thread_create("Add_thread",THREAD_ID_DEFAULT,(virtaddr_t)Add,(void*)'1',THREAD_STACK_SIZE,THREAD_NICE_DEFAULT-5,THREAD_QUANTUM_DEFAULT);
+  ti = thread_create("Calc_thread",THREAD_ID_DEFAULT,(virtaddr_t)Calc,(void*)'2',THREAD_STACK_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
+  ta = thread_create("Mult_thread",THREAD_ID_DEFAULT,(virtaddr_t)Mult,(void*)'3',THREAD_STACK_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
 
   /* Simule un ordonnancement */
   sched_dequeue(SCHED_READY_QUEUE,ta);
