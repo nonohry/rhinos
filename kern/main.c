@@ -16,7 +16,6 @@
 #include "physmem.h"
 #include "paging.h"
 #include "virtmem.h"
-#include "context_cpu.h"
 #include "thread.h"
 #include "sched.h"
 #include "irq.h"
@@ -137,13 +136,6 @@ PUBLIC int main()
       goto err00;
     }
   klib_bochs_print("Virtual Memory Manager initialized\n");
-
-  /* Initialisation des contextes */
-  if ( context_cpu_init() != EXIT_SUCCESS )
-    {
-      goto err00;
-    }
-  klib_bochs_print("Kernel Contexts initialized\n");
 
   /* Initialisation des thread */
   if ( thread_init() != EXIT_SUCCESS )

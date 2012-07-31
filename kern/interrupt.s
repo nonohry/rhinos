@@ -48,7 +48,6 @@ extern	irq_handle_flih			; Handlers pour les IRQ en C
 extern	excep_handle			; Handlers pour les exceptions en C
 extern	cur_ctx				; Contexte courant
 extern	cur_th				; Thread courant	
-extern	context_cpu_postsave		; Posttraitement de la sauvegarde de context en C
 extern	thread_cpu_postsave		; Posttraitement de la sauvegarde de context en C	
 extern	syscall_handle			; Gestion des appels systemes en C
 	
@@ -81,7 +80,7 @@ extern	syscall_handle			; Gestion des appels systemes en C
 %assign		FAKE_ERROR		0xFEC
 	
 	;;
-	;; Offset dans struct context_cpu
+	;; Offset dans struct cpu_info
 	;;
 
 %assign		THREAD_RET_OFFSET		40
@@ -131,7 +130,7 @@ extern	syscall_handle			; Gestion des appels systemes en C
 %macro	hwint_generic0	1
 	push	FAKE_ERROR	; Faux erreur code
    	call	save_ctx	; Sauvegarde des registres
-	push	dword [cur_th]	; Empile le contexte courant
+	push	dword [cur_th]	; Empile le thread courant
 	push	%1		; Empile l'IRQ
  	call	irq_handle_flih	; Appel les handles C
 	add	esp,8		; Depile l'IRQ
@@ -147,7 +146,7 @@ extern	syscall_handle			; Gestion des appels systemes en C
 %macro	hwint_generic1	1
 	push	FAKE_ERROR	; Faux erreur code	
 	call	save_ctx	; Sauvegarde des registres
-	push	dword [cur_th]	; Empile le contexte courant
+	push	dword [cur_th]	; Empile le thread courant
 	push	%1		; Empile l'IRQ
 	call	irq_handle_flih	; Appel les handles C
 	add	esp,8		; Depile l'IRQ
@@ -234,7 +233,7 @@ save_ctx:
 	cld		        ; Positionne le sens d empilement
 	
 	mov dword [save_esp],esp	; Sauvegarde ESP
-	mov esp, [cur_th] 		; Placement de ESP sur le contexte courant
+	mov esp, [cur_th] 		; Placement de ESP sur le thread courant
 	add esp,THREAD_RET_OFFSET	; Placement a ret_addr
 
 	pushad			; Sauve les registres generaux 32bits
@@ -248,11 +247,6 @@ save_ctx:
 	mov	ds,ax
 	mov	ax,ES_SELECTOR
 	mov	es,ax			; note: FS & GS ne sont pas utilises par le noyau
-
-	push	dword [save_esp]	; Empile le pointeur de pile
-	push	ss			; Empile le stack segment
-	call	context_cpu_postsave 	; Passe par le C pour finaliser le contexte
-	add	esp,8			; Depile les arguments
 
 	push	dword [save_esp]	; Empile le pointeur de pile
 	push	ss			; Empile le stack segment

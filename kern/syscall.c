@@ -54,14 +54,14 @@ PUBLIC u8_t syscall_handle()
     }
 
   /* Le numero d appel dans les registres */
-  syscall_num = (u32_t)(cur_th->ctx->edx);
+  syscall_num = (u32_t)(cur_th->cpu.edx);
 
   /* Les arguments dans les registres */
-  arg_id = (s32_t)(cur_th->ctx->ebx);
+  arg_id = (s32_t)(cur_th->cpu.ebx);
 
   if (syscall_num != SYSCALL_NOTIFY)
     {
-      arg_message = (struct ipc_message*)(cur_th->ctx->ecx);
+      arg_message = (struct ipc_message*)(cur_th->cpu.ecx);
        /* Indique le createur du message */
       arg_message->from = cur_th->id->id;
     }

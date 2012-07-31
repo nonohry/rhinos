@@ -16,7 +16,6 @@
 #include <types.h>
 #include <ipc.h>
 #include "const.h"
-#include "context_cpu.h"
 
 
 /*========================================================================
@@ -128,7 +127,6 @@ PUBLIC struct thread
 {
   struct cpu_info cpu;
   char name[THREAD_NAMELEN];
-  struct context_cpu* ctx;
   struct id_info* id;
   virtaddr_t stack_base;
   u32_t stack_size;

@@ -14,7 +14,6 @@
 #include "klib.h"
 #include "virtmem_slab.h"
 #include "virtmem.h"
-#include "context_cpu.h"
 #include "sched.h"
 #include "thread.h"
 
@@ -120,14 +119,7 @@ PUBLIC struct thread* thread_create(const char* name, s32_t id, virtaddr_t start
   /* Definit la taille de la pile */
   th->stack_size = stack_size;
 
-  /* Alloue le contexte */
-  th->ctx = context_cpu_create(start_entry,start_arg,(virtaddr_t)thread_exit,(void*)th,th->stack_base,stack_size);
-  if (th->ctx == NULL)
-    {
-      goto err02;
-    }
-
-
+  /* Initialise le contexte */
   if (thread_cpu_init((struct cpu_info*)th,start_entry,start_arg,(virtaddr_t)thread_exit,(void*)th,th->stack_base,stack_size) != EXIT_SUCCESS)
     {
       goto err02;
@@ -243,7 +235,6 @@ PUBLIC u8_t thread_destroy(struct thread* th)
 
   /* Libere simplement les parties allouees */
   return virt_free((void*)th->stack_base) 
-    && context_cpu_destroy(th->ctx) 
     &&  virtmem_cache_free(thread_cache,th);
 
 }
