@@ -38,14 +38,14 @@ void toto(char c)
     {
       i=0;
       m.code = k;
-      //ipc_send(3,&m);
-      klib_bochs_print(t);
+      ipc_send(3,&m);
+      //klib_bochs_print(t);
       while(i < (1<<9))
 	{
 	  i++;
 	}
       k++;
-      //klib_bochs_print(   "Incrementing m.code\n");
+      klib_bochs_print(   "Incrementing m.code\n");
     }
 
   return;
@@ -62,9 +62,9 @@ void titi(char c)
   while(1)
     {
       u32_t i=0;
-      klib_bochs_print(t);
-      //ipc_receive(IPC_ANY,&m);
-      //klib_bochs_print("DATA RECEIVED from %d =>   Message len: %d code :%d\n",m.from,m.len,m.code);
+      //klib_bochs_print(t);
+      ipc_receive(IPC_ANY,&m);
+      klib_bochs_print("DATA RECEIVED from %d =>   Message len: %d code :%d\n",m.from,m.len,m.code);
 
       ipc_notify(m.from);
 
@@ -93,9 +93,9 @@ void tata(char c)
 
   while(j)
     {
-       i=0;
-       //ipc_send(3, &m);
-      klib_bochs_print(t);
+      i=0;
+      ipc_send(3, &m);
+      //klib_bochs_print(t);
       while(i < (1<<9))
 	{
 	  i++;
