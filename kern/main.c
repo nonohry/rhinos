@@ -45,13 +45,13 @@ void Add(u16_t max)
     {
       cm.op_1 = k;
       cm.op_2 = k;
-      klib_mem_copy((physaddr_t)&cm,(physaddr_t)m.data,m.len);
+      klib_mem_copy((addr_t)&cm,(addr_t)m.data,m.len);
       klib_bochs_print("Add - Sending %d + %d\n",cm.op_1,cm.op_2);
       if (ipc_sendrec(3,&m)!=IPC_SUCCESS)
 	{
 	  break;
 	}
-      klib_mem_copy((physaddr_t)m.data,(physaddr_t)&cm,m.len);
+      klib_mem_copy((addr_t)m.data,(addr_t)&cm,m.len);
       klib_bochs_print("Add - Receiving : %d\n",cm.op_res);
       k++;
     }
@@ -66,7 +66,7 @@ void Calc(u8_t who)
 
   while(ipc_receive(who,&m)==IPC_SUCCESS)
     {
-      klib_mem_copy((physaddr_t)m.data,(physaddr_t)&cm,m.len);
+      klib_mem_copy((addr_t)m.data,(addr_t)&cm,m.len);
       switch(cm.op_code)
 	{     
 	case 1:
@@ -78,7 +78,7 @@ void Calc(u8_t who)
 	default:
 	  cm.op_res = 0;
 	}
-      klib_mem_copy((physaddr_t)&cm,(physaddr_t)m.data,m.len);      
+      klib_mem_copy((addr_t)&cm,(addr_t)m.data,m.len);      
       ipc_notify(m.from);
       ipc_send(m.from,&m);
 
@@ -103,13 +103,13 @@ void Mult(u8_t max)
     {
       cm.op_1 = j;
       cm.op_2 = j;
-      klib_mem_copy((physaddr_t)&cm,(physaddr_t)m.data,m.len);
+      klib_mem_copy((addr_t)&cm,(addr_t)m.data,m.len);
       klib_bochs_print("Mult - Sending %d * %d\n",cm.op_1,cm.op_2);
       if (ipc_sendrec(3,&m)!=IPC_SUCCESS)
 	{
 	  break;
 	}
-      klib_mem_copy((physaddr_t)m.data,(physaddr_t)&cm,m.len);
+      klib_mem_copy((addr_t)m.data,(addr_t)&cm,m.len);
       klib_bochs_print("Mult - Receiving : %d\n",cm.op_res);
       j--;
     }

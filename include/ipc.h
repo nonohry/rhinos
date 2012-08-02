@@ -19,7 +19,7 @@
 #define IPC_FAILURE   1
 #define IPC_DEADLOCK  2
 
-#define IPC_DATA      246
+#define IPC_DATA_LEN  251
 
 
 /*========================================================================
@@ -30,8 +30,8 @@
 PUBLIC struct ipc_message
 {
   s32_t from;
-  u32_t len;
-  u8_t  data[IPC_DATA];
+  u8_t len;
+  u8_t  data[IPC_DATA_LEN];
 } __attribute ((packed))__ ;
 
 

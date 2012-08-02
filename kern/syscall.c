@@ -201,7 +201,7 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
       virt_message = virt_page + (th_receiver->ipc.receive_phys_message - phys_page);
       
       /* Copie le message */
-      klib_mem_copy((virtaddr_t)message, virt_message, sizeof(struct ipc_message));
+      klib_mem_copy((addr_t)message, virt_message, sizeof(struct ipc_message));
       
       /* Demap la page */
       paging_unmap(virt_page);
@@ -324,7 +324,7 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
       virt_message = virt_page + (th_available->ipc.send_phys_message - phys_page);
       
       /* Copie le message */
-      klib_mem_copy(virt_message, (virtaddr_t)message, sizeof(struct ipc_message));
+      klib_mem_copy(virt_message, (addr_t)message, sizeof(struct ipc_message));
       
       /* Demap la page */
       paging_unmap(virt_page);

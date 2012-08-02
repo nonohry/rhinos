@@ -20,8 +20,7 @@ global	ipc_sendrec
 IPC_SYSCALL_VECTOR	equ	50
 IPC_SEND_NUM		equ	1
 IPC_RECEIVE_NUM		equ	2
-IPC_NOTIFY_NUM		equ	3	
-IPC_SENDREC_NUM		equ 	4
+IPC_NOTIFY_NUM		equ	3
 IPC_SUCCESS		equ	0
 	
 	

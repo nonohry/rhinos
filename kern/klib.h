@@ -13,8 +13,8 @@ EXTERN void klib_load_CR3(physaddr_t);
 EXTERN void klib_set_pg_cr0(void);
 EXTERN void klib_flush_tlb(void);
 EXTERN void klib_invlpg(virtaddr_t);
-EXTERN void klib_mem_set(u32_t, physaddr_t, u32_t);
-EXTERN void klib_mem_copy(physaddr_t, physaddr_t, u32_t);
+EXTERN void klib_mem_set(u32_t, addr_t, u32_t);
+EXTERN void klib_mem_copy(addr_t, addr_t, u32_t);
 EXTERN void klib_idle(void);
 
 #endif

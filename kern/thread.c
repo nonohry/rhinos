@@ -28,7 +28,7 @@ PRIVATE struct vmem_cache* id_info_cache;
 PRIVATE s32_t thread_IDs;
 
 PRIVATE void thread_exit(struct thread* th);
-PRIVATE void thread_cpu_trampoline(cpu_ctx_func_t start_func, void* start_arg, cpu_ctx_func_t exit_func, void* exit_arg);
+PRIVATE void thread_cpu_trampoline(thread_cpu_func_t start_func, void* start_arg, thread_cpu_func_t exit_func, void* exit_arg);
 
 
 /*========================================================================
@@ -261,7 +261,7 @@ PUBLIC u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* 
     }
 
   /* Nettoie la pile */
-  klib_mem_set(0,stack_base,stack_size);
+  klib_mem_set(0,(addr_t)stack_base,stack_size);
   /* Recupere l'adresse de pile pour empiler les arguments */
   esp = (virtaddr_t*)(stack_base+stack_size);
  
@@ -353,7 +353,7 @@ PUBLIC void thread_cpu_postsave(reg32_t ss, reg32_t* esp)
  *========================================================================*/
 
 
-PRIVATE void thread_cpu_trampoline(cpu_ctx_func_t start_func, void* start_arg, cpu_ctx_func_t exit_func, void* exit_arg)
+PRIVATE void thread_cpu_trampoline(thread_cpu_func_t start_func, void* start_arg, thread_cpu_func_t exit_func, void* exit_arg)
 {
   /* Trampoline ! */
   start_func(start_arg);

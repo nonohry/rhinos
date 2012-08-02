@@ -28,7 +28,7 @@ PUBLIC u8_t paging_init(void)
     }
 
   /* Nullifie la page */
-  klib_mem_set(0,(u32_t)kern_PD,PAGING_ENTRIES*sizeof(struct pde));
+  klib_mem_set(0,(addr_t)kern_PD,PAGING_ENTRIES*sizeof(struct pde));
 
   /* Self Mapping */
   kern_PD[PAGING_SELFMAP].present = 1;
@@ -110,7 +110,7 @@ PUBLIC u8_t paging_map(virtaddr_t vaddr, physaddr_t paddr, u8_t flags)
       pd[pde].baseaddr = (((physaddr_t)table)>>PAGING_BASESHIFT);
 
       /* Nullifie le page table */
-      klib_mem_set(0,(flags&PAGING_IDENTITY?(u32_t)table:PAGING_GET_PT(pde)),PAGING_ENTRIES*sizeof(struct pte));
+      klib_mem_set(0,(flags&PAGING_IDENTITY?(addr_t)table:(addr_t)PAGING_GET_PT(pde)),PAGING_ENTRIES*sizeof(struct pte));
     }
 
   /* Ici, la table existe forcement */

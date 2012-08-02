@@ -39,10 +39,11 @@ typedef long long int s64_t;
 typedef unsigned int   physaddr_t;
 typedef unsigned int   lineaddr_t;
 typedef unsigned int   virtaddr_t;
+typedef unsigned int   addr_t;
 typedef unsigned int   reg32_t;
 typedef unsigned short reg16_t;
 
 /* Contexte */
-typedef void (*cpu_ctx_func_t)(void*);
+typedef void (*thread_cpu_func_t)(void*);
 
 #endif
