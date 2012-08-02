@@ -47,8 +47,10 @@ void Add(u16_t max)
       cm.op_2 = k;
       klib_mem_copy((physaddr_t)&cm,(physaddr_t)m.data,m.len);
       klib_bochs_print("Add - Sending %d + %d\n",cm.op_1,cm.op_2);
-      ipc_send(3,&m);
-      ipc_receive(3,&m);
+      ipc_sendrec(3,&m);
+      //ipc_send(3,&m);
+      //ipc_receive(3,&m);
+      //ipc_notify(3);
       klib_mem_copy((physaddr_t)m.data,(physaddr_t)&cm,m.len);
       klib_bochs_print("Add - Receiving : %d\n",cm.op_res);
       k++;
@@ -103,8 +105,7 @@ void Mult(u8_t max)
       cm.op_2 = j;
       klib_mem_copy((physaddr_t)&cm,(physaddr_t)m.data,m.len);
       klib_bochs_print("Mult - Sending %d * %d\n",cm.op_1,cm.op_2);
-      ipc_send(3,&m);
-      ipc_receive(3,&m);
+      ipc_sendrec(3,&m);
       klib_mem_copy((physaddr_t)m.data,(physaddr_t)&cm,m.len);
       klib_bochs_print("Mult - Receiving : %d\n",cm.op_res);
       j--;
@@ -170,18 +171,18 @@ PUBLIC int main()
 
   /* Tests threads */
 
-  struct thread* to;
-  struct thread* ti;
-  struct thread* ta;
+  struct thread* th_add;
+  struct thread* th_calc;
+  struct thread* th_mult;
 
 
-  to = thread_create("Add_thread",THREAD_ID_DEFAULT,(virtaddr_t)Add,(void*)12,THREAD_STACK_SIZE,THREAD_NICE_DEFAULT-5,THREAD_QUANTUM_DEFAULT);
-  ti = thread_create("Calc_thread",THREAD_ID_DEFAULT,(virtaddr_t)Calc,(void*)IPC_ANY,THREAD_STACK_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
-  ta = thread_create("Mult_thread",THREAD_ID_DEFAULT,(virtaddr_t)Mult,(void*)15,THREAD_STACK_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
+  th_add = thread_create("Add_thread",THREAD_ID_DEFAULT,(virtaddr_t)Add,(void*)12,THREAD_STACK_SIZE,THREAD_NICE_DEFAULT-5,THREAD_QUANTUM_DEFAULT);
+  th_calc = thread_create("Calc_thread",THREAD_ID_DEFAULT,(virtaddr_t)Calc,(void*)IPC_ANY,THREAD_STACK_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
+  th_mult = thread_create("Mult_thread",THREAD_ID_DEFAULT,(virtaddr_t)Mult,(void*)15,THREAD_STACK_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
 
   /* Simule un ordonnancement */
-  sched_dequeue(SCHED_READY_QUEUE,ta);
-  sched_enqueue(SCHED_RUNNING_QUEUE,ta);
+  sched_dequeue(SCHED_READY_QUEUE,th_calc);
+  sched_enqueue(SCHED_RUNNING_QUEUE,th_calc);
   
 
   /* Initialisation du gestionnaire des IRQ */

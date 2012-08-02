@@ -101,7 +101,19 @@ PUBLIC u8_t syscall_handle()
 	res = syscall_notify(cur_th, target_th);
 	break;
       }
-      
+    case SYSCALL_SENDREC:
+      {
+	res = IPC_FAILURE;
+	if (syscall_send(cur_th, target_th, arg_message) == IPC_SUCCESS)
+	  { 
+	    if (syscall_receive(cur_th, target_th, arg_message) == IPC_SUCCESS)
+	      {
+		res = syscall_notify(cur_th, target_th);
+	      }
+	  }
+	res = IPC_FAILURE;
+	break;
+      }
     default:
       {
 	res = IPC_FAILURE;
@@ -136,6 +148,7 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
   /* Si le destinataire envoie, alors on s'assure qu on ne boucle pas */
   if (th_receiver->ipc.state & SYSCALL_IPC_SENDING)
     {
+
       th_tmp = th_receiver->ipc.send_to;
       while( th_tmp->ipc.state & SYSCALL_IPC_SENDING )
 	{
@@ -350,8 +363,7 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
     {
       /* Pas de thread disponible : Bloque en attente de message */
       th_receiver->next_state = THREAD_BLOCKED;
-
-      /* Ordonnance  */
+       /* Ordonnance  */
       sched_schedule(SCHED_FROM_RECEIVE);
     }
 

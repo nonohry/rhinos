@@ -18,7 +18,7 @@
 #define SYSCALL_SEND        1
 #define SYSCALL_RECEIVE     2
 #define SYSCALL_NOTIFY      3
-
+#define SYSCALL_SENDREC     4
 
 #define SYSCALL_IPC_SENDING    1
 #define SYSCALL_IPC_RECEIVING  2

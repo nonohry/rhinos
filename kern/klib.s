@@ -305,7 +305,7 @@ klib_mem_copy:
 	;;========================================================================
 
 	
-klib_idle:	
+klib_idle:
 	hlt			; Repose le processeur
 	jmp	klib_idle
 	
