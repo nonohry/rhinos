@@ -39,9 +39,9 @@ PUBLIC struct ipc_message
  * Prototypes
  *========================================================================*/
 
-EXTERN void ipc_send(int to, struct ipc_message* msg);
-EXTERN void ipc_receive(int from, struct ipc_message* msg);
-EXTERN void ipc_notify(int to);
-EXTERN void ipc_sendrec(int to, struct ipc_message* msg);
+EXTERN u8_t ipc_send(int to, struct ipc_message* msg);
+EXTERN u8_t ipc_receive(int from, struct ipc_message* msg);
+EXTERN u8_t ipc_notify(int to);
+EXTERN u8_t ipc_sendrec(int to, struct ipc_message* msg);
 
 #endif

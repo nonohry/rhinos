@@ -47,10 +47,10 @@ void Add(u16_t max)
       cm.op_2 = k;
       klib_mem_copy((physaddr_t)&cm,(physaddr_t)m.data,m.len);
       klib_bochs_print("Add - Sending %d + %d\n",cm.op_1,cm.op_2);
-      ipc_sendrec(3,&m);
-      //ipc_send(3,&m);
-      //ipc_receive(3,&m);
-      //ipc_notify(3);
+      if (ipc_sendrec(3,&m)!=IPC_SUCCESS)
+	{
+	  break;
+	}
       klib_mem_copy((physaddr_t)m.data,(physaddr_t)&cm,m.len);
       klib_bochs_print("Add - Receiving : %d\n",cm.op_res);
       k++;
@@ -64,9 +64,8 @@ void Calc(u8_t who)
   struct ipc_message m;
   struct calc_msg cm;
 
-  while(1)
+  while(ipc_receive(who,&m)==IPC_SUCCESS)
     {
-      ipc_receive(who,&m);
       klib_mem_copy((physaddr_t)m.data,(physaddr_t)&cm,m.len);
       switch(cm.op_code)
 	{     
@@ -85,6 +84,7 @@ void Calc(u8_t who)
 
     }
 
+  klib_bochs_print(" [Quit Calc....]\n");
   return;
 }
 
@@ -105,7 +105,10 @@ void Mult(u8_t max)
       cm.op_2 = j;
       klib_mem_copy((physaddr_t)&cm,(physaddr_t)m.data,m.len);
       klib_bochs_print("Mult - Sending %d * %d\n",cm.op_1,cm.op_2);
-      ipc_sendrec(3,&m);
+      if (ipc_sendrec(3,&m)!=IPC_SUCCESS)
+	{
+	  break;
+	}
       klib_mem_copy((physaddr_t)m.data,(physaddr_t)&cm,m.len);
       klib_bochs_print("Mult - Receiving : %d\n",cm.op_res);
       j--;

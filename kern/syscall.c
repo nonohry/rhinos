@@ -37,7 +37,7 @@ PRIVATE u8_t syscall_notify(struct thread* th_from, struct thread* th_to);
  *========================================================================*/
 
 
-PUBLIC u8_t syscall_handle()
+PUBLIC void syscall_handle()
 {
   struct thread* cur_th;
   struct thread* target_th;
@@ -50,7 +50,8 @@ PUBLIC u8_t syscall_handle()
   cur_th = sched_get_running_thread();
   if (cur_th == NULL)
     {
-      return IPC_FAILURE;
+      res = IPC_FAILURE;
+      goto end;
     }
 
   /* Le numero d appel dans les registres */
@@ -77,7 +78,8 @@ PUBLIC u8_t syscall_handle()
       target_th = thread_id2thread(arg_id);
       if ( target_th == NULL )
 	{
-	  return IPC_FAILURE;
+	  res = IPC_FAILURE;
+	  goto end;
 	}
     }
 
@@ -101,19 +103,6 @@ PUBLIC u8_t syscall_handle()
 	res = syscall_notify(cur_th, target_th);
 	break;
       }
-    case SYSCALL_SENDREC:
-      {
-	res = IPC_FAILURE;
-	if (syscall_send(cur_th, target_th, arg_message) == IPC_SUCCESS)
-	  { 
-	    if (syscall_receive(cur_th, target_th, arg_message) == IPC_SUCCESS)
-	      {
-		res = syscall_notify(cur_th, target_th);
-	      }
-	  }
-	res = IPC_FAILURE;
-	break;
-      }
     default:
       {
 	res = IPC_FAILURE;
@@ -121,7 +110,11 @@ PUBLIC u8_t syscall_handle()
       }  
     }
 
-  return res;
+ end:
+  /* Ecrit le retour pour le thread appelant */
+  cur_th->cpu.eax=res;
+
+  return;
 }
 
 

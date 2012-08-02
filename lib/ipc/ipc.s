@@ -22,6 +22,7 @@ IPC_SEND_NUM		equ	1
 IPC_RECEIVE_NUM		equ	2
 IPC_NOTIFY_NUM		equ	3	
 IPC_SENDREC_NUM		equ 	4
+IPC_SUCCESS		equ	0
 	
 	
 	;;========================================================================
@@ -116,13 +117,18 @@ ipc_sendrec:
         push 	dword [ebp+8]   
 	call	ipc_send
 	add	esp,8
+	cmp 	eax,IPC_SUCCESS
+	jne	ipc_sendrec_end
 	push 	dword [ebp+12]  ; Appelle ipc_receive avec les arguments
         push 	dword [ebp+8]    
 	call	ipc_receive
 	add	esp,8
+	cmp 	eax,IPC_SUCCESS
+	jne	ipc_sendrec_end
         push 	dword [ebp+8]   ; Appelle ipc_notify avec le bon argument
 	call	ipc_notify
 	add	esp,4
+ipc_sendrec_end:	
         pop     edi             ; Restaure EDI
         pop     esi             ; Restaure ESI
         mov     esp,ebp         ; Restaure la pile
