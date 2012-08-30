@@ -30,6 +30,7 @@
 PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, struct ipc_message* message);
 PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sender, struct ipc_message* message);
 PRIVATE u8_t syscall_notify(struct thread* th_from, struct thread* th_to);
+PRIVATE u8_t syscall_copymsg(physaddr_t phys_msg, struct ipc_message* message, u8_t op);
 
 
 /*========================================================================
@@ -172,45 +173,10 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
        && ( (th_receiver->ipc.receive_from == th_sender)||(th_receiver->ipc.receive_from == NULL) ) )
     {
       /* Le destinataire est en attente de message: copie du message dans l espace destinataire */
-
-      physaddr_t phys_page;
-      virtaddr_t virt_page;
-      virtaddr_t virt_message;
-
-      /* Alloue une page virtuelle non mappee */
-      virt_page = (virtaddr_t)virtmem_buddy_alloc(CONST_PAGE_SIZE,VIRT_BUDDY_NOMAP);
-      if ((void*)virt_page == NULL)
+      if (syscall_copymsg(th_receiver->ipc.receive_phys_message,message,SYSCALL_SEND) != EXIT_SUCCESS)
 	{
 	  return IPC_FAILURE;
 	}
-      
-      /* Determine la page physique du receive_message */
-      phys_page = PHYS_ALIGN_INF(th_receiver->ipc.receive_phys_message);
-      
-      /* Map la page physique du message avec la page virtuelle */
-      if (paging_map(virt_page, phys_page, PAGING_SUPER) == EXIT_FAILURE)
-	{
-	  virtmem_buddy_free((void*)virt_page);
-	  return IPC_FAILURE;
-	}
-      
-      /* Nettoie le cache pour la page */
-      klib_invlpg(virt_page);
-
-      /* Determine l adresse virtuelle du message */
-      virt_message = virt_page + (th_receiver->ipc.receive_phys_message - phys_page);
-      
-      /* Copie le message */
-      klib_mem_copy((addr_t)message, virt_message, sizeof(struct ipc_message));
-      
-      /* Demap la page */
-      paging_unmap(virt_page);
-      
-      /* Nettoie le cache pour la page */
-      klib_invlpg(virt_page);
-
-      /* Libere la page */
-      virtmem_buddy_free((void*)virt_page);
       
       /* Debloque le destinataire au besoin */
       if (th_receiver->state == THREAD_BLOCKED)
@@ -295,44 +261,10 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
   if ( th_available != NULL )
     {
       /* Un thread dans la wait_list: copie du message de l'emetteur dans l'espace du receveur */
-
-      physaddr_t phys_page;
-      virtaddr_t virt_page;
-      virtaddr_t virt_message;
-      
-      /* Alloue une page virtuelle non mappee */
-      virt_page = (virtaddr_t)virtmem_buddy_alloc(CONST_PAGE_SIZE,VIRT_BUDDY_NOMAP); 
-      if ((void*)virt_page == NULL)
+      if (syscall_copymsg(th_available->ipc.send_phys_message,message,SYSCALL_RECEIVE) != EXIT_SUCCESS)
 	{
 	  return IPC_FAILURE;
 	}
-      
-      /* Determine la page physique du send_message de l emetteur */
-      phys_page = PHYS_ALIGN_INF(th_available->ipc.send_phys_message);
-      
-      /* Map la page physique du message avec la page virtuelle */
-      if( paging_map(virt_page, phys_page, PAGING_SUPER) == EXIT_FAILURE)
-      	{
-	  virtmem_buddy_free((void*)virt_page);
-	  return IPC_FAILURE;
-	}
-
-      /* Nettoie le cache pour la page */
-      klib_invlpg(virt_page);
-      
-      /* Determine l adresse virtuelle du message */
-      virt_message = virt_page + (th_available->ipc.send_phys_message - phys_page);
-      
-      /* Copie le message */
-      klib_mem_copy(virt_message, (addr_t)message, sizeof(struct ipc_message));
-      
-      /* Demap la page */
-      paging_unmap(virt_page);
-
-      /* Nettoie le cache pour la page */
-      klib_invlpg(virt_page);
-
-      virtmem_buddy_free((void*)virt_page);
 
       /* Debloque le sender au besoin */
       if (th_available->state == THREAD_BLOCKED_SENDING)
@@ -382,4 +314,66 @@ PRIVATE u8_t syscall_notify(struct thread* th_from, struct thread* th_to)
 	}
 
   return IPC_SUCCESS;
+}
+
+
+/*========================================================================
+ * Helper: Copie de message
+ *========================================================================*/
+
+PRIVATE u8_t syscall_copymsg(physaddr_t phys_msg, struct ipc_message* message, u8_t op)
+{
+  physaddr_t phys_page;
+  virtaddr_t virt_page;
+  virtaddr_t virt_message;
+  
+  /* Alloue une page virtuelle non mappee */
+  virt_page = (virtaddr_t)virtmem_buddy_alloc(CONST_PAGE_SIZE,VIRT_BUDDY_NOMAP);
+  if ((void*)virt_page == NULL)
+    {
+      return EXIT_FAILURE;
+    }
+  
+  /* Determine la page physique du receive_message */
+  phys_page = PHYS_ALIGN_INF(phys_msg);
+  
+  /* Map la page physique du message avec la page virtuelle */
+  if (paging_map(virt_page, phys_page, PAGING_SUPER) == EXIT_FAILURE)
+    {
+      virtmem_buddy_free((void*)virt_page);
+      return EXIT_FAILURE;
+    }
+      
+  /* Nettoie le cache pour la page */
+  klib_invlpg(virt_page);
+
+  /* Determine l adresse virtuelle du message */
+  virt_message = virt_page + (phys_msg - phys_page);
+      
+  /* Copie le message */
+  switch(op)
+    {
+    case SYSCALL_RECEIVE:
+      klib_mem_copy(virt_message, (addr_t)message, sizeof(struct ipc_message));
+      break;
+
+    case SYSCALL_SEND:
+      klib_mem_copy((addr_t)message, virt_message, sizeof(struct ipc_message));
+      break;
+
+    default:
+      return EXIT_FAILURE;
+      break;
+    }
+      
+  /* Demap la page */
+  paging_unmap(virt_page);
+      
+  /* Nettoie le cache pour la page */
+  klib_invlpg(virt_page);
+
+  /* Libere la page */
+  virtmem_buddy_free((void*)virt_page);
+
+  return EXIT_SUCCESS;
 }
