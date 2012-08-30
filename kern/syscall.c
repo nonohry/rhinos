@@ -30,7 +30,7 @@
 PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, struct ipc_message* message);
 PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sender, struct ipc_message* message);
 PRIVATE u8_t syscall_notify(struct thread* th_from, struct thread* th_to);
-PRIVATE u8_t syscall_copymsg(physaddr_t phys_msg, struct ipc_message* message, u8_t op);
+PRIVATE u8_t syscall_copymsg(struct ipc_message* message, physaddr_t phys_msg, u8_t op);
 
 
 /*========================================================================
@@ -173,7 +173,7 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
        && ( (th_receiver->ipc.receive_from == th_sender)||(th_receiver->ipc.receive_from == NULL) ) )
     {
       /* Le destinataire est en attente de message: copie du message dans l espace destinataire */
-      if (syscall_copymsg(th_receiver->ipc.receive_phys_message,message,SYSCALL_SEND) != EXIT_SUCCESS)
+      if (syscall_copymsg(message,th_receiver->ipc.receive_phys_message,SYSCALL_SEND) != EXIT_SUCCESS)
 	{
 	  return IPC_FAILURE;
 	}
@@ -261,7 +261,7 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
   if ( th_available != NULL )
     {
       /* Un thread dans la wait_list: copie du message de l'emetteur dans l'espace du receveur */
-      if (syscall_copymsg(th_available->ipc.send_phys_message,message,SYSCALL_RECEIVE) != EXIT_SUCCESS)
+      if (syscall_copymsg(message,th_available->ipc.send_phys_message,SYSCALL_RECEIVE) != EXIT_SUCCESS)
 	{
 	  return IPC_FAILURE;
 	}
@@ -321,7 +321,7 @@ PRIVATE u8_t syscall_notify(struct thread* th_from, struct thread* th_to)
  * Helper: Copie de message
  *========================================================================*/
 
-PRIVATE u8_t syscall_copymsg(physaddr_t phys_msg, struct ipc_message* message, u8_t op)
+PRIVATE u8_t syscall_copymsg(struct ipc_message* message, physaddr_t phys_msg, u8_t op)
 {
   physaddr_t phys_page;
   virtaddr_t virt_page;
