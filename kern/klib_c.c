@@ -187,17 +187,17 @@ PRIVATE void klib_putc(char c)
   u8_t buf;
 
   /* Attend que la ligne soit libre */
-  for(i=0;i<123456;i++)
+  for(i=0;i<12345;i++)
     {
       klib_inb(KLIB_SERIAL_PORT+5,&buf);
       if (buf & 0x20)
-	{
-	  break;
-	}
+  	{
+  	  break;
+  	}
     }
 
   /* Emet le caractere */
   klib_outb(KLIB_SERIAL_PORT,c);
-
+ 
   return;
 }

@@ -18,6 +18,7 @@
 
 #define KLIB_SERIAL_PORT   0x3f8
 #define KLIB_SERIAL_MASK   0x20
+#define KLIB_BOCHS_PORT    0xe9
 
 
 /*========================================================================
