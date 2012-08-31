@@ -51,6 +51,9 @@ PRIVATE u8_t start_e88_generate(struct boot_info* bootinfo);
 
 PUBLIC void start_main(struct boot_info* binfo)
 { 
+  /* Initialise le port serie pour la sortie noyau */
+  klib_serial_init();
+
   /* Recopie les informations de demarrage */
   bootinfo = binfo;
 

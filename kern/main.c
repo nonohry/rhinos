@@ -127,6 +127,11 @@ PUBLIC int main()
 {
   struct thread* thread_idle;
 
+  klib_printf("coucou\n");
+  klib_printf("coucou\n");
+  klib_printf("coucou\n");
+  while(1){}
+
   /* Initialisation de la memoire physique */
   if ( phys_init() != EXIT_SUCCESS )
     {

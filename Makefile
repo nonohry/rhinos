@@ -16,7 +16,7 @@ CFLAGS	=	-Iinclude
 
 # Objets
 
-OBJ_KERN = kern/khead.o kern/klib_s.o kern/interrupt.o kern/start.o kern/seg.o kern/tables.o kern/pic.o kern/pit.o kern/irq.o kern/exceptions.o kern/physmem.o kern/paging.o kern/virtmem_buddy.o kern/virtmem_slab.o kern/virtmem.o kern/thread.o kern/sched.o kern/syscall.o kern/main.o
+OBJ_KERN = kern/khead.o kern/klib_s.o kern/klib_c.o kern/interrupt.o kern/start.o kern/seg.o kern/tables.o kern/pic.o kern/pit.o kern/irq.o kern/exceptions.o kern/physmem.o kern/paging.o kern/virtmem_buddy.o kern/virtmem_slab.o kern/virtmem.o kern/thread.o kern/sched.o kern/syscall.o kern/main.o
 OBJ_IPC  = lib/ipc/ipc.o
 
 # Offset en secteurs des differents modules
