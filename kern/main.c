@@ -128,8 +128,10 @@ PUBLIC int main()
   struct thread* thread_idle;
 
   klib_printf("coucou%d\n",4);
-  klib_printf("coucou%d\n",-97);
+  klib_printf("coucou%s\n"," gab");
   klib_printf("coucou%x\n",22);
+  klib_printf("coucou%o\n"," gab");
+  klib_printf("coucou%%\n"," gab");
   while(1){}
 
   /* Initialisation de la memoire physique */

@@ -118,7 +118,7 @@ PUBLIC void klib_printf(const char* str,...)
 	      }
 	    default:
 	      {
-		val_s = "?";
+		val_s = "%?";
 		base=0;
 		break;
 	      }
