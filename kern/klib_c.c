@@ -21,6 +21,10 @@
 PRIVATE void klib_putc(char c);
 
 
+/*========================================================================
+ * Initialisation du port serie
+ *========================================================================*/
+
 
 PUBLIC void klib_serial_init(void)
 {
