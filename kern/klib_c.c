@@ -53,12 +53,6 @@ PUBLIC void klib_printf(const char* str,...)
 
   while( (c=*str++) != 0 )
     {
-      /* Cas du retour a la ligne Unix */
-      if (c == '\n')
-	{
-	  klib_putc('\r');
-	}
-
       /* Traitement si caractere special % */
       if (c == '%')
 	{
@@ -169,6 +163,11 @@ PUBLIC void klib_printf(const char* str,...)
 	}
       else
 	{
+	  /* Cas du retour a la ligne Unix */
+	  if (c == '\n')
+	    {
+	      klib_putc('\r');
+	    }
 	  klib_putc(c);
 	}
     }

@@ -46,16 +46,16 @@ void Add(u16_t max)
       cm.op_1 = k;
       cm.op_2 = k;
       klib_mem_copy((addr_t)&cm,(addr_t)m.data,m.len);
-      klib_bochs_print("Add - Sending %d + %d\n",cm.op_1,cm.op_2);
+      klib_printf("Add - Sending %d + %d\n",cm.op_1,cm.op_2);
       if (ipc_sendrec(3,&m)!=IPC_SUCCESS)
 	{
 	  break;
 	}
       klib_mem_copy((addr_t)m.data,(addr_t)&cm,m.len);
-      klib_bochs_print("Add - Receiving : %d\n",cm.op_res);
+      klib_printf("Add - Receiving : %d\n",cm.op_res);
       k++;
     }
-  klib_bochs_print(" [Quit Add....]\n");
+  klib_printf(" [Quit Add....]\n");
   return;
 }
 
@@ -84,7 +84,7 @@ void Calc(u8_t who)
 
     }
 
-  klib_bochs_print(" [Quit Calc....]\n");
+  klib_printf(" [Quit Calc....]\n");
   return;
 }
 
@@ -104,16 +104,16 @@ void Mult(u8_t max)
       cm.op_1 = j;
       cm.op_2 = j;
       klib_mem_copy((addr_t)&cm,(addr_t)m.data,m.len);
-      klib_bochs_print("Mult - Sending %d * %d\n",cm.op_1,cm.op_2);
+      klib_printf("Mult - Sending %d * %d\n",cm.op_1,cm.op_2);
       if (ipc_sendrec(3,&m)!=IPC_SUCCESS)
 	{
 	  break;
 	}
       klib_mem_copy((addr_t)m.data,(addr_t)&cm,m.len);
-      klib_bochs_print("Mult - Receiving : %d\n",cm.op_res);
+      klib_printf("Mult - Receiving : %d\n",cm.op_res);
       j--;
     }
-  klib_bochs_print(" [Quit Mult....]\n");
+  klib_printf(" [Quit Mult....]\n");
   return;
 }
 
@@ -127,40 +127,33 @@ PUBLIC int main()
 {
   struct thread* thread_idle;
 
-  klib_printf("coucou%d\n",4);
-  klib_printf("coucou%s\n"," gab");
-  klib_printf("coucou%x\n",22);
-  klib_printf("coucou%o\n"," gab");
-  klib_printf("coucou%%\n"," gab");
-  while(1){}
-
   /* Initialisation de la memoire physique */
   if ( phys_init() != EXIT_SUCCESS )
     {
       goto err00;
     }
-  klib_bochs_print("Physical Memory Manager initialized\n");
+  klib_printf("Physical Memory Manager initialized\n");
 
   /* Initialisation de la pagination */
   if ( paging_init() != EXIT_SUCCESS )
     {
       goto err00;
     }
-  klib_bochs_print("Paging enabled\n");
+  klib_printf("Paging enabled\n");
 
   /* Initialisation de la memoire virtuelle */
   if ( virt_init() != EXIT_SUCCESS )
     {
       goto err00;
     }
-  klib_bochs_print("Virtual Memory Manager initialized\n");
+  klib_printf("Virtual Memory Manager initialized\n");
 
   /* Initialisation des thread */
   if ( thread_init() != EXIT_SUCCESS )
     {
       goto err00;
     }
-  klib_bochs_print("Kernel Threads initialized\n");
+  klib_printf("Kernel Threads initialized\n");
 
 
   /* Initialisation de l ordonannceur */
@@ -168,7 +161,7 @@ PUBLIC int main()
     {
       goto err00;
     }
-  klib_bochs_print("Scheduler initialized\n");
+  klib_printf("Scheduler initialized\n");
 
 
   /* Idle Thread */
@@ -177,7 +170,7 @@ PUBLIC int main()
     {
       goto err00;
     }
-  klib_bochs_print("Idle Thread initialized\n");
+  klib_printf("Idle Thread initialized\n");
 
   /* Tests threads */
 
@@ -200,14 +193,14 @@ PUBLIC int main()
     {
       goto err00;
     }
-  klib_bochs_print("IRQ System initialized\n");
+  klib_printf("IRQ System initialized\n");
   
   /* Initialisation Horloge */
   if ( pit_init() != EXIT_SUCCESS )
     {
       goto err00;
     }
-  klib_bochs_print("Clock (100Hz) initialized\n");
+  klib_printf("Clock (100Hz) initialized\n");
 
    /* On ne doit plus arriver ici (sauf DEBUG ou erreur) */
  err00:

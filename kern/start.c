@@ -92,15 +92,15 @@ PUBLIC void start_main(struct boot_info* binfo)
     {
       goto err_tables;
     }
-  klib_bochs_print("GDT & IDT initialized\n");
+  klib_printf("GDT & IDT initialized\n");
 
   return;
 
  err_mem:
-  klib_bochs_print("Memory Error ! Aborting...\n");
+  klib_printf("Memory Error ! Aborting...\n");
 
  err_tables:
-  klib_bochs_print("GDT & IDT Error\n");
+  klib_printf("GDT & IDT Error\n");
 
   while(1){}
   return;
