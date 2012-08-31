@@ -26,11 +26,11 @@ PUBLIC void klib_serial_init(void)
 {
   /* Initialise le port serie */
 
-  klib_outb(KLIB_SERIAL_PORT + 1, 0x00);    // Disable all interrupts
-  klib_outb(KLIB_SERIAL_PORT + 3, 0x80);    // Enable DLAB (set baud rate divisor)
-  klib_outb(KLIB_SERIAL_PORT + 0, 0x03);    // Set divisor to 3 (lo byte) 38400 baud
-  klib_outb(KLIB_SERIAL_PORT + 1, 0x00);    //                  (hi byte)
-  klib_outb(KLIB_SERIAL_PORT + 3, 0x03);    // 8 bits, no parity, one stop bit
+  klib_outb(KLIB_SERIAL_PORT + 1, 0x00);    /* Pas d interruption */
+  klib_outb(KLIB_SERIAL_PORT + 3, 0x80);    /* DLAB (diviseur) */
+  klib_outb(KLIB_SERIAL_PORT + 0, 0x03);    /* Diviseur mis a 3 (=> 38400 bauds) - MSB */
+  klib_outb(KLIB_SERIAL_PORT + 1, 0x00);    /* LSB du diviseur */
+  klib_outb(KLIB_SERIAL_PORT + 3, 0x03);    /* 8 bits, pas de parite, 1 stop bit */
 
  return;
 }
