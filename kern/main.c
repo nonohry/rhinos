@@ -127,9 +127,9 @@ PUBLIC int main()
 {
   struct thread* thread_idle;
 
-  klib_printf("coucou\n");
-  klib_printf("coucou\n");
-  klib_printf("coucou\n");
+  klib_printf("coucou%d\n",4);
+  klib_printf("coucou%d\n",-7);
+  klib_printf("coucou%d\n",2);
   while(1){}
 
   /* Initialisation de la memoire physique */
