@@ -46,9 +46,11 @@ PUBLIC void klib_printf(const char* str,...)
   u8_t neg=0;
   u32_t val_n;
   char* val_s;
+  char buf[11]; /* Taille en nombre de charactere d'un u32_t + 1 */
+  char* itoa = "0123456789ABCDEF";
   u8_t base=0;
   u32_t* arg = (u32_t*)&str;
-  
+
   while( (c=*str++) != 0 )
     {
       /* Cas du retour a la ligne Unix */
@@ -122,17 +124,46 @@ PUBLIC void klib_printf(const char* str,...)
 	      }
 	    }
 
+	  /* Convertit un nombre en une chaine */
 	  if (val_s == NULL)
 	    {
-	      if (neg)
+	      /* La decomposition nous donne les chiffres a l envers
+	       * idee: utiliser une chaine tampon pour ecrire les chiffres dedans de la fin vers le debut */
+
+	      /* Va a la fin de la chaine tampon */
+	      val_s = buf + sizeof(buf)-1;
+	      /* Marque le fin de chaine */
+	      *val_s = 0;
+	      do
 		{
-		  klib_bochs_print("-");
-		}
-	      klib_bochs_print("%d",val_n);
+		  /* Decremente le caractere */
+		  --val_s;
+		  /* Affecte selon la decomposition */
+		  *val_s = itoa[val_n % base];
+		  /* Suite de la decomposition */
+		  val_n /= base;
+		}while(val_n>0);
+
 	    }
-	  else
+
+	  /* Precede d'un '-' les nombres negatifs */
+	  if (neg)
 	    {
-	      klib_bochs_print(val_s);
+	      klib_putc('-');
+	    }
+
+	  /* Precede d'un '0x' les nombres hexa */
+	  if (base == 16)
+	    {
+	      klib_putc('0');
+	      klib_putc('x');
+	    }
+
+	  /* Affiche la chaine */
+	  while(*val_s != 0)
+	    {
+	      klib_putc(*val_s);
+	      val_s++;
 	    }
 
 	}
