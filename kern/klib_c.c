@@ -150,13 +150,6 @@ PUBLIC void klib_printf(const char* str,...)
 	      klib_putc('-');
 	    }
 
-	  /* Precede d'un '0x' les nombres hexa */
-	  if (base == 16)
-	    {
-	      klib_putc('0');
-	      klib_putc('x');
-	    }
-
 	  /* Affiche la chaine */
 	  while(*val_s != 0)
 	    {
