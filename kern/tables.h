@@ -20,9 +20,10 @@
 #define TABLES_NULL_INDEX          0
 #define TABLES_KERN_CS_INDEX       1
 #define TABLES_KERN_XS_INDEX       2                  /* DS,ES,FS,SS */
-#define TABLES_TSS_INDEX           3
-#define TABLES_LDT_INDEX           4                  /* Index de la premiere LDT */
-#define TABLES_MAX_INDEX           TABLES_LDT_INDEX   /* Nombre maximum d index d une GDT */
+#define TABLES_USER_CS_INDEX       3
+#define TABLES_USER_XS_INDEX       4                  /* DS,ES,FS,SS */
+#define TABLES_TSS_INDEX           5
+#define TABLES_MAX_INDEX           TABLES_TSS_INDEX   /* Nombre maximum d index d une GDT */
 
 /* Taille de la GDT & IDT */
 
@@ -42,7 +43,8 @@
 
 #define TABLES_KERN_BASE         0x0        /* Adresse de base du noyau */
 #define TABLES_KERN_LIMIT_4G     0x0        /* Limite de l'espace Noyau (4G) */
-
+#define TABLES_USER_BASE         0x0        /* Adresse de base de l espace utilisateur */
+#define TABLES_USER_LIMIT_4G     0x0        /* Limite de l'espace utilisateur (4G) */
 
 /*========================================================================
  * Structures
@@ -108,6 +110,7 @@ PUBLIC struct tss
 
 PUBLIC struct seg_desc gdt[TABLES_GDT_SIZE];  /* GDT */
 PUBLIC struct gate_desc idt[TABLES_IDT_SIZE]; /* IDT */
+PUBLIC struct tss tss; /* TSS */
 PUBLIC struct table_desc gdt_desc;     /* Descripteur de la GDT */
 PUBLIC struct table_desc idt_desc;     /* Descripteur de l'IDT */
 

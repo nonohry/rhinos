@@ -29,10 +29,19 @@ PUBLIC u8_t gdt_init()
   gdt_desc.limit = sizeof(gdt) - 1;  /* la GDT commence a 0, d'ou le -1 */
   gdt_desc.base = (lineaddr_t) gdt;       /* Adresse de gdt dans l espace lineaire */
 
-  /* Initialisation de la GDT */
+  /* Initialisation de la GDT: segments noyau */
   
   init_code_seg(&gdt[TABLES_KERN_CS_INDEX],(lineaddr_t) TABLES_KERN_BASE, TABLES_KERN_LIMIT_4G, TABLES_RING0);
   init_data_seg(&gdt[TABLES_KERN_XS_INDEX],(lineaddr_t) TABLES_KERN_BASE, TABLES_KERN_LIMIT_4G, TABLES_RING0);
+
+  /* Initialisation de la GDT: segments utilsateur */
+
+  init_code_seg(&gdt[TABLES_USER_CS_INDEX],(lineaddr_t) TABLES_USER_BASE, TABLES_USER_LIMIT_4G, TABLES_RING3);
+  init_data_seg(&gdt[TABLES_USER_XS_INDEX],(lineaddr_t) TABLES_USER_BASE, TABLES_USER_LIMIT_4G, TABLES_RING3);
+
+  /* Initialisation de la GDT: TSS */
+
+  init_tss_seg(&gdt[TABLES_TSS_INDEX], (lineaddr_t)&tss, sizeof(tss), TABLES_RING0);
 
   return EXIT_SUCCESS;
 }

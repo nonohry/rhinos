@@ -23,6 +23,12 @@
 #define	CONST_KERN_DS_SELECTOR       16   /*  DS = 0000000000010  0  00   =  16 */
 #define	CONST_KERN_ES_SELECTOR	     16   /*  ES = 0000000000010  0  00   =  16 */
 #define	CONST_KERN_SS_SELECTOR	     16   /*  SS = 0000000000010  0  00   =  16 */
-#define CONST_TSS_SELECTOR           24   /* TSS = 0000000000011  0  00   =  24 */
+
+#define CONST_USER_CS_SELECTOR       27   /*  CS = 0000000000011  0  11   =  8  */
+#define	CONST_USER_DS_SELECTOR       35   /*  DS = 0000000000100  0  11   =  16 */
+#define	CONST_USER_ES_SELECTOR	     35   /*  ES = 0000000000100  0  11   =  16 */
+#define	CONST_USER_SS_SELECTOR	     35   /*  SS = 0000000000100  0  11   =  16 */
+
+#define CONST_TSS_SELECTOR           40   /* TSS = 0000000000101  0  00   =  24 */
 
 
