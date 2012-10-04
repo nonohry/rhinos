@@ -17,19 +17,19 @@
 
 /* Indexes de la GDT */
 
-#define TABLES_NULL_INDEX     0
-#define TABLES_CS_INDEX       1
-#define TABLES_XS_INDEX       2                  /* DS,ES,FS,SS */
-#define TABLES_TSS_INDEX      3
-#define TABLES_LDT_INDEX      4                  /* Index de la premiere LDT */
-#define TABLES_MAX_INDEX      TABLES_LDT_INDEX   /* Nombre maximum d index d une GDT */
+#define TABLES_NULL_INDEX          0
+#define TABLES_KERN_CS_INDEX       1
+#define TABLES_KERN_XS_INDEX       2                  /* DS,ES,FS,SS */
+#define TABLES_TSS_INDEX           3
+#define TABLES_LDT_INDEX           4                  /* Index de la premiere LDT */
+#define TABLES_MAX_INDEX           TABLES_LDT_INDEX   /* Nombre maximum d index d une GDT */
 
 /* Taille de la GDT & IDT */
 
-#define TABLES_GDT_SIZE       TABLES_MAX_INDEX+1  /* Debute a 0 */
-#define TABLES_IDT_SIZE       52
+#define TABLES_GDT_SIZE            TABLES_MAX_INDEX+1  /* Debute a 0 */
+#define TABLES_IDT_SIZE            52
 
-#define TABLES_SHIFT_SELECTOR  3    /* INDEX << SHIFT_SELECTOR = SELECTOR */
+#define TABLES_SHIFT_SELECTOR      3    /* INDEX << SHIFT_SELECTOR = SELECTOR */
 
 /* Rings */
 

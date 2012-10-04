@@ -266,10 +266,10 @@ PUBLIC u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* 
   esp = (virtaddr_t*)(stack_base+stack_size);
  
   /* Installe les registres de segments */
-  ctx->cs = CONST_CS_SELECTOR;
-  ctx->ds = CONST_DS_SELECTOR;
-  ctx->es = CONST_ES_SELECTOR;
-  ctx->ss = CONST_SS_SELECTOR;
+  ctx->cs = CONST_KERN_CS_SELECTOR;
+  ctx->ds = CONST_KERN_DS_SELECTOR;
+  ctx->es = CONST_KERN_ES_SELECTOR;
+  ctx->ss = CONST_KERN_SS_SELECTOR;
 
   /* Positionne un faux code d erreur */
   ctx->error_code = THREAD_CPU_FEC;
@@ -291,7 +291,7 @@ PUBLIC u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* 
 
   /* Simule une pile interrompue (le switch passe par une interruption logicielle) */
   *(--esp) = ctx->eflags;
-  *(--esp) = CONST_CS_SELECTOR;
+  *(--esp) = CONST_KERN_CS_SELECTOR;
   *(--esp) = ctx->eip;
   *(--esp) = ctx->error_code;
   *(--esp) = 0;
@@ -331,7 +331,7 @@ PUBLIC void thread_cpu_postsave(reg32_t ss, reg32_t* esp)
 
   
   /* Traitement si pas changement de privileges (Note: SS est sur 16bits) */
-  if ((ss & 0xFF) == CONST_SS_SELECTOR)
+  if ((ss & 0xFF) == CONST_KERN_SS_SELECTOR)
     {
       /* Recupere les registres oublies */
       cur_th->cpu.ret_addr = *(esp);
@@ -340,7 +340,7 @@ PUBLIC void thread_cpu_postsave(reg32_t ss, reg32_t* esp)
       cur_th->cpu.cs = *(esp+3);
       cur_th->cpu.eflags = *(esp+4);
       cur_th->cpu.esp = (reg32_t)(esp);
-      cur_th->cpu.ss = CONST_SS_SELECTOR;
+      cur_th->cpu.ss = CONST_KERN_SS_SELECTOR;
 
     }
   
