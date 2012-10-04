@@ -12,6 +12,7 @@
 #include <llist.h>
 #include "const.h"
 #include "klib.h"
+#include "tables.h"
 #include "virtmem_slab.h"
 #include "virtmem.h"
 #include "sched.h"
@@ -68,6 +69,10 @@ PUBLIC u8_t thread_init(void)
 
   /* la coquille noyau devient le thread courant */
   cur_th = kern_th;
+
+  /* Affecte les registres de pile du TSS suivant la coquille noyau */
+  tss.esp0 = (u32_t)kern_th;
+  tss.ss0 = CONST_KERN_SS_SELECTOR;
 
   /* Initialise le compteur d ID global */
   thread_IDs = 1;

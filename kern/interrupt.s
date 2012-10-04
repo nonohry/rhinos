@@ -44,6 +44,7 @@ global	excep_16
 global	excep_17
 global	excep_18
 
+	
 extern	irq_handle_flih			; Handlers pour les IRQ en C
 extern	excep_handle			; Handlers pour les exceptions en C
 extern	cur_ctx				; Contexte courant
@@ -61,10 +62,10 @@ extern	syscall_handle			; Gestion des appels systemes en C
 	;; Segment Selector
 	;;
 
-%assign		CS_SELECTOR		8  ; CS  = 00000001  0  00   = (byte) 8
-%assign		DS_SELECTOR		16 ; DS  = 00000010  0  00   = (byte) 16
-%assign		ES_SELECTOR		16 ; ES  = 00000010  0  00   = (byte) 16
-%assign		SS_SELECTOR		16 ; SS  = 00000010  0  00   = (byte) 16
+%assign		KERN_CS_SELECTOR		8  ; CS  = 00000001  0  00   = (byte) 8
+%assign		KERN_DS_SELECTOR		16 ; DS  = 00000010  0  00   = (byte) 16
+%assign		KERN_ES_SELECTOR		16 ; ES  = 00000010  0  00   = (byte) 16
+%assign		KERN_SS_SELECTOR		16 ; SS  = 00000010  0  00   = (byte) 16
 	
 	;;
 	;; IRQ Magic Numbers
@@ -242,10 +243,10 @@ save_ctx:
 	o16 push	fs
 	o16 push	gs
 
-	mov	esp, int_stack_top 	; Positionne la pile d interruption
-	mov	ax,DS_SELECTOR		; Ajuste les segments noyau (CS & SS sont deja positionnes)
+	mov	esp, int_stack_top 	; (Re)Positionne la pile d interruption
+	mov	ax,KERN_DS_SELECTOR	; Ajuste les segments noyau (CS & SS sont deja positionnes)
 	mov	ds,ax
-	mov	ax,ES_SELECTOR
+	mov	ax,KERN_ES_SELECTOR
 	mov	es,ax			; note: FS & GS ne sont pas utilises par le noyau
 
 	push	dword [save_esp]	; Empile le pointeur de pile
@@ -271,7 +272,7 @@ restore_ctx:
 	o16 pop	ds
 	popad		    	; Restaure les registre generaux
 	
-	cmp 	dword [esp+THREAD_CS_OFFSET], CS_SELECTOR 	; Teste si le contexte est un contexte noyau
+	cmp 	dword [esp+THREAD_CS_OFFSET], KERN_CS_SELECTOR 	; Teste si le contexte est un contexte noyau
 	jne 	restore_ctx_next	    			; Saute a la suite si ce n'est pas le cas
 	mov 	esp, dword [esp+THREAD_ESP_OFFSET]	    	; Retourne sur la pile interrompue (qui contient les bonnes infos pour iret) sinon
 

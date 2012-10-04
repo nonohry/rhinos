@@ -62,8 +62,9 @@ virtmem_slab.o: ../include/types.h const.h ../include/llist.h klib.h start.h
 virtmem_slab.o: physmem.h virtmem_slab.h virtmem_buddy.h paging.h
 virtmem.o: ../include/types.h const.h virtmem_buddy.h virtmem_slab.h
 virtmem.o: virtmem.h
-thread.o: ../include/types.h ../include/llist.h const.h klib.h virtmem_slab.h
-thread.o: virtmem.h sched.h thread.h ../include/ipc.h
+thread.o: ../include/types.h ../include/llist.h const.h klib.h tables.h seg.h
+thread.o: irq.h interrupt.h thread.h ../include/ipc.h virtmem_slab.h
+thread.o: virtmem.h sched.h
 sched.o: ../include/types.h ../include/llist.h klib.h const.h thread.h
 sched.o: ../include/ipc.h sched.h
 syscall.o: ../include/types.h ../include/llist.h ../include/ipc.h const.h
