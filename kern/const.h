@@ -4,6 +4,8 @@
  *
  */
 
+#ifndef CONST_H
+#define CONST_H
 
 /*========================================================================
  * Memoire
@@ -31,4 +33,7 @@
 
 #define CONST_TSS_SELECTOR           40   /* TSS = 0000000000101  0  00   =  24 */
 
+#define CONST_KERN_HIGHMEM           (1<<30)
 
+
+#endif
