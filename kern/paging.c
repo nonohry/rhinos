@@ -18,6 +18,8 @@
 PUBLIC u8_t paging_init(void)
 {
   physaddr_t p;
+  u16_t i;
+  struct pte* table;
 
   /* PD Noyau */
   kern_PD = (struct pde*)phys_alloc(PAGING_ENTRIES*sizeof(struct pde));
@@ -36,6 +38,33 @@ PUBLIC u8_t paging_init(void)
   kern_PD[PAGING_SELFMAP].user = 0;
   kern_PD[PAGING_SELFMAP].baseaddr = (physaddr_t)kern_PD >> PAGING_BASESHIFT;
   
+
+  /* Pre allocation des pages tables pour l espace noyau afin de faciliter la sync avec les threads */
+  for(i=0;i<CONST_KERN_HIGHMEM/CONST_PAGE_SIZE/PAGING_ENTRIES;i++)
+    {
+      /* Au cas ou ... */
+      if ( (i == PAGING_SELFMAP)||(i>=PAGING_ENTRIES) )
+	{
+	  return EXIT_FAILURE;
+	}
+
+      /* Alloue une page physique */
+      table = (struct pte*)phys_alloc(PAGING_ENTRIES*sizeof(struct pte));
+      if( table == NULL)
+	{
+	  return EXIT_FAILURE;
+	}
+
+      /* Fait pointer le pde sur la nouvelle page */
+      kern_PD[i].present = 1;
+      kern_PD[i].rw = 1;
+      kern_PD[i].user = 0;
+      kern_PD[i].baseaddr = (((physaddr_t)table)>>PAGING_BASESHIFT);
+
+      /* Nullifie le page table */
+      klib_mem_set(0,(addr_t)table,PAGING_ENTRIES*sizeof(struct pte));
+    }
+
 
   for(p=PAGING_ALIGN_INF(0);
       p<PAGING_ALIGN_SUP(bootinfo->kern_end);
@@ -155,7 +184,7 @@ PUBLIC u8_t paging_unmap(virtaddr_t vaddr)
   pte = PAGING_GET_PTE(vaddr);
   pd = (struct pde*)PAGING_GET_PD();
 
-  /* Interdit le pde du self map et verifie l'existence du pde*/
+  /* Interdit le pde du self map et verifie l'existence du pde */
   if ( (pde == PAGING_SELFMAP)||(!pd[pde].present) )
     {
       return EXIT_FAILURE;
@@ -179,8 +208,9 @@ PUBLIC u8_t paging_unmap(virtaddr_t vaddr)
   table[pte].user=0;
   table[pte].baseaddr=0;
 
-  /* Decremente le compteur de maps de la table */
-  if (phys_unmap(pd[pde].baseaddr << PAGING_BASESHIFT, PHYS_UNMAP_DEFAULT) == PHYS_UNMAP_FREE)
+  /* Decremente le compteur de maps de la table et libere uniquement les pages tables hors espace noyau */
+  if (phys_unmap(pd[pde].baseaddr << PAGING_BASESHIFT, 
+		 (pde<CONST_KERN_HIGHMEM/CONST_PAGE_SIZE/PAGING_ENTRIES?PHYS_UNMAP_NOFREE:PHYS_UNMAP_DEFAULT)) == PHYS_UNMAP_FREE)
     {
       /* Si la page de la table est liberee, on nullifie le pd[pde] */
       pd[pde].present = 0;
