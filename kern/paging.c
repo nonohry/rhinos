@@ -171,7 +171,7 @@ PUBLIC u8_t paging_unmap(virtaddr_t vaddr)
     }
  
   /* Demap/Libere la page physique */
-  phys_unmap(table[pte].baseaddr<<PAGING_BASESHIFT);
+  phys_unmap(table[pte].baseaddr<<PAGING_BASESHIFT, PHYS_UNMAP_DEFAULT);
 
   /* Nullifie la structure */
   table[pte].present=0;
@@ -180,7 +180,7 @@ PUBLIC u8_t paging_unmap(virtaddr_t vaddr)
   table[pte].baseaddr=0;
 
   /* Decremente le compteur de maps de la table */
-  if (phys_unmap(pd[pde].baseaddr << PAGING_BASESHIFT) == PHYS_UNMAP_FREE)
+  if (phys_unmap(pd[pde].baseaddr << PAGING_BASESHIFT, PHYS_UNMAP_DEFAULT) == PHYS_UNMAP_FREE)
     {
       /* Si la page de la table est liberee, on nullifie le pd[pde] */
       pd[pde].present = 0;

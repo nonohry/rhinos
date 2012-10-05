@@ -233,7 +233,7 @@ PUBLIC u8_t phys_map(physaddr_t addr)
  * Supprime un mappage sur une ppage allouee
  *========================================================================*/
 
-PUBLIC u8_t phys_unmap(physaddr_t addr)
+PUBLIC u8_t phys_unmap(physaddr_t addr, u8_t flag)
 {
   struct ppage_desc* pdesc;
   
@@ -248,8 +248,8 @@ PUBLIC u8_t phys_unmap(physaddr_t addr)
     {
       /* Decremente le nombre de mappages */
       pdesc->maps--;
-      /* Plus de mappage ? */
-      if (!(pdesc->maps))
+      /* Plus de mappage et le flag par defaut ? */
+      if ( (!(pdesc->maps))&&(flag == PHYS_UNMAP_DEFAULT) )
 	{
 	  /* On libere */
 	  if ( phys_free((void*)addr) == EXIT_SUCCESS )

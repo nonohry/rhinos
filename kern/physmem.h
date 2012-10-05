@@ -28,9 +28,14 @@
 #define PHYS_UNMAP_UNMAP      1
 #define PHYS_UNMAP_FREE       2
 
+#define PHYS_UNMAP_DEFAULT    0
+#define PHYS_UNMAP_NOFREE     1
+
+
 /*========================================================================
  * Macros
  *========================================================================*/
+
 
 /* Alignement inferieur sur PPAGE_SIZE */
 #define PHYS_ALIGN_INF(__addr)			\
@@ -92,6 +97,6 @@ PUBLIC u8_t phys_init(void);
 PUBLIC void* phys_alloc(u32_t size);
 PUBLIC u8_t phys_free(void* addr);
 PUBLIC u8_t phys_map(physaddr_t addr);
-PUBLIC u8_t phys_unmap(physaddr_t addr);
+PUBLIC u8_t phys_unmap(physaddr_t addr, u8_t flag);
 
 #endif
