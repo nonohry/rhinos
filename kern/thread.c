@@ -320,6 +320,10 @@ PUBLIC void thread_switch_to(struct thread* th)
   if (th != NULL)
     {
       cur_th = th;
+      
+      /* positionne le tss */
+      tss.esp0 = (u32_t)th;
+
     }
 
   return;
