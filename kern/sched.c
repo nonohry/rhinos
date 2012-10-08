@@ -230,8 +230,8 @@ PUBLIC void sched_schedule(u8_t flag)
 
       /* Switch vers le nouveau thread */
       thread_switch_to(new_th);
-
-    }
+      
+     }
 
   return;
 }

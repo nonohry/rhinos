@@ -23,6 +23,15 @@
 #include <ipc.h>
 
 
+
+void userThread()
+{
+  while(1)
+    {}
+  return;
+}
+
+
 struct calc_msg
 {
   u8_t op_code;
@@ -165,7 +174,7 @@ PUBLIC int main()
 
 
   /* Idle Thread */
-  thread_idle = thread_create("[Idle]",THREAD_ID_DEFAULT,(virtaddr_t)klib_idle,NULL,THREAD_STACK_SIZE,THREAD_NICE_TOP,THREAD_QUANTUM_DEFAULT);
+  thread_idle = thread_create("[Idle]",THREAD_ID_DEFAULT,(virtaddr_t)klib_idle,NULL,THREAD_NICE_TOP,THREAD_QUANTUM_DEFAULT,CONST_RING0);
   if ( thread_idle == NULL )
     {
       goto err00;
@@ -174,19 +183,52 @@ PUBLIC int main()
 
   /* Tests threads */
 
-  struct thread* th_add;
-  struct thread* th_calc;
-  struct thread* th_mult;
+// struct thread* th_add;
+// struct thread* th_calc;
+// struct thread* th_mult;
+//
+//
+// th_add = thread_create("Add_thread",THREAD_ID_DEFAULT,(virtaddr_t)Add,(void*)12,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT,CONST_RING0);
+// th_calc = thread_create("Calc_thread",THREAD_ID_DEFAULT,(virtaddr_t)Calc,(void*)IPC_ANY,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT,CONST_RING0);
+// th_mult = thread_create("Mult_thread",THREAD_ID_DEFAULT,(virtaddr_t)Mult,(void*)15,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT,CONST_RING0);
+//
+//
+// /* Simule un ordonnancement */
+// sched_dequeue(SCHED_READY_QUEUE,th_calc);
+// sched_enqueue(SCHED_RUNNING_QUEUE,th_calc);
+// 
 
+  struct thread* th_user;
+  virtaddr_t vaddr;
+  physaddr_t paddr;
 
-  th_add = thread_create("Add_thread",THREAD_ID_DEFAULT,(virtaddr_t)Add,(void*)12,THREAD_STACK_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
-  th_calc = thread_create("Calc_thread",THREAD_ID_DEFAULT,(virtaddr_t)Calc,(void*)IPC_ANY,THREAD_STACK_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
-  th_mult = thread_create("Mult_thread",THREAD_ID_DEFAULT,(virtaddr_t)Mult,(void*)15,THREAD_STACK_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
-
-  /* Simule un ordonnancement */
-  sched_dequeue(SCHED_READY_QUEUE,th_calc);
-  sched_enqueue(SCHED_RUNNING_QUEUE,th_calc);
+  vaddr = (virtaddr_t)virtmem_buddy_alloc(CONST_PAGE_SIZE,VIRT_BUDDY_NOMAP);
+  if ((void*)vaddr == NULL)
+    {
+      goto err00;
+    }
   
+  paddr = (physaddr_t)phys_alloc(CONST_PAGE_SIZE);
+  if (!paddr)
+    {
+      goto err00;
+    }
+  
+  if (paging_map(vaddr,paddr,PAGING_USER) == EXIT_FAILURE)
+    {
+      goto err00;
+    }
+
+  klib_mem_copy((addr_t)userThread,(addr_t)vaddr,50);
+  th_user = thread_create("User_thread",THREAD_ID_DEFAULT,(virtaddr_t)vaddr,NULL,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT,CONST_RING3);
+   if (th_user == NULL)
+  {
+    goto err00;
+  }
+
+  sched_dequeue(SCHED_READY_QUEUE,thread_idle);
+  sched_enqueue(SCHED_RUNNING_QUEUE,thread_idle);
+
 
   /* Initialisation du gestionnaire des IRQ */
   if ( irq_init() != EXIT_SUCCESS )

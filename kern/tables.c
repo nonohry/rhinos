@@ -31,17 +31,17 @@ PUBLIC u8_t gdt_init()
 
   /* Initialisation de la GDT: segments noyau */
   
-  init_code_seg(&gdt[TABLES_KERN_CS_INDEX],(lineaddr_t) TABLES_KERN_BASE, TABLES_KERN_LIMIT_4G, TABLES_RING0);
-  init_data_seg(&gdt[TABLES_KERN_XS_INDEX],(lineaddr_t) TABLES_KERN_BASE, TABLES_KERN_LIMIT_4G, TABLES_RING0);
+  init_code_seg(&gdt[TABLES_KERN_CS_INDEX],(lineaddr_t) TABLES_KERN_BASE, TABLES_KERN_LIMIT_4G, CONST_RING0);
+  init_data_seg(&gdt[TABLES_KERN_XS_INDEX],(lineaddr_t) TABLES_KERN_BASE, TABLES_KERN_LIMIT_4G, CONST_RING0);
 
   /* Initialisation de la GDT: segments utilsateur */
 
-  init_code_seg(&gdt[TABLES_USER_CS_INDEX],(lineaddr_t) TABLES_USER_BASE, TABLES_USER_LIMIT_4G, TABLES_RING3);
-  init_data_seg(&gdt[TABLES_USER_XS_INDEX],(lineaddr_t) TABLES_USER_BASE, TABLES_USER_LIMIT_4G, TABLES_RING3);
+  init_code_seg(&gdt[TABLES_USER_CS_INDEX],(lineaddr_t) TABLES_USER_BASE, TABLES_USER_LIMIT_4G, CONST_RING3);
+  init_data_seg(&gdt[TABLES_USER_XS_INDEX],(lineaddr_t) TABLES_USER_BASE, TABLES_USER_LIMIT_4G, CONST_RING3);
 
   /* Initialisation de la GDT: TSS */
 
-  init_tss_seg(&gdt[TABLES_TSS_INDEX], (lineaddr_t)&tss, sizeof(tss), TABLES_RING0);
+  init_tss_seg(&gdt[TABLES_TSS_INDEX], (lineaddr_t)&tss, sizeof(tss), CONST_RING0);
 
   return EXIT_SUCCESS;
 }

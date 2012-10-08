@@ -16,6 +16,8 @@
 #include "virtmem_slab.h"
 #include "virtmem.h"
 #include "sched.h"
+#include "physmem.h"
+#include "paging.h"
 #include "thread.h"
 
 
@@ -67,6 +69,8 @@ PUBLIC u8_t thread_init(void)
       return EXIT_FAILURE;
     }
 
+  kern_th->cpu.ss = CONST_KERN_SS_SELECTOR;
+
   /* la coquille noyau devient le thread courant */
   cur_th = kern_th;
 
@@ -86,17 +90,29 @@ PUBLIC u8_t thread_init(void)
  *========================================================================*/
 
 
-PUBLIC struct thread* thread_create(const char* name, s32_t id, virtaddr_t start_entry, void* start_arg, u32_t stack_size, s8_t nice_level, u8_t quantum)
+PUBLIC struct thread* thread_create(const char* name, s32_t id, virtaddr_t start_entry, void* start_arg, s8_t nice_level, u8_t quantum, u8_t ring)
 {
   struct thread* th;
   struct id_info* thID;
-  u8_t i;
+  physaddr_t paddr;
+   u8_t i;
 
   /* Controles */
   if ( (start_entry == 0)
-       || (stack_size < THREAD_CPU_MIN_STACK)
        || (nice_level > THREAD_NICE_TOP)
        || (nice_level < THREAD_NICE_BOTTOM) )
+    {
+      return NULL;
+    }
+
+  /* Rings autorises */
+  if ( (ring != CONST_RING0)&&(ring != CONST_RING3) )
+    {
+      return NULL;
+    }
+       
+  /* Cas ring 3: pas d'arguments */
+  if ( (ring==CONST_RING3)&&(start_arg!=NULL) )
     {
       return NULL;
     }
@@ -115,17 +131,42 @@ PUBLIC struct thread* thread_create(const char* name, s32_t id, virtaddr_t start
     }
   
   /* Alloue la pile */
-  th->stack_base = (virtaddr_t)virt_alloc(stack_size);
-  if ((void*)th->stack_base == NULL)
+  if (ring == CONST_RING0)
     {
-      goto err01;
+      th->stack_base = (virtaddr_t)virt_alloc(CONST_PAGE_SIZE);
+      if ((void*)th->stack_base == NULL)
+	{
+	  goto err01;
+	}
     }
+  else {
+    
+    /* Mappage de la pile en ring3 */
+    th->stack_base = (virtaddr_t)virtmem_buddy_alloc(CONST_PAGE_SIZE,VIRT_BUDDY_NOMAP);
+    if ((void*)th->stack_base == NULL)
+      {
+	goto err01;
+      }
+
+    paddr = (physaddr_t)phys_alloc(CONST_PAGE_SIZE);
+    if (!paddr)
+      {
+	goto err01;
+      }
+    
+    
+    if (paging_map(th->stack_base,paddr,PAGING_USER) == EXIT_FAILURE)
+      {
+	goto err01;
+      }
+  }
+
 
   /* Definit la taille de la pile */
-  th->stack_size = stack_size;
+  th->stack_size = CONST_PAGE_SIZE;
 
   /* Initialise le contexte */
-  if (thread_cpu_init((struct cpu_info*)th,start_entry,start_arg,(virtaddr_t)thread_exit,(void*)th,th->stack_base,stack_size) != EXIT_SUCCESS)
+  if (thread_cpu_init((struct cpu_info*)th,start_entry,start_arg,(virtaddr_t)thread_exit,(void*)th,th->stack_base,ring) != EXIT_SUCCESS)
     {
       goto err02;
     }
@@ -184,12 +225,22 @@ PUBLIC struct thread* thread_create(const char* name, s32_t id, virtaddr_t start
   th->ipc.receive_message = NULL;
   LLIST_NULLIFY(th->ipc.receive_waitlist);
 
+
   /* Retour */
   return th;
 
  err02:
   /* Libere la pile */
-  virt_free((void*)th->stack_base);
+  if (ring == CONST_RING0)
+    {
+      virt_free((void*)th->stack_base);
+    }
+  else
+    {
+      /* paging_unmap liberera la page physique */
+      paging_unmap((virtaddr_t)th->stack_base);
+      virtmem_buddy_free((void*)th->stack_base);
+    }
 
  err01:
   /* Libere le id_info */
@@ -250,7 +301,7 @@ PUBLIC u8_t thread_destroy(struct thread* th)
  *========================================================================*/
 
 
-PUBLIC u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* start_arg, virtaddr_t exit_entry, void* exit_arg, virtaddr_t stack_base, u32_t stack_size)
+PUBLIC u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* start_arg, virtaddr_t exit_entry, void* exit_arg, virtaddr_t stack_base, u8_t ring)
 {
   
   virtaddr_t* esp;
@@ -259,22 +310,33 @@ PUBLIC u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* 
   if ( (start_entry == 0)
        || (exit_entry == 0)
        || (stack_base == 0)
-       || (stack_size < THREAD_CPU_MIN_STACK)
        || (ctx == NULL) )
     {
       return EXIT_FAILURE;
     }
 
+  /* Rings autorises */
+  if ( (ring != CONST_RING0)&&(ring != CONST_RING3) )
+    {
+      return EXIT_FAILURE;
+    }
+  
+  /* Cas ring 3: pas d'arguments */
+  if ( (ring==CONST_RING3)&&(start_arg!=NULL) )
+    {
+      return EXIT_FAILURE;
+    }
+
   /* Nettoie la pile */
-  klib_mem_set(0,(addr_t)stack_base,stack_size);
+  klib_mem_set(0,(addr_t)stack_base,CONST_PAGE_SIZE);
   /* Recupere l'adresse de pile pour empiler les arguments */
-  esp = (virtaddr_t*)(stack_base+stack_size);
- 
+  esp = (virtaddr_t*)(stack_base+CONST_PAGE_SIZE/2);
+
   /* Installe les registres de segments */
-  ctx->cs = CONST_KERN_CS_SELECTOR;
-  ctx->ds = CONST_KERN_DS_SELECTOR;
-  ctx->es = CONST_KERN_ES_SELECTOR;
-  ctx->ss = CONST_KERN_SS_SELECTOR;
+  ctx->cs = (ring == CONST_RING0 ? CONST_KERN_CS_SELECTOR : CONST_USER_CS_SELECTOR);
+  ctx->ds = (ring == CONST_RING0 ? CONST_KERN_DS_SELECTOR : CONST_USER_DS_SELECTOR);
+  ctx->es = (ring == CONST_RING0 ? CONST_KERN_ES_SELECTOR : CONST_USER_ES_SELECTOR);
+  ctx->ss = (ring == CONST_RING0 ? CONST_KERN_SS_SELECTOR : CONST_USER_SS_SELECTOR);
 
   /* Positionne un faux code d erreur */
   ctx->error_code = THREAD_CPU_FEC;
@@ -283,24 +345,32 @@ PUBLIC u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* 
   ctx->eflags = (1<<THREAD_CPU_INTFLAG_SHIFT);
 
 
-  /* Pointe EIP sur la fonction trampoline */
-  ctx->eip = (reg32_t)thread_cpu_trampoline;
+  /* Pointe EIP sur le point d entree */
+  ctx->eip = (reg32_t)start_entry;
 
-  /* Empile les arguments */
-  *(--esp) = (virtaddr_t)exit_arg;
-  *(--esp) = exit_entry;
-  *(--esp) = (virtaddr_t)start_arg;
-  *(--esp) = start_entry;
-  /* Fausse adresse de retour pour la fonction de trampoline */
-  *(--esp) = 0;
+  /* Utilisation d un trampoline (ring0) */
+  if (ring == CONST_RING0)
+    {
+      /* Pointe EIP sur le trampoline */
+      ctx->eip = (reg32_t)thread_cpu_trampoline;
 
-  /* Simule une pile interrompue (le switch passe par une interruption logicielle) */
-  *(--esp) = ctx->eflags;
-  *(--esp) = CONST_KERN_CS_SELECTOR;
-  *(--esp) = ctx->eip;
-  *(--esp) = ctx->error_code;
-  *(--esp) = 0;
+      /* Arguments du trampoline */
+      *(--esp) = (virtaddr_t)exit_arg;
+      *(--esp) = exit_entry;
+      *(--esp) = (virtaddr_t)start_arg;
+      *(--esp) = start_entry;
+  
+      /* Fausse adresse de retour pour la fonction de trampoline */
+      *(--esp) = 0;
+    
 
+      /* Simule une pile interrompue (le switch passe par une interruption logicielle sans changement de pile pour le ring0) */
+      *(--esp) = ctx->eflags;
+      *(--esp) = CONST_KERN_CS_SELECTOR;
+      *(--esp) = ctx->eip;
+      *(--esp) = ctx->error_code;
+      *(--esp) = 0;
+    }
   /* Installe la pile */
   ctx->esp = (reg32_t)esp;
 
@@ -335,12 +405,12 @@ PUBLIC void thread_switch_to(struct thread* th)
  *========================================================================*/
 
 
-PUBLIC void thread_cpu_postsave(reg32_t ss, reg32_t* esp)
+PUBLIC void thread_cpu_postsave(struct thread* th, reg32_t* esp)
 {
 
   
   /* Traitement si pas changement de privileges (Note: SS est sur 16bits) */
-  if ((ss & 0xFF) == CONST_KERN_SS_SELECTOR)
+  if ((th->cpu.ss & 0xFF) == CONST_KERN_SS_SELECTOR)
     {
       /* Recupere les registres oublies */
       cur_th->cpu.ret_addr = *(esp);
@@ -350,9 +420,8 @@ PUBLIC void thread_cpu_postsave(reg32_t ss, reg32_t* esp)
       cur_th->cpu.eflags = *(esp+4);
       cur_th->cpu.esp = (reg32_t)(esp);
       cur_th->cpu.ss = CONST_KERN_SS_SELECTOR;
-
     }
-  
+   
   return;
 }
 

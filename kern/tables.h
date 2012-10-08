@@ -32,12 +32,6 @@
 
 #define TABLES_SHIFT_SELECTOR      3    /* INDEX << SHIFT_SELECTOR = SELECTOR */
 
-/* Rings */
-
-#define TABLES_RING0   0
-#define TABLES_RING1   1
-#define TABLES_RING2   2
-#define TABLES_RING3   3
 
 /* Limite des segments  */
 

@@ -31,9 +31,13 @@
 #define	CONST_USER_ES_SELECTOR	     35   /*  ES = 0000000000100  0  11   =  16 */
 #define	CONST_USER_SS_SELECTOR	     35   /*  SS = 0000000000100  0  11   =  16 */
 
+#define CONST_RING0                  0
+#define CONST_RING1                  1
+#define CONST_RING2                  2
+#define CONST_RING3                  3
+
 #define CONST_TSS_SELECTOR           40   /* TSS = 0000000000101  0  00   =  24 */
 
 #define CONST_KERN_HIGHMEM           (1<<30)
-
 
 #endif

@@ -250,7 +250,7 @@ save_ctx:
 	mov	es,ax			; note: FS & GS ne sont pas utilises par le noyau
 
 	push	dword [save_esp]	; Empile le pointeur de pile
-	push	ss			; Empile le stack segment
+	push 	dword [cur_th]		; Empile le thread courant
 	call	thread_cpu_postsave 	; Passe par le C pour finaliser le contexte
 	add	esp,8			; Depile les arguments
 
@@ -264,7 +264,7 @@ save_ctx:
 	;;======================================================================== 
 
 	
-restore_ctx:	
+restore_ctx:
 	mov 	esp, [cur_th]
 	o16 pop gs		; Restaure les registres
 	o16 pop fs		; sauves par save_ctx
