@@ -9,6 +9,7 @@
 #include "klib.h"
 #include "interrupt.h"
 #include "pic.h"
+#include "thread.h"
 #include "irq.h"
 
 

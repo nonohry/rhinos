@@ -51,7 +51,7 @@ extern	cur_ctx				; Contexte courant
 extern	cur_th				; Thread courant	
 extern	thread_cpu_postsave		; Posttraitement de la sauvegarde de context en C	
 extern	syscall_handle			; Gestion des appels systemes en C
-	
+
 
 	;;========================================================================
 	;; Constantes
@@ -253,7 +253,6 @@ save_ctx:
 	push 	dword [cur_th]		; Empile le thread courant
 	call	thread_cpu_postsave 	; Passe par le C pour finaliser le contexte
 	add	esp,8			; Depile les arguments
-
 	
 	mov	eax,dword [save_esp] 	; La pile sauvee pointe sur l adresse de retour
 	jmp	[eax]		     	; Saute a l adresse de retour
@@ -275,7 +274,7 @@ restore_ctx:
 	cmp 	dword [esp+THREAD_CS_OFFSET], KERN_CS_SELECTOR 	; Teste si le contexte est un contexte noyau
 	jne 	restore_ctx_next	    			; Saute a la suite si ce n'est pas le cas
 	mov 	esp, dword [esp+THREAD_ESP_OFFSET]	    	; Retourne sur la pile interrompue (qui contient les bonnes infos pour iret) sinon
-
+	
 restore_ctx_next:
 	add 	esp,4		; Depile l adresse de retour de save_ctx
 	add 	esp,4		; Depile le code d erreur

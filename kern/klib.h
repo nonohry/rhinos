@@ -36,6 +36,7 @@ EXTERN void klib_flush_tlb(void);
 EXTERN void klib_invlpg(virtaddr_t);
 EXTERN void klib_mem_set(u32_t, addr_t, u32_t);
 EXTERN void klib_mem_copy(addr_t, addr_t, u32_t);
+EXTERN void klib_sti(void);
 EXTERN void klib_idle(void);
 
 PUBLIC void klib_serial_init(void);

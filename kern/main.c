@@ -26,8 +26,16 @@
 
 void userThread()
 {
+  int a;
+  char str[800];
+
   while(1)
-    {}
+    {
+      a=9;
+      a++;
+      str[a]='t';
+    }
+
   return;
 }
 
@@ -198,15 +206,19 @@ PUBLIC int main()
 // sched_enqueue(SCHED_RUNNING_QUEUE,th_calc);
 // 
 
+
   struct thread* th_user;
   virtaddr_t vaddr;
   physaddr_t paddr;
 
-  vaddr = (virtaddr_t)virtmem_buddy_alloc(CONST_PAGE_SIZE,VIRT_BUDDY_NOMAP);
-  if ((void*)vaddr == NULL)
-    {
-      goto err00;
-    }
+//  vaddr = (virtaddr_t)virtmem_buddy_alloc(CONST_PAGE_SIZE,VIRT_BUDDY_NOMAP);
+//  if ((void*)vaddr == NULL)
+//    {
+//      goto err00;
+//    }
+//
+
+  vaddr = (1<<31);
   
   paddr = (physaddr_t)phys_alloc(CONST_PAGE_SIZE);
   if (!paddr)
@@ -218,19 +230,19 @@ PUBLIC int main()
     {
       goto err00;
     }
-
+  
   klib_mem_copy((addr_t)userThread,(addr_t)vaddr,50);
   th_user = thread_create("User_thread",THREAD_ID_DEFAULT,(virtaddr_t)vaddr,NULL,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT,CONST_RING3);
-   if (th_user == NULL)
-  {
-    goto err00;
-  }
+  if (th_user == NULL)
+    {
+      goto err00;
+    }
+  
+  sched_dequeue(SCHED_READY_QUEUE,kern_th);
+  sched_enqueue(SCHED_RUNNING_QUEUE,kern_th);
+  
 
-  sched_dequeue(SCHED_READY_QUEUE,thread_idle);
-  sched_enqueue(SCHED_RUNNING_QUEUE,thread_idle);
-
-
-  /* Initialisation du gestionnaire des IRQ */
+   /* Initialisation du gestionnaire des IRQ */
   if ( irq_init() != EXIT_SUCCESS )
     {
       goto err00;
@@ -243,6 +255,9 @@ PUBLIC int main()
       goto err00;
     }
   klib_printf("Clock (100Hz) initialized\n");
+
+  /* Restaure les interruptions */
+  klib_sti();
 
    /* On ne doit plus arriver ici (sauf DEBUG ou erreur) */
  err00:

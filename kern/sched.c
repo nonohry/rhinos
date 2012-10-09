@@ -72,7 +72,7 @@ PUBLIC u8_t sched_enqueue(u8_t queue, struct thread* th)
     
     case SCHED_RUNNING_QUEUE:
       
-       LLIST_ADD(sched_running, th);
+      LLIST_ADD(sched_running, th);
       th->state = THREAD_RUNNING;
       break;
 
@@ -130,7 +130,7 @@ PUBLIC u8_t sched_dequeue(u8_t queue, struct thread* th)
       break;
 
     case SCHED_READY_QUEUE:
-       LLIST_REMOVE(sched_ready[th->sched.dynamic_prio], th);
+      LLIST_REMOVE(sched_ready[th->sched.dynamic_prio], th);
       break;
 
     case SCHED_BLOCKED_QUEUE:
@@ -175,7 +175,7 @@ PUBLIC void sched_schedule(u8_t flag)
     {
       return;
     }
- 
+
   /* Decremente son quantum dynamique si appel par le PIT */
   if (flag == SCHED_FROM_PIT)
     {
@@ -185,7 +185,7 @@ PUBLIC void sched_schedule(u8_t flag)
 
   /* Trouve la file de plus haute priorite */
   high_prio = sched_get_higher_prio_queue();
-
+    
   /* Avec cette condition, une tache de plus haute priorite est qd meme stoppee en fin de quantum  */
   if ( (cur_th->sched.dynamic_quantum<0) || (high_prio > cur_th->sched.dynamic_prio) || (cur_th->next_state != THREAD_READY) )
     {
@@ -216,13 +216,15 @@ PUBLIC void sched_schedule(u8_t flag)
 	  break;
 	}
 
-      
+
+
       /* Choisis un nouveau thread */
       new_th = LLIST_GETHEAD(sched_ready[high_prio]);
       if (new_th == NULL)
 	{
 	  return;
 	}
+
          
       /* Change le nouveau thread de queue */
       sched_dequeue(SCHED_READY_QUEUE,new_th);
@@ -322,7 +324,7 @@ PRIVATE void sched_enqueue_staircase(struct thread* th)
 PRIVATE u8_t sched_get_higher_prio_queue(void)
 {
   u8_t i;
-
+  
   /* Parcourt simplement les files de la ready queue */  
   for(i=SCHED_PRIO_MAX;(i!=0)&&(LLIST_ISNULL(sched_ready[i]));i--)
     {}

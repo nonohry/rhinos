@@ -65,7 +65,7 @@ PUBLIC u8_t paging_init(void)
       klib_mem_set(0,(addr_t)table,PAGING_ENTRIES*sizeof(struct pte));
     }
 
-
+  
   for(p=PAGING_ALIGN_INF(0);
       p<PAGING_ALIGN_SUP(bootinfo->kern_end);
       p+=CONST_PAGE_SIZE)

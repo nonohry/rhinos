@@ -11,6 +11,7 @@ global klib_flush_tlb
 global klib_invlpg	
 global klib_mem_set
 global klib_mem_copy	
+global klib_sti
 global klib_idle
 	
 	
@@ -299,6 +300,24 @@ klib_mem_copy:
 	pop	ebp		; Restaure EBP
 	ret
 
+
+	;;========================================================================
+	;; klib_sti(void)
+	;;========================================================================
+	
+
+klib_sti:
+	push 	ebp         	; Sauvegarde de EBP
+	mov  	ebp,esp 	; Mise en place de la base
+	push	esi		; Sauvegarde ESI (Requis par GCC)
+	push	edi		; Sauvegarde EDI (Requis par GCC)
+	sti			; Restaure les interruptions
+	pop	edi		; Restaure EDI
+	pop	esi		; Restaure ESI
+	mov	esp,ebp		; Restaure la pile
+	pop	ebp		; Restaure EBP
+	ret
+	
 	
 	;;========================================================================
 	;; Idle thread

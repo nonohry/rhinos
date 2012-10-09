@@ -36,7 +36,7 @@
 #define CONST_RING2                  2
 #define CONST_RING3                  3
 
-#define CONST_TSS_SELECTOR           40   /* TSS = 0000000000101  0  00   =  24 */
+#define CONST_TSS_SELECTOR           40   /* TSS = 0000000000101  0  00   =  40 */
 
 #define CONST_KERN_HIGHMEM           (1<<30)
 

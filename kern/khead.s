@@ -31,6 +31,9 @@ _start:
 	
 	lgdt	[gdt_desc]	; Charge la nouvelle GDT
     	lidt	[idt_desc]	; Charge l IDT
+
+	mov	ax,TSS_SELECTOR ; Charge le TSS
+	ltr	ax
 	
 	jmp	next		; Vide les caches processeurs
 
@@ -44,8 +47,7 @@ next:
 	mov     ax,SS_SELECTOR	;
 	mov     ss,ax   	; segments
 	mov	esp,kstack_top	;
- 	sti			; Restaure les interruptions
-
+ 
 	jmp	CS_SELECTOR:main
 
 
@@ -68,6 +70,13 @@ next:
 	ES_SELECTOR	equ	16 ; ES  = 00000010  0  00   = (byte) 16
 	SS_SELECTOR	equ	16 ; SS  = 00000010  0  00   = (byte) 16
 
+	;;
+	;; Tss Selector
+	;; 
+
+	
+	TSS_SELECTOR	equ 	40 ; TSS = 0000000000101  0  00   =  40 */
+	
 	;;
 	;; Donnees de la pile noyau
 	;;

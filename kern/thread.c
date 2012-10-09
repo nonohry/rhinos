@@ -70,6 +70,16 @@ PUBLIC u8_t thread_init(void)
     }
 
   kern_th->cpu.ss = CONST_KERN_SS_SELECTOR;
+  kern_th->name[0] = '[';
+  kern_th->name[1] = 'K';
+  kern_th->name[2] = 'e';
+  kern_th->name[3] = 'r';
+  kern_th->name[4] = 'n';
+  kern_th->name[5] = ']';
+  kern_th->name[6] = 0;
+
+  kern_th->state = THREAD_RUNNING;
+  kern_th->next_state = THREAD_DEAD;
 
   /* la coquille noyau devient le thread courant */
   cur_th = kern_th;
@@ -142,7 +152,12 @@ PUBLIC struct thread* thread_create(const char* name, s32_t id, virtaddr_t start
   else {
     
     /* Mappage de la pile en ring3 */
-    th->stack_base = (virtaddr_t)virtmem_buddy_alloc(CONST_PAGE_SIZE,VIRT_BUDDY_NOMAP);
+
+    /************************
+     * TODOOOOOOOOOOOOO
+     ************************/
+
+    th->stack_base = 0x80001000;
     if ((void*)th->stack_base == NULL)
       {
 	goto err01;
@@ -330,7 +345,7 @@ PUBLIC u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* 
   /* Nettoie la pile */
   klib_mem_set(0,(addr_t)stack_base,CONST_PAGE_SIZE);
   /* Recupere l'adresse de pile pour empiler les arguments */
-  esp = (virtaddr_t*)(stack_base+CONST_PAGE_SIZE/2);
+  esp = (virtaddr_t*)(stack_base+CONST_PAGE_SIZE);
 
   /* Installe les registres de segments */
   ctx->cs = (ring == CONST_RING0 ? CONST_KERN_CS_SELECTOR : CONST_USER_CS_SELECTOR);
@@ -363,14 +378,17 @@ PUBLIC u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* 
       /* Fausse adresse de retour pour la fonction de trampoline */
       *(--esp) = 0;
     
-
+    
       /* Simule une pile interrompue (le switch passe par une interruption logicielle sans changement de pile pour le ring0) */
       *(--esp) = ctx->eflags;
       *(--esp) = CONST_KERN_CS_SELECTOR;
       *(--esp) = ctx->eip;
+    
       *(--esp) = ctx->error_code;
       *(--esp) = 0;
     }
+    
+
   /* Installe la pile */
   ctx->esp = (reg32_t)esp;
 
@@ -392,7 +410,7 @@ PUBLIC void thread_switch_to(struct thread* th)
       cur_th = th;
       
       /* Positionne le tss */
-      tss.esp0 = (u32_t)th;
+      tss.esp0 = (u32_t)th+sizeof(struct cpu_info);
 
     }
 
@@ -408,7 +426,7 @@ PUBLIC void thread_switch_to(struct thread* th)
 PUBLIC void thread_cpu_postsave(struct thread* th, reg32_t* esp)
 {
 
-  
+
   /* Traitement si pas changement de privileges (Note: SS est sur 16bits) */
   if ((th->cpu.ss & 0xFF) == CONST_KERN_SS_SELECTOR)
     {
