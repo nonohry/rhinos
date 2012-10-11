@@ -191,36 +191,27 @@ PUBLIC int main()
 
   /* Tests threads */
 
-// struct thread* th_add;
-// struct thread* th_calc;
-// struct thread* th_mult;
-//
-//
-// th_add = thread_create("Add_thread",THREAD_ID_DEFAULT,(virtaddr_t)Add,(void*)12,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT,CONST_RING0);
-// th_calc = thread_create("Calc_thread",THREAD_ID_DEFAULT,(virtaddr_t)Calc,(void*)IPC_ANY,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT,CONST_RING0);
-// th_mult = thread_create("Mult_thread",THREAD_ID_DEFAULT,(virtaddr_t)Mult,(void*)15,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT,CONST_RING0);
-//
-//
-// /* Simule un ordonnancement */
-// sched_dequeue(SCHED_READY_QUEUE,th_calc);
-// sched_enqueue(SCHED_RUNNING_QUEUE,th_calc);
-// 
-
-
+  struct thread* th_add;
+  struct thread* th_calc;
+  struct thread* th_mult;
   struct thread* th_user;
   virtaddr_t v_entry, v_stack;
   physaddr_t paddr;
+   
+  th_add = thread_create_kern("Add_thread",THREAD_ID_DEFAULT,(virtaddr_t)Add,(void*)12,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
+  th_calc = thread_create_kern("Calc_thread",THREAD_ID_DEFAULT,(virtaddr_t)Calc,(void*)IPC_ANY,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
+  th_mult = thread_create_kern("Mult_thread",THREAD_ID_DEFAULT,(virtaddr_t)Mult,(void*)15,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
+  //
+  //
+  // /* Simule un ordonnancement */
+  // sched_dequeue(SCHED_READY_QUEUE,th_calc);
+  // sched_enqueue(SCHED_RUNNING_QUEUE,th_calc);
+  // 
 
-//  vaddr = (virtaddr_t)virtmem_buddy_alloc(CONST_PAGE_SIZE,VIRT_BUDDY_NOMAP);
-//  if ((void*)vaddr == NULL)
-//    {
-//      goto err00;
-//    }
-//
 
   v_entry = 0x80000000; /* == (1<31) */
   v_stack = 0x80001000;
-
+ 
   paddr = (physaddr_t)phys_alloc(CONST_PAGE_SIZE);
   if (!paddr)
     {
@@ -255,7 +246,7 @@ PUBLIC int main()
   sched_enqueue(SCHED_RUNNING_QUEUE,kern_th);
   
 
-   /* Initialisation du gestionnaire des IRQ */
+  /* Initialisation du gestionnaire des IRQ */
   if ( irq_init() != EXIT_SUCCESS )
     {
       goto err00;
@@ -272,7 +263,7 @@ PUBLIC int main()
   /* Restaure les interruptions */
   klib_sti();
 
-   /* On ne doit plus arriver ici (sauf DEBUG ou erreur) */
+  /* On ne doit plus arriver ici (sauf DEBUG ou erreur) */
  err00:
 
   while(1)
