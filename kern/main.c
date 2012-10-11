@@ -170,7 +170,15 @@ PUBLIC int main()
     {
       goto err00;
     }
-  klib_printf("Kernel Threads initialized\n");
+  klib_printf("Threads initialized\n");
+
+
+  /* Initialisation des processes */
+  if ( proc_init() != EXIT_SUCCESS )
+    {
+      goto err00;
+    }
+  klib_printf("Processes initialized\n");
 
 
   /* Initialisation de l ordonannceur */
