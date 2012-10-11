@@ -27,7 +27,7 @@
 
 PRIVATE struct vmem_cache* proc_cache;
 PRIVATE struct vmem_cache* thread_info_cache;
-
+PRIVATE struct vmem_cache* pd_cache;
 
 
 /*========================================================================
@@ -48,6 +48,12 @@ PUBLIC u8_t proc_init(void)
  
   thread_info_cache = virtmem_cache_create("thread_info_cache",sizeof(struct thread_info),0,0,VIRT_CACHE_DEFAULT,NULL,NULL);
   if (thread_info_cache == NULL)
+    {
+      return EXIT_FAILURE;
+    }
+
+  pd_cache = virtmem_cache_create("pd_cache",PAGING_ENTRIES*sizeof(struct pde),0,0,VIRT_CACHE_DEFAULT,NULL,NULL);
+  if (pd_cache == NULL)
     {
       return EXIT_FAILURE;
     }
