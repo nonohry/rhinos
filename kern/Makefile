@@ -20,7 +20,7 @@ CFLAGS	=	-I../include
 
 ASM_SRC	=	khead.s klib_s.s interrupt.s
 ASM_OUT	=	${ASM_SRC:.s=.o}
-C_SRC	=	start.c seg.c tables.c pic.c pit.c irq.c exceptions.c physmem.c paging.c virtmem_buddy.c virtmem_slab.c virtmem.c thread.c sched.c syscall.c klib_c.c main.c 
+C_SRC	=	start.c seg.c tables.c pic.c pit.c irq.c exceptions.c physmem.c paging.c virtmem_buddy.c virtmem_slab.c virtmem.c thread.c sched.c syscall.c klib_c.c proc.c main.c 
 C_OUT	=	${C_SRC:.c=.o}
 OBJ	=	$(ASM_OUT) $(C_OUT)
 
@@ -71,6 +71,8 @@ syscall.o: ../include/types.h ../include/llist.h ../include/ipc.h const.h
 syscall.o: klib.h thread.h sched.h physmem.h virtmem_slab.h virtmem_buddy.h
 syscall.o: virtmem.h paging.h syscall.h
 klib_c.o: ../include/types.h klib.h const.h
+proc.o: ../include/types.h ../include/llist.h const.h thread.h
+proc.o: ../include/ipc.h klib.h virtmem_slab.h paging.h proc.h
 main.o: ../include/types.h ../include/llist.h const.h start.h klib.h
 main.o: physmem.h virtmem_slab.h virtmem_buddy.h paging.h virtmem.h thread.h
 main.o: ../include/ipc.h sched.h irq.h interrupt.h pit.h
