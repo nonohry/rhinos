@@ -182,7 +182,7 @@ PUBLIC int main()
 
 
   /* Idle Thread */
-  thread_idle = thread_create("[Idle]",THREAD_ID_DEFAULT,(virtaddr_t)klib_idle,NULL,THREAD_NICE_TOP,THREAD_QUANTUM_DEFAULT,CONST_RING0);
+  thread_idle = thread_create_kern("[Idle]",THREAD_ID_DEFAULT,(virtaddr_t)klib_idle,NULL,THREAD_NICE_TOP,THREAD_QUANTUM_DEFAULT);
   if ( thread_idle == NULL )
     {
       goto err00;
@@ -208,7 +208,7 @@ PUBLIC int main()
 
 
   struct thread* th_user;
-  virtaddr_t vaddr;
+  virtaddr_t v_entry, v_stack;
   physaddr_t paddr;
 
 //  vaddr = (virtaddr_t)virtmem_buddy_alloc(CONST_PAGE_SIZE,VIRT_BUDDY_NOMAP);
@@ -218,21 +218,34 @@ PUBLIC int main()
 //    }
 //
 
-  vaddr = (1<<31);
-  
+  v_entry = 0x80000000; /* == (1<31) */
+  v_stack = 0x80001000;
+
   paddr = (physaddr_t)phys_alloc(CONST_PAGE_SIZE);
   if (!paddr)
     {
       goto err00;
     }
   
-  if (paging_map(vaddr,paddr,PAGING_USER) == EXIT_FAILURE)
+  if (paging_map(v_entry,paddr,PAGING_USER) == EXIT_FAILURE)
+    {
+      goto err00;
+    }
+
+  paddr = (physaddr_t)phys_alloc(CONST_PAGE_SIZE);
+  if (!paddr)
     {
       goto err00;
     }
   
-  klib_mem_copy((addr_t)userThread,(addr_t)vaddr,50);
-  th_user = thread_create("User_thread",THREAD_ID_DEFAULT,(virtaddr_t)vaddr,NULL,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT,CONST_RING3);
+  if (paging_map(v_stack,paddr,PAGING_USER) == EXIT_FAILURE)
+    {
+      goto err00;
+    }
+  
+  klib_mem_copy((addr_t)userThread,(addr_t)v_entry,50);
+
+  th_user = thread_create_user("User_thread",THREAD_ID_DEFAULT,v_entry,v_stack,CONST_PAGE_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
   if (th_user == NULL)
     {
       goto err00;

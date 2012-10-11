@@ -100,12 +100,11 @@ PUBLIC u8_t thread_init(void)
  *========================================================================*/
 
 
-PUBLIC struct thread* thread_create(const char* name, s32_t id, virtaddr_t start_entry, void* start_arg, s8_t nice_level, u8_t quantum, u8_t ring)
+PUBLIC struct thread* thread_create_kern(const char* name, s32_t id, virtaddr_t start_entry, void* start_arg, s8_t nice_level, u8_t quantum)
 {
   struct thread* th;
   struct id_info* thID;
-  physaddr_t paddr;
-   u8_t i;
+  u8_t i;
 
   /* Controles */
   if ( (start_entry == 0)
@@ -115,19 +114,7 @@ PUBLIC struct thread* thread_create(const char* name, s32_t id, virtaddr_t start
       return NULL;
     }
 
-  /* Rings autorises */
-  if ( (ring != CONST_RING0)&&(ring != CONST_RING3) )
-    {
-      return NULL;
-    }
-       
-  /* Cas ring 3: pas d'arguments */
-  if ( (ring==CONST_RING3)&&(start_arg!=NULL) )
-    {
-      return NULL;
-    }
-
-   /* Allocation dans les cache */
+  /* Allocation dans les cache */
   th = (struct thread*)virtmem_cache_alloc(thread_cache,VIRT_CACHE_DEFAULT);
   if ( th == NULL )
     {
@@ -141,47 +128,17 @@ PUBLIC struct thread* thread_create(const char* name, s32_t id, virtaddr_t start
     }
   
   /* Alloue la pile */
-  if (ring == CONST_RING0)
+  th->stack_base = (virtaddr_t)virt_alloc(CONST_PAGE_SIZE);
+  if ((void*)th->stack_base == NULL)
     {
-      th->stack_base = (virtaddr_t)virt_alloc(CONST_PAGE_SIZE);
-      if ((void*)th->stack_base == NULL)
-	{
-	  goto err01;
-	}
+      goto err01;
     }
-  else {
-    
-    /* Mappage de la pile en ring3 */
-
-    /************************
-     * TODOOOOOOOOOOOOO
-     ************************/
-
-    th->stack_base = 0x80001000;
-    if ((void*)th->stack_base == NULL)
-      {
-	goto err01;
-      }
-
-    paddr = (physaddr_t)phys_alloc(CONST_PAGE_SIZE);
-    if (!paddr)
-      {
-	goto err01;
-      }
-    
-    
-    if (paging_map(th->stack_base,paddr,PAGING_USER) == EXIT_FAILURE)
-      {
-	goto err01;
-      }
-  }
-
-
+  
   /* Definit la taille de la pile */
   th->stack_size = CONST_PAGE_SIZE;
 
   /* Initialise le contexte */
-  if (thread_cpu_init((struct cpu_info*)th,start_entry,start_arg,(virtaddr_t)thread_exit,(void*)th,th->stack_base,ring) != EXIT_SUCCESS)
+  if (thread_cpu_init((struct cpu_info*)th,start_entry,start_arg,(virtaddr_t)thread_exit,(void*)th,th->stack_base,th->stack_size,CONST_RING0) != EXIT_SUCCESS)
     {
       goto err02;
     }
@@ -246,16 +203,124 @@ PUBLIC struct thread* thread_create(const char* name, s32_t id, virtaddr_t start
 
  err02:
   /* Libere la pile */
-  if (ring == CONST_RING0)
+  virt_free((void*)th->stack_base);
+  
+ err01:
+  /* Libere le id_info */
+  virtmem_cache_free(id_info_cache,thID);
+
+ err00:
+  /* Libere le thread */
+  virtmem_cache_free(thread_cache,th);
+
+  /* retour */
+  return NULL;
+
+}
+
+
+/*========================================================================
+ * Creation d un thread utilisateur
+ *========================================================================*/
+
+
+PUBLIC struct thread* thread_create_user(const char* name, s32_t id, virtaddr_t start_entry, virtaddr_t stack_base, u32_t stack_size, s8_t nice_level, u8_t quantum)
+{
+  struct thread* th;
+  struct id_info* thID;
+  u8_t i;
+  
+  /* Controles */
+  if ( (start_entry == 0)
+       || (nice_level > THREAD_NICE_TOP)
+       || (nice_level < THREAD_NICE_BOTTOM) 
+       || (stack_base == 0)
+       || (stack_size == 0) )
     {
-      virt_free((void*)th->stack_base);
+      return NULL;
     }
+
+  /* Allocation dans les cache */
+  th = (struct thread*)virtmem_cache_alloc(thread_cache,VIRT_CACHE_DEFAULT);
+  if ( th == NULL )
+    {
+      return NULL;
+    }
+ 
+  thID = (struct id_info*)virtmem_cache_alloc(id_info_cache,VIRT_CACHE_DEFAULT);
+  if (thID == NULL)
+    {
+      goto err00;
+    }
+  
+  th->stack_base = stack_base;
+
+  /* Definit la taille de la pile */
+  th->stack_size = stack_size;
+
+  /* Initialise le contexte */
+  if (thread_cpu_init((struct cpu_info*)th,start_entry,NULL,(virtaddr_t)thread_exit,(void*)th,th->stack_base,th->stack_size,CONST_RING3) != EXIT_SUCCESS)
+    {
+      goto err01;
+    }
+
+
+  /* Copie du nom */
+  i=0;
+  while( (name[i]!=0)&&(i<THREAD_NAMELEN-1) )
+    {
+      th->name[i] = name[i];
+      i++;
+    }
+  th->name[i]=0;
+
+  /* Etats */
+  th->state = THREAD_READY;
+  th->next_state = THREAD_READY;
+
+  /* Nice Level */
+  th->nice = nice_level;
+
+  /* Priorite */
+  th->sched.static_prio = THREAD_NICE2PRIO(nice_level);
+  th->sched.dynamic_prio = th->sched.static_prio;
+  th->sched.head_prio = th->sched.static_prio;
+
+  /* Quantum */
+  th->sched.static_quantum = quantum;
+  th->sched.dynamic_quantum = quantum;
+
+  /* Chainage */
+  sched_enqueue(SCHED_READY_QUEUE,th);
+
+  /* ID */
+  if (id == THREAD_ID_DEFAULT)
+    {
+      thID->id = thread_IDs;
+      thread_IDs++;
+     }
   else
     {
-      /* paging_unmap liberera la page physique */
-      paging_unmap((virtaddr_t)th->stack_base);
-      virtmem_buddy_free((void*)th->stack_base);
+      thID->id = id;
     }
+  thID->thread = th;
+
+  /* Back pointer ID */
+  th->id = thID;
+
+  /* Chainage ID */
+  LLIST_ADD(thread_hashID[THREAD_HASHID_FUNC(thID->id)],thID);
+
+  /* IPC */
+  th->ipc.send_to = NULL;
+  th->ipc.send_message = NULL;
+  th->ipc.receive_from = NULL;
+  th->ipc.receive_message = NULL;
+  LLIST_NULLIFY(th->ipc.receive_waitlist);
+
+
+  /* Retour */
+  return th;
 
  err01:
   /* Libere le id_info */
@@ -316,7 +381,7 @@ PUBLIC u8_t thread_destroy(struct thread* th)
  *========================================================================*/
 
 
-PUBLIC u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* start_arg, virtaddr_t exit_entry, void* exit_arg, virtaddr_t stack_base, u8_t ring)
+PUBLIC u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* start_arg, virtaddr_t exit_entry, void* exit_arg, virtaddr_t stack_base, u32_t stack_size, u8_t ring)
 {
   
   virtaddr_t* esp;
@@ -325,6 +390,7 @@ PUBLIC u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* 
   if ( (start_entry == 0)
        || (exit_entry == 0)
        || (stack_base == 0)
+       || (stack_size == 0)
        || (ctx == NULL) )
     {
       return EXIT_FAILURE;
@@ -343,9 +409,9 @@ PUBLIC u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* 
     }
 
   /* Nettoie la pile */
-  klib_mem_set(0,(addr_t)stack_base,CONST_PAGE_SIZE);
+  klib_mem_set(0,(addr_t)stack_base,stack_size);
   /* Recupere l'adresse de pile pour empiler les arguments */
-  esp = (virtaddr_t*)(stack_base+CONST_PAGE_SIZE);
+  esp = (virtaddr_t*)(stack_base+stack_size);
 
   /* Installe les registres de segments */
   ctx->cs = (ring == CONST_RING0 ? CONST_KERN_CS_SELECTOR : CONST_USER_CS_SELECTOR);

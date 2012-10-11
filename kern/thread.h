@@ -161,10 +161,11 @@ PUBLIC struct thread* cur_th;
 PUBLIC struct thread* kern_th;
 
 PUBLIC u8_t thread_init(void);
-PUBLIC struct thread* thread_create(const char* name, s32_t id, virtaddr_t start_entry, void* start_arg, s8_t nice_level, u8_t quantum, u8_t ring);
+PUBLIC struct thread* thread_create_kern(const char* name, s32_t id, virtaddr_t start_entry, void* start_arg, s8_t nice_level, u8_t quantum);
+PUBLIC struct thread* thread_create_user(const char* name, s32_t id, virtaddr_t start_entry, virtaddr_t stack_base, u32_t stack_size, s8_t nice_level, u8_t quantum);
 PUBLIC u8_t thread_destroy(struct thread* th);
 PUBLIC void thread_switch_to(struct thread* th);
-PUBLIC u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* start_arg, virtaddr_t exit_entry, void* exit_arg, virtaddr_t stack_base, u8_t ring);
+PUBLIC u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* start_arg, virtaddr_t exit_entry, void* exit_arg, virtaddr_t stack_base, u32_t stack_size, u8_t ring);
 PUBLIC void thread_cpu_postsave(struct thread* th, reg32_t* esp);
 PUBLIC struct thread* thread_id2thread(s32_t n);
 
