@@ -15,6 +15,7 @@
 #include "const.h"
 #include "thread.h"
 #include "klib.h"
+#include "physmem.h"
 #include "virtmem_slab.h"
 #include "paging.h"
 #include "proc.h"
@@ -68,17 +69,18 @@ PUBLIC u8_t proc_init(void)
  *========================================================================*/
 
 
-PUBLIC u8_t proc_create(char* name)
+PUBLIC struct proc* proc_create(char* name)
 {
   struct proc* proc;
   struct pde*  pd;
-  u8_t i;
+  struct pde* kern_pd;
+  u16_t i;
 
   /* Allocation du processus */
   proc = (struct proc*)virtmem_cache_alloc(proc_cache,VIRT_CACHE_DEFAULT);
   if (proc == NULL)
     {
-      return EXIT_FAILURE;
+      return NULL;
     }
 
   /* Allocation du page directory */
@@ -110,9 +112,10 @@ PUBLIC u8_t proc_create(char* name)
   klib_mem_set(0,(addr_t)pd,PAGING_ENTRIES*sizeof(struct pde));
 
   /* Synchronise le page directory avec l espace noyau */
+  kern_pd = (struct pde*)PAGING_GET_PD();
   for(i=0;i<CONST_KERN_HIGHMEM/CONST_PAGE_SIZE/PAGING_ENTRIES;i++)
     {
-      pd[i] = kern_PD[i];
+      pd[i]=kern_pd[i];
     }
 
   /* Affecte le page directory */
@@ -129,10 +132,10 @@ PUBLIC u8_t proc_create(char* name)
   proc->v_pd[PAGING_SELFMAP].user = 0;
   proc->v_pd[PAGING_SELFMAP].baseaddr = proc->p_pd >> PAGING_BASESHIFT;
 
-
-  return EXIT_SUCCESS;
+  return proc;
 
  err01:
+  /* Libere le page directory */
   virtmem_cache_free(pd_cache,pd);
 
  err00:
@@ -140,7 +143,7 @@ PUBLIC u8_t proc_create(char* name)
    virtmem_cache_free(proc_cache,proc);
   
 
-  return EXIT_FAILURE;
+  return NULL;
 }
 
 

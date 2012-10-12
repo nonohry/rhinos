@@ -475,6 +475,14 @@ PUBLIC void thread_switch_to(struct thread* th)
     {
       cur_th = th;
       
+      /* Change le processus courant uniquement en cas de besoins */
+      if (cur_proc != th->proc)
+	{
+	  cur_proc = th->proc;
+	  /* Change l espace d adressage egalement */
+	  klib_load_CR3(cur_proc->p_pd);
+	}
+
       /* Positionne le tss */
       tss.esp0 = (u32_t)th+sizeof(struct cpu_info);
 

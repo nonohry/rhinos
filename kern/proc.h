@@ -61,7 +61,7 @@ PUBLIC struct proc
 
 
 PUBLIC u8_t proc_init(void);
-PUBLIC u8_t proc_create(char* name);
+PUBLIC struct proc* proc_create(char* name);
 PUBLIC u8_t proc_add_thread(struct proc* proc, struct thread* th);
 PUBLIC u8_t proc_remove_thread(struct proc* proc, struct thread* th);
 

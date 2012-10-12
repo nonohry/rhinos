@@ -18,6 +18,7 @@
 #include "virtmem.h"
 #include "thread.h"
 #include "sched.h"
+#include "proc.h"
 #include "irq.h"
 #include "pit.h"
 #include <ipc.h>
@@ -189,6 +190,28 @@ PUBLIC int main()
   klib_printf("Scheduler initialized\n");
 
 
+  /* Test Proc */
+
+  struct proc* kern_proc;
+  struct proc* user_proc;
+
+  kern_proc = (struct proc*)virt_alloc(sizeof(struct proc));
+  kern_proc->name[0] = 'k';
+  kern_proc->name[1] = 'e';
+  kern_proc->name[2] = 'r';
+  kern_proc->name[3] = 'n';
+  kern_proc->name[4] = '_';
+  kern_proc->name[5] = 'p';
+  kern_proc->name[6] = 'r';
+  kern_proc->name[7] = 'o';
+  kern_proc->name[8] = 'c';
+  kern_proc->name[9] = 0;
+  kern_proc->v_pd = (struct pde*)PAGING_GET_PD();
+  kern_proc->p_pd = paging_virt2phys((virtaddr_t)kern_proc->v_pd);
+  LLIST_NULLIFY(kern_proc->thread_list);
+ 
+  user_proc = proc_create("user_proc");
+ 
   /* Idle Thread */
   thread_idle = thread_create_kern("[Idle]",THREAD_ID_DEFAULT,(virtaddr_t)klib_idle,NULL,THREAD_NICE_TOP,THREAD_QUANTUM_DEFAULT);
   if ( thread_idle == NULL )
@@ -209,17 +232,17 @@ PUBLIC int main()
   th_add = thread_create_kern("Add_thread",THREAD_ID_DEFAULT,(virtaddr_t)Add,(void*)12,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
   th_calc = thread_create_kern("Calc_thread",THREAD_ID_DEFAULT,(virtaddr_t)Calc,(void*)IPC_ANY,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
   th_mult = thread_create_kern("Mult_thread",THREAD_ID_DEFAULT,(virtaddr_t)Mult,(void*)15,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
-  //
-  //
-  // /* Simule un ordonnancement */
-  // sched_dequeue(SCHED_READY_QUEUE,th_calc);
-  // sched_enqueue(SCHED_RUNNING_QUEUE,th_calc);
-  // 
 
 
+  /* Destinations arbitraire pour le code et la pile ustilisateur */
   v_entry = 0x80000000; /* == (1<31) */
   v_stack = 0x80001000;
- 
+
+  /* Se met sur le page directory du processus utilisateur (qui est synchro avec le noyau donc pas de soucis) pour le mapping */
+  klib_load_CR3(user_proc->p_pd);
+
+  /* Effectue les mappages dans ce nouvel espace d'adressage */
+
   paddr = (physaddr_t)phys_alloc(CONST_PAGE_SIZE);
   if (!paddr)
     {
@@ -241,15 +264,33 @@ PUBLIC int main()
     {
       goto err00;
     }
-  
+
+
+  /* Copie le code */  
   klib_mem_copy((addr_t)userThread,(addr_t)v_entry,50);
 
+  /* Cree le thread dans l'espace utilisateur (sinon, pas acces au point d entree ni a la pile) */
   th_user = thread_create_user("User_thread",THREAD_ID_DEFAULT,v_entry,v_stack,CONST_PAGE_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
   if (th_user == NULL)
     {
       goto err00;
     }
+
+  /* Retourne dans l'espace d'adressage noyau */
+  klib_load_CR3((physaddr_t)kern_PD);
+
+  /* Rentre tous les threads noyau dans le processus noyau */
+  proc_add_thread(kern_proc,kern_th);
+  proc_add_thread(kern_proc,thread_idle);
+  proc_add_thread(kern_proc,th_add);
+  proc_add_thread(kern_proc,th_mult);
+  proc_add_thread(kern_proc,th_calc);
+
+  /* Ajoute le thread user a proc user */
+  proc_add_thread(user_proc,th_user);
   
+  /* Affecte le processus courant et cree un ordonnancement initial */
+  cur_proc = kern_proc;
   sched_dequeue(SCHED_READY_QUEUE,kern_th);
   sched_enqueue(SCHED_RUNNING_QUEUE,kern_th);
   
