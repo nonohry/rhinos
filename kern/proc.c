@@ -62,3 +62,145 @@ PUBLIC u8_t proc_init(void)
   return EXIT_SUCCESS;
 }
 
+
+
+/*========================================================================
+ * Creation d'un processus
+ *========================================================================*/
+
+
+PUBLIC u8_t proc_create(char* name)
+{
+  struct proc* proc;
+  struct pde*  pd;
+  u8_t i;
+
+  /* Allocation du processus */
+  proc = (struct proc*)virtmem_cache_alloc(proc_cache,VIRT_CACHE_DEFAULT);
+  if (proc == NULL)
+    {
+      return EXIT_FAILURE;
+    }
+
+  /* Allocation du page directory */
+  pd = (struct pde*)virtmem_cache_alloc(pd_cache,VIRT_CACHE_DEFAULT);
+  if (!pd)
+    {
+      goto err00;
+    }
+
+  /* Petit controle du nom */
+  if (name == NULL)
+    {
+      name = "NONAME";
+    }
+
+  /* Copie du nom */
+  i=0;
+  while( (name[i]!=0)&&(i<PROC_NAMELEN-1) )
+    {
+      proc->name[i] = name[i];
+      i++;
+    }
+  proc->name[i]=0;
+
+  /* Initialisation de la liste de threads */
+  LLIST_NULLIFY(proc->thread_list);
+
+  /* Nettoie le page directory */
+  klib_mem_set(0,(addr_t)pd,PAGING_ENTRIES*sizeof(struct pde));
+
+  /* Synchronise le page directory avec l espace noyau */
+  for(i=0;i<CONST_KERN_HIGHMEM/CONST_PAGE_SIZE/PAGING_ENTRIES;i++)
+    {
+      pd[i] = kern_PD[i];
+    }
+
+  /* Affecte le page directory */
+  proc->v_pd = pd;
+  proc->p_pd = paging_virt2phys((virtaddr_t)pd);
+  if (!(proc->p_pd))
+    {
+      goto err01;
+    }
+
+  /* Self Mapping */
+  proc->v_pd[PAGING_SELFMAP].present = 1;
+  proc->v_pd[PAGING_SELFMAP].rw = 1;
+  proc->v_pd[PAGING_SELFMAP].user = 0;
+  proc->v_pd[PAGING_SELFMAP].baseaddr = proc->p_pd >> PAGING_BASESHIFT;
+
+
+  return EXIT_SUCCESS;
+
+ err01:
+  virtmem_cache_free(pd_cache,pd);
+
+ err00:
+  /* Libere le processus */
+   virtmem_cache_free(proc_cache,proc);
+  
+
+  return EXIT_FAILURE;
+}
+
+
+/*========================================================================
+ * Ajout d'un thread a un processus
+ *========================================================================*/
+
+
+PUBLIC u8_t proc_add_thread(struct proc* proc, struct thread* th)
+{
+  struct thread_info* thinfo;
+
+  if ( (th == NULL) || (proc == NULL) )
+    {
+      return EXIT_FAILURE;
+    }
+
+  /* Alloue un thread_info */
+  thinfo = (struct thread_info*)virtmem_cache_alloc(thread_info_cache,VIRT_CACHE_DEFAULT);
+  if (thinfo == NULL)
+    {
+      return EXIT_FAILURE;
+    }
+
+  thinfo->thread = th;
+  LLIST_ADD(proc->thread_list,thinfo);
+
+  return EXIT_SUCCESS;
+}
+
+
+/*========================================================================
+ * Retrait d'un thread d un processus
+ *========================================================================*/
+
+
+PUBLIC u8_t proc_remove_thread(struct proc* proc, struct thread* th)
+{
+  struct thread_info* thinfo;
+
+  if ( (th == NULL) || (proc == NULL) || LLIST_ISNULL(proc->thread_list) )
+    {
+      return EXIT_FAILURE;
+    }
+
+  /* Cherche le thread_info correspondant */
+  thinfo = LLIST_GETHEAD(proc->thread_list);
+  do
+    {
+      if (thinfo->thread == th)
+	{
+	  /* Enleve et libere le thread_info */
+	  LLIST_REMOVE(proc->thread_list, thinfo);
+	  virtmem_cache_free(thread_info_cache,thinfo);
+	  return EXIT_SUCCESS;
+	}
+      thinfo = LLIST_NEXT(proc->thread_list,thinfo);
+    }while(!LLIST_ISHEAD(proc->thread_list,thinfo));
+    
+
+  return EXIT_FAILURE;
+}
