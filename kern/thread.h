@@ -16,6 +16,7 @@
 #include <types.h>
 #include <ipc.h>
 #include "const.h"
+#include "proc.h"
 
 
 /*========================================================================
@@ -128,6 +129,7 @@ PUBLIC struct thread
   struct id_info* id;
   virtaddr_t stack_base;
   u32_t stack_size;
+  struct proc* proc;
   enum thread_state state;
   enum thread_state next_state;
   s8_t nice;

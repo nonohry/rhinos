@@ -166,7 +166,11 @@ PUBLIC u8_t proc_add_thread(struct proc* proc, struct thread* th)
       return EXIT_FAILURE;
     }
 
+  /* Back pointer du thread sur le processus */
+  th->proc = proc;
+  /* Affectation du thread au thread info */
   thinfo->thread = th;
+  /* Liaison aux threads du processus */
   LLIST_ADD(proc->thread_list,thinfo);
 
   return EXIT_SUCCESS;
