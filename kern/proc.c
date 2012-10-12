@@ -58,7 +58,6 @@ PUBLIC u8_t proc_init(void)
       return EXIT_FAILURE;
     }
 
-
   return EXIT_SUCCESS;
 }
 

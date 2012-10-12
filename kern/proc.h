@@ -59,7 +59,6 @@ PUBLIC struct proc
  * Prototypes
  *========================================================================*/
 
-PUBLIC struct proc* cur_proc;
 
 PUBLIC u8_t proc_init(void);
 PUBLIC u8_t proc_create(char* name);

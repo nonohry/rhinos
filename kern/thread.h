@@ -160,6 +160,7 @@ PUBLIC struct thread
 
 PUBLIC struct id_info* thread_hashID[THREAD_HASH_SIZE];
 PUBLIC struct thread* cur_th;
+PUBLIC struct proc* cur_proc;
 PUBLIC struct thread* kern_th;
 
 PUBLIC u8_t thread_init(void);
