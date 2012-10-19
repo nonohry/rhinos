@@ -1,14 +1,14 @@
 OUTPUT_FORMAT("binary")
-offset = 0x1000;
+offset = 0x80000000;
 ENTRY(_start)
 SECTIONS
 {	
-	/* Noyau Charge a 0x1000 */
+	/* Programme Charge a 0x80000000 (adresse virtuelle) */
 	. = offset;
 
 	/* Fournit les adresses de debut */
-	PROVIDE(kernel_start = .);
-	PROVIDE(_kernel_start = .);
+	PROVIDE(user_start = .);
+	PROVIDE(_user_start = .);
 	
 	/* La section de code et de donnees read-only */
 	.text : 
@@ -39,6 +39,6 @@ SECTIONS
 	}
 
 	/* Fournit l adresse de fin du noyau */
-	PROVIDE(kernel_end = .);
-	PROVIDE(_kernel_end = .);
+	PROVIDE(user_end = .);
+	PROVIDE(_user_end = .);
 }
