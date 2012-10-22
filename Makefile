@@ -25,7 +25,7 @@ OBJ_IPC  = lib/ipc/ipc.o
 
 BOOTSEEK	=	1
 KERNSEEK	=	3
-USERSEEK	=	100
+USERSEEK	=	103
 
 
 sub:

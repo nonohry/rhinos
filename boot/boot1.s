@@ -15,6 +15,13 @@
 	%assign KERN_LBA_END		(KERN_LBA_START+KERN_SIZE-1)
 	%assign	KERN_ABS_ADDR		0x1000
 
+
+	%assign USER_LBA_START		103
+	%assign	USER_SIZE		8
+	%assign USER_LBA_END		(USER_LBA_START+USER_SIZE-1)
+	%assign	USER_ABS_ADDR		0x9EC00
+	
+
 	%assign	BOOT1_MMAP_ADDR		0xC00
 	%assign	BOOT1_MMAP_SIZE		0x14
 
