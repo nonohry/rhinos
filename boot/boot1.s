@@ -19,7 +19,7 @@
 	%assign USER_LBA_START		103
 	%assign	USER_SIZE		8
 	%assign USER_LBA_END		(USER_LBA_START+USER_SIZE-1)
-	%assign	USER_ABS_ADDR		0x9EC00
+	%assign	USER_ABS_ADDR		0x9E000
 	
 
 	%assign	BOOT1_MMAP_ADDR		0xC00
@@ -153,8 +153,35 @@ lba_load:
 	cmp	si,KERN_LBA_END
 	jle	lba_load
 
+
+	;; Preparation au chargement des secteurs
+	mov	si,USER_LBA_START
+	;; 	mov	di,USER_ABS_ADDR
+	mov	byte [sector_dap+size],0x10
+	mov	byte [sector_dap+unused],0x00
+	mov	word [sector_dap+count],0x01
+	
+ulba_load:	
+
+	;; Chargement en LBA
+	mov	dword [sector_dap+buffer],USER_ABS_ADDR
+	mov	word [sector_dap+startlba],si
+	push	si
+	mov	si,sector_dap
+	mov	ah,0x42
+	int	0x13
+	jc	read_error
+	pop	si	
+	
+	;; Increment de la boucle
+	inc	si
+	add	di,0x200
+	cmp	si,USER_LBA_END
+	jle	ulba_load
+	
+
 	;; Saut a la suite
-	jmp	next01
+	jmp	next01			
 	
 chs_geometry:	
 	
@@ -225,6 +252,61 @@ chs_load:
 	add	di,0x200
 	cmp	si,KERN_LBA_END
 	jle	chs_load
+
+
+	;; Preparation au chargement des secteurs
+	mov	si,USER_LBA_START
+	mov	di,0xE000
+	xor	ah,ah
+	mov	dl,byte [boot1_info+drv_number]
+	int	0x13
+	jc	reset_error
+
+uchs_load:
+	
+	;; Conversion LBA vers CHS
+	xor	dx,dx
+	xor	cx,cx
+	mov	ax,si	; Secteur LBA [0,inf[
+	mov	cl,[boot1_info+drv_sectors]
+	div	cx
+	inc	dx
+	mov	byte [sector_info+sector],dl
+	xor	dx,dx
+	xor	cx,cx
+	mov	cl,byte [boot1_info+drv_heads]
+	div 	cx
+	mov	word [sector_info+cylinder],ax
+	mov	byte [sector_info+head],dl
+
+	;; Chargement du secteur courant
+	mov	ax,0x9000
+	mov	es,ax
+	mov	bx,di
+	xor	ax,ax
+	mov	ah,0x02
+	mov	al,0x01
+	mov	cx, word [sector_info+cylinder]
+	xor	cl,ch		; xor swapping :)
+	xor	ch,cl
+	xor	cl,ch
+	shl	cl,0x06
+	or	cl,byte [sector_info+sector]
+	mov	dh,byte [sector_info+head]
+	mov	dl,byte [boot1_info+drv_number]
+	int	0x13
+	jc 	read_error
+	
+	;; Increment de la boucle
+	push 	si
+	PRINT	BOOT1_LOAD_PROGRESS
+	pop	si
+	inc	si
+	add	di,0x200
+	cmp	si,USER_LBA_END
+	jle	uchs_load
+
+	
 	PRINT	BOOT1_LOAD_OK
 	
 	

@@ -42,16 +42,17 @@ int main()
 
   while(j)
     {
-      cm.op_1 = j;
-      cm.op_2 = j;
+      cm.op_1 = 8;
+      cm.op_2 = 9;
       mem_copy((addr_t)&cm,(addr_t)m.data,m.len);
       if (ipc_sendrec(3,&m)!=IPC_SUCCESS)
-	{
-	  break;
-	}
+      	{
+      	  break;
+      	}
       mem_copy((addr_t)m.data,(addr_t)&cm,m.len);
       //j--;
     }
+  while(1){}
   return 0;
 }
 

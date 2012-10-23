@@ -74,7 +74,6 @@ PUBLIC void start_main(struct boot_info* binfo)
 	}
     }
 
-
   /* Corrige les eventuels chevauchements */
   if (start_e820_sanitize(bootinfo) != EXIT_SUCCESS)
     {
@@ -91,6 +90,13 @@ PUBLIC void start_main(struct boot_info* binfo)
   bootinfo->mem_total = 0;
   for(i=0;i<bootinfo->mem_map_count;i++)
     {
+
+      /* HACK TEST USER */
+      if ( (u32_t)(((struct boot_mmap_e820*)bootinfo->mem_map_addr)[i].size) == 0x9F000)
+	{
+	  (((struct boot_mmap_e820*)bootinfo->mem_map_addr)[i].size) = 0x9E000;
+	}
+      
       bootinfo->mem_total += ((struct boot_mmap_e820*)bootinfo->mem_map_addr)[i].size;
     }
 

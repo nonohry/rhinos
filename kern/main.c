@@ -64,13 +64,13 @@ void Add(u16_t max)
       cm.op_1 = k;
       cm.op_2 = k;
       klib_mem_copy((addr_t)&cm,(addr_t)m.data,m.len);
-      klib_printf("Add - Sending %d + %d\n",cm.op_1,cm.op_2);
+      //klib_printf("Add - Sending %d + %d\n",cm.op_1,cm.op_2);
       if (ipc_sendrec(3,&m)!=IPC_SUCCESS)
 	{
 	  break;
 	}
       klib_mem_copy((addr_t)m.data,(addr_t)&cm,m.len);
-      klib_printf("Add - Receiving : %d\n",cm.op_res);
+      //klib_printf("Add - Receiving : %d\n",cm.op_res);
       k++;
     }
   klib_printf(" [Quit Add....]\n");
@@ -85,6 +85,7 @@ void Calc(u8_t who)
   while(ipc_receive(who,&m)==IPC_SUCCESS)
     {
       klib_mem_copy((addr_t)m.data,(addr_t)&cm,m.len);
+      klib_printf("Receive code %u from %s\n",cm.op_code,(thread_id2thread(m.from))->name);
       switch(cm.op_code)
 	{     
 	case 1:
@@ -122,13 +123,13 @@ void Mult(u8_t max)
       cm.op_1 = j;
       cm.op_2 = j;
       klib_mem_copy((addr_t)&cm,(addr_t)m.data,m.len);
-      klib_printf("Mult - Sending %d * %d\n",cm.op_1,cm.op_2);
+      //klib_printf("Mult - Sending %d * %d\n",cm.op_1,cm.op_2);
       if (ipc_sendrec(3,&m)!=IPC_SUCCESS)
 	{
 	  break;
 	}
       klib_mem_copy((addr_t)m.data,(addr_t)&cm,m.len);
-      klib_printf("Mult - Receiving : %d\n",cm.op_res);
+      //klib_printf("Mult - Receiving : %d\n",cm.op_res);
       j--;
     }
   klib_printf(" [Quit Mult....]\n");
@@ -243,13 +244,14 @@ PUBLIC int main()
 
   /* Effectue les mappages dans ce nouvel espace d'adressage */
 
-  paddr = (physaddr_t)phys_alloc(CONST_PAGE_SIZE);
-  if (!paddr)
-    {
-      goto err00;
-    }
+//  paddr = (physaddr_t)phys_alloc(CONST_PAGE_SIZE);
+//  if (!paddr)
+//    {
+//      goto err00;
+//    }
+//
   
-  if (paging_map(v_entry,paddr,PAGING_USER) == EXIT_FAILURE)
+  if (paging_map(v_entry,0x9E000,PAGING_USER) == EXIT_FAILURE)
     {
       goto err00;
     }
@@ -267,7 +269,7 @@ PUBLIC int main()
 
 
   /* Copie le code */  
-  klib_mem_copy((addr_t)userThread,(addr_t)v_entry,50);
+  //  klib_mem_copy((addr_t)userThread,(addr_t)v_entry,50);
 
   /* Cree le thread dans l'espace utilisateur (sinon, pas acces au point d entree ni a la pile) */
   th_user = thread_create_user("User_thread",THREAD_ID_DEFAULT,v_entry,v_stack,CONST_PAGE_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);

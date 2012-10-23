@@ -17,7 +17,7 @@ CFLAGS	=	-Iinclude
 
 
 # Objets
-OBJ_USR = srv/user.o
+OBJ_USER = srv/user.o
 OBJ_KERN = kern/khead.o kern/klib_s.o kern/klib_c.o kern/interrupt.o kern/start.o kern/seg.o kern/tables.o kern/pic.o kern/pit.o kern/irq.o kern/exceptions.o kern/physmem.o kern/paging.o kern/virtmem_buddy.o kern/virtmem_slab.o kern/virtmem.o kern/thread.o kern/sched.o kern/syscall.o kern/proc.o kern/main.o
 OBJ_IPC  = lib/ipc/ipc.o
 
@@ -43,14 +43,14 @@ kern: 	sub
 user:	sub
 	$(LD_USER) $(CFLAGS) -o $(USER) $(OBJ_USER) $(OBJ_IPC)	
 
-hd:	sub kern
+hd:	sub kern user
 	@echo yes | bximage -q -hd -mode=flat -size=$(SIZE) $(IMG) 1>/dev/null 
 	@cat $(BOOT0) | $(DD) of=$(IMG) bs=512 conv=notrunc 2>/dev/null
 	@cat $(BOOT1) | $(DD) of=$(IMG) bs=512 seek=$(BOOTSEEK) conv=notrunc 2>/dev/null
 	@cat $(KERN)  | $(DD) of=$(IMG) bs=512 seek=$(KERNSEEK) conv=notrunc 2>/dev/null
 	@cat $(USER)  | $(DD) of=$(IMG) bs=512 seek=$(USERSEEK) conv=notrunc 2>/dev/null
 
-fd:	sub kern
+fd:	sub kern user
 	@echo yes | bximage -q -fd  -size=1.44 $(IMG) 1>/dev/null
 	@cat $(BOOT0) | $(DD) of=$(IMG) bs=512 conv=notrunc 2>/dev/null
 	@cat $(BOOT1) | $(DD) of=$(IMG) bs=512 seek=$(BOOTSEEK) conv=notrunc 2>/dev/null
