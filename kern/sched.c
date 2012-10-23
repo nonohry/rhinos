@@ -196,12 +196,16 @@ PUBLIC void sched_schedule(u8_t flag)
       switch(cur_th->next_state)
 	{
 	case THREAD_READY:
-	  sched_enqueue(SCHED_READY_QUEUE,cur_th);
-	  break;
+	  {
+	    sched_enqueue(SCHED_READY_QUEUE,cur_th);
+	    break;
+	  }
 
 	case THREAD_BLOCKED:
-	  sched_enqueue(SCHED_BLOCKED_QUEUE,cur_th);
-	  break;
+	  {
+	    sched_enqueue(SCHED_BLOCKED_QUEUE,cur_th);
+	    break;
+	  }
 
 	case THREAD_BLOCKED_SENDING:
 	  {

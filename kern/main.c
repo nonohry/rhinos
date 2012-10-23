@@ -85,7 +85,7 @@ void Calc(u8_t who)
   while(ipc_receive(who,&m)==IPC_SUCCESS)
     {
       klib_mem_copy((addr_t)m.data,(addr_t)&cm,m.len);
-      klib_printf("Receive code %u from %s\n",cm.op_code,(thread_id2thread(m.from))->name);
+      klib_printf("Receive op %u %u from %s\n",cm.op_1, cm.op_2,(thread_id2thread(m.from))->name);
       switch(cm.op_code)
 	{     
 	case 1:

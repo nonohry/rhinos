@@ -66,6 +66,7 @@ PUBLIC u8_t pit_init()
 
 PRIVATE void pit_handler(struct thread* th)
 {
+
   /* Ordonnanceur */
   sched_schedule(SCHED_FROM_PIT);
  
