@@ -169,7 +169,7 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
     }
  
   /* Regarde si le destinataire receptionne uniquement et de la part de l emetteur */
-  if ( ( (th_receiver->ipc.state & (SYSCALL_IPC_SENDING|SYSCALL_IPC_RECEIVING)) == SYSCALL_IPC_RECEIVING)
+  if ( (th_receiver->ipc.state == SYSCALL_IPC_RECEIVING)
        && ( (th_receiver->ipc.receive_from == th_sender)||(th_receiver->ipc.receive_from == NULL) ) )
     {
       /* Le destinataire est en attente de message: copie du message dans l espace destinataire */
@@ -181,6 +181,7 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
       /* Debloque le destinataire au besoin */
       if (th_receiver->state == THREAD_BLOCKED)
 	{
+
 	  th_receiver->next_state = THREAD_READY;
 	  /* Fin de reception pour le destinataire */
 	  th_receiver->ipc.state &= ~SYSCALL_IPC_RECEIVING;
@@ -202,12 +203,9 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
       /* Bloque en attendant le traitement du message */
       th_sender->next_state = THREAD_BLOCKED;
 
-      klib_printf("%s fin envoi reussi vers %s\n", th_sender->name,th_receiver->name);
-     
     }
   else
     {
-      klib_printf("%s bloque apres envoi vers %s\n", th_sender->name,th_receiver->name);
       /* Le destinataire n'attend pas de message: bloque l emetteur dans la wait list du destinataire */
       th_sender->next_state = THREAD_BLOCKED_SENDING;
     }
@@ -240,6 +238,7 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
   /* Cherche un thread disponible dans la waitlist */
   if (!LLIST_ISNULL(th_receiver->ipc.receive_waitlist))
     {
+      
       if (th_sender == NULL)
 	{
 	  th_available = LLIST_GETHEAD(th_receiver->ipc.receive_waitlist);
@@ -272,6 +271,7 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
       /* Debloque le sender au besoin */
       if (th_available->state == THREAD_BLOCKED_SENDING)
 	{
+           
 	  th_available->next_state = THREAD_READY;
 	  /* Fin d'envoi */
 	  th_available->ipc.state &= ~SYSCALL_IPC_SENDING;
@@ -281,16 +281,15 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
 	    {
 	      return IPC_FAILURE;
 	    }
+
 	}
 
-      /* Fin de reception */
+        /* Fin de reception */
       th_receiver->ipc.state &= ~SYSCALL_IPC_RECEIVING;
-      klib_printf("%s fin reception reussi de %s\n", th_receiver->name,th_available->name);
       
     }
   else
     {
-      klib_printf("%s fin reception: pas de th dispo\n", th_receiver->name);
       /* Pas de thread disponible : Bloque en attente de message */
       th_receiver->next_state = THREAD_BLOCKED;
        /* Ordonnance  */
@@ -307,9 +306,9 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
 
 PRIVATE u8_t syscall_notify(struct thread* th_from, struct thread* th_to)
 {
-  
-   if (th_to->state == THREAD_BLOCKED)
+  if ( (th_to->state == THREAD_BLOCKED) && (th_to->ipc.state != SYSCALL_IPC_RECEIVING) )
 	{
+	  
 	  th_to->next_state = THREAD_READY;
 	  /* Fin d'envoi */
 	  th_to->ipc.state &= ~SYSCALL_IPC_SENDING;
