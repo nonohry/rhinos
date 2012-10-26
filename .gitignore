@@ -12,3 +12,4 @@ lib/ipc/Makefile.bak
 parport.out
 *~
 *.bak
+srv/user
