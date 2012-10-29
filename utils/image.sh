@@ -57,6 +57,12 @@ then
     exit
 fi
 
+if [ -z `which mke2fs` ]
+then
+    echo "No mke2fs found !"
+    exit
+fi
+
 if [ -z `which losetup` ]
 then
     echo "No losetup found !"
@@ -99,7 +105,13 @@ fi
 
 umount /dev/loop0 1>/dev/null 2>&1
 losetup -d /dev/loop0 1>/dev/null 2>&1
-losetup /dev/loop0 $IMG
+
+if [ $TYPE == "floppy" ]
+then
+    losetup /dev/loop0 $IMG
+else
+    losetup -o32256 /dev/loop0 $IMG
+fi
 
 
 ########################################
@@ -107,7 +119,12 @@ losetup /dev/loop0 $IMG
 ########################################
 
 
-mkfs -t ext2 /dev/loop0 1>/dev/null 2>&1
+if [ $TYPE == "floppy" ]
+then
+    mkfs -t ext2 /dev/loop0 1>/dev/null 2>&1
+else
+    mke2fs -b 1024 /dev/loop0 4000 1>/dev/null 2>&1
+fi
 
 
 ########################################
@@ -126,7 +143,3 @@ touch $MNT/IwasHere
 
 #umount /dev/loop0
 #losetup -d /dev/loop0
-
-
-
-
