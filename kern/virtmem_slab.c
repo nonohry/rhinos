@@ -76,6 +76,7 @@ PUBLIC u8_t virtmem_cache_init(void)
       /* Cree une adresse virtuelle mappee pour les initialisations */
       vaddr_init = i*CONST_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT;
       paddr_init = (physaddr_t)phys_alloc(CONST_PAGE_SIZE);
+      
       if (!paddr_init)
 	{
 	  return EXIT_FAILURE;
@@ -84,13 +85,13 @@ PUBLIC u8_t virtmem_cache_init(void)
 	{
 	  return EXIT_FAILURE;
 	}
-
+      
       /* Fait grossir cache_cache dans cette page */
       if ( virtmem_cache_grow(&cache_cache,vaddr_init) != EXIT_SUCCESS )
 	{
 	  return EXIT_FAILURE;
 	}
-     
+           
     }
 
   /* Les caches des structures de base */

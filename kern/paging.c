@@ -76,7 +76,7 @@ PUBLIC u8_t paging_init(void)
 	}
     }
 
-  for(p=PAGING_ALIGN_INF(CONST_ROM_AREA_START);
+  for(p=PAGING_ALIGN_INF(CONST_PAGE_NODE_POOL_ADDR);
       p<PAGING_ALIGN_SUP(CONST_PAGE_NODE_POOL_ADDR+((bootinfo->mem_total) >> CONST_PAGE_SHIFT)*sizeof(struct ppage_desc));
       p+=CONST_PAGE_SIZE)
     {

@@ -91,6 +91,7 @@ PUBLIC void* virt_alloc(u32_t size)
 	}
     }
 
+
   /* Sinon, alloue dans le buddy */
   return virtmem_buddy_alloc(size,VIRT_BUDDY_NOMAP);
 }

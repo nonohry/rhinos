@@ -22,7 +22,7 @@
  *========================================================================*/
 
 #define PHYS_PAGE_MAX_BUDDY      21        /* 32 - 12 + 1 = 21 */
-#define PHYS_POOL_AREA_START       CONST_PAGE_NODE_POOL_ADDR
+#define PHYS_POOL_AREA_START     CONST_PAGE_NODE_POOL_ADDR
 
 #define PHYS_UNMAP_NONE       0
 #define PHYS_UNMAP_UNMAP      1

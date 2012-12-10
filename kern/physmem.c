@@ -53,19 +53,22 @@ PUBLIC u8_t phys_init(void)
 	  if ( (bootinfo->kern_end >= base)&&
 	       (bootinfo->kern_end <= base+size) )
 	    {
+
 	      /* Reajuste la taille */
 	      size -= (bootinfo->kern_end - base);
 	      base = bootinfo->kern_end;
+	      
 	    }
 	  
 	  /* Si le pool est dans la zone, alors sa fin devient le debut de la zone */
 	  if ( (CONST_PAGE_NODE_POOL_ADDR+pool_size >= base)&&
 	       (CONST_PAGE_NODE_POOL_ADDR+pool_size <= base+size) )
 	    {
+	      
 	      /* Reajuste la taille */
 	      size -= (CONST_PAGE_NODE_POOL_ADDR+pool_size - base);
 	      base = CONST_PAGE_NODE_POOL_ADDR+pool_size;
-	      
+	
 	    }
 	  
 	  /* Initialise la zone dans le buddy */
