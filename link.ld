@@ -1,9 +1,9 @@
-OUTPUT_FORMAT("binary")
-offset = 0x1000;
+OUTPUT_FORMAT("elf32-i386")
+offset = 0x100000;
 ENTRY(_start)
 SECTIONS
 {	
-	/* Noyau Charge a 0x1000 */
+	/* Noyau Charge a 0x100000 */
 	. = offset;
 
 	/* Fournit les adresses de debut */

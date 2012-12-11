@@ -17,15 +17,29 @@ global _start			; Point d'entree pour le lien
 	
 
 
+
+	jmp _start
+
+	
+        ;;;;;;;;;;;;;;;;;;;;;
+	;; Multiboot header
+        ;;;;;;;;;;;;;;;;;;;;;
+
+	align 4
+
+	dd	MULTIBOOT_MAGIC
+	dd	MULTIBOOT_FLAGS
+	dd	-(MULTIBOOT_MAGIC+MULTIBOOT_FLAGS)
+	
+
 	;;;;;;;;;
 	;; Code
 	;;;;;;;;;
 
 	
 _start:
-	mov	dword [ebx], kernel_start 	; Champs kern_start de boot_info
-	mov	dword [ebx+4], kernel_end 	; Champs kern_end de boot_info
 	push	ebx
+	push 	eax
 	call	start_main	; Appelle start_main
 	add 	esp,4
 	
@@ -60,6 +74,13 @@ next:
 
 	pmodemsg 	db	'Protected Mode enabled !',13,10,0
 
+
+	;;
+	;; Multiboot
+	;; 
+
+	MULTIBOOT_MAGIC	equ	0x1BADB002
+	MULTIBOOT_FLAGS	equ	0x3 ; Modules aligne sur 4K + Memoire - Video Mode - Bin Headers
 	
 	;; 
 	;; Segment Selector

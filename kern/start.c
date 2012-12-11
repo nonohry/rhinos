@@ -40,7 +40,7 @@ PRIVATE u8_t start_e88_generate(struct boot_info* bootinfo);
  *========================================================================*/
 
 
-PUBLIC void start_main(struct boot_info* binfo)
+PUBLIC void start_main(u32_t magic, physaddr_t mbi)
 { 
 
   u8_t i;
@@ -48,8 +48,11 @@ PUBLIC void start_main(struct boot_info* binfo)
   /* Initialise le port serie pour la sortie noyau */
   klib_serial_init();
 
+  klib_printf("coucou");
+  while(1){}
+
   /* Recopie les informations de demarrage */
-  bootinfo = binfo;
+  bootinfo = (struct boot_info*)mbi;
 
   /* Genere un memory map si besoins */
   if (!bootinfo->mem_map_count)

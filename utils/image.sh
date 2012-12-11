@@ -103,15 +103,19 @@ fi
 # Creation de la boucle locale
 ########################################
 
+umount /dev/loop1 1>/dev/null 2>&1
 umount /dev/loop0 1>/dev/null 2>&1
+losetup -d /dev/loop1 1>/dev/null 2>&1
 losetup -d /dev/loop0 1>/dev/null 2>&1
+
 
 if [ $TYPE == "floppy" ]
 then
     losetup /dev/loop0 $IMG
 else
-    losetup -o32256 /dev/loop0 $IMG
+    losetup /dev/loop0 $IMG
 fi
+
 
 
 ########################################
@@ -123,7 +127,8 @@ if [ $TYPE == "floppy" ]
 then
     mkfs -t ext2 /dev/loop0 1>/dev/null 2>&1
 else
-    mke2fs -b 1024 /dev/loop0 4000 1>/dev/null 2>&1
+    losetup -o 32256 /dev/loop1 /dev/loop0
+    mke2fs -b 1024 /dev/loop1 4000 1>/dev/null 2>&1
 fi
 
 
@@ -132,14 +137,20 @@ fi
 ########################################
 
 
-mount -t ext2 /dev/loop0 $MNT 
-mkdir $MNT/test
-touch $MNT/IwasHere
+mount -t ext2 /dev/loop1 $MNT 
+mkdir $MNT/kern
+cp /home/g4b/rhinos/kern/kern $MNT/kern
+grub-install --modules=part_msdos --root-directory=$MNT /dev/loop0
 
+printf "set timeout=10\nset default=0\n\nmenuentry \"RhinOS\" {\n\tmultiboot /kern/kern\n\tboot\n}\n" > $MNT/boot/grub/grub.cfg
 
 ########################################
 # Demontage
 #####################################
 
-#umount /dev/loop0
-#losetup -d /dev/loop0
+umount /dev/loop1 1>/dev/null 2>&1
+umount /dev/loop0 1>/dev/null 2>&1
+losetup -d /dev/loop1 1>/dev/null 2>&1
+losetup -d /dev/loop0 1>/dev/null 2>&1
+
+chmod 666 $IMG
