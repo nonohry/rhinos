@@ -23,6 +23,7 @@
 #define START_MULTIBOOT_FLAG_DEVICE    0x2
 #define START_MULTIBOOT_FLAG_CMDLINE   0x4
 #define START_MULTIBOOT_FLAG_MODS      0x8
+#define START_MULTIBOOT_FLAG_AOUT      0x10
 #define START_MULTIBOOT_FLAG_ELF       0x20
 #define START_MULTIBOOT_FLAG_MMAP      0x40
 #define START_MULTIBOOT_FLAG_DRIVE     0x80
@@ -102,8 +103,9 @@ PUBLIC struct multiboot_info
 
 PUBLIC struct multiboot_mmap_entry
 {
+  u32_t size;
   u64_t addr;
-  u64_t size;
+  u64_t len;
   u32_t type;
 }__attribute__((packed));
 

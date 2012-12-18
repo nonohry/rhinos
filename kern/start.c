@@ -52,10 +52,41 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
   klib_printf("Booting with magic 0x%x and mbi addr 0x%x\n",magic,mbi_addr);
   mbi = (struct multiboot_info*)mbi_addr;
 
+  klib_printf("Flag: 0x%x\n",mbi->flags);
+
   if (mbi->flags & START_MULTIBOOT_FLAG_MEMORY)
     {
       klib_printf("Mem lower : %d Ko - Mem upper : %d Ko\n",mbi->mem_lower,mbi->mem_upper);
     }
+
+  if (mbi->flags & START_MULTIBOOT_FLAG_CMDLINE)
+    {
+      klib_printf("Command line : %s\n",(char*)mbi->cmdline);
+    }
+
+  if (mbi->flags & START_MULTIBOOT_FLAG_BLNAME)
+    {
+      klib_printf("Bootloader : %s\n",(char*)mbi->boot_loader_name);
+    }
+
+
+  if (mbi->flags & START_MULTIBOOT_FLAG_MMAP)
+    {
+      struct multiboot_mmap_entry* mmap;
+
+      for(mmap = (struct multiboot_mmap_entry*)mbi->mmap_addr;
+	  (unsigned long)mmap <  mbi->mmap_addr + mbi->mmap_length;
+	  mmap = (struct multiboot_mmap_entry*)((unsigned long)mmap + mmap->size + sizeof(mmap->size)))
+
+	klib_printf("\taddr=0x%x%x  len=0x%x%x  type=0x%x\n",
+		    (u32_t)(mmap->addr >> 32),
+		    (u32_t)(mmap->addr & 0xffffffff),
+		    (u32_t)(mmap->len >> 32),
+		    (u32_t)(mmap->len & 0xffffffff),
+		    mmap->type);
+
+    }
+
 
   /* DEBUG */
   while(1){}
