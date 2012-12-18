@@ -9,9 +9,9 @@
 ########################################
 
 
-if [ $# -ne 2 ]
+if [ $# -ne 1 ]
 then
-    printf "Usage: %s type mountpoint\n\t type = 'floppy' or 'disk'\n" $0 
+    printf "Usage: %s mountpoint\n" $0 
     exit
 fi
 
@@ -21,8 +21,7 @@ fi
 #######################################
 
 
-TYPE=$1
-MNT=$2
+MNT=$1
 
 IMG=disk.img
 
@@ -51,12 +50,6 @@ then
     exit
 fi
 
-if [ -z `which mkfs` ]
-then
-    echo "No mkfs found !"
-    exit
-fi
-
 if [ -z `which mke2fs` ]
 then
     echo "No mke2fs found !"
@@ -77,26 +70,16 @@ then
 fi
 
 
-if [ $TYPE != "floppy" -a $TYPE != "disk" ]
-then
-    echo "Type muste be 'floppy' or 'disk'"
-    exit
-fi
-
 
 ########################################
 # Creation d'une galette
 ########################################
 
 
-if [ $TYPE == "floppy" ]
-then
-    dd if=/dev/zero  of=$IMG bs=512 count=2880 1>/dev/null 2>&1
-else
-    dd if=/dev/zero of=$IMG bs=516096c count=8 1>/dev/null 2>&1
-    # Formate le disque
-    printf "n\np\n1\n\n\na\n1\nw" | fdisk -u -C8 -S63 -H16  $IMG 1>/dev/null 2>&1
-fi
+dd if=/dev/zero of=$IMG bs=516096c count=8 1>/dev/null 2>&1
+# Formate le disque
+printf "n\np\n1\n\n\na\n1\nw" | fdisk -u -C8 -S63 -H16  $IMG 1>/dev/null 2>&1
+
 
 
 ########################################
@@ -109,12 +92,7 @@ losetup -d /dev/loop1 1>/dev/null 2>&1
 losetup -d /dev/loop0 1>/dev/null 2>&1
 
 
-if [ $TYPE == "floppy" ]
-then
-    losetup /dev/loop0 $IMG
-else
-    losetup /dev/loop0 $IMG
-fi
+losetup /dev/loop0 $IMG
 
 
 
@@ -123,13 +101,9 @@ fi
 ########################################
 
 
-if [ $TYPE == "floppy" ]
-then
-    mkfs -t ext2 /dev/loop0 1>/dev/null 2>&1
-else
-    losetup -o 32256 /dev/loop1 /dev/loop0
-    mke2fs -b 1024 /dev/loop1 4000 1>/dev/null 2>&1
-fi
+losetup -o 32256 /dev/loop1 /dev/loop0
+mke2fs -b 1024 /dev/loop1 4000 1>/dev/null 2>&1
+
 
 
 ########################################
