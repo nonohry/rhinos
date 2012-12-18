@@ -40,15 +40,24 @@ PRIVATE u8_t start_e88_generate(struct boot_info* bootinfo);
  *========================================================================*/
 
 
-PUBLIC void start_main(u32_t magic, physaddr_t mbi)
+PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
 { 
 
   u8_t i;
+  struct multiboot_info* mbi;
 
   /* Initialise le port serie pour la sortie noyau */
   klib_serial_init();
 
-  klib_printf("coucou");
+  klib_printf("Booting with magic 0x%x and mbi addr 0x%x\n",magic,mbi_addr);
+  mbi = (struct multiboot_info*)mbi_addr;
+
+  if (mbi->flags & START_MULTIBOOT_FLAG_MEMORY)
+    {
+      klib_printf("Mem lower : %d Ko - Mem upper : %d Ko\n",mbi->mem_lower,mbi->mem_upper);
+    }
+
+  /* DEBUG */
   while(1){}
 
   /* Recopie les informations de demarrage */
