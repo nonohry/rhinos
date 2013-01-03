@@ -36,6 +36,14 @@ PRIVATE u8_t start_e88_generate(struct boot_info* bootinfo);
 
 
 /*========================================================================
+ * Declarations Static
+ *========================================================================*/
+
+
+static struct multiboot_mmap_entry start_mmap[START_MULTIBOOT_MMAP_MAX];
+
+
+/*========================================================================
  * Fonction start_main
  *========================================================================*/
 
@@ -44,55 +52,70 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
 { 
 
   u8_t i;
-  struct multiboot_info* mbi;
+  struct multiboot_mmap_entry* mmap;
 
   /* Initialise le port serie pour la sortie noyau */
   klib_serial_init();
 
   klib_printf("Booting with magic 0x%x and mbi addr 0x%x\n",magic,mbi_addr);
-  mbi = (struct multiboot_info*)mbi_addr;
+  start_mbi = (struct multiboot_info*)mbi_addr;
 
-  klib_printf("Flag: 0x%x\n",mbi->flags);
+  klib_printf("Flag: 0x%x\n",start_mbi->flags);
 
-  if (mbi->flags & START_MULTIBOOT_FLAG_MEMORY)
+  if (start_mbi->flags & START_MULTIBOOT_FLAG_MEMORY)
     {
-      klib_printf("Mem lower : %d Ko - Mem upper : %d Ko\n",mbi->mem_lower,mbi->mem_upper);
+      klib_printf("Mem lower : %d Ko - Mem upper : %d Ko\n",start_mbi->mem_lower,start_mbi->mem_upper);
     }
 
-  if (mbi->flags & START_MULTIBOOT_FLAG_CMDLINE)
+  if (start_mbi->flags & START_MULTIBOOT_FLAG_CMDLINE)
     {
-      klib_printf("Command line : %s\n",(char*)mbi->cmdline);
+      klib_printf("Command line : %s\n",(char*)start_mbi->cmdline);
     }
 
-  if (mbi->flags & START_MULTIBOOT_FLAG_BLNAME)
+  if (start_mbi->flags & START_MULTIBOOT_FLAG_BLNAME)
     {
-      klib_printf("Bootloader : %s\n",(char*)mbi->boot_loader_name);
+      klib_printf("Bootloader : %s\n",(char*)start_mbi->boot_loader_name);
     }
 
-
-  if (mbi->flags & START_MULTIBOOT_FLAG_MMAP)
+  /* Copie les entrees mmap dans un lieu maitrise */
+  if (start_mbi->flags & START_MULTIBOOT_FLAG_MMAP)
     {
-      struct multiboot_mmap_entry* mmap;
-
-      for(mmap = (struct multiboot_mmap_entry*)mbi->mmap_addr;
-	  (unsigned long)mmap <  mbi->mmap_addr + mbi->mmap_length;
-	  mmap = (struct multiboot_mmap_entry*)((unsigned long)mmap + mmap->size + sizeof(mmap->size)))
-
-	klib_printf("\taddr=0x%x%x  len=0x%x%x  type=0x%x\n",
-		    (u32_t)(mmap->addr >> 32),
-		    (u32_t)(mmap->addr & 0xffffffff),
-		    (u32_t)(mmap->len >> 32),
-		    (u32_t)(mmap->len & 0xffffffff),
-		    mmap->type);
-
+      for(mmap = (struct multiboot_mmap_entry*)start_mbi->mmap_addr, i=0;
+	  (unsigned long)mmap <  start_mbi->mmap_addr + start_mbi->mmap_length;
+	  i++, mmap = (struct multiboot_mmap_entry*)((unsigned long)mmap + mmap->size + sizeof(mmap->size)))
+	{
+	
+	  start_mmap[i].size = mmap->size;
+	  start_mmap[i].addr = mmap->addr;
+	  start_mmap[i].len = mmap->len;
+	  start_mmap[i].type = mmap->type;
+	  
+	}
     }
+  
+  /* Pointe vers la copie */
+  start_mbi->mmap_addr = (u32_t)start_mmap;
+  /* Nombre d'entrees */
+  start_mbi->mmap_length = i;
 
-
+  /* Affiche le mmap */
+  mmap = (struct multiboot_mmap_entry*)start_mbi->mmap_addr;
+  for(i=0;i<start_mbi->mmap_length;i++)
+    {
+      	  klib_printf("\taddr=0x%x%x  len=0x%x%x  type=0x%x\n",
+		      (u32_t)(mmap[i].addr >> 32),
+		      (u32_t)(mmap[i].addr & 0xffffffff),
+		      (u32_t)(mmap[i].len >> 32),
+		      (u32_t)(mmap[i].len & 0xffffffff),
+		      mmap[i].type);
+    }
+  
+  
   /* DEBUG */
   while(1){}
-
+  
   /* Recopie les informations de demarrage */
-  bootinfo = (struct boot_info*)mbi;
+  bootinfo = (struct boot_info*)start_mbi;
 
   /* Genere un memory map si besoins */
   if (!bootinfo->mem_map_count)

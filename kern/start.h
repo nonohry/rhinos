@@ -33,6 +33,9 @@
 #define START_MULTIBOOT_FLAG_VIDEO     0x800
 
 
+#define START_MULTIBOOT_MMAP_MAX       128
+
+
 #define START_MEM_SIZE_0        1048576
 
 /* Type pour boot_mmap_e820 */
@@ -136,6 +139,7 @@ PUBLIC struct boot_mmap_e820
  * Prototypes
  *========================================================================*/
 
+PUBLIC struct multiboot_info* start_mbi;
 PUBLIC struct boot_info* bootinfo;
 
 #endif
