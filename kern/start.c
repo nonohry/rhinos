@@ -132,31 +132,6 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
   /* DEBUG */
   while(1){}
   
-  /* Recopie les informations de demarrage */
-  bootinfo = (struct boot_info*)start_mbi;
-
-  /* Genere un memory map si besoins */
-  if (!bootinfo->mem_map_count)
-    {
-      if ( (bootinfo->mem_upper)&&(bootinfo->mem_lower) )
-	{      
-	  if (start_e801_generate(bootinfo) != EXIT_SUCCESS)
-	    {
-	      goto err_mem;
-	    }
-	}
-      else if ( (bootinfo->mem_0x0)&&(bootinfo->mem_0x100000) )
-	{
-	  if (start_e88_generate(bootinfo) != EXIT_SUCCESS)
-	    {
-	      goto err_mem;
-	    }
-	}
-      else
-	{
-	  goto err_mem;
-	}
-    }
 
   /* Corrige les eventuels chevauchements */
   if (start_e820_sanitize(bootinfo) != EXIT_SUCCESS)
