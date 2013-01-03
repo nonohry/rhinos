@@ -57,27 +57,10 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
   /* Initialise le port serie pour la sortie noyau */
   klib_serial_init();
 
-  klib_printf("Booting with magic 0x%x and mbi addr 0x%x\n",magic,mbi_addr);
+  /* Affecte la structure multiboot */
   start_mbi = (struct multiboot_info*)mbi_addr;
 
-  klib_printf("Flag: 0x%x\n",start_mbi->flags);
-
-  if (start_mbi->flags & START_MULTIBOOT_FLAG_MEMORY)
-    {
-      klib_printf("Mem lower : %d Ko - Mem upper : %d Ko\n",start_mbi->mem_lower,start_mbi->mem_upper);
-    }
-
-  if (start_mbi->flags & START_MULTIBOOT_FLAG_CMDLINE)
-    {
-      klib_printf("Command line : %s\n",(char*)start_mbi->cmdline);
-    }
-
-  if (start_mbi->flags & START_MULTIBOOT_FLAG_BLNAME)
-    {
-      klib_printf("Bootloader : %s\n",(char*)start_mbi->boot_loader_name);
-    }
-
-  /* Copie les entrees mmap dans un lieu maitrise */
+  /* Copie les entrees mmap dans un lieu maitrise si presence d un mmap */
   if (start_mbi->flags & START_MULTIBOOT_FLAG_MMAP)
     {
       for(mmap = (struct multiboot_mmap_entry*)start_mbi->mmap_addr, i=0;
@@ -89,10 +72,43 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
 	  start_mmap[i].addr = mmap->addr;
 	  start_mmap[i].len = mmap->len;
 	  start_mmap[i].type = mmap->type;
+
+	  /* Trop d'entrees (buggy mmap) */
+	  if (i>START_MULTIBOOT_MMAP_MAX)
+	    {
+	       goto err_mem;
+	    }
 	  
 	}
     }
-  
+  else
+    {
+      /* Construit un memory map avec les informations upper/lower */
+      if (start_mbi->flags & START_MULTIBOOT_FLAG_MEMORY)
+	{
+	  /* Nombre d'entrees */
+	  i=2;
+	  
+	  /* Creation d'un mmap */
+
+	  start_mmap[0].size = sizeof(struct multiboot_mmap_entry);
+	  start_mmap[0].addr = 0;
+	  start_mmap[0].len = start_mbi->mem_lower*1024;
+	  start_mmap[0].type = START_E820_AVAILABLE;
+
+	  start_mmap[1].size = sizeof(struct multiboot_mmap_entry);
+	  start_mmap[1].addr = 0x100000;
+	  start_mmap[1].len = start_mbi->mem_upper*1024;
+	  start_mmap[1].type = START_E820_AVAILABLE;
+	  
+	}
+      else
+	{
+	  /* Aucune information memoire, on quitte */
+	   goto err_mem;
+	}
+    }
+
   /* Pointe vers la copie */
   start_mbi->mmap_addr = (u32_t)start_mmap;
   /* Nombre d'entrees */
@@ -102,15 +118,17 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
   mmap = (struct multiboot_mmap_entry*)start_mbi->mmap_addr;
   for(i=0;i<start_mbi->mmap_length;i++)
     {
-      	  klib_printf("\taddr=0x%x%x  len=0x%x%x  type=0x%x\n",
-		      (u32_t)(mmap[i].addr >> 32),
-		      (u32_t)(mmap[i].addr & 0xffffffff),
-		      (u32_t)(mmap[i].len >> 32),
-		      (u32_t)(mmap[i].len & 0xffffffff),
-		      mmap[i].type);
-    }
-  
-  
+      klib_printf("\taddr=0x%x%x  len=0x%x%x  type=0x%x\n",
+		  (u32_t)(mmap[i].addr >> 32),
+		  (u32_t)(mmap[i].addr & 0xffffffff),
+		  (u32_t)(mmap[i].len >> 32),
+		  (u32_t)(mmap[i].len & 0xffffffff),
+		  mmap[i].type);
+    }      
+
+
+
+
   /* DEBUG */
   while(1){}
   
