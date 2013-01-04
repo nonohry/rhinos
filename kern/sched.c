@@ -122,6 +122,8 @@ PUBLIC u8_t sched_dequeue(u8_t queue, struct thread* th)
       return EXIT_FAILURE;
     }
 
+  klib_printf("DEQUEUE\n");
+
   switch(queue)
     {
     
@@ -145,6 +147,8 @@ PUBLIC u8_t sched_dequeue(u8_t queue, struct thread* th)
        return EXIT_FAILURE;
       
     }
+
+  klib_printf("FIN DEQUEUE\n");
 
   return EXIT_SUCCESS;
 

@@ -194,7 +194,7 @@ PUBLIC int main()
   /* Test Proc */
 
   struct proc* kern_proc;
-  struct proc* user_proc;
+  //struct proc* user_proc;
 
   kern_proc = (struct proc*)virt_alloc(sizeof(struct proc));
   kern_proc->name[0] = 'k';
@@ -211,7 +211,7 @@ PUBLIC int main()
   kern_proc->p_pd = paging_virt2phys((virtaddr_t)kern_proc->v_pd);
   LLIST_NULLIFY(kern_proc->thread_list);
  
-  user_proc = proc_create("user_proc");
+  //user_proc = proc_create("user_proc");
  
   /* Idle Thread */
   thread_idle = thread_create_kern("[Idle]",THREAD_ID_DEFAULT,(virtaddr_t)klib_idle,NULL,THREAD_NICE_TOP,THREAD_QUANTUM_DEFAULT);
@@ -226,21 +226,22 @@ PUBLIC int main()
   struct thread* th_add;
   struct thread* th_calc;
   struct thread* th_mult;
-  struct thread* th_user;
-  virtaddr_t v_entry, v_stack;
-  physaddr_t paddr;
+  //struct thread* th_user;
+  //virtaddr_t v_entry, v_stack;
+  //physaddr_t paddr;
    
   th_add = thread_create_kern("Add_thread",THREAD_ID_DEFAULT,(virtaddr_t)Add,(void*)12,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
   th_calc = thread_create_kern("Calc_thread",THREAD_ID_DEFAULT,(virtaddr_t)Calc,(void*)IPC_ANY,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
   th_mult = thread_create_kern("Mult_thread",THREAD_ID_DEFAULT,(virtaddr_t)Mult,(void*)15,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
 
+  klib_printf("Calculus Threads initialized\n");
 
   /* Destinations arbitraire pour le code et la pile ustilisateur */
-  v_entry = 0x80000000; /* == (1<31) */
-  v_stack = 0x80001000;
+  //v_entry = 0x80000000; /* == (1<31) */
+  //v_stack = 0x80001000;
 
   /* Se met sur le page directory du processus utilisateur (qui est synchro avec le noyau donc pas de soucis) pour le mapping */
-  klib_load_CR3(user_proc->p_pd);
+  //klib_load_CR3(user_proc->p_pd);
 
   /* Effectue les mappages dans ce nouvel espace d'adressage */
 
@@ -251,35 +252,35 @@ PUBLIC int main()
 //    }
 //
   
-  if (paging_map(v_entry,0x9E000,PAGING_USER) == EXIT_FAILURE)
-    {
-      goto err00;
-    }
+  /* if (paging_map(v_entry,0x9E000,PAGING_USER) == EXIT_FAILURE) */
+  /*   { */
+  /*     goto err00; */
+  /*   } */
 
-  paddr = (physaddr_t)phys_alloc(CONST_PAGE_SIZE);
-  if (!paddr)
-    {
-      goto err00;
-    }
+  /* paddr = (physaddr_t)phys_alloc(CONST_PAGE_SIZE); */
+  /* if (!paddr) */
+  /*   { */
+  /*     goto err00; */
+  /*   } */
   
-  if (paging_map(v_stack,paddr,PAGING_USER) == EXIT_FAILURE)
-    {
-      goto err00;
-    }
+  /* if (paging_map(v_stack,paddr,PAGING_USER) == EXIT_FAILURE) */
+  /*   { */
+  /*     goto err00; */
+  /*   } */
 
 
-  /* Copie le code */  
-  //  klib_mem_copy((addr_t)userThread,(addr_t)v_entry,50);
+  /* /\* Copie le code *\/   */
+  /* //  klib_mem_copy((addr_t)userThread,(addr_t)v_entry,50); */
 
-  /* Cree le thread dans l'espace utilisateur (sinon, pas acces au point d entree ni a la pile) */
-  th_user = thread_create_user("User_thread",THREAD_ID_DEFAULT,v_entry,v_stack,CONST_PAGE_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
-  if (th_user == NULL)
-    {
-      goto err00;
-    }
+  /* /\* Cree le thread dans l'espace utilisateur (sinon, pas acces au point d entree ni a la pile) *\/ */
+  /* th_user = thread_create_user("User_thread",THREAD_ID_DEFAULT,v_entry,v_stack,CONST_PAGE_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT); */
+  /* if (th_user == NULL) */
+  /*   { */
+  /*     goto err00; */
+  /*   } */
 
-  /* Retourne dans l'espace d'adressage noyau */
-  klib_load_CR3((physaddr_t)kern_PD);
+  /* /\* Retourne dans l'espace d'adressage noyau *\/ */
+  /* klib_load_CR3((physaddr_t)kern_PD); */
 
   /* Rentre tous les threads noyau dans le processus noyau */
   proc_add_thread(kern_proc,kern_th);
@@ -288,15 +289,17 @@ PUBLIC int main()
   proc_add_thread(kern_proc,th_mult);
   proc_add_thread(kern_proc,th_calc);
 
+  klib_printf("Calculus threads added to kern_proc\n");
+
   /* Ajoute le thread user a proc user */
-  proc_add_thread(user_proc,th_user);
+  //proc_add_thread(user_proc,th_user);
   
   /* Affecte le processus courant et cree un ordonnancement initial */
   cur_proc = kern_proc;
   sched_dequeue(SCHED_READY_QUEUE,kern_th);
   sched_enqueue(SCHED_RUNNING_QUEUE,kern_th);
-  
 
+  
   /* Initialisation du gestionnaire des IRQ */
   if ( irq_init() != EXIT_SUCCESS )
     {

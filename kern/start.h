@@ -139,6 +139,7 @@ PUBLIC struct boot_mmap_e820
  * Prototypes
  *========================================================================*/
 
+PUBLIC u64_t start_mem_total;
 PUBLIC struct multiboot_info* start_mbi;
 PUBLIC struct boot_info* bootinfo;
 

@@ -7,16 +7,16 @@ SECTIONS
 	. = offset;
 
 	/* Fournit les adresses de debut */
-	PROVIDE(kernel_start = .);
-	PROVIDE(_kernel_start = .);
+	PROVIDE(__CONST_KERN_START = .);
+	PROVIDE(___CONST_KERN_START = .);
 	
 	/* La section de code et de donnees read-only */
 	.text : 
 	{
 		*(.text)
     		*(.rodata)
-		PROVIDE(text_end = .);
-		PROVIDE(_text_end = .);
+		PROVIDE(__CONST_TEXT_END = .);
+		PROVIDE(___CONST_TEXT_END = .);
 		. = ALIGN(4096);
       	}
 
@@ -24,8 +24,8 @@ SECTIONS
 	.data offset + SIZEOF(.text) :
   	{
 		*(.data)
-		PROVIDE(data_end = .);
-		PROVIDE(_data_end = .);
+		PROVIDE(__CONST_DATA_END = .);
+		PROVIDE(___CONST_DATA_END = .);
 		. = ALIGN(4096);
  	}
 
@@ -33,12 +33,12 @@ SECTIONS
   	.bss offset + SIZEOF(.text) + SIZEOF(.data) :
   	{
 		*(.bss)
-		PROVIDE(bss_end = .);
-		PROVIDE(_bss_end = .);
+		PROVIDE(__CONST_BSS_END = .);
+		PROVIDE(___CONST_BSS_END = .);
 		. = ALIGN(4096);
 	}
 
 	/* Fournit l adresse de fin du noyau */
-	PROVIDE(kernel_end = .);
-	PROVIDE(_kernel_end = .);
+	PROVIDE(__CONST_KERN_END = .);
+	PROVIDE(___CONST_KERN_END = .);
 }

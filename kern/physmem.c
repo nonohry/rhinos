@@ -29,7 +29,7 @@ PUBLIC u8_t phys_init(void)
 {
   s32_t i;
   u32_t pool_size;
-  struct boot_mmap_e820* entry;
+  struct multiboot_mmap_entry* entry;
 
   /* Nullifie les structures de pages */  
   for(i=0; i<PHYS_PAGE_MAX_BUDDY; i++)
@@ -38,25 +38,38 @@ PUBLIC u8_t phys_init(void)
     }
 
   /* Calcule la taille maximale du pool */
-  pool_size = ((bootinfo->mem_total) >> CONST_PAGE_SHIFT)*sizeof(struct ppage_desc);
+  pool_size = ((start_mem_total) >> CONST_PAGE_SHIFT)*sizeof(struct ppage_desc);
 
   /* Entre les zones libres du memory map dans le buddy */
-  for(entry=(struct boot_mmap_e820*)bootinfo->mem_map_addr,i=0;i<bootinfo->mem_map_count;i++,entry++)
+  for(entry=(struct multiboot_mmap_entry*)start_mbi->mmap_addr,i=0;i<start_mbi->mmap_length;i++,entry++)
     {
       if (entry->type == START_E820_AVAILABLE)
 	{
-	  
+
 	  physaddr_t base = (physaddr_t)entry->addr;
-	  u32_t size = (u32_t)entry->size;
+	  u32_t size = (u32_t)entry->len;
+
+	  /* Protege la premiere page physique - cas 1 */
+	  if ((base < CONST_PAGE_SIZE)&&(base+size <= CONST_PAGE_SIZE))
+	    {
+	      continue;
+	    }
+
+	  /* Protege la premiere page physique - cas 2 */
+	  if ((base < CONST_PAGE_SIZE)&&(base+size > CONST_PAGE_SIZE))
+	    {
+	      size -= (CONST_PAGE_SIZE - base);
+	      base = CONST_PAGE_SIZE;
+	    }
 
 	  /* Si le noyau est dans la zone, alors sa fin devient le debut de la zone */
-	  if ( (bootinfo->kern_end >= base)&&
-	       (bootinfo->kern_end <= base+size) )
+	  if ( (CONST_KERN_END >= base)&&
+	       (CONST_KERN_END <= base+size) )
 	    {
 
 	      /* Reajuste la taille */
-	      size -= (bootinfo->kern_end - base);
-	      base = bootinfo->kern_end;
+	      size -= (CONST_KERN_END - base);
+	      base = CONST_KERN_END;
 	      
 	    }
 	  
@@ -70,7 +83,7 @@ PUBLIC u8_t phys_init(void)
 	      base = CONST_PAGE_NODE_POOL_ADDR+pool_size;
 	
 	    }
-	  
+
 	  /* Initialise la zone dans le buddy */
 	  phys_init_area(base,size);
 	}

@@ -5,13 +5,10 @@
 	;;;;;;;;;;;;;;;;;;;;;;;;
 
 	
-extern	klib_bochs_print
 extern	start_main		; Fonction d'initialisation en C
 extern  gdt_desc		; Descripteur de la GDT en C
 extern  idt_desc		; Descripteur de l'IDT en C
 extern  main			; RhinOS Main en C
-extern	kernel_start		; Debut du Noyau (issu de l edition des liens)	
-extern	kernel_end		; Fin du Noyau (issu de l edition des liens)
 	
 global _start			; Point d'entree pour le lien
 	
@@ -41,7 +38,7 @@ _start:
 	push	ebx
 	push 	eax
 	call	start_main	; Appelle start_main
-	add 	esp,4
+	add 	esp,8
 	
 	lgdt	[gdt_desc]	; Charge la nouvelle GDT
     	lidt	[idt_desc]	; Charge l IDT

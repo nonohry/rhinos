@@ -90,7 +90,7 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
 	  /* Creation d'un mmap */
 
 	  start_mmap[0].size = sizeof(struct multiboot_mmap_entry);
-	  start_mmap[0].addr = 0;
+	  start_mmap[0].addr = 4096;
 	  start_mmap[0].len = start_mbi->mem_lower*1024;
 	  start_mmap[0].type = START_E820_AVAILABLE;
 
@@ -132,54 +132,22 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
       goto err_mem;
     }    
 
-  /* Affiche le mmap */
+  /* Calcule la memoire totale */
+  start_mem_total = 0;
   mmap = (struct multiboot_mmap_entry*)start_mbi->mmap_addr;
   for(i=0;i<start_mbi->mmap_length;i++)
     {
-      klib_printf("\taddr=0x%x%x  len=0x%x%x  type=0x%x\n",
-		  (u32_t)(mmap[i].addr >> 32),
-		  (u32_t)(mmap[i].addr & 0xffffffff),
-		  (u32_t)(mmap[i].len >> 32),
-		  (u32_t)(mmap[i].len & 0xffffffff),
-		  mmap[i].type);
-    }
-
-  /* DEBUG */
-  while(1){}
-  
-
-  /* Corrige les eventuels chevauchements */
-  /* if (start_e820_sanitize(bootinfo) != EXIT_SUCCESS) */
-  /*   { */
-  /*     goto err_mem; */
-  /*   } */
-
-  /* Tronque a 4G */
-  /* if (start_e820_truncate32b(bootinfo) != EXIT_SUCCESS) */
-  /*   { */
-  /*     goto err_mem; */
-  /*   } */
-
-  /* Calcul la memoire totale corrigee */
-  /* bootinfo->mem_total = 0; */
-  /* for(i=0;i<bootinfo->mem_map_count;i++) */
-  /*   { */
-
-  /*     /\* HACK TEST USER *\/ */
-  /*     if ( (u32_t)(((struct boot_mmap_e820*)bootinfo->mem_map_addr)[i].size) == 0x9F000) */
-  /* 	{ */
-  /* 	  (((struct boot_mmap_e820*)bootinfo->mem_map_addr)[i].size) = 0x9E000; */
-  /* 	} */
+      start_mem_total += mmap[i].len;
       
-  /*     bootinfo->mem_total += ((struct boot_mmap_e820*)bootinfo->mem_map_addr)[i].size; */
-  /*   } */
-
+    }
+ 
   /* Initialise les tables du mode protege */
   if ( (gdt_init() != EXIT_SUCCESS)||(idt_init() != EXIT_SUCCESS) ) 
     {
       goto err_tables;
     }
   klib_printf("GDT & IDT initialized\n");
+
 
   return;
 

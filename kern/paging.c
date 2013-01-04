@@ -29,6 +29,7 @@ PUBLIC u8_t paging_init(void)
       return EXIT_FAILURE;
     }
 
+  
   /* Nullifie la page */
   klib_mem_set(0,(addr_t)kern_PD,PAGING_ENTRIES*sizeof(struct pde));
 
@@ -47,14 +48,14 @@ PUBLIC u8_t paging_init(void)
 	{
 	  return EXIT_FAILURE;
 	}
-
+         
       /* Alloue une page physique */
       table = (struct pte*)phys_alloc(PAGING_ENTRIES*sizeof(struct pte));
       if( table == NULL)
 	{
 	  return EXIT_FAILURE;
 	}
-
+   
       /* Fait pointer le pde sur la nouvelle page */
       kern_PD[i].present = 1;
       kern_PD[i].rw = 1;
@@ -66,8 +67,8 @@ PUBLIC u8_t paging_init(void)
     }
 
   
-  for(p=PAGING_ALIGN_INF(0);
-      p<PAGING_ALIGN_SUP(bootinfo->kern_end);
+  for(p=PAGING_ALIGN_INF(CONST_KERN_START);
+      p<PAGING_ALIGN_SUP(CONST_KERN_END);
       p+=CONST_PAGE_SIZE)
     {
       if (paging_map((virtaddr_t)p, p, PAGING_SUPER|PAGING_IDENTITY) == EXIT_FAILURE)
@@ -75,9 +76,9 @@ PUBLIC u8_t paging_init(void)
 	  return EXIT_FAILURE;
 	}
     }
-
+ 
   for(p=PAGING_ALIGN_INF(CONST_PAGE_NODE_POOL_ADDR);
-      p<PAGING_ALIGN_SUP(CONST_PAGE_NODE_POOL_ADDR+((bootinfo->mem_total) >> CONST_PAGE_SHIFT)*sizeof(struct ppage_desc));
+      p<PAGING_ALIGN_SUP(CONST_PAGE_NODE_POOL_ADDR+((start_mem_total) >> CONST_PAGE_SHIFT)*sizeof(struct ppage_desc));
       p+=CONST_PAGE_SIZE)
     {
       if (paging_map((virtaddr_t)p, p, PAGING_SUPER|PAGING_IDENTITY) == EXIT_FAILURE)
@@ -85,10 +86,7 @@ PUBLIC u8_t paging_init(void)
 	  return EXIT_FAILURE;
 	}
     }
-
-
-
-
+  
   /* Charge le Kernel  Page Directory */
   klib_load_CR3((physaddr_t)kern_PD);
 
