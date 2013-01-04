@@ -64,6 +64,7 @@ PUBLIC u8_t sched_enqueue(u8_t queue, struct thread* th)
   /* Controle */
   if ( th == NULL)
     {
+      klib_printf("enqueue: null\n");
       return EXIT_FAILURE;
     }
 
@@ -119,10 +120,9 @@ PUBLIC u8_t sched_dequeue(u8_t queue, struct thread* th)
   /* Controle */
   if ( th == NULL)
     {
+      klib_printf("dequeue: null\n");
       return EXIT_FAILURE;
     }
-
-  klib_printf("DEQUEUE\n");
 
   switch(queue)
     {
@@ -134,7 +134,7 @@ PUBLIC u8_t sched_dequeue(u8_t queue, struct thread* th)
     case SCHED_READY_QUEUE:
       LLIST_REMOVE(sched_ready[th->sched.dynamic_prio], th);
       break;
-
+      
     case SCHED_BLOCKED_QUEUE:
        LLIST_REMOVE(sched_blocked, th);
       break;
@@ -147,8 +147,6 @@ PUBLIC u8_t sched_dequeue(u8_t queue, struct thread* th)
        return EXIT_FAILURE;
       
     }
-
-  klib_printf("FIN DEQUEUE\n");
 
   return EXIT_SUCCESS;
 
@@ -169,6 +167,7 @@ PUBLIC void sched_schedule(u8_t flag)
   /* Controle */
   if ( LLIST_ISNULL(sched_running) )
     {
+      klib_printf("Running null\n");
       return;
     }
 
@@ -176,6 +175,7 @@ PUBLIC void sched_schedule(u8_t flag)
   cur_th = sched_get_running_thread();
   if (cur_th == NULL)
     {
+      klib_printf("cur_th null\n");
       return;
     }
 
@@ -187,8 +187,7 @@ PUBLIC void sched_schedule(u8_t flag)
 
   /* Trouve la file de plus haute priorite */
   high_prio = sched_get_higher_prio_queue();
-
-    
+     
   /* Avec cette condition, une tache de plus haute priorite est qd meme stoppee en fin de quantum  */
   if ( (cur_th->sched.dynamic_quantum<0) || (high_prio > cur_th->sched.dynamic_prio) || (cur_th->next_state != THREAD_READY) )
     {
@@ -223,8 +222,7 @@ PUBLIC void sched_schedule(u8_t flag)
 	  break;
 	}
 
-
-
+      
       /* Choisis un nouveau thread */
       new_th = LLIST_GETHEAD(sched_ready[high_prio]);
       if (new_th == NULL)
@@ -232,15 +230,15 @@ PUBLIC void sched_schedule(u8_t flag)
 	  return;
 	}
 
-         
       /* Change le nouveau thread de queue */
       sched_dequeue(SCHED_READY_QUEUE,new_th);
       sched_enqueue(SCHED_RUNNING_QUEUE,new_th);
 
+
       /* Switch vers le nouveau thread */
       thread_switch_to(new_th);
-      
-     }
+ 
+    }
 
   return;
 }

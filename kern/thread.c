@@ -81,6 +81,22 @@ PUBLIC u8_t thread_init(void)
   kern_th->state = THREAD_RUNNING;
   kern_th->next_state = THREAD_DEAD;
 
+  /* Nice Level */
+  kern_th->nice = 0;
+
+  /* Priorite */
+  kern_th->sched.static_prio = THREAD_NICE2PRIO(0);
+  kern_th->sched.dynamic_prio = kern_th->sched.static_prio;
+  kern_th->sched.head_prio = kern_th->sched.static_prio;
+
+  /* Quantum */
+  kern_th->sched.static_quantum = 0;
+  kern_th->sched.dynamic_quantum = 0;
+
+  /* Ordonnance */
+  sched_enqueue(SCHED_RUNNING_QUEUE,kern_th);
+
+
   /* la coquille noyau devient le thread courant */
   cur_th = kern_th;
 
@@ -120,6 +136,10 @@ PUBLIC struct thread* thread_create_kern(const char* name, s32_t id, virtaddr_t 
     {
       return NULL;
     }
+
+  /* Nettoie la structure */
+  klib_mem_set(0,(addr_t)th,sizeof(struct thread));
+
  
   thID = (struct id_info*)virtmem_cache_alloc(id_info_cache,VIRT_CACHE_DEFAULT);
   if (thID == NULL)
@@ -246,7 +266,9 @@ PUBLIC struct thread* thread_create_user(const char* name, s32_t id, virtaddr_t 
     {
       return NULL;
     }
- 
+   /* Nettoie la structure */
+  klib_mem_set(0,(addr_t)th,sizeof(struct thread));
+
   thID = (struct id_info*)virtmem_cache_alloc(id_info_cache,VIRT_CACHE_DEFAULT);
   if (thID == NULL)
     {
@@ -478,6 +500,7 @@ PUBLIC void thread_switch_to(struct thread* th)
       /* Change le processus courant uniquement en cas de besoins */
       if (cur_proc != th->proc)
 	{
+	  klib_printf("Change Proc\n");
 	  cur_proc = th->proc;
 	  /* Change l espace d adressage egalement */
 	  klib_load_CR3(cur_proc->p_pd);

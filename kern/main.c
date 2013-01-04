@@ -64,13 +64,14 @@ void Add(u16_t max)
       cm.op_1 = k;
       cm.op_2 = k;
       klib_mem_copy((addr_t)&cm,(addr_t)m.data,m.len);
-      //klib_printf("Add - Sending %d + %d\n",cm.op_1,cm.op_2);
+      klib_printf("Add - Sending %d + %d\n",cm.op_1,cm.op_2);
       if (ipc_sendrec(3,&m)!=IPC_SUCCESS)
 	{
+	   klib_printf("Add: error on IPC\n");
 	  break;
 	}
       klib_mem_copy((addr_t)m.data,(addr_t)&cm,m.len);
-      //klib_printf("Add - Receiving : %d\n",cm.op_res);
+      klib_printf("Add - Receiving : %d\n",cm.op_res);
       k++;
     }
   klib_printf(" [Quit Add....]\n");
@@ -123,13 +124,14 @@ void Mult(u8_t max)
       cm.op_1 = j;
       cm.op_2 = j;
       klib_mem_copy((addr_t)&cm,(addr_t)m.data,m.len);
-      //klib_printf("Mult - Sending %d * %d\n",cm.op_1,cm.op_2);
+      klib_printf("Mult - Sending %d * %d\n",cm.op_1,cm.op_2);
       if (ipc_sendrec(3,&m)!=IPC_SUCCESS)
 	{
+	  klib_printf("Mult: error on IPC\n");
 	  break;
 	}
       klib_mem_copy((addr_t)m.data,(addr_t)&cm,m.len);
-      //klib_printf("Mult - Receiving : %d\n",cm.op_res);
+      klib_printf("Mult - Receiving : %d\n",cm.op_res);
       j--;
     }
   klib_printf(" [Quit Mult....]\n");
@@ -167,6 +169,13 @@ PUBLIC int main()
     }
   klib_printf("Virtual Memory Manager initialized\n");
 
+  /* Initialisation de l ordonannceur */
+  if ( sched_init() != EXIT_SUCCESS )
+    {
+      goto err00;
+    }
+  klib_printf("Scheduler initialized\n");
+
   /* Initialisation des thread */
   if ( thread_init() != EXIT_SUCCESS )
     {
@@ -181,14 +190,6 @@ PUBLIC int main()
       goto err00;
     }
   klib_printf("Processes initialized\n");
-
-
-  /* Initialisation de l ordonannceur */
-  if ( sched_init() != EXIT_SUCCESS )
-    {
-      goto err00;
-    }
-  klib_printf("Scheduler initialized\n");
 
 
   /* Test Proc */
@@ -234,9 +235,8 @@ PUBLIC int main()
   th_calc = thread_create_kern("Calc_thread",THREAD_ID_DEFAULT,(virtaddr_t)Calc,(void*)IPC_ANY,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
   th_mult = thread_create_kern("Mult_thread",THREAD_ID_DEFAULT,(virtaddr_t)Mult,(void*)15,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
 
-  klib_printf("Calculus Threads initialized\n");
 
-  /* Destinations arbitraire pour le code et la pile ustilisateur */
+  /* Destinations arbitraire pour le code et la pile utilisateur */
   //v_entry = 0x80000000; /* == (1<31) */
   //v_stack = 0x80001000;
 
@@ -289,17 +289,13 @@ PUBLIC int main()
   proc_add_thread(kern_proc,th_mult);
   proc_add_thread(kern_proc,th_calc);
 
-  klib_printf("Calculus threads added to kern_proc\n");
 
   /* Ajoute le thread user a proc user */
   //proc_add_thread(user_proc,th_user);
   
   /* Affecte le processus courant et cree un ordonnancement initial */
   cur_proc = kern_proc;
-  sched_dequeue(SCHED_READY_QUEUE,kern_th);
-  sched_enqueue(SCHED_RUNNING_QUEUE,kern_th);
 
-  
   /* Initialisation du gestionnaire des IRQ */
   if ( irq_init() != EXIT_SUCCESS )
     {
@@ -319,7 +315,7 @@ PUBLIC int main()
 
   /* On ne doit plus arriver ici (sauf DEBUG ou erreur) */
  err00:
-
+  
   while(1)
     {
     }

@@ -69,7 +69,7 @@ PRIVATE void pit_handler(struct thread* th)
 
   /* Ordonnanceur */
   sched_schedule(SCHED_FROM_PIT);
- 
+
   return;
 }
 
