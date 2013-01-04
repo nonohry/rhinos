@@ -29,10 +29,8 @@
  *========================================================================*/
 
 
-PRIVATE u8_t start_e820_sanitize(struct boot_info* bootinfo);
-PRIVATE u8_t start_e820_truncate32b(struct boot_info* bootinfo);
-PRIVATE u8_t start_e801_generate(struct boot_info* bootinfo);
-PRIVATE u8_t start_e88_generate(struct boot_info* bootinfo);
+PRIVATE u8_t start_mmap_sanitize(struct multiboot_info* bootinfo);
+PRIVATE u8_t start_mmap_truncate32b(struct multiboot_info* bootinfo);
 
 
 /*========================================================================
@@ -87,7 +85,7 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
       if (start_mbi->flags & START_MULTIBOOT_FLAG_MEMORY)
 	{
 	  /* Nombre d'entrees */
-	  i=2;
+	  i=3;
 	  
 	  /* Creation d'un mmap */
 
@@ -97,9 +95,15 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
 	  start_mmap[0].type = START_E820_AVAILABLE;
 
 	  start_mmap[1].size = sizeof(struct multiboot_mmap_entry);
-	  start_mmap[1].addr = 0x100000;
-	  start_mmap[1].len = start_mbi->mem_upper*1024;
-	  start_mmap[1].type = START_E820_AVAILABLE;
+	  start_mmap[1].addr = CONST_ROM_AREA_START;
+	  start_mmap[1].len = CONST_ROM_AREA_SIZE;
+	  start_mmap[1].type = START_E820_RESERVED;
+
+
+	  start_mmap[2].size = sizeof(struct multiboot_mmap_entry);
+	  start_mmap[2].addr = 0x100000;
+	  start_mmap[2].len = start_mbi->mem_upper*1024;
+	  start_mmap[2].type = START_E820_AVAILABLE;
 	  
 	}
       else
@@ -114,6 +118,20 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
   /* Nombre d'entrees */
   start_mbi->mmap_length = i;
 
+
+  /* Corrige les eventuels chevauchements dans le  mmap */
+  if ( start_mmap_sanitize(start_mbi) != EXIT_SUCCESS )
+    {
+      goto err_mem;
+    }
+
+
+  /* Tronque a 4G si besoin */
+  if ( start_mmap_truncate32b(start_mbi) != EXIT_SUCCESS )
+    {
+      goto err_mem;
+    }    
+
   /* Affiche le mmap */
   mmap = (struct multiboot_mmap_entry*)start_mbi->mmap_addr;
   for(i=0;i<start_mbi->mmap_length;i++)
@@ -124,40 +142,37 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
 		  (u32_t)(mmap[i].len >> 32),
 		  (u32_t)(mmap[i].len & 0xffffffff),
 		  mmap[i].type);
-    }      
-
-
-
+    }
 
   /* DEBUG */
   while(1){}
   
 
   /* Corrige les eventuels chevauchements */
-  if (start_e820_sanitize(bootinfo) != EXIT_SUCCESS)
-    {
-      goto err_mem;
-    }
+  /* if (start_e820_sanitize(bootinfo) != EXIT_SUCCESS) */
+  /*   { */
+  /*     goto err_mem; */
+  /*   } */
 
   /* Tronque a 4G */
-  if (start_e820_truncate32b(bootinfo) != EXIT_SUCCESS)
-    {
-      goto err_mem;
-    }
+  /* if (start_e820_truncate32b(bootinfo) != EXIT_SUCCESS) */
+  /*   { */
+  /*     goto err_mem; */
+  /*   } */
 
   /* Calcul la memoire totale corrigee */
-  bootinfo->mem_total = 0;
-  for(i=0;i<bootinfo->mem_map_count;i++)
-    {
+  /* bootinfo->mem_total = 0; */
+  /* for(i=0;i<bootinfo->mem_map_count;i++) */
+  /*   { */
 
-      /* HACK TEST USER */
-      if ( (u32_t)(((struct boot_mmap_e820*)bootinfo->mem_map_addr)[i].size) == 0x9F000)
-	{
-	  (((struct boot_mmap_e820*)bootinfo->mem_map_addr)[i].size) = 0x9E000;
-	}
+  /*     /\* HACK TEST USER *\/ */
+  /*     if ( (u32_t)(((struct boot_mmap_e820*)bootinfo->mem_map_addr)[i].size) == 0x9F000) */
+  /* 	{ */
+  /* 	  (((struct boot_mmap_e820*)bootinfo->mem_map_addr)[i].size) = 0x9E000; */
+  /* 	} */
       
-      bootinfo->mem_total += ((struct boot_mmap_e820*)bootinfo->mem_map_addr)[i].size;
-    }
+  /*     bootinfo->mem_total += ((struct boot_mmap_e820*)bootinfo->mem_map_addr)[i].size; */
+  /*   } */
 
   /* Initialise les tables du mode protege */
   if ( (gdt_init() != EXIT_SUCCESS)||(idt_init() != EXIT_SUCCESS) ) 
@@ -187,30 +202,30 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
 
 
 
-PRIVATE u8_t start_e820_sanitize(struct boot_info* bootinfo)
+PRIVATE u8_t start_mmap_sanitize(struct multiboot_info* bootinfo)
 {
   u8_t i,j,flag;
   u64_t A,B,C,D;
-  struct boot_mmap_e820* mmap;
-  struct boot_mmap_e820 tmpEntry;
+  struct multiboot_mmap_entry* mmap;
+  struct multiboot_mmap_entry tmpEntry;
 
-  mmap = (struct boot_mmap_e820*)bootinfo->mem_map_addr;
+  mmap = (struct multiboot_mmap_entry*)bootinfo->mmap_addr;
 
   /* Parcours glouton de la table */
-  for(i=0;i<bootinfo->mem_map_count-1;i++)
+  for(i=0;i<bootinfo->mmap_length-1;i++)
     {
       /* Extremite du segment */
       A=mmap[i].addr;
-      B=mmap[i].size+mmap[i].addr-1;
+      B=mmap[i].len+mmap[i].addr-1;
 
-      for(j=i+1;j<bootinfo->mem_map_count;j++)
+      for(j=i+1;j<bootinfo->mmap_length;j++)
 	{
 	  /* (Re)Initialisation du flag */
 	  flag = 3;
 
 	  /* Extremites du segment compare */
 	  C=mmap[j].addr;
-	  D=mmap[j].size+mmap[j].addr-1;
+	  D=mmap[j].len+mmap[j].addr-1;
 
 	  /* Overlap */
 	  if ((s64_t)(MIN(B,D)-MAX(A,C))>0)
@@ -225,7 +240,7 @@ PRIVATE u8_t start_e820_sanitize(struct boot_info* bootinfo)
 		  {
 		    /* Creation de 3 segments */
 
-		    if (bootinfo->mem_map_count+1 < START_E820_MAX)
+		    if (bootinfo->mmap_length+1 < START_MULTIBOOT_MMAP_MAX)
 		      {
 			u8_t t0,t1,t2;
 			
@@ -235,18 +250,18 @@ PRIVATE u8_t start_e820_sanitize(struct boot_info* bootinfo)
 			t2 = (MAX(B,D) == B ? mmap[i].type : mmap[j].type);
 
 			mmap[i].addr = MIN(A,C);
-			mmap[i].size = MAX(A,C)-MIN(A,C);
+			mmap[i].len = MAX(A,C)-MIN(A,C);
 			mmap[i].type = t0;
 
 			mmap[j].addr = MAX(A,C);
-			mmap[j].size = MIN(B,D)-MAX(A,C)+1;
+			mmap[j].len = MIN(B,D)-MAX(A,C)+1;
 			mmap[j].type = t1;
 
-			mmap[bootinfo->mem_map_count].addr = MIN(B,D)+1;
-			mmap[bootinfo->mem_map_count].size = MAX(B,D)-MIN(B,D);
-			mmap[bootinfo->mem_map_count].type = t2;
+			mmap[bootinfo->mmap_length].addr = MIN(B,D)+1;
+			mmap[bootinfo->mmap_length].len = MAX(B,D)-MIN(B,D);
+			mmap[bootinfo->mmap_length].type = t2;
 
-			bootinfo->mem_map_count++; 
+			bootinfo->mmap_length++; 
 		      }
 		    else
 		      {
@@ -266,11 +281,11 @@ PRIVATE u8_t start_e820_sanitize(struct boot_info* bootinfo)
 		    t1 = (MAX(B,D) == B ? mmap[i].type : mmap[j].type);
 
 		    mmap[i].addr = MAX(A,C);
-		    mmap[i].size = MIN(B,D)-MAX(A,C)+1;
+		    mmap[i].len = MIN(B,D)-MAX(A,C)+1;
 		    mmap[i].type = t0;
 		    
 		    mmap[j].addr = MIN(B,D)+1;
-		    mmap[j].size = MAX(B,D)-MIN(B,D);
+		    mmap[j].len = MAX(B,D)-MIN(B,D);
 		    mmap[j].type = t1;
 		    
 
@@ -285,11 +300,11 @@ PRIVATE u8_t start_e820_sanitize(struct boot_info* bootinfo)
 		    t1 = MAX(mmap[i].type,mmap[j].type);
 		    
 		    mmap[i].addr = MIN(A,C);
-		    mmap[i].size = MAX(A,C)-MIN(A,C);
+		    mmap[i].len = MAX(A,C)-MIN(A,C);
 		    mmap[i].type = t0;
 
 		    mmap[j].addr = MAX(A,C);
-		    mmap[j].size = MIN(B,D)-MAX(A,C)+1;
+		    mmap[j].len = MIN(B,D)-MAX(A,C)+1;
 		    mmap[j].type = t1;
 
 
@@ -304,12 +319,12 @@ PRIVATE u8_t start_e820_sanitize(struct boot_info* bootinfo)
 		    mmap[i].type = MAX(mmap[i].type,mmap[j].type);
 		    
 		    /* Supprime le segment confondu */
-		    for(k=j;k<bootinfo->mem_map_count-1;k++)
+		    for(k=j;k<bootinfo->mmap_length-1;k++)
 		      {
 			mmap[k]=mmap[k+1];
 		      }
 		    
-		    bootinfo->mem_map_count--;
+		    bootinfo->mmap_length--;
 
 		    break;
 		  }
@@ -331,22 +346,22 @@ PRIVATE u8_t start_e820_sanitize(struct boot_info* bootinfo)
   do
     {
       flag=0;
-      for(i=0;i<bootinfo->mem_map_count-1;i++)
+      for(i=0;i<bootinfo->mmap_length-1;i++)
 	{
 	  if (mmap[i].addr > mmap[i+1].addr)
 	    {
 	      /* Echange des entrees */
 
 	      tmpEntry.addr=mmap[i].addr;
-	      tmpEntry.size=mmap[i].size;
+	      tmpEntry.len=mmap[i].len;
 	      tmpEntry.type=mmap[i].type;
 
 	      mmap[i].addr=mmap[i+1].addr;
-	      mmap[i].size=mmap[i+1].size;
+	      mmap[i].len=mmap[i+1].len;
 	      mmap[i].type=mmap[i+1].type;
 
 	      mmap[i+1].addr=tmpEntry.addr;
-	      mmap[i+1].size=tmpEntry.size;
+	      mmap[i+1].len=tmpEntry.len;
 	      mmap[i+1].type=tmpEntry.type;
 
 	      flag=1;
@@ -357,22 +372,22 @@ PRIVATE u8_t start_e820_sanitize(struct boot_info* bootinfo)
 
 
   /* Lissage du memory map */
-  for(i=0;i<bootinfo->mem_map_count-1;i++)
+  for(i=0;i<bootinfo->mmap_length-1;i++)
     {
       /* Fusion des segments s ils se suivent et sont de meme type */
-      if ( (mmap[i].addr+mmap[i].size == mmap[i+1].addr)&&(mmap[i].type == mmap[i+1].type) )
+      if ( (mmap[i].addr+mmap[i].len == mmap[i+1].addr)&&(mmap[i].type == mmap[i+1].type) )
 	{
 	  /* Ajuste la taille */
-	  mmap[i].size = mmap[i].size+mmap[i+1].size;
+	  mmap[i].len = mmap[i].len+mmap[i+1].len;
 
 	  /* Supprime le segment suivant */
-	  for(j=i+1;j<bootinfo->mem_map_count-1;j++)
+	  for(j=i+1;j<bootinfo->mmap_length-1;j++)
 	    {
 	      mmap[j]=mmap[j+1];
 	    }
 
 	  /* Met a jour le nombre d entrees */
-	  bootinfo->mem_map_count--;
+	  bootinfo->mmap_length--;
 
 	  /* Recalcul avec la nouvelle entree */
 	  i--;
@@ -390,14 +405,14 @@ PRIVATE u8_t start_e820_sanitize(struct boot_info* bootinfo)
  *========================================================================*/
 
 
-PRIVATE u8_t start_e820_truncate32b(struct boot_info* bootinfo)
+PRIVATE u8_t start_mmap_truncate32b(struct multiboot_info* bootinfo)
 {
   u8_t i;
-  struct boot_mmap_e820* mmap;
+  struct multiboot_mmap_entry* mmap;
 
-  mmap = (struct boot_mmap_e820*)bootinfo->mem_map_addr;
+  mmap = (struct multiboot_mmap_entry*)bootinfo->mmap_addr;
 
-  for(i=0;i<bootinfo->mem_map_count;i++)
+  for(i=0;i<bootinfo->mmap_length;i++)
     {
 
       /* Marque la memoire au dela de 4G comme reservee */
@@ -405,91 +420,16 @@ PRIVATE u8_t start_e820_truncate32b(struct boot_info* bootinfo)
 	{
 	  mmap[i].type = START_E820_RESERVED;
 	}
-      else
+
+      /* Cas de l'entree disponible a cheval */
+      if ((!(mmap[i].addr>>32))&& ((mmap[i].addr+mmap[i].len)>>32)&&(mmap[i].type == START_E820_AVAILABLE) )
 	{
-	  /* Cas de l'entree disponible a cheval */
-	  if ( ((mmap[i].addr+mmap[i].size)>>32)&&(mmap[i].type == START_E820_AVAILABLE) )
-	    {
-	      mmap[i].size = (u32_t)(-1) - mmap[i].addr;
-	    }
+	  mmap[i].len = (u32_t)(-1) - mmap[i].addr;
 	}
+
       
     }
   
   return EXIT_SUCCESS;
 }
 
-
-
-
-/************************************************
- * Genere un memory map depuis int 0x15 ax=0e801 
- ************************************************/
-
-
-PRIVATE u8_t start_e801_generate(struct boot_info* bootinfo)
-{
-  struct boot_mmap_e820* entry;
-  
-  /* Cree un faux memory map */
-  bootinfo->mem_map_count = 4;
-  
-  entry = (struct boot_mmap_e820*)bootinfo->mem_map_addr;
-  entry->addr = 0;
-  entry->size = CONST_ROM_AREA_START;
-  entry->type = START_E820_AVAILABLE;
-
-  entry = (struct boot_mmap_e820*)(bootinfo->mem_map_addr+sizeof(struct boot_mmap_e820));
-  entry->addr = CONST_ROM_AREA_START;
-  entry->size = CONST_ROM_AREA_SIZE;
-  entry->type = START_E820_RESERVED;
-  
-  entry = (struct boot_mmap_e820*)(bootinfo->mem_map_addr+2*sizeof(struct boot_mmap_e820));
-  entry->addr = CONST_ROM_AREA_START+CONST_ROM_AREA_SIZE+1;
-  entry->size = bootinfo->mem_lower << 10;
-  entry->type = START_E820_AVAILABLE;
-  
-  entry = (struct boot_mmap_e820*)(bootinfo->mem_map_addr+3*sizeof(struct boot_mmap_e820));
-  entry->addr = 0x1000000;
-  entry->size = bootinfo->mem_upper << 16;
-  entry->type = START_E820_AVAILABLE;
-  
-  return EXIT_SUCCESS;
-}
-
-
-
-/************************************************
- * Genere un memory map depuis int 0x15 ax=0e88 
- ************************************************/
-
-
-PRIVATE u8_t start_e88_generate(struct boot_info* bootinfo)
-{
-  struct boot_mmap_e820* entry;
-  
-  /* Taille totale */
-  bootinfo->mem_total = (bootinfo->mem_0x0 + bootinfo->mem_0x100000) << 10;
-  
-  /* Cree un faux memory map */
-  bootinfo->mem_map_count = 3;
-
-  entry = (struct boot_mmap_e820*)bootinfo->mem_map_addr;
-  entry->addr = 0;
-  entry->size = bootinfo->mem_0x0;
-  entry->type = START_E820_AVAILABLE;
-
-  /* Possible chevauchement, corrige ensuite via e820_sanitize */
-  entry = (struct boot_mmap_e820*)(bootinfo->mem_map_addr+sizeof(struct boot_mmap_e820));
-  entry->addr = CONST_ROM_AREA_START;
-  entry->size = CONST_ROM_AREA_SIZE;
-  entry->type = START_E820_RESERVED;
-
-  
-  entry = (struct boot_mmap_e820*)(bootinfo->mem_map_addr+2*sizeof(struct boot_mmap_e820));
-  entry->addr = CONST_ROM_AREA_START+CONST_ROM_AREA_SIZE+1;
-  entry->size = bootinfo->mem_0x100000 << 10;
-  entry->type = START_E820_AVAILABLE;
-  
-  return EXIT_SUCCESS;
-}

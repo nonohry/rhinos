@@ -19,8 +19,8 @@
 #define CONST_PAGE_SHIFT             12         /* 2^12=4096    */
 #define CONST_PAGE_NODE_POOL_ADDR    PAGING_ALIGN_SUP(bootinfo->kern_end) //0x100000
 
-#define CONST_ROM_AREA_START        0x9FC00
-#define CONST_ROM_AREA_SIZE         0x603FF
+#define CONST_ROM_AREA_START        0x9F000
+#define CONST_ROM_AREA_SIZE         0x60FFF
 #define CONST_ACPI_AREA_START       0xFEC00000
 #define CONST_ACPI_AREA_SIZE        0x13FFFFF
 
