@@ -64,7 +64,6 @@ PUBLIC u8_t sched_enqueue(u8_t queue, struct thread* th)
   /* Controle */
   if ( th == NULL)
     {
-      klib_printf("enqueue: null\n");
       return EXIT_FAILURE;
     }
 
@@ -120,7 +119,6 @@ PUBLIC u8_t sched_dequeue(u8_t queue, struct thread* th)
   /* Controle */
   if ( th == NULL)
     {
-      klib_printf("dequeue: null\n");
       return EXIT_FAILURE;
     }
 
@@ -167,7 +165,6 @@ PUBLIC void sched_schedule(u8_t flag)
   /* Controle */
   if ( LLIST_ISNULL(sched_running) )
     {
-      klib_printf("Running null\n");
       return;
     }
 
@@ -175,7 +172,6 @@ PUBLIC void sched_schedule(u8_t flag)
   cur_th = sched_get_running_thread();
   if (cur_th == NULL)
     {
-      klib_printf("cur_th null\n");
       return;
     }
 

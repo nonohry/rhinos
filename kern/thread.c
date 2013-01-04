@@ -500,7 +500,6 @@ PUBLIC void thread_switch_to(struct thread* th)
       /* Change le processus courant uniquement en cas de besoins */
       if (cur_proc != th->proc)
 	{
-	  klib_printf("Change Proc\n");
 	  cur_proc = th->proc;
 	  /* Change l espace d adressage egalement */
 	  klib_load_CR3(cur_proc->p_pd);

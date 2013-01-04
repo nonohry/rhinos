@@ -90,21 +90,18 @@ PUBLIC void syscall_handle()
     case SYSCALL_SEND:
       {
 	res = syscall_send(cur_th, target_th, arg_message);
-	if (res!=IPC_SUCCESS) klib_printf("send: error\n");
 	break;
       }
 
     case SYSCALL_RECEIVE:
       {
 	res = syscall_receive(cur_th, target_th, arg_message);
-	if (res!=IPC_SUCCESS) klib_printf("rec: error\n");
 	break;
       }
 
     case SYSCALL_NOTIFY:
       {
 	res = syscall_notify(cur_th, target_th);
-	if (res!=IPC_SUCCESS) klib_printf("not: error\n");
 	break;
       }
     default:
