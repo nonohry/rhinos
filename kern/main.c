@@ -234,8 +234,10 @@ PUBLIC int main()
   /*     goto err00; */
   /*   } */
 
-  
-  if (paging_map(v_entry,0x1835000,PAGING_USER) == EXIT_FAILURE) 
+  struct multiboot_mod_entry* mod;
+  mod = (struct multiboot_mod_entry *) start_mbi->mods_addr;
+
+  if (paging_map(v_entry,mod->start,PAGING_USER) == EXIT_FAILURE) 
     {
       goto err00;
     }
