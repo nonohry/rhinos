@@ -32,11 +32,8 @@
 #define START_MULTIBOOT_FLAG_APM       0x400
 #define START_MULTIBOOT_FLAG_VIDEO     0x800
 
-
 #define START_MULTIBOOT_MMAP_MAX       128
 
-
-#define START_MEM_SIZE_0        1048576
 
 /* Type pour mmap e820 */
 
@@ -45,12 +42,6 @@
 #define START_E820_ACPI         0x3
 #define START_E820_ACPI_NVS     0x4
 
-
-/* Constantes sanitize */
-
-#define START_E820_MAX              50
-#define START_FRAME_MAX             4096
-#define START_SHIFT                 12
 
 
 /*======================================================================== 

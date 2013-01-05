@@ -58,6 +58,13 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
   /* Affecte la structure multiboot */
   start_mbi = (struct multiboot_info*)mbi_addr;
 
+  /* Controle */
+  if (magic != START_MULTIBOOT_MAGIC)
+    {
+      goto err_magic;
+    }
+      
+
   /* Copie les entrees mmap dans un lieu maitrise si presence d un mmap */
   if (start_mbi->flags & START_MULTIBOOT_FLAG_MMAP)
     {
@@ -140,6 +147,15 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
       start_mem_total += mmap[i].len;
       
     }
+
+  /* Recuperation des modules */
+  if (start_mbi->flags & START_MULTIBOOT_FLAG_MODS)
+    {
+    }
+  else
+    {
+      goto err_mods;
+    }
  
   /* Initialise les tables du mode protege */
   if ( (gdt_init() != EXIT_SUCCESS)||(idt_init() != EXIT_SUCCESS) ) 
@@ -147,16 +163,22 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
       goto err_tables;
     }
   klib_printf("GDT & IDT initialized\n");
-
-
+  
+  /* Fin */
   return;
-
+  
+ err_magic:
+  klib_printf("Bad Magic Number\n");
+  
  err_mem:
-  klib_printf("Memory Error ! Aborting...\n");
+  klib_printf("Memory Error\n");
+  
+ err_mods:
+  klib_printf("No module found\n");
 
  err_tables:
   klib_printf("GDT & IDT Error\n");
-
+  
   while(1){}
 
   return;

@@ -113,10 +113,12 @@ mke2fs -b 1024 /dev/loop1 4000 1>/dev/null 2>&1
 
 mount -t ext2 /dev/loop1 $MNT 
 mkdir $MNT/kern
-cp /home/g4b/rhinos/kern/kern $MNT/kern
+mkdir $MNT/srv
+cp ../kern/kern $MNT/kern
+cp ../srv/user $MNT/srv
 grub-install --modules=part_msdos --root-directory=$MNT /dev/loop0
 
-printf "set timeout=10\nset default=0\n\nmenuentry \"RhinOS\" {\n\tmultiboot /kern/kern\n\tboot\n}\n" > $MNT/boot/grub/grub.cfg
+printf "set timeout=10\nset default=0\n\nmenuentry \"RhinOS\" {\n\tmultiboot /kern/kern\n\tmodule /srv/user\n\tboot\n}\n" > $MNT/boot/grub/grub.cfg
 
 ########################################
 # Demontage
