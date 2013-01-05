@@ -185,7 +185,7 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
   klib_printf("Memory Error\n");
   
  err_mods:
-  klib_printf("No module found\n");
+  klib_printf("No Module Found\n");
 
  err_tables:
   klib_printf("GDT & IDT Error\n");
