@@ -115,10 +115,12 @@ mount -t ext2 /dev/loop1 $MNT
 mkdir $MNT/kern
 mkdir $MNT/srv
 cp ../kern/kern $MNT/kern
-cp ../srv/user $MNT/srv
+cp ../srv/user $MNT/srv/user1
+cp ../srv/user $MNT/srv/user2
+cp ../srv/user $MNT/srv/user3
 grub-install --modules=part_msdos --root-directory=$MNT /dev/loop0
 
-printf "set timeout=10\nset default=0\n\nmenuentry \"RhinOS\" {\n\tmultiboot /kern/kern\n\tmodule /srv/user\n\tboot\n}\n" > $MNT/boot/grub/grub.cfg
+printf "set timeout=10\nset default=0\n\nmenuentry \"RhinOS\" {\n\tmultiboot /kern/kern\n\tmodule /srv/user1\n\tmodule /srv/user2\n\tmodule /srv/user3\n\tboot\n}\n" > $MNT/boot/grub/grub.cfg
 
 ########################################
 # Demontage

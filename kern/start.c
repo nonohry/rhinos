@@ -151,6 +151,17 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
   /* Recuperation des modules */
   if (start_mbi->flags & START_MULTIBOOT_FLAG_MODS)
     {
+      struct multiboot_mod_entry* mod;
+
+      for (mod = (struct multiboot_mod_entry *) start_mbi->mods_addr, i=0;
+	   i < start_mbi->mods_count;
+	   mod++, i++)
+	{
+	  klib_printf ("mod_start = 0x%x, mod_end = 0x%x, cmdline = %s\n",
+		       mod->start,
+		       mod->end,
+		       (char *) mod->cmdline);
+	}
     }
   else
     {
