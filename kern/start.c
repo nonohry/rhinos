@@ -91,6 +91,13 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
       /* Construit un memory map avec les informations upper/lower */
       if (start_mbi->flags & START_MULTIBOOT_FLAG_MEMORY)
 	{
+
+	  /* S'assure de la presence de valeurs */
+	  if (!(start_mbi->mem_lower && start_mbi->mem_upper))
+	    {
+	      goto err_mem;
+	    }
+
 	  /* Nombre d'entrees */
 	  i=3;
 	  
@@ -148,26 +155,12 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
       
     }
 
-  /* Recuperation des modules */
-  if (start_mbi->flags & START_MULTIBOOT_FLAG_MODS)
-    {
-      struct multiboot_mod_entry* mod;
-
-      for (mod = (struct multiboot_mod_entry *) start_mbi->mods_addr, i=0;
-	   i < start_mbi->mods_count;
-	   mod++, i++)
-	{
-	  klib_printf ("mod_start = 0x%x, mod_end = 0x%x, cmdline = %s\n",
-		       mod->start,
-		       mod->end,
-		       (char *) mod->cmdline);
-	}
-    }
-  else
+  /* Verification des modules */
+  if (!(start_mbi->flags & START_MULTIBOOT_FLAG_MODS))
     {
       goto err_mods;
     }
- 
+
   /* Initialise les tables du mode protege */
   if ( (gdt_init() != EXIT_SUCCESS)||(idt_init() != EXIT_SUCCESS) ) 
     {

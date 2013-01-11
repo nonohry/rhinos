@@ -66,5 +66,4 @@ extern u8_t __CONST_KERN_END[];
 #define CONST_RING3                  3
 
 
-
 #endif

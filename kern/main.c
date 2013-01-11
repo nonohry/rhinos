@@ -129,7 +129,10 @@ void Mult(u8_t max)
 
 PUBLIC int main()
 {
+  u32_t i;
   struct thread* thread_idle;
+  struct multiboot_mod_entry* mod;
+  physaddr_t paddr;
 
   /* Initialisation de la memoire physique */
   if ( phys_init() != EXIT_SUCCESS )
@@ -137,6 +140,26 @@ PUBLIC int main()
       goto err00;
     }
   klib_printf("Physical Memory Manager initialized\n");
+
+
+  /* Relocalise les modules avec de nouvelles pages physiques */
+  for (mod = (struct multiboot_mod_entry *) start_mbi->mods_addr, i=0;
+       i < start_mbi->mods_count;
+       mod++, i++)
+    {
+      /* Alloue une zone physique */
+      paddr = (physaddr_t)phys_alloc(mod->end-mod->start);
+      if (!paddr)
+	{
+	  goto err00;
+	}
+      /* Copie du module */
+      klib_mem_copy(mod->start,paddr,mod->end-mod->start);
+      /* Met a jour les informations */
+      mod->end = paddr + (mod->end-mod->start);
+      mod->start = paddr;
+
+    }
 
   /* Initialisation de la pagination */
   if ( paging_init() != EXIT_SUCCESS )
@@ -212,7 +235,7 @@ PUBLIC int main()
   struct thread* th_mult;
   struct thread* th_user;
   virtaddr_t v_entry, v_stack;
-  physaddr_t paddr;
+
    
   th_add = thread_create_kern("Add_thread",THREAD_ID_DEFAULT,(virtaddr_t)Add,(void*)12,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
   th_calc = thread_create_kern("Calc_thread",THREAD_ID_DEFAULT,(virtaddr_t)Calc,(void*)IPC_ANY,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
@@ -221,41 +244,38 @@ PUBLIC int main()
 
   /* Destinations arbitraire pour le code et la pile utilisateur */
   v_entry = 0x80000000; /* == (1<31) */
-  v_stack = 0x80001000;
+  v_stack = 0x90000000;
 
   /* Se met sur le page directory du processus utilisateur (qui est synchro avec le noyau donc pas de soucis) pour le mapping */
   klib_load_CR3(user_proc->p_pd);
 
-  /* Effectue les mappages dans ce nouvel espace d'adressage */
-
-  /* paddr = (physaddr_t)phys_alloc(CONST_PAGE_SIZE); */
-  /* if (!paddr) */
-  /*   { */
-  /*     goto err00; */
-  /*   } */
-
-  struct multiboot_mod_entry* mod;
+  /* Effectue les mappages de code et donnees dans ce nouvel espace d'adressage */
   mod = (struct multiboot_mod_entry *) start_mbi->mods_addr;
-
-  if (paging_map(v_entry,mod->start,PAGING_USER) == EXIT_FAILURE) 
+  paddr=mod->start;
+  for(v_entry=0x80000000, paddr=mod->start;
+      paddr < mod->end ;
+      v_entry += CONST_PAGE_SIZE, paddr+= CONST_PAGE_SIZE)
     {
-      goto err00;
-    }
+
+      if (paging_map(v_entry,paddr,PAGING_USER) == EXIT_FAILURE) 
+	{
+	  goto err00;
+	}
+      }
   
+  /* Mappage de la pile */
   paddr = (physaddr_t)phys_alloc(CONST_PAGE_SIZE); 
   if (!paddr)
     { 
       goto err00; 
     } 
-  
   if (paging_map(v_stack,paddr,PAGING_USER) == EXIT_FAILURE) 
     { 
       goto err00; 
     } 
-  
 
   /*  Cree le thread dans l'espace utilisateur (sinon, pas acces au point d entree ni a la pile) */
-  th_user = thread_create_user("User_thread",THREAD_ID_DEFAULT,v_entry,v_stack,CONST_PAGE_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT); 
+  th_user = thread_create_user("User_thread",THREAD_ID_DEFAULT,0x80000000,v_stack,CONST_PAGE_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT); 
   if (th_user == NULL) 
     { 
       goto err00; 
