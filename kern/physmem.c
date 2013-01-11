@@ -28,6 +28,7 @@ PRIVATE struct ppage_desc* ppage_free[PHYS_PAGE_MAX_BUDDY];
 PUBLIC u8_t phys_init(void)
 {
   s32_t i;
+  u8_t ok=0;
   u32_t pool_size;
   struct multiboot_mmap_entry* entry;
 
@@ -49,37 +50,22 @@ PUBLIC u8_t phys_init(void)
 	  physaddr_t base = (physaddr_t)entry->addr;
 	  u32_t size = (u32_t)entry->len;
 
-	  /* Protege la premiere page physique - cas 1 */
-	  if ((base < CONST_PAGE_SIZE)&&(base+size <= CONST_PAGE_SIZE))
+	  /* Protege la premiere page physique */
+	  if (base == 0)
 	    {
-	      continue;
+	      size -= CONST_PAGE_SIZE;
+	      base += CONST_PAGE_SIZE;
 	    }
 
-	  /* Protege la premiere page physique - cas 2 */
-	  if ((base < CONST_PAGE_SIZE)&&(base+size > CONST_PAGE_SIZE))
-	    {
-	      size -= (CONST_PAGE_SIZE - base);
-	      base = CONST_PAGE_SIZE;
-	    }
-
-	  /* Si le noyau est dans la zone, alors sa fin devient le debut de la zone */
-	  if ( (CONST_KERN_END >= base)&&
-	       (CONST_KERN_END <= base+size) )
-	    {
-
-	      /* Reajuste la taille */
-	      size -= (CONST_KERN_END - base);
-	      base = CONST_KERN_END;
-	      
-	    }
 	  
-	  /* Si le pool est dans la zone, alors sa fin devient le debut de la zone */
-	  if ( (CONST_PAGE_NODE_POOL_ADDR+pool_size >= base)&&
-	       (CONST_PAGE_NODE_POOL_ADDR+pool_size <= base+size) )
+	  /* Retire la zone kern_start (0x100000) - NODE_POOL_ADDR+pool_size de l'allocateur */
+	  if ( (base == CONST_KERN_START)&&(base+size > CONST_PAGE_NODE_POOL_ADDR+pool_size) )
 	    {
+	      /* Indique l'existence de la zone en question */
+	      ok = 1;
 	      
 	      /* Reajuste la taille */
-	      size -= (CONST_PAGE_NODE_POOL_ADDR+pool_size - base);
+	      size -= CONST_PAGE_NODE_POOL_ADDR+pool_size - base;
 	      base = CONST_PAGE_NODE_POOL_ADDR+pool_size;
 	
 	    }
@@ -89,7 +75,7 @@ PUBLIC u8_t phys_init(void)
 	}
     }
 
-  return EXIT_SUCCESS;
+  return (ok?EXIT_SUCCESS:EXIT_FAILURE);
 }
 
 
