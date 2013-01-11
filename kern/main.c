@@ -134,6 +134,20 @@ PUBLIC int main()
   struct multiboot_mod_entry* mod;
   physaddr_t paddr;
 
+  struct thread* th_add;
+  struct thread* th_calc;
+  struct thread* th_mult;
+  struct thread* th_user;
+  virtaddr_t v_entry, v_stack;
+
+  struct proc* kern_proc;
+  struct proc* user_proc;
+
+
+  char* proc_names[3] = {"user_proc1","user_proc2","user_proc3"};
+  char* th_names[3] = {"user_thread1","user_thread2","user_thread3"};
+
+
   /* Initialisation de la memoire physique */
   if ( phys_init() != EXIT_SUCCESS )
     {
@@ -198,11 +212,7 @@ PUBLIC int main()
   klib_printf("Processes initialized\n");
 
 
-  /* Test Proc */
-
-  struct proc* kern_proc;
-  struct proc* user_proc;
-
+  /* Kern Proc */
   kern_proc = (struct proc*)virt_alloc(sizeof(struct proc));
   kern_proc->name[0] = 'k';
   kern_proc->name[1] = 'e';
@@ -217,8 +227,7 @@ PUBLIC int main()
   kern_proc->v_pd = (struct pde*)PAGING_GET_PD();
   kern_proc->p_pd = paging_virt2phys((virtaddr_t)kern_proc->v_pd);
   LLIST_NULLIFY(kern_proc->thread_list);
- 
-  user_proc = proc_create("user_proc");
+
  
   /* Idle Thread */
   thread_idle = thread_create_kern("[Idle]",THREAD_ID_DEFAULT,(virtaddr_t)klib_idle,NULL,THREAD_NICE_TOP,THREAD_QUANTUM_DEFAULT);
@@ -228,61 +237,12 @@ PUBLIC int main()
     }
   klib_printf("Idle Thread initialized\n");
 
-  /* Tests threads */
-
-  struct thread* th_add;
-  struct thread* th_calc;
-  struct thread* th_mult;
-  struct thread* th_user;
-  virtaddr_t v_entry, v_stack;
-
-   
+  /* Tests kernel threads */
   th_add = thread_create_kern("Add_thread",THREAD_ID_DEFAULT,(virtaddr_t)Add,(void*)12,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
   th_calc = thread_create_kern("Calc_thread",THREAD_ID_DEFAULT,(virtaddr_t)Calc,(void*)IPC_ANY,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
   th_mult = thread_create_kern("Mult_thread",THREAD_ID_DEFAULT,(virtaddr_t)Mult,(void*)15,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
+  klib_printf("Test Kernel Threads initialized\n");
 
-
-  /* Destinations arbitraire pour le code et la pile utilisateur */
-  v_entry = 0x80000000; /* == (1<31) */
-  v_stack = 0x90000000;
-
-  /* Se met sur le page directory du processus utilisateur (qui est synchro avec le noyau donc pas de soucis) pour le mapping */
-  klib_load_CR3(user_proc->p_pd);
-
-  /* Effectue les mappages de code et donnees dans ce nouvel espace d'adressage */
-  mod = (struct multiboot_mod_entry *) start_mbi->mods_addr;
-  paddr=mod->start;
-  for(v_entry=0x80000000, paddr=mod->start;
-      paddr < mod->end ;
-      v_entry += CONST_PAGE_SIZE, paddr+= CONST_PAGE_SIZE)
-    {
-
-      if (paging_map(v_entry,paddr,PAGING_USER) == EXIT_FAILURE) 
-	{
-	  goto err00;
-	}
-      }
-  
-  /* Mappage de la pile */
-  paddr = (physaddr_t)phys_alloc(CONST_PAGE_SIZE); 
-  if (!paddr)
-    { 
-      goto err00; 
-    } 
-  if (paging_map(v_stack,paddr,PAGING_USER) == EXIT_FAILURE) 
-    { 
-      goto err00; 
-    } 
-
-  /*  Cree le thread dans l'espace utilisateur (sinon, pas acces au point d entree ni a la pile) */
-  th_user = thread_create_user("User_thread",THREAD_ID_DEFAULT,0x80000000,v_stack,CONST_PAGE_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT); 
-  if (th_user == NULL) 
-    { 
-      goto err00; 
-    } 
-  
-  /* Retourne dans l'espace d'adressage noyau */
-  klib_load_CR3((physaddr_t)kern_PD); 
 
   /* Rentre tous les threads noyau dans le processus noyau */
   proc_add_thread(kern_proc,kern_th);
@@ -290,10 +250,60 @@ PUBLIC int main()
   proc_add_thread(kern_proc,th_add);
   proc_add_thread(kern_proc,th_mult);
   proc_add_thread(kern_proc,th_calc);
+
+
+
+  /* Destinations arbitraire pour le code et la pile utilisateur */
+  v_stack = 0x90000000;
+
+
+  for(mod = (struct multiboot_mod_entry *) start_mbi->mods_addr, i=0;
+      i < start_mbi->mods_count;
+      mod++,i++)
+    {
+        /* User Proc */
+      user_proc = proc_create(proc_names[i]);
+
+      /* Se met sur le page directory du processus utilisateur (qui est synchro avec le noyau donc pas de soucis) pour le mapping */
+      klib_load_CR3(user_proc->p_pd);
+
+      /* Effectue les mappages de code et donnees dans ce nouvel espace d'adressage */
+      paddr=mod->start;
+      for(v_entry=0x80000000, paddr=mod->start;
+	  paddr < mod->end ;
+	  v_entry += CONST_PAGE_SIZE, paddr+= CONST_PAGE_SIZE)
+	{
+	  
+	  if (paging_map(v_entry,paddr,PAGING_USER) == EXIT_FAILURE) 
+	    {
+	      goto err00;
+	    }
+	}
   
+      /* Mappage de la pile */
+      paddr = (physaddr_t)phys_alloc(CONST_PAGE_SIZE); 
+      if (!paddr)
+	{ 
+	  goto err00; 
+	} 
+      if (paging_map(v_stack,paddr,PAGING_USER) == EXIT_FAILURE) 
+	{ 
+	  goto err00; 
+	} 
+
+      /*  Cree le thread dans l'espace utilisateur (sinon, pas acces au point d entree ni a la pile) */
+      th_user = thread_create_user(th_names[i],THREAD_ID_DEFAULT,0x80000000,v_stack,CONST_PAGE_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT); 
+      if (th_user == NULL) 
+	{ 
+	  goto err00; 
+	} 
   
-  /* Ajoute le thread user a proc user */
-  proc_add_thread(user_proc,th_user);
+      /* Retourne dans l'espace d'adressage noyau */
+      klib_load_CR3((physaddr_t)kern_PD); 
+  
+      /* Ajoute le thread user a proc user */
+      proc_add_thread(user_proc,th_user);
+    }
   
   /* Affecte le processus courant et cree un ordonnancement initial */
   cur_proc = kern_proc;
