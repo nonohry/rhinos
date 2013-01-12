@@ -144,8 +144,8 @@ PUBLIC int main()
   struct proc* user_proc;
 
 
-  char* proc_names[3] = {"user_proc1","user_proc2","user_proc3"};
-  char* th_names[3] = {"user_thread1","user_thread2","user_thread3"};
+  char* proc_names[CONST_BOOT_MODULES] = {"user_proc1","user_proc2","user_proc3"};
+  char* th_names[CONST_BOOT_MODULES] = {"user_thread1","user_thread2","user_thread3"};
 
 
   /* Initialisation de la memoire physique */

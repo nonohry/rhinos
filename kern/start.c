@@ -139,7 +139,6 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
       goto err_mem;
     }
 
-
   /* Tronque a 4G si besoin */
   if ( start_mmap_truncate32b(start_mbi) != EXIT_SUCCESS )
     {
@@ -156,7 +155,7 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
     }
 
   /* Verification des modules */
-  if (!(start_mbi->flags & START_MULTIBOOT_FLAG_MODS))
+  if (!((start_mbi->flags & START_MULTIBOOT_FLAG_MODS)&&(start_mbi->mods_count == CONST_BOOT_MODULES)))
     {
       goto err_mods;
     }
