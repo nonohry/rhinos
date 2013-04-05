@@ -12,29 +12,22 @@
 #define IPC_H
 
 
-/**=============================================================
+/**
   
    Includes
    --------
 
    - types.h
 
-===============================================================**/
+**/
 
 #include <types.h>
 
 
-
-/**=============================================================
-   
-   Constants
-   ---------
-
-===============================================================**/
-
-
 /**
-    ### IPC_ANY
+
+    Constante: IPC_ANY
+    ------------------
 
     Wildcard acceptance for Receive
 
@@ -45,8 +38,9 @@
 
 /**
 
-   ### IPC Return Values
-   
+   Constantes: IPC Return Values
+   -----------------------------
+
    - IPC_SUCCESS  : All is OK
    - IPC_FAILURE  : Something got wrong
    - IPC_DEADLOCK : A is sending to B which is sending to A
@@ -60,7 +54,8 @@
 
 /**
 
-   ### IPC_DATA_LEN
+   Constante: IPC_DATA_LEN
+   -----------------------
 
    Max data in an IPC message
 
@@ -69,22 +64,16 @@
 #define IPC_DATA_LEN  251
 
 
-/**=============================================================
-
-   Structures
-   ----------
-
-===============================================================**/
-
 
 /**
    
-   ### struct ipc_message
+   Structure: struct ipc_message
+   -----------------------------
 
    Define an IPC message. Members are
    
    - from : originated thread
-   - len  : size of message
+   - len  : size of message content
    - data : message content
 
 **/
@@ -99,15 +88,15 @@ PUBLIC struct ipc_message
 
 
 
-/**=============================================================
+/**
 
   Prototypes
   ----------
   
   Declare the 4 ipc primitives.
-  Their scope is extern because they are defined in assembly
+  EXTERN scope due to assembly defintion (lib/ipc/ipc.s)
 
-===============================================================**/
+**/
 
 EXTERN u8_t ipc_send(int to, struct ipc_message* msg);
 EXTERN u8_t ipc_receive(int from, struct ipc_message* msg);
