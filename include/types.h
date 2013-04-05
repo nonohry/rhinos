@@ -18,9 +18,10 @@
    ------
 
    Define 3 scopes:
-    - PUBLIC  : universal scope
-    - PRIVATE : in source file scope
-    - EXTERN  : external scope
+   
+   - PUBLIC  : universal scope
+   - PRIVATE : in source file scope
+   - EXTERN  : external scope
 
 
 **/
@@ -52,8 +53,9 @@
    -------------
 
    Define 2 generic value for returning functions:
-    - EXIT_SUCCESS : No error
-    - EXIT_FAILURE : Something wrong ...
+   
+   - EXIT_SUCCESS : No error
+   - EXIT_FAILURE : Something wrong ...
 
 **/
 
@@ -100,13 +102,14 @@ typedef long long int s64_t;
    --------
 
    Define the types of adresses used in RhinOS:
-    - physaddr_t : Physical address
-    - lineaddr_t : Linear address
-    - virtaddr_t : Virtual address
-    - addr_t     : Generic address
-    - reg32_t    : 32 bits register
-    - reg16_t    : 16 bits register
 
+   - physaddr_t : Physical address
+   - lineaddr_t : Linear address
+   - virtaddr_t : Virtual address
+   - addr_t     : Generic address
+   - reg32_t    : 32 bits register
+   - reg16_t    : 16 bits register
+    
 **/
 
 typedef unsigned int   physaddr_t;
