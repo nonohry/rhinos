@@ -1,25 +1,42 @@
-/*
- * Interrupt.h
- * Header pour interrupt.s
- *
- */
+/**
+ 
+  interrupt.h
+  ===========
+
+  Header for interrupt.s
+  Give access to hardware interrupts and exceptions assembly handlers
+
+ **/
 
 
 #ifndef INTERRUPT_H
 #define INTERRUPT_H
 
-/*========================================================================
- * Includes
- *========================================================================*/
+
+/**
+
+   Includes
+   --------
+
+   - types.h
+   - const.h
+   - thread.h      : struct thread needed
+   
+**/
 
 #include <types.h>
 #include "const.h"
 #include "thread.h"
 
 
-/*========================================================================
- * ISR assembleur
- *========================================================================*/
+/**
+
+   Prototypes
+   ----------
+
+   Assembly interrupt service routines
+
+**/
 
 EXTERN void hwint_00(void);
 EXTERN void hwint_01(void);
@@ -61,16 +78,26 @@ EXTERN void excep_18(void);
 
 
 
-/*========================================================================
- * Structure
- *========================================================================*/
+/**
 
-/* Structure int_node */
+   Structure: struct int_node
+   --------------------------
+
+   Link all the first level interrupt handlers  sharing the same IRQ.
+   Members are:
+
+   - flih     : first level interrupt handler 
+   - prev     : previous item in the linked list 
+   - next     : next item in the linked list
+
+**/
+   
+
 PUBLIC struct int_node
 {
-  void (*flih)(struct thread* th);      /* First Level Interrupt Handler */
-  struct int_node* prev;   /* Noeud precedent */
-  struct int_node* next;   /* Noeud suivant */
+  void (*flih)(struct thread* th);
+  struct int_node* prev;
+  struct int_node* next;
 };
 
 

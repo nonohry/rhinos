@@ -1,12 +1,27 @@
-
+	;;/**
+	;;
+	;; 	interrupt.s
+	;; 	===========
+	;;
+	;; 	Low level interrupt handling
+	;;
+	;;**/
+	
 	[BITS 32]
 
-	;;========================================================================
-	;; Gestion bas niveau des interruptions/exceptions
-	;;========================================================================
 
+
+	;;/**
+	;;
+	;; 	Global
+	;; 	------
+	;;
+	;; 	Global declaration to make ISR visible by C code
+	;;
+	;;**/
 	
-global	hwint_00		; ISR visibles pour le C
+	
+global	hwint_00
 global	hwint_01
 global	hwint_02
 global	hwint_03
@@ -44,59 +59,97 @@ global	excep_16
 global	excep_17
 global	excep_18
 
-	
-extern	irq_handle_flih			; Handlers pour les IRQ en C
-extern	excep_handle			; Handlers pour les exceptions en C
-extern	cur_ctx				; Contexte courant
-extern	cur_th				; Thread courant	
-extern	thread_cpu_postsave		; Posttraitement de la sauvegarde de context en C	
-extern	syscall_handle			; Gestion des appels systemes en C
 
-
-	;;========================================================================
-	;; Constantes
-	;;========================================================================
-
-	
-	;; 
-	;; Segment Selector
+	;;/**
 	;;
+	;; 	Extern
+	;; 	------
+	;;
+	;; 	C code needed:
+	;;
+	;;	- irq_handle_flih	: IRQ generic handler
+	;;	- excep_handle		: exception generic handler
+	;;	- cur_th		: current thread
+	;; 	- thread_cpu_postsave	: helper to save context in case of ring jump
+	;; 	- syscall_handle	: syscall generic handler
+	;; 
+	;;**/
+	
+extern	irq_handle_flih
+extern	excep_handle
+extern	cur_th
+extern	thread_cpu_postsave
+extern	syscall_handle
+
+
+	;;/**
+	;; 
+	;; 	Constants: segment selector
+	;;	---------------------------
+	;;
+	;;**/
 
 %assign		KERN_CS_SELECTOR		8  ; CS  = 00000001  0  00   = (byte) 8
 %assign		KERN_DS_SELECTOR		16 ; DS  = 00000010  0  00   = (byte) 16
 %assign		KERN_ES_SELECTOR		16 ; ES  = 00000010  0  00   = (byte) 16
 %assign		KERN_SS_SELECTOR		16 ; SS  = 00000010  0  00   = (byte) 16
 	
+	;;/**
+	;; 
+	;; 	Constants: IRQ magic numbers
+	;;	----------------------------
 	;;
-	;; IRQ Magic Numbers
-	;;
+	;;**/
 
 %assign		IRQ_EOI			0x20
 %assign		IRQ_MASTER		0x20
 %assign		IRQ_SLAVE		0xA0
 
+	;;/**
+	;; 
+	;; 	Constant: Fake Error Code
+	;;	-------------------------
 	;;
-	;; Fake Error Code
+	;; 	Intgerrupts ans some exceptions dont provide an error code.
+	;; 	This error code will be pushed on stack in this case to have a generic handler
 	;;
+	;;**/
+	
 %assign		FAKE_ERROR		0xFEC
 	
+	;;/**
+	;; 
+	;; 	Constants: Offsets
+	;; 	------------------
+	;; 
+	;;	Offset of fields:
+	;; 	- ret_addr
+	;; 	- cs
+	;; 	- esp
+	;; 	in struct cpu_info
 	;;
-	;; Offset dans struct cpu_info
-	;;
+	;;**/
+	
 
 %assign		THREAD_RET_OFFSET		40
 %assign		THREAD_CS_OFFSET		12
 %assign		THREAD_ESP_OFFSET		20
 	
+	;;/**
 	;;
-	;; Taille de la pile d interruption
-	;; 
+	;; 	Constant: interrupt stack size
+	;; 	------------------------------
+	;;
+	;;**/
 
 %assign		INT_STACK_SIZE		1024	
 	
+	;;/**
 	;;
-	;; Vecteurs Exceptions
+	;; 	Constants: Exceptions Vectors
+	;; 	-----------------------------
 	;;
+	;;**/
 
 %assign		DIVIDE_VECTOR		0
 %assign		DEBUG_VECTOR		1
@@ -118,51 +171,68 @@ extern	syscall_handle			; Gestion des appels systemes en C
 %assign		MACHINE_VECTOR		18
 
 
-	;;========================================================================
-	;; Macros
-	;;========================================================================
-
-
-	
+	;;/**
 	;;
-	;; Traitement generique des IRQ (macro maitre)
+	;; 	Macro: hwint_generic0
+	;; 	---------------------
 	;;
+	;; 	All the hardware interrupts are treated the same, so we create a macro to repeat the processing.
+	;; 	The actions are:
+	;;
+	;; 	- Push a fake erroc code (hardware interrupt have no error code)
+	;; 	- Save the CPU context
+	;; 	- Call the C handler with IRQ as a parameter
+	;; 	- Acknowledge the master PIC
+	;; 	- Restore a CPU context
+	;;
+	;;**/
 	
 %macro	hwint_generic0	1
-	push	FAKE_ERROR	; Faux erreur code
-   	call	save_ctx	; Sauvegarde des registres
-	push	dword [cur_th]	; Empile le thread courant
-	push	%1		; Empile l'IRQ
- 	call	irq_handle_flih	; Appel les handles C
-	add	esp,8		; Depile l'IRQ
-	mov	al,IRQ_EOI	; Envoi la fin d interruption
-	out	IRQ_MASTER,al	; au PIC Maitre
-	call	restore_ctx	; Restaure les registres
+	push	FAKE_ERROR
+   	call	save_ctx
+	push	dword [cur_th]
+	push	%1
+ 	call	irq_handle_flih
+	add	esp,8
+	mov	al,IRQ_EOI
+	out	IRQ_MASTER,al
+	call	restore_ctx
 %endmacro
 
+
+	;;/**
 	;;
-	;; Traitement generique des IRQ (macro esclave)
+	;; 	Macro: hwint_generic1
+	;; 	---------------------
 	;;
+	;; 	Same as above, except that acknowledgement is also sent to the slave PIC
+	;;
+	;;**/
 
 %macro	hwint_generic1	1
-	push	FAKE_ERROR	; Faux erreur code	
-	call	save_ctx	; Sauvegarde des registres
-	push	dword [cur_th]	; Empile le thread courant
-	push	%1		; Empile l'IRQ
-	call	irq_handle_flih	; Appel les handles C
-	add	esp,8		; Depile l'IRQ
-	mov	al,IRQ_EOI	; Envoi la fin d interruption
-	out	IRQ_SLAVE,al	; au PIC Esclave
-	out	IRQ_MASTER,al	; puis au Maitre
-	call	restore_ctx	; Restaure les registres
+	push	FAKE_ERROR
+	call	save_ctx
+	push	dword [cur_th]
+	push	%1
+	call	irq_handle_flih
+	add	esp,8
+	mov	al,IRQ_EOI
+	out	IRQ_SLAVE,al
+	out	IRQ_MASTER,al
+	call	restore_ctx
 %endmacro
 
 
 	
-	;;========================================================================
-	;; IRQ Handlers
-	;;========================================================================
-
+	;;/**
+	;;
+	;; 	Functions: hwint_xx
+	;; 	-------------------
+	;;
+	;; 	Define the 16 hardware interrupt handlers corresponding to the 16 IRQ vectors
+	;; 	All the definition use the  hwint_generic macros
+	;;
+	;;**/
 	
 
 hwint_00:
@@ -214,77 +284,109 @@ hwint_15:
 	hwint_generic1	15
 	
 	
-	;;========================================================================
-	;; Software Interrupt Handlers
-	;;========================================================================
+	;;/**
+	;;
+	;; 	Function: swint_syscall
+	;; 	-----------------------
+	;;
+	;; 	low level handler for software interrupt, which is in fact a syscall.
+	;; 	Just save the CPU context and call the C syscall handler before restoring a context
+	;;
+	;;**/
+
 
 
 swint_syscall:
-        push    FAKE_ERROR      ; Faux erreur code      
-        call    save_ctx        ; Sauvegarde des registres
-        call    syscall_handle  ; Handler syscall()
-        call    restore_ctx     ; Restaure les registres
+        push    FAKE_ERROR
+        call    save_ctx
+        call    syscall_handle
+        call    restore_ctx
 	
 	
-	;;========================================================================
-	;; Sauvegarde du contexte pour les IRQ et les exceptions
-	;;========================================================================
+	;;/**
+	;;
+	;; 	Function: save_ctx
+	;;	------------------
+	;;
+	;; 	Save an interrupted CPU context in the thread struct cpu_info
+	;; 	A difference is made if the thread is userland or not
+	;;
+	;;**/
 
 save_ctx:
-	cld		        ; Positionne le sens d empilement
-	
-	mov dword [save_esp],esp	; Sauvegarde ESP
-	mov esp, [cur_th] 		; Placement de ESP sur le thread courant
-	add esp,THREAD_RET_OFFSET	; Placement a ret_addr
+	cld
 
-	pushad			; Sauve les registres generaux 32bits
-	o16 push	ds	; Sauve les registres de segments (empile en 16bits)
+	;; Save ESP and point it to ret_addr field of thread cpu_info struct
+	mov dword [save_esp],esp
+	mov esp, [cur_th]
+	add esp,THREAD_RET_OFFSET
+
+	;;  Push to save registers 
+	pushad
+	o16 push	ds
 	o16 push	es
 	o16 push	fs
 	o16 push	gs
 
-	mov	esp, int_stack_top 	; (Re)Positionne la pile d interruption
-	mov	ax,KERN_DS_SELECTOR	; Ajuste les segments noyau (CS & SS sont deja positionnes)
+	;; Get on the interrupt stack with kernel segments (CS already set by processor)
+	mov	esp, int_stack_top
+	mov	ax,KERN_DS_SELECTOR
 	mov	ds,ax
 	mov	ax,KERN_ES_SELECTOR
-	mov	es,ax			; note: FS & GS ne sont pas utilises par le noyau
+	mov	es,ax
 
-	push	dword [save_esp]	; Empile le pointeur de pile
-	push 	dword [cur_th]		; Empile le thread courant
-	call	thread_cpu_postsave 	; Passe par le C pour finaliser le contexte
-	add	esp,8			; Depile les arguments
-	
-	mov	eax,dword [save_esp] 	; La pile sauvee pointe sur l adresse de retour
-	jmp	[eax]		     	; Saute a l adresse de retour
+	;; Call thread_cpu_postsave to save remaining registers in case of an interrupted kernel thread 
+	push	dword [save_esp]
+	push 	dword [cur_th]
+	call	thread_cpu_postsave
+	add	esp,8
+
+	;; Get the save stack to return to caller
+	mov	eax,dword [save_esp]
+	jmp	[eax]
 
 	
-	;;======================================================================== 
-	;; Restauration du contexte pour les IRQ et les exceptions
-	;;======================================================================== 
+	;;/**
+	;;
+	;; 	Function: restore_ctx
+	;; 	---------------------
+	;;
+	;; 	Restore the context of cur_th thread
+	;; 	It simply pops the registers from the cur_th struct cpu_info
+	;;
+	;;**/
 
 	
 restore_ctx:
 	mov 	esp, [cur_th]
-	o16 pop gs		; Restaure les registres
-	o16 pop fs		; sauves par save_ctx
-	o16 pop	es		; en 16bits
+	o16 pop gs
+	o16 pop fs
+	o16 pop	es
 	o16 pop	ds
-	popad		    	; Restaure les registre generaux
-	
-	cmp 	dword [esp+THREAD_CS_OFFSET], KERN_CS_SELECTOR 	; Teste si le contexte est un contexte noyau
-	jne 	restore_ctx_next	    			; Saute a la suite si ce n'est pas le cas
-	mov 	esp, dword [esp+THREAD_ESP_OFFSET]	    	; Retourne sur la pile interrompue (qui contient les bonnes infos pour iret) sinon
+	popad
+
+	;; In case of an interrupted kernel thread, we move back to the thread stack
+	;; which contains the parameters for itretd					       
+	cmp 	dword [esp+THREAD_CS_OFFSET], KERN_CS_SELECTOR
+	jne 	restore_ctx_next
+	mov 	esp, dword [esp+THREAD_ESP_OFFSET]
 	
 restore_ctx_next:
-	add 	esp,4		; Depile l adresse de retour de save_ctx
-	add 	esp,4		; Depile le code d erreur
+	add 	esp,4		; pop save_ctxt return address
+	add 	esp,4		; pop error code
 	iretd
 
 
 	
-	;;========================================================================
-	;; Exceptions Handlers
-	;;======================================================================== 
+	;;/**
+	;;
+	;; 	Functions: excep_xx
+	;; 	-------------------
+	;;
+	;; 	Define the exception handlers. In fact, they only push an error code if the exception does not provide one
+	;; 	and the exception vector before jumping to excep_next.
+	;;
+	;;**/
 
 excep_00:
 	push	FAKE_ERROR
@@ -370,37 +472,52 @@ excep_18:
 	jmp	excep_next	
 	
 	
-	;;========================================================================
-	;; Gestion des exceptions
-	;;======================================================================== 
-
+	;;/**
+	;;
+	;; 	Function: excep_next
+	;; 	--------------------
+	;;
+	;; 	Real low level exceptions handler. Actions are:
+	;; 	- Save the CPU context
+	;; 	- Call the C handler with exception vector and the current thread
+	;; 	- Restore a CPU context
+	;;
+	;;**/
 	
 excep_next:
-	pop	dword [excep_num] 	; Recupere le vecteur
-	call	save_ctx		; Sauve le contexte
-	push	dword [cur_th]		; Empile le contexte courant	
-	push	dword [excep_num]	; Argument 1 de excep_handle
-	call	excep_handle		; Gestion de l exception en C
-	add	esp,8			; Depile les arguments
-	call	restore_ctx		; Restaure les registres
+	pop	dword [excep_num]
+	call	save_ctx
+	push	dword [cur_th]
+	push	dword [excep_num]
+	call	excep_handle
+	add	esp,8
+	call	restore_ctx
 
 
+
+	;;/**
+	;;
+	;; 	Global variables
+	;; 	----------------
+	;;
+	;; 	- excep_num	: exception vector
+	;;	- save_esp	: saved esp during save_ctx
+	;;
+	;;**/
+	
+	excep_num	dd	0 
+	save_esp	dd	0
 
 	
-	;;========================================================================
-	;; Declaration des Donnees
-	;;========================================================================
-
+	;;/**
 	;;
-	;; Divers
-	;; 
+	;; 	Global variable: int_stack_top
+	;; 	------------------------------
+	;;
+	;; 	Define the top of the interrupt stack
+	;;
+	;;**/
 	
-	excep_num	dd	0 ; Vecteur de l exception
-	save_esp	dd	0 ; Sauvegarde de ESP
-	
-	;;
-	;; La pile d interruption
-	;;
 
 int_stack:
 	times	INT_STACK_SIZE	db 0
