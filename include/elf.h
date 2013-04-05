@@ -1,14 +1,36 @@
+/**
+
+   elf.h
+   =====
+
+   Constantes et structures for elf manipulation
+
+**/
+
 #ifndef ELF_H
 #define ELF_H
+
+
+/**
+
+   Includes
+   --------
+
+   - types.h
+
+**/
+
 
 #include <types.h>
 
 
-/*************
- * Constantes
- *************/
+/**
 
-/* ELF Header Identification */
+   Constantes: ELF Header Identification
+   -------------------------------------
+
+**/
+
 
 #define EI_NIDENT     16
 #define EI_MAG0       0
@@ -33,7 +55,13 @@
 #define ELFDATA2LSB   1
 #define ELFDATA2MSB   2
 
-/* ELF Header Type */
+
+/**
+
+   Constantes: ELF Header Type 
+   ---------------------------
+
+**/
 
 #define ET_NONE       0
 #define ET_REL        1
@@ -43,7 +71,13 @@
 #define ET_LOPROC     0xFF00
 #define ET_HIPROC     0xFFFF
 
-/* ELF Header Architecture */
+
+/**
+
+   Constantes: ELF Header Architecture 
+   -----------------------------------
+
+**/
 
 #define EM_NONE       0
 #define EM_M32        1
@@ -54,12 +88,24 @@
 #define EM_860        7
 #define EM_MIPS       8
 
-/* ELF Header Version */
+
+/**
+
+   Constantes: ELF Header Version 
+   ------------------------------
+
+**/
 
 #define EV_NONE       0
 #define EV_CURRENT    1
 
-/* Program Header Type */
+
+/**
+   
+   Constantes: Program Header Type 
+   -------------------------------
+
+**/
 
 #define PT_NULL       0
 #define PT_LOAD       1
@@ -71,7 +117,13 @@
 #define PT_LOPROC     0x70000000
 #define PL_HIPROC     0x7FFFFFFF
 
-/* Program Header Flags */
+
+/**
+ 
+  Constantes: Program Header Flags 
+  --------------------------------
+
+**/
 
 #define PF_R            0x4
 #define PF_W            0x2
@@ -80,43 +132,77 @@
 #define PF_MASKPROC     0xf0000000
 
 
-/**************
- * ELF Header
- **************/
+/**
+
+   Structure: struct elf_header
+   ----------------------------
+
+   Describe an elf header. Members are:
+
+   - e_ident[EI_NIDENT]         : identification
+   - e_type                     : file type
+   - e_machine                  : processor architecture
+   - e_version                  : version 
+   - e_entry                    : entry point (virtual addr)
+   - e_phoff                    : program header offset 
+   - e_shoff                    : section header offset 
+   - e_flags                    : processor flags 
+   - e_ehsize                   : ELF header size 
+   - e_phentsize                : program header entry size (in bytes) 
+   - e_phnum                    : program header entries number
+   - e_shentsize                : section header entry size (in bytes) 
+   - e_shnum                    : section header entries number
+   - e_shstrndx                 : symbol table index 
+
+**/
 
 PUBLIC struct elf_header
 {
-  unsigned char e_ident[EI_NIDENT]; /* Identification */
-  u16_t e_type;                     /* Type de fichier */
-  u16_t e_machine;                  /* Architecture processeur */
-  u32_t e_version;                  /* Version du ELF */
-  u32_t e_entry;                    /* Point d entree (adresse virtuelle) */
-  u32_t e_phoff;                    /* Offset du Program Header */
-  u32_t e_shoff;                    /* Offset du Section Header */
-  u32_t e_flags;                    /* Flags processeur */
-  u16_t e_ehsize;                   /* Taille du ELF Header */
-  u16_t e_phentsize;                /* Taille d une entree du Program Header (en octet) */
-  u16_t e_phnum;                    /* Nombre d entrees du Program Header */
-  u16_t e_shentsize;                /* Taille d une entree du Section Header (en octet) */
-  u16_t e_shnum;                    /* Nombre d entrees du Section Header */
-  u16_t e_shstrndx;                 /* Index dans le section header de la table des symboles */
+  unsigned char e_ident[EI_NIDENT];
+  u16_t e_type;
+  u16_t e_machine;
+  u32_t e_version;
+  u32_t e_entry;
+  u32_t e_phoff;
+  u32_t e_shoff;
+  u32_t e_flags;
+  u16_t e_ehsize;
+  u16_t e_phentsize;
+  u16_t e_phnum;
+  u16_t e_shentsize;
+  u16_t e_shnum;
+  u16_t e_shstrndx;
 }__attribute__ ((packed));
 
 
-/******************
- * Program Header
- ******************/
+/**
+
+   Structure: struct prog_header
+
+   Describe an ELF program header. Members are:
+   
+     - p_type                     : segment type 
+     - p_offset                   : segment offset
+     - p_vaddr                    : firts byte virtual address
+     - p_paddr                    : first byte physical address
+     - p_filesz                   : in file segment size (in bytes)
+     - p_memsz                    : in memory segment size (in byte)
+     - p_flags                    : flags
+     - p_align                    : alignement 
+
+**/
+
 
 PUBLIC struct prog_header
 {
-  u32_t p_type;                     /* Type de segment */
-  u32_t p_offset;                   /* Offset du segment dans le fichier */
-  u32_t p_vaddr;                    /* Adresse virtuelle du premier octet */
-  u32_t p_paddr;                    /* Adresse physique du premier octet */
-  u32_t p_filesz;                   /* Taille en octet du segment dans le fichier */
-  u32_t p_memsz;                    /* Taille en octet du segment en memoire */
-  u32_t p_flags;                    /* Flags du segment */
-  u32_t p_align;                    /* Valeur de l alignement */
+  u32_t p_type;
+  u32_t p_offset;
+  u32_t p_vaddr;
+  u32_t p_paddr;
+  u32_t p_filesz;
+  u32_t p_memsz;
+  u32_t p_flags;
+  u32_t p_align;
 }__attribute__ ((packed));
 
 
