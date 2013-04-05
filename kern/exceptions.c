@@ -1,12 +1,26 @@
-/*
- * Gestion des exceptions
- *
- */
+/**
+
+   exceptions.c
+   ===========
+
+   Exceptions Handling
+
+**/
 
 
-/*========================================================================
- * Interrupt
- *========================================================================*/
+/**
+
+   Includes
+   --------
+
+   - types.h
+   - const.h
+   - klib.h        : klib_printf needed
+   - thread.h      : struct thread needed
+   - exceptions.h  : self header
+
+**/
+   
 
 #include <types.h>
 #include "const.h"
@@ -15,9 +29,15 @@
 #include "exceptions.h"
 
 
-/*========================================================================
- * Gestion des exceptions (generique)
- *========================================================================*/
+/**
+   
+   Function: void excep_handle(u32_t num, struct thread* th)
+   ---------------------------------------------------------
+
+   Handle or dispatch processor exceptions.
+   For the moment, it only prints the thread cpu context
+
+**/
 
 PUBLIC void excep_handle(u32_t num, struct thread* th)
 {

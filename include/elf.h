@@ -3,7 +3,7 @@
    elf.h
    =====
 
-   Constantes et structures for elf manipulation
+   Constants and structures for elf manipulation
 
 **/
 
@@ -26,7 +26,7 @@
 
 /**
 
-   Constantes: ELF Header Identification
+   Constants: ELF Header Identification
    -------------------------------------
 
 **/
@@ -58,7 +58,7 @@
 
 /**
 
-   Constantes: ELF Header Type 
+   Constants: ELF Header Type 
    ---------------------------
 
 **/
@@ -74,7 +74,7 @@
 
 /**
 
-   Constantes: ELF Header Architecture 
+   Constants: ELF Header Architecture 
    -----------------------------------
 
 **/
@@ -91,7 +91,7 @@
 
 /**
 
-   Constantes: ELF Header Version 
+   Constants: ELF Header Version 
    ------------------------------
 
 **/
@@ -102,7 +102,7 @@
 
 /**
    
-   Constantes: Program Header Type 
+   Constants: Program Header Type 
    -------------------------------
 
 **/
@@ -120,7 +120,7 @@
 
 /**
  
-  Constantes: Program Header Flags 
+  Constants: Program Header Flags 
   --------------------------------
 
 **/

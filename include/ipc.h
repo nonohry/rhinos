@@ -26,7 +26,7 @@
 
 /**
 
-    Constante: IPC_ANY
+    Constant: IPC_ANY
     ------------------
 
     Wildcard acceptance for Receive
@@ -38,7 +38,7 @@
 
 /**
 
-   Constantes: IPC Return Values
+   Constants: IPC Return Values
    -----------------------------
 
    - IPC_SUCCESS  : All is OK
@@ -54,7 +54,7 @@
 
 /**
 
-   Constante: IPC_DATA_LEN
+   Constant: IPC_DATA_LEN
    -----------------------
 
    Max data in an IPC message
