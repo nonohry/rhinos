@@ -3,7 +3,7 @@
    exceptions.h
    ============
 
-   Exception hanfling header file
+   Exception handling header file
 
 **/
 
