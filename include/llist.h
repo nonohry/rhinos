@@ -1,49 +1,113 @@
-/*
- *
- * Macros Listes Doublement Chainees Circulaires
- *
- */
+/**
+   
+   llist.h
+   =======
+
+   Macros for linked list manipulation
+
+**/
 
 
 #ifndef LLIST_H
 #define LLIST_H
 
 
-/* Initialisation de la liste */
+/**
+
+   LLIST_NULLIFY
+   -------------
+
+   Linked list initialization
+
+**/
+
+
 #define LLIST_NULLIFY(__e)			\
   (__e) = (void*)0;
 
 
-/* NULL ? */
+
+
+/**
+
+   LLIST_ISNULL
+   ------------
+
+   Test the existence of a linked list
+
+**/
+
 #define LLIST_ISNULL(__e)				\
   ( (__e)==(void*)0 )
 
 
-/* Tete de la liste (set) */
+
+/**
+
+   LLIST_SETHEAD
+   -------------
+
+   Set a new first item
+
+**/
+
 #define LLIST_SETHEAD(__e)			\
   {						\
     (__e)->next = (__e);			\
     (__e)->prev = (__e);			\
   }
 
-/* Tete de la liste (get) */
+
+/**
+
+   LLIST_GETHEAD
+   -------------
+
+   get the first item
+
+**/
+
 #define LLIST_GETHEAD(__l)			\
   ( __l )
 
 
-/* Liste singleton */
+/**
+
+   LLIST_ISSINGLE
+   --------------
+
+   Test whether the linked list is a signleton
+
+**/
+
 #define LLIST_ISSINGLE(__l)			\
   ( ((__l)->next == __l)&&((__l)->prev == __l) )		
 
 
-/* Comparaison a la tete */
+/**
+
+   LLIST_ISHEAD
+   ------------
+
+   Test whether an item is the first element
+
+**/
+
 #define LLIST_ISHEAD(__l,__e)			\
   ( (__e)==(__l) )
 
 
+/**
 
-/* Ajout a la liste */
-#define LLIST_ADD(__l,__e)				\
+   LLIST_ADD
+   ---------
+
+   Add a new item. 
+   The new item is placed at the head of the list
+
+**/
+
+#define LLIST_ADD(__l,__e)			\
   {						\
     if (LLIST_ISNULL(__l))			\
       {						\
@@ -52,7 +116,7 @@
       }						\
     else					\
       {						\
-	(__e)->prev = (__l)->prev;			\
+	(__e)->prev = (__l)->prev;		\
 	(__e)->next = (__l);			\
 	((__l)->prev)->next = (__e);		\
 	(__l)->prev = (__e);			\
@@ -60,7 +124,16 @@
 }
 
 
-/* Suppression */
+
+/**
+
+   LLIST_REMOVE
+   ------------
+
+   Remove an item. 
+
+**/
+
 #define LLIST_REMOVE(__l,__e)			\
   {						\
     ((__e)->prev)->next = (__e)->next;		\
@@ -79,12 +152,29 @@
   }
 
 
-/* Next */
+
+/**
+
+   LLIST_NEXT
+   ----------
+
+   Get the item following a given item in the list 
+
+**/
+
 #define LLIST_NEXT(__l,__e)				\
   (__e)->next;
 
 
-/* Previous */
+/**
+
+   LLIST_PREVIOUS
+   --------------
+
+   Get the item before a given item in the list 
+
+**/
+
 #define LLIST_PREV(__l,__e)				\
   (__e)->prev;
 
