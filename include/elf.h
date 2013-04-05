@@ -178,6 +178,7 @@ PUBLIC struct elf_header
 /**
 
    Structure: struct prog_header
+   -----------------------------
 
    Describe an ELF program header. Members are:
    
