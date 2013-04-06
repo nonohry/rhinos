@@ -110,7 +110,7 @@ extern	syscall_handle
 	;; 	Constant: Fake Error Code
 	;;	-------------------------
 	;;
-	;; 	Intgerrupts ans some exceptions dont provide an error code.
+	;; 	Interrupts and some exceptions dont provide an error code.
 	;; 	This error code will be pushed on stack in this case to have a generic handler
 	;;
 	;;**/
