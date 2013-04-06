@@ -1,6 +1,27 @@
-[BITS 32]
+	;;/**
+	;;
+	;; 	klib_s.s
+	;; 	========
+	;;
+	;; 	Kernel utilities library - Assembly code
+	;;
+	;;**/
 
-global klib_bochs_print
+
+
+
+	[BITS 32]
+
+
+	;;/**
+	;;
+	;; 	Global
+	;; 	------
+	;;
+	;; 	Global declarations to make routines visible by C code
+	;;
+	;;**/
+
 global klib_outb
 global klib_inb
 global klib_msb
@@ -15,199 +36,154 @@ global klib_sti
 global klib_idle
 	
 	
-	;;======================================================================== 
-	;; Affichage dans bochs (%d et %x supporte)
-	;;========================================================================
 	
-
-ASCII_OFFSET0	equ	48
-ASCII_OFFSETA	equ	55	
+	;;/**
+	;;
+	;; 	Function: klib_outb(u16_t port, u8_t value)
+	;; 	-------------------------------------------
+	;;
+	;; 	Output byte `value` on processor `port`
+	;;
+	;;**/
 	
-klib_bochs_print:
-	push 	ebp         	; Sauvegarde de EBP
-	mov  	ebp,esp 	; Mise en place de la base
-	push	esi		; Sauvegarde ESI (Requis par GCC)
-	push	edi		; Sauvegarde EDI (Requis par GCC)
-	push	edx		; Sauvegarde EDX
-	mov	edx,ebp		; Copie EBP
-	add	edx,8		; Place EDX sur le premier argument
-	mov  	esi,[edx]	; Recupere l'argument dans ESI
-bochs_loop:	
-	lodsb			; Identique a print_message
-	cmp	al,0		; Fin de chaine ?
-	je	bochs_end	; On retourne si oui
-	cmp	al,'%'		; Caractere '%' ?
-	je	bochs_percent	; On s'en occupe si oui
-	push	edx		; Sauvegarde EDX
-	mov	dx,0xe9		; Port de Bochs
-	out	dx,al		; Emet le caractere courant
-	pop	edx		; Restaure EDX
-	jmp	bochs_loop	; Boucle
-bochs_percent:
-	lodsb			; Avale le caractere suivant
-bochs_base10:
-	cmp	al,'d'		; Regarde si c est un 'd'
-	jne	bochs_base16	; Si non, on saute
-	mov	[BASE],dword 10 ; Base decimale
-	jmp	bochs_next	; Saute a la decomposition
-bochs_base16:
-	cmp	al,'x'		; Regarde si c est un 'x'
-	jne	bochs_loop	; Si non, on saute
-	mov	[BASE],dword 16 ; Base hexadecimale
-bochs_next:	
-	push	eax	 	; Sauvegarde EAX
-	push	ebx		; Sauvegarde EBX
-	push	ecx		; Sauvegarde ECX
-	add	edx,4		; EDX pointe sur l argument suivant
-	mov	eax,[edx]	; Met la valeur de l argument dans EAX
-	mov	ecx,0		; Initialise le compteur de division
-	mov	ebx,dword [BASE]; Initialise le diviseur
-	push	edx		; Sauvegarde EDX
-bochs_decomp:
-	mov	edx,0		; Zero EDX (car on divise EDX-EAX)
-	div	ebx		; Divise par la base
-	add	ecx,1		; Increment le compteur de division
-	push	edx		; Empile le Reste
-	cmp	eax,0		; Fin de la division ?
-	jnz	bochs_decomp	; Si non, on continue la decomposition
-bochs_depop:
-	pop	eax		; Depile dans AL
-	cmp	eax,9		; Compare la valeur a 9
-	jg	bochs_ascii16	; Change l'offset pour les nombres hexa
-	add	eax,ASCII_OFFSET0 ; Ajoute l offset pour avoir le code ASCII (0->9)
-	jmp	bochs_ascii_next  ; Saute a l affichage
-bochs_ascii16:
-	add	eax,ASCII_OFFSETA ; Ajoute l offset pour avoir le code ASCII (A->F)
-bochs_ascii_next:	
-	mov	dx,0xe9		; Port de Bochs
-	out	dx,al		; Emet le caractere courant
-	sub	ecx,1		; Decremente le compteur
-	jnz	bochs_depop	; Boucle tant que le compteur est non nul
-	pop	edx		; Restaure EDX
-	pop	ecx		; Restaure ECX
-	pop	ebx		; Restaure EBX
-	pop	eax		; Restaure EAX
-	jmp	bochs_loop	; Boucle sur le reste de la chaine	
-bochs_end:
-	pop	edx		; Restaure EDX
-	pop	edi		; Restaure EDI
-	pop	esi		; Restaure ESI
-	mov	esp,ebp		; Restaure la pile
-	pop	ebp		; Restaure EBP
-	ret
-	
-	
-	;;========================================================================
-	;; klib_outb(u16_t,u8_t)
-	;;========================================================================
 
 klib_outb:
-	push 	ebp         	; Sauvegarde de EBP
-	mov  	ebp,esp 	; Mise en place de la base
-	push	esi		; Sauvegarde ESI (Requis par GCC)
-	push	edi		; Sauvegarde EDI (Requis par GCC)
-	mov  	dx,[ebp+8]	; Recupere le port dans dx
-	mov     al,[ebp+12]     ; Recupere la valeur dans al
-	out     dx,al		; instruction out
-	pop	edi		; Restaure EDI
-	pop	esi		; Restaure ESI
-	mov	esp,ebp		; Restaure la pile
-	pop	ebp		; Restaure EBP
-	ret
-
-	;;========================================================================
-	;; klib_inb(u16_t,u8_t*)
-	;;========================================================================
-
-klib_inb:
-	push 	ebp         	; Sauvegarde de EBP
-	mov  	ebp,esp 	; Mise en place de la base
-	push	esi		; Sauvegarde ESI (Requis par GCC)
-	push	edi		; Sauvegarde EDI (Requis par GCC)
-	mov  	dx,[ebp+8]	; Recupere le port dans dx
-	mov	ebx,[ebp+12]	; Recupere le buffer dans ebx
-	in      al,dx		; Instruction in
-	mov	byte [ebx],al	; Affecte la valeur
-	pop	edi		; Restaure EDI
-	pop	esi		; Restaure ESI
-	mov	esp,ebp		; Restaure la pile
-	pop	ebp		; Restaure EBP
+	push 	ebp		
+	mov  	ebp,esp
+	push	esi
+	push	edi
+	mov  	dx,[ebp+8]	; move ̀port` in DX
+	mov     al,[ebp+12]     ; move `value` in AL
+	out     dx,al		; out
+	pop	edi
+	pop	esi
+	mov	esp,ebp
+	pop	ebp
 	ret
 
 	
-	;;========================================================================
-	;; u32_t klib_msb(u32_t)
-	;;========================================================================
+	;;/**
+	;;
+	;; 	Function: klib_inb(u16_t port, u8_t* buf)
+	;; 	-------------------------------------------
+	;;
+	;; 	Retrieve a byte from processor `port` to buffer ̀buf`
+	;;
+	;;**/
+	
+klib_inb:
+	push 	ebp
+	mov  	ebp,esp
+	push	esi
+	push	edi
+	mov  	dx,[ebp+8]	; move ̀port` in DX
+	mov	ebx,[ebp+12]	; move `buf` address in EBX
+	in      al,dx		; in
+	mov	byte [ebx],al	; put `in` value in EBX
+	pop	edi
+	pop	esi
+	mov	esp,ebp
+	pop	ebp
+	ret
+
+	
+	;;/**
+	;; 
+	;; 	Function: u32_t klib_msb(u32_t n)
+	;;	---------------------------------
+	;;
+	;; 	Return most significant bit
+	;;
+	;;**/
+
+	
 
 klib_msb:
-	push 	ebp         	; Sauvegarde de EBP
-	mov  	ebp,esp 	; Mise en place de la base
-	push	esi		; Sauvegarde ESI (Requis par GCC)
-	push	edi		; Sauvegarde EDI (Requis par GCC)
-	mov  	edx,[ebp+8]	; Recupere le nombre dans edx
-	bsr     eax,edx		; Instruction bsr
-	pop	edi		; Restaure EDI
-	pop	esi		; Restaure ESI
-	mov	esp,ebp		; Restaure la pile
-	pop	ebp		; Restaure EBP
+	push 	ebp
+	mov  	ebp,esp
+	push	esi
+	push	edi
+	mov  	edx,[ebp+8]	; move `n` to EDX
+	bsr     eax,edx		; bsr
+	pop	edi
+	pop	esi
+	mov	esp,ebp
+	pop	ebp
 	ret
 
 	
-	;;========================================================================
-	;; u32_t klib_msb(u32_t)
-	;;========================================================================
 
+	;;/**
+	;; 
+	;; 	Function: u32_t klib_lsb(u32_t n)
+	;;	---------------------------------
+	;;
+	;; 	Return less significant bit
+	;;
+	;;**/	
+	
 klib_lsb:
-	push 	ebp         	; Sauvegarde de EBP
-	mov  	ebp,esp 	; Mise en place de la base
-	push	esi		; Sauvegarde ESI (Requis par GCC)
-	push	edi		; Sauvegarde EDI (Requis par GCC)
-	mov  	edx,[ebp+8]	; Recupere le nombre dans edx
-	bsf     eax,edx		; Instruction bsr
-	pop	edi		; Restaure EDI
-	pop	esi		; Restaure ESI
-	mov	esp,ebp		; Restaure la pile
-	pop	ebp		; Restaure EBP
+	push 	ebp
+	mov  	ebp,esp
+	push	esi
+	push	edi
+	mov  	edx,[ebp+8]	; move `n` to EDX
+	bsf     eax,edx		; bsf
+	pop	edi
+	pop	esi
+	mov	esp,ebp
+	pop	ebp
 	ret
 
 	
-	;;========================================================================
-	;; klib_load_CR3(u32_t cr3)
-	;;========================================================================
+	;;/**
+	;; 
+	;; 	Function: void klib_load_CR3(u32_t cr3)
+	;;	---------------------------------------
+	;;
+	;; 	Load the value `cr3` inr CR3 processor register
+	;;
+	;;**/
 
 	
 klib_load_CR3:
-	push 	ebp         	; Sauvegarde de EBP
-	mov  	ebp,esp 	; Mise en place de la base
-	push	esi		; Sauvegarde ESI (Requis par GCC)
-	push	edi		; Sauvegarde EDI (Requis par GCC)
-	mov  	eax,[ebp+8]	; Recupere la valeur dans eax	
-	mov	cr3,eax		; Charge CR3
+	push 	ebp
+	mov  	ebp,esp
+	push	esi
+	push	edi
+	mov  	eax,[ebp+8]	; move `cr3` in EAX	
+	mov	cr3,eax		; load CR3
 	pop	edi		; Restaure EDI
-	pop	esi		; Restaure ESI
-	mov	esp,ebp		; Restaure la pile
-	pop	ebp		; Restaure EBP
+	pop	esi
+	mov	esp,ebp
+	pop	ebp
 	ret	
 
 
-	;;========================================================================
-	;; klib_set_pg_cr0(void)
-	;;========================================================================
+	;;/**
+	;; 
+	;; 	Function: void klib_set_pg_cr0(void)
+	;;	------------------------------------
+	;;
+	;;	Activate pagination through CR0 register
+	;;
+	;;**/
+	
 	
 
 klib_set_pg_cr0:
-	push 	ebp         	; Sauvegarde de EBP
-	mov  	ebp,esp 	; Mise en place de la base
-	push	esi		; Sauvegarde ESI (Requis par GCC)
-	push	edi		; Sauvegarde EDI (Requis par GCC)
-	xor	eax,eax		; Nullifie EAX
-	mov	eax,cr0		; Recupere CR0
-	or	eax, 0x80000000	; Flag le bit PG (pagination)
-	mov	cr0,eax		; Active la pagination
-	pop	edi		; Restaure EDI
-	pop	esi		; Restaure ESI
-	mov	esp,ebp		; Restaure la pile
-	pop	ebp		; Restaure EBP
+	push 	ebp
+	mov  	ebp,esp
+	push	esi
+	push	edi
+	xor	eax,eax		; Nullify EAX
+	mov	eax,cr0		; Get CR0 in EAX
+	or	eax, 0x80000000	; Activate PG bit (pagination)
+	mov	cr0,eax		; Set CR0 to activate pagination
+	pop	edi
+	pop	esi
+	mov	esp,ebp
+	pop	ebp
 	ret
 
 
