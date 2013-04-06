@@ -1,47 +1,72 @@
-/*
- * klib_c.c
- * Librairie noyau en C
- *
- */
+/**
+   
+   klib_c.c
+   ========
+
+   Kernel utilities library - C code
+
+**/ 
 
 
+/**
 
-/*========================================================================
- * Includes 
- *========================================================================*/
+   Includes
+   --------
+
+   - types.h
+   - klib.h.h            : self header
+
+**/
 
 #include <types.h>
 #include "klib.h"
 
 
-/*========================================================================
- * Declaration Private
- *========================================================================*/
+/**
+
+   Private: Prototypes
+   -------------------
+
+**/
 
 PRIVATE void klib_putc(char c);
 
 
-/*========================================================================
- * Initialisation du port serie
- *========================================================================*/
+/**
+   
+   Function: void klib_serial_init(void)
+   -------------------------------------
 
+   Initialize serial port sending parameter to the approriate ports
+
+**/
 
 PUBLIC void klib_serial_init(void)
 {
-  /* Initialise le port serie */
 
-  klib_outb(KLIB_SERIAL_PORT + 1, 0x00);    /* Pas d interruption */
-  klib_outb(KLIB_SERIAL_PORT + 3, 0x80);    /* DLAB (diviseur) */
-  klib_outb(KLIB_SERIAL_PORT + 0, 0x03);    /* Diviseur mis a 3 (=> 38400 bauds) - MSB */
-  klib_outb(KLIB_SERIAL_PORT + 1, 0x00);    /* LSB du diviseur */
-  klib_outb(KLIB_SERIAL_PORT + 3, 0x03);    /* 8 bits, pas de parite, 1 stop bit */
+  klib_outb(KLIB_SERIAL_PORT + 1, 0x00);    /* No interrupt   */
+  klib_outb(KLIB_SERIAL_PORT + 3, 0x80);    /* DLAB (divisor) */
+  klib_outb(KLIB_SERIAL_PORT + 0, 0x03);    /* Divisor (3 == 38400 bauds) - MSB */
+  klib_outb(KLIB_SERIAL_PORT + 1, 0x00);    /* Divisor - LSB  */
+  klib_outb(KLIB_SERIAL_PORT + 3, 0x03);    /* 8 bits, no parity, 1 stop bit    */
 
  return;
 }
 
-/*========================================================================
- * Printf Noyau
- *========================================================================*/
+
+/** 
+    Function: void klib_printf(const char* str,...)
+    -----------------------------------------------
+
+    kernel printf like. Supported switches:
+
+    - d : print a signed 32b integer
+    - u : print an unsigned 32b integer
+    - x : print a hexadecimal 32b value
+    - s : print a string
+
+**/
+
 
 PUBLIC void klib_printf(const char* str,...)
 {
@@ -50,16 +75,17 @@ PUBLIC void klib_printf(const char* str,...)
   u8_t neg=0;
   u32_t val_n;
   char* val_s;
-  char buf[11]; /* Taille en nombre de charactere d'un u32_t + 1 */
+  char buf[11]; /* number of characters in a u32_t */
   char* itoa = "0123456789ABCDEF";
   u8_t base=0;
   u32_t* arg = (u32_t*)&str;
 
   while( (c=*str++) != 0 )
     {
-      /* Traitement si caractere special % */
+      /* Special character '%' */
       if (c == '%')
 	{
+	  /* Get the next char */
 	  c=*str++;
 	  neg=0;
 	  val_s=NULL;
@@ -68,9 +94,9 @@ PUBLIC void klib_printf(const char* str,...)
 	    {
 	    case 'd':
 	      {
-		/* Recupere l'argument suivant */
+		/* Get next arg */
 		arg++;
-		/* Positive le nombre signe */
+		/* Positive the number if negative in order to print it */
 		if ((s32_t)(*arg) < 0)
 		  {
 		    val_n=-(s32_t)(*arg);
@@ -86,7 +112,7 @@ PUBLIC void klib_printf(const char* str,...)
 	      }
 	    case 'u':
 	      {
-		/* Recupere l'argument suivant */
+		/* Get next arg */
 		arg++;
 		val_n = (u32_t)(*arg);
 		base=10;
@@ -94,7 +120,7 @@ PUBLIC void klib_printf(const char* str,...)
 	      }
 	    case 'x':
 	      {
-		/* Recupere l'argument suivant */
+		/* Get next arg */
 		arg++;
 		val_n = (u32_t)(*arg);
 		base=16;
@@ -102,7 +128,7 @@ PUBLIC void klib_printf(const char* str,...)
 	      }
 	    case 's':
 	      {
-		/* Recupere l'argument suivant */
+		/* Get next arg */
 		arg++;
 		val_s = (char*)(*arg);
 		base=0;
@@ -122,35 +148,36 @@ PUBLIC void klib_printf(const char* str,...)
 	      }
 	    }
 
-	  /* Convertit un nombre en une chaine */
+	  /* Convert number into string */
 	  if (val_s == NULL)
 	    {
-	      /* La decomposition nous donne les chiffres a l envers
-	       * idee: utiliser une chaine tampon pour ecrire les chiffres dedans de la fin vers le debut */
+	      
+	      /* Decomposition provides individual numbers in reverse order
+		 We use a buffer string to store those numbers from the end to the beginning */
 
-	      /* Va a la fin de la chaine tampon */
+	      /* Go to the buffer string end */
 	      val_s = buf + sizeof(buf)-1;
-	      /* Marque le fin de chaine */
+	      /* Set end of string */
 	      *val_s = 0;
 	      do
 		{
-		  /* Decremente le caractere */
+		  /* Run throught the characters */
 		  --val_s;
-		  /* Affecte selon la decomposition */
+		  /* Set character */
 		  *val_s = itoa[val_n % base];
-		  /* Suite de la decomposition */
+		  /* Run through decomposition */
 		  val_n /= base;
 		}while(val_n>0);
 
 	    }
 
-	  /* Precede d'un '-' les nombres negatifs */
+	  /* Negative number gets a leading '-' */
 	  if (neg)
 	    {
 	      klib_putc('-');
 	    }
 
-	  /* Affiche la chaine */
+	  /* Print the string */
 	  while(*val_s != 0)
 	    {
 	      klib_putc(*val_s);
@@ -160,7 +187,7 @@ PUBLIC void klib_printf(const char* str,...)
 	}
       else
 	{
-	  /* Cas du retour a la ligne Unix */
+	  /* Unix newline case */
 	  if (c == '\n')
 	    {
 	      klib_putc('\r');
@@ -173,9 +200,14 @@ PUBLIC void klib_printf(const char* str,...)
 }
 
 
-/*========================================================================
- * Affiche un caractere sur le port serie
- *========================================================================*/
+/**
+
+   Function: void klib_putc(char c)
+   --------------------------------
+
+   Put a character on serial port
+
+**/
 
 
 PRIVATE void klib_putc(char c)
@@ -183,7 +215,7 @@ PRIVATE void klib_putc(char c)
   u32_t i;
   u8_t buf;
 
-  /* Attend que la ligne soit libre */
+  /* Wait for line release */
   for(i=0;i<12345;i++)
     {
       klib_inb(KLIB_SERIAL_PORT+5,&buf);
@@ -193,7 +225,7 @@ PRIVATE void klib_putc(char c)
   	}
     }
 
-  /* Emet le caractere */
+  /* Put character */
   klib_outb(KLIB_SERIAL_PORT,c);
  
   return;
