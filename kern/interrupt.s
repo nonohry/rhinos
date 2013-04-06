@@ -16,7 +16,7 @@
 	;; 	Global
 	;; 	------
 	;;
-	;; 	Global declaration to make ISR visible by C code
+	;; 	Global declarations to make ISR visible by C code
 	;;
 	;;**/
 	
