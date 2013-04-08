@@ -1,7 +1,27 @@
-/*
- * Mise en place de la pagination
- *
- */
+/**
+
+   paging.c
+   ========
+
+   Pagination management
+
+**/
+
+
+/**
+
+   Includes
+   --------
+
+   - types.h
+   - const.h
+   - klib.h
+   - start.h      : kernel boundaries needed
+   - physmem.h    : physical memory needed
+   - paging.h     : self header
+
+**/
+
 
 #include <types.h>
 #include "const.h"
@@ -11,9 +31,17 @@
 #include "paging.h"
 
 
-/*========================================================================
- * Initialisation
- *========================================================================*/
+/**
+
+   Funtion: u8_t paging_init(void)
+   -------------------------------
+
+   Pagination initialization.
+   Create the kernel page directory and physically allocate all the page tables corresponding to the kernel space.
+   This trick makes the synchronization between an user space and the kernel space a lot easier.
+   Then, all the kernel space in used is identity mapping before activating the pagination.
+
+**/
 
 PUBLIC u8_t paging_init(void)
 {
@@ -21,16 +49,15 @@ PUBLIC u8_t paging_init(void)
   u16_t i;
   struct pte* table;
 
-  /* PD Noyau */
+  /* Kernel page directory */
   kern_PD = (struct pde*)phys_alloc(PAGING_ENTRIES*sizeof(struct pde));
-  /* Validite de l allocation */
   if ( kern_PD == NULL)
     {
       return EXIT_FAILURE;
     }
 
   
-  /* Nullifie la page */
+  /* Clean the page directory */
   klib_mem_set(0,(addr_t)kern_PD,PAGING_ENTRIES*sizeof(struct pde));
 
   /* Self Mapping */
@@ -40,33 +67,33 @@ PUBLIC u8_t paging_init(void)
   kern_PD[PAGING_SELFMAP].baseaddr = (physaddr_t)kern_PD >> PAGING_BASESHIFT;
   
 
-  /* Pre allocation des pages tables pour l espace noyau afin de faciliter la sync avec les threads */
+  /* Pre allocate page tables */
   for(i=0;i<CONST_KERN_HIGHMEM/CONST_PAGE_SIZE/PAGING_ENTRIES;i++)
     {
-      /* Au cas ou ... */
+      /* We never know ... */
       if ( (i == PAGING_SELFMAP)||(i>=PAGING_ENTRIES) )
 	{
 	  return EXIT_FAILURE;
 	}
          
-      /* Alloue une page physique */
+      /* Allocate a physical page */
       table = (struct pte*)phys_alloc(PAGING_ENTRIES*sizeof(struct pte));
       if( table == NULL)
 	{
 	  return EXIT_FAILURE;
 	}
    
-      /* Fait pointer le pde sur la nouvelle page */
+      /* Point PDE to that new physical page */
       kern_PD[i].present = 1;
       kern_PD[i].rw = 1;
       kern_PD[i].user = 0;
       kern_PD[i].baseaddr = (((physaddr_t)table)>>PAGING_BASESHIFT);
 
-      /* Nullifie le page table */
+      /* Clean page table */
       klib_mem_set(0,(addr_t)table,PAGING_ENTRIES*sizeof(struct pte));
     }
 
-  
+  /* Identity map kernel code and data to activate pagination seamlessly */
   for(p=PAGING_ALIGN_INF(CONST_KERN_START);
       p<PAGING_ALIGN_SUP(CONST_KERN_END);
       p+=CONST_PAGE_SIZE)
@@ -77,6 +104,7 @@ PUBLIC u8_t paging_init(void)
 	}
     }
  
+  /* Identity map physical memory manager structures too */
   for(p=PAGING_ALIGN_INF(CONST_PAGE_NODE_POOL_ADDR);
       p<PAGING_ALIGN_SUP(CONST_PAGE_NODE_POOL_ADDR+((start_mem_total) >> CONST_PAGE_SHIFT)*sizeof(struct ppage_desc));
       p+=CONST_PAGE_SIZE)
@@ -87,19 +115,28 @@ PUBLIC u8_t paging_init(void)
 	}
     }
   
-  /* Charge le Kernel  Page Directory */
+  /* Load kernel page directory */
   klib_load_CR3((physaddr_t)kern_PD);
 
-  /* Activation de la pagination */
+  /* Activate pagination */
   klib_set_pg_cr0();
 
   return EXIT_SUCCESS;
 }
 
 
-/*========================================================================
- * Mapping
- *========================================================================*/
+
+/**
+
+   Function: u8_t paging_map(virtaddr_t vaddr, physaddr_t paddr, u8_t flags)
+   -------------------------------------------------------------------------
+
+
+   Associate `vaddr` and `paddr`.
+   `flags` switches between an  user or kernel mode mapping.
+
+**/
+
 
 PUBLIC u8_t paging_map(virtaddr_t vaddr, physaddr_t paddr, u8_t flags)
 {
@@ -108,57 +145,59 @@ PUBLIC u8_t paging_map(virtaddr_t vaddr, physaddr_t paddr, u8_t flags)
   u16_t pde,pte;
 
 
-  /* Recupere le pd, pde et pte associe */
+  /* Get right page directory, page directory entry and page table entry linked to `vaddr` */
   pde = PAGING_GET_PDE(vaddr);
   pte = PAGING_GET_PTE(vaddr);
   pd = (flags&PAGING_IDENTITY?kern_PD:(struct pde*)PAGING_GET_PD());
 
-  /* Interdit le pde du self map */
+  /* Cannot map self ampping area */
   if ( pde == PAGING_SELFMAP )
     {
       return EXIT_FAILURE;
     }
       
       
-  /* Si le pde n'existe pas, on le cree */
+  /* If there is no page directory entry, create it */
   if (!(pd[pde].present))
     {
-      /* Alloue une page physique */
+      /* Allocate a physical page for page table */
       table = (struct pte*)phys_alloc(PAGING_ENTRIES*sizeof(struct pte));
       if( table == NULL)
 	{
 	  return EXIT_FAILURE;
 	}
 
-      /* Fait pointer le pde sur la nouvelle page */
+      /* Point the page directory entry to that page table */
       pd[pde].present = 1;
       pd[pde].rw = 1;
       pd[pde].user = (flags&PAGING_SUPER?0:1);
       pd[pde].baseaddr = (((physaddr_t)table)>>PAGING_BASESHIFT);
 
-      /* Nullifie le page table */
+      /* Nullify page table */
       klib_mem_set(0,(flags&PAGING_IDENTITY?(addr_t)table:(addr_t)PAGING_GET_PT(pde)),PAGING_ENTRIES*sizeof(struct pte));
     }
 
-  /* Ici, la table existe forcement */
+  /* Here, the page table necessary exists, so get it */
   table = (struct pte*)(flags&PAGING_IDENTITY?pd[pde].baseaddr<<PAGING_BASESHIFT:PAGING_GET_PT(pde));
 
-  /* Si le pte est present, l adresse est deja mappee */
+  /* If the page table entry exists, mapping already exists */
   if (table[pte].present)
     {
       return EXIT_FAILURE;
     }
  
-  /* Fait pointer le pte sur la page physique */
+  /* Point the page table entry to the desired physical page */
   table[pte].present = 1;
   table[pte].rw = 1;
   table[pte].user = (flags&PAGING_SUPER?0:1);
   table[pte].baseaddr = paddr >> PAGING_BASESHIFT;
 
-  /* Indique un mappage de notre adresse physique */
+  /* Indicate a mapping for the physical page */
   phys_map(paddr);
 
-  /* Indique un mappage dans la page table */
+  /* Indicate a mapping for the page table.
+     In fact, we use this indication as a counter to determine the number 
+     of physical pages referenced by the page table */
   phys_map(pd[pde].baseaddr << PAGING_BASESHIFT);
   
 
@@ -166,9 +205,17 @@ PUBLIC u8_t paging_map(virtaddr_t vaddr, physaddr_t paddr, u8_t flags)
 }
 
 
-/*========================================================================
- * Unmapping
- *========================================================================*/
+/**
+
+   Function: u8_t paging_unmap(virtaddr_t vaddr)
+   ---------------------------------------------
+
+
+   Remove the association virtual/physical corresponding to the virtaul address `vaddr` in the current page directory
+   If the mapping is the last in a user page table, the page table is also freed.
+
+**/
+
 
 PUBLIC u8_t paging_unmap(virtaddr_t vaddr)
 {
@@ -177,40 +224,40 @@ PUBLIC u8_t paging_unmap(virtaddr_t vaddr)
   u16_t pde,pte;
 
 
-  /* Recupere le pd, pde et pte associe */
+  /* Get current page directory, page directory entry and page table entry linked to `vaddr` */ 
   pde = PAGING_GET_PDE(vaddr);
   pte = PAGING_GET_PTE(vaddr);
   pd = (struct pde*)PAGING_GET_PD();
 
-  /* Interdit le pde du self map et verifie l'existence du pde */
+  /* Check page table entry existence as well as validity in regards to self mapping */
   if ( (pde == PAGING_SELFMAP)||(!pd[pde].present) )
     {
       return EXIT_FAILURE;
     }
 
-  /* Recupere la table */
+  /* Get page table */
   table = (struct pte*)(PAGING_GET_PT(pde));
 
-  /* Si le pte n'existe pas, on retourne */
+  /* No page table ? Error */
   if (!table[pte].present)
     {
       return EXIT_FAILURE;
     }
  
-  /* Demap/Libere la page physique */
+  /* Unmap and free physical page */
   phys_unmap(table[pte].baseaddr<<PAGING_BASESHIFT, PHYS_UNMAP_DEFAULT);
 
-  /* Nullifie la structure */
+  /* Nullify the corresponding page table entry */
   table[pte].present=0;
   table[pte].rw=0;
   table[pte].user=0;
   table[pte].baseaddr=0;
 
-  /* Decremente le compteur de maps de la table et libere uniquement les pages tables hors espace noyau */
+  /* Decrement page table mapping counter and free user space page table if needed */
   if (phys_unmap(pd[pde].baseaddr << PAGING_BASESHIFT, 
 		 (pde<CONST_KERN_HIGHMEM/CONST_PAGE_SIZE/PAGING_ENTRIES?PHYS_UNMAP_NOFREE:PHYS_UNMAP_DEFAULT)) == PHYS_UNMAP_FREE)
     {
-      /* Si la page de la table est liberee, on nullifie le pd[pde] */
+      /* Nullify page directory entry if the page table is freed */
       pd[pde].present = 0;
       pd[pde].rw=0;
       pd[pde].user=0;
@@ -223,9 +270,15 @@ PUBLIC u8_t paging_unmap(virtaddr_t vaddr)
 }
   
 
-/*========================================================================
- * Conversion Virtuelle vers Physique
- *========================================================================*/
+/**
+   
+   Function: physaddr_t paging_virt2phys(virtaddr_t vaddr)
+   -------------------------------------------------------
+
+   Return the physical address mapped to `vaddr`. 
+   If such a mapping does not exist, return 0.
+
+**/
 
 PUBLIC physaddr_t paging_virt2phys(virtaddr_t vaddr)
 {
@@ -234,30 +287,30 @@ PUBLIC physaddr_t paging_virt2phys(virtaddr_t vaddr)
   u16_t pde,pte;
   u32_t offset;
 
-  /* Recupere le pd, pde et pte associe */
+  /* Get current page directory, page directory entry and page table entry linked to `vaddr` */ 
   pde = PAGING_GET_PDE(vaddr);
   pte = PAGING_GET_PTE(vaddr);
   pd = (struct pde*)PAGING_GET_PD();
 
-  /* Offset dans le page physique */
+  /* Offset in physical page */
   offset = vaddr & PAGING_OFFMASK;
 
-  /* Si le pde n'existe pas, on retourne */
+  /* No page directory entry ? Error */
   if ( !pd[pde].present )
     {
       return 0;
     }
  
-  /* Recupere la table */
+  /* Get page table */
   table = (struct pte*)(PAGING_GET_PT(pde));
 
-  /* Si le pte n'existe pas, on retourne */
+  /* No page table entry ? Error */
   if ( !table[pte].present )
     {
       return 0;
     }
  
-  /* Retourne l'adresse physique */
+  /* Return physical address */
   return (((table[pte].baseaddr)<<PAGING_BASESHIFT)+offset);
 
 }
