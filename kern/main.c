@@ -1,12 +1,34 @@
-/*
- * RhinOS Main
- *
- */
+/**
+   
+   main.c
+   ======
+
+   Kernel main function. All initializations occur here
+   
+**/
 
 
-/*========================================================================
- * Includes 
- *========================================================================*/
+/**
+   
+   Includes
+   --------
+   
+   - types.h
+   - llist.h
+   - const.h
+   - start.h
+   - klib.h
+   - physmem.h   : Physical memory manger initialization 
+   - paging.h    : Paging subsystem initialization
+   - virtmem.h   : Virtual memory manager initialization
+   - thread.h    : Thread subsytem initialization
+   - sched.h     : Scheduler initialization
+   - proc.h      : Process management initialization
+   - irq.h       : IRQ subsystem initialization
+   - pit.h       : Clock initialization
+   - ipc.h       : Inter process communication system initialization
+
+**/
 
 #include <types.h>
 #include <llist.h>
@@ -23,6 +45,17 @@
 #include "pit.h"
 #include <ipc.h>
 
+
+
+/**
+
+   Proof of concept stuff
+   ----------------------
+
+   Here is the proof of IPC mechanism. 2 threads require a third to compute value (addition and multuiplication)
+   They exchange command and data through the structure `struct calc_msg`.
+
+**/
 
 struct calc_msg
 {
@@ -122,9 +155,16 @@ void Mult(u8_t max)
 }
 
 
-/*========================================================================
- * Fonction principale 
- *========================================================================*/
+
+/**
+ 
+   Function: int main(void)
+   ------------------------
+
+   Kernel main function. Initialize all subsystems then wait for a thread to spawn
+   (at least, the idle thread will spawn)
+
+**/
 
 
 PUBLIC int main()
@@ -148,7 +188,7 @@ PUBLIC int main()
   char* th_names[CONST_BOOT_MODULES] = {"user_thread1","user_thread2","user_thread3"};
 
 
-  /* Initialisation de la memoire physique */
+  /* Physical memory manager */
   if ( phys_init() != EXIT_SUCCESS )
     {
       goto err00;
@@ -156,47 +196,47 @@ PUBLIC int main()
   klib_printf("Physical Memory Manager initialized\n");
 
 
-  /* Relocalise les modules avec de nouvelles pages physiques */
+  /* Relocate boot modules with new (and controlled) physical pages */
   for (mod = (struct multiboot_mod_entry *) start_mbi->mods_addr, i=0;
        i < start_mbi->mods_count;
        mod++, i++)
     {
-      /* Alloue une zone physique */
+      /* Allocate a physical area */
       paddr = (physaddr_t)phys_alloc(mod->end-mod->start);
       if (!paddr)
 	{
 	  goto err00;
 	}
-      /* Copie du module */
+      /* Copy module */
       klib_mem_copy(mod->start,paddr,mod->end-mod->start);
-      /* Met a jour les informations */
+      /* Update end & start */
       mod->end = paddr + (mod->end-mod->start);
       mod->start = paddr;
 
     }
 
-  /* Initialisation de la pagination */
+  /* Pagination */
   if ( paging_init() != EXIT_SUCCESS )
     {
       goto err00;
     }
   klib_printf("Paging enabled\n");
 
-  /* Initialisation de la memoire virtuelle */
+  /* Virtual memory manager */
   if ( virt_init() != EXIT_SUCCESS )
     {
       goto err00;
     }
   klib_printf("Virtual Memory Manager initialized\n");
 
-  /* Initialisation de l ordonannceur */
+  /* Scheduler */
   if ( sched_init() != EXIT_SUCCESS )
     {
       goto err00;
     }
   klib_printf("Scheduler initialized\n");
 
-  /* Initialisation des thread */
+  /* Threads */
   if ( thread_init() != EXIT_SUCCESS )
     {
       goto err00;
@@ -204,7 +244,7 @@ PUBLIC int main()
   klib_printf("Threads initialized\n");
 
 
-  /* Initialisation des processes */
+  /* Processes */
   if ( proc_init() != EXIT_SUCCESS )
     {
       goto err00;
@@ -212,7 +252,7 @@ PUBLIC int main()
   klib_printf("Processes initialized\n");
 
 
-  /* Kern Proc */
+  /* Kernel process creation */
   kern_proc = (struct proc*)virt_alloc(sizeof(struct proc));
   kern_proc->name[0] = 'k';
   kern_proc->name[1] = 'e';
@@ -229,7 +269,7 @@ PUBLIC int main()
   LLIST_NULLIFY(kern_proc->thread_list);
 
  
-  /* Idle Thread */
+  /* Idle thread */
   thread_idle = thread_create_kern("[Idle]",THREAD_ID_DEFAULT,(virtaddr_t)klib_idle,NULL,THREAD_NICE_TOP,THREAD_QUANTUM_DEFAULT);
   if ( thread_idle == NULL )
     {
@@ -237,14 +277,14 @@ PUBLIC int main()
     }
   klib_printf("Idle Thread initialized\n");
 
-  /* Tests kernel threads */
+  /* Testing kernel threads */
   th_add = thread_create_kern("Add_thread",THREAD_ID_DEFAULT,(virtaddr_t)Add,(void*)12,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
   th_calc = thread_create_kern("Calc_thread",THREAD_ID_DEFAULT,(virtaddr_t)Calc,(void*)IPC_ANY,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
   th_mult = thread_create_kern("Mult_thread",THREAD_ID_DEFAULT,(virtaddr_t)Mult,(void*)15,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT);
   klib_printf("Test Kernel Threads initialized\n");
 
 
-  /* Rentre tous les threads noyau dans le processus noyau */
+  /* Gather testing threads and idle thread in kernel process */
   proc_add_thread(kern_proc,kern_th);
   proc_add_thread(kern_proc,thread_idle);
   proc_add_thread(kern_proc,th_add);
@@ -253,21 +293,23 @@ PUBLIC int main()
 
 
 
-  /* Destinations arbitraire pour le code et la pile utilisateur */
+  /* Arbitrary address for user stack (testing purpose) */
   v_stack = 0x90000000;
 
 
+  /* Boot modules are user processes (testing purpose) */
   for(mod = (struct multiboot_mod_entry *) start_mbi->mods_addr, i=0;
       i < start_mbi->mods_count;
       mod++,i++)
     {
-        /* User Proc */
+        /* Create an user process */
       user_proc = proc_create(proc_names[i]);
 
-      /* Se met sur le page directory du processus utilisateur (qui est synchro avec le noyau donc pas de soucis) pour le mapping */
+      /* Get on user page directory to create virtual/physical mappings
+	 (the kernel part is already sync by process creation, so it is seamless) */
       klib_load_CR3(user_proc->p_pd);
 
-      /* Effectue les mappages de code et donnees dans ce nouvel espace d'adressage */
+      /* Map code/data */
       paddr=mod->start;
       for(v_entry=0x80000000, paddr=mod->start;
 	  paddr < mod->end ;
@@ -280,7 +322,7 @@ PUBLIC int main()
 	    }
 	}
   
-      /* Mappage de la pile */
+      /* Map stack */
       paddr = (physaddr_t)phys_alloc(CONST_PAGE_SIZE); 
       if (!paddr)
 	{ 
@@ -291,41 +333,41 @@ PUBLIC int main()
 	  goto err00; 
 	} 
 
-      /*  Cree le thread dans l'espace utilisateur (sinon, pas acces au point d entree ni a la pile) */
+      /*  Create an user thread with stack and entry point in this address space */
       th_user = thread_create_user(th_names[i],THREAD_ID_DEFAULT,0x80000000,v_stack,CONST_PAGE_SIZE,THREAD_NICE_DEFAULT,THREAD_QUANTUM_DEFAULT); 
       if (th_user == NULL) 
 	{ 
 	  goto err00; 
 	} 
   
-      /* Retourne dans l'espace d'adressage noyau */
+      /* Back to kernel address space */
       klib_load_CR3((physaddr_t)kern_PD); 
   
-      /* Ajoute le thread user a proc user */
+      /* Add the new thread to the user process */
       proc_add_thread(user_proc,th_user);
     }
   
-  /* Affecte le processus courant et cree un ordonnancement initial */
+  /* Set the current process */
   cur_proc = kern_proc;
   
-  /* Initialisation du gestionnaire des IRQ */
+    /* IRQ can be enabled now */
   if ( irq_init() != EXIT_SUCCESS )
     {
       goto err00;
     }
   klib_printf("IRQ System initialized\n");
-  
-  /* Initialisation Horloge */
+
+  /* Clock */
   if ( pit_init() != EXIT_SUCCESS )
     {
       goto err00;
     }
   klib_printf("Clock (100Hz) initialized\n");
 
-  /* Restaure les interruptions */
+  /* Restore interrupts */
   klib_sti();
 
-  /* On ne doit plus arriver ici (sauf DEBUG ou erreur) */
+  /* Non ending loop (we should not stay here after first clock tick) */
  err00:
   
   while(1)
