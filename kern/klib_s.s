@@ -187,127 +187,144 @@ klib_set_pg_cr0:
 	ret
 
 
-	;;========================================================================
-	;; klib_flush_tlb(void)
-	;;========================================================================
+	;;/**
+	;; 
+	;; 	Function: void klib_flush_tlb(void)
+	;;	-----------------------------------
+	;;
+	;; 	Flush Translation Lookaside Buffer cache by reloading CR3
+	;;
+	;;**/
 	
 
 klib_flush_tlb:
-	push 	ebp         	; Sauvegarde de EBP
-	mov  	ebp,esp 	; Mise en place de la base
-	push	esi		; Sauvegarde ESI (Requis par GCC)
-	push	edi		; Sauvegarde EDI (Requis par GCC)
-	xor	eax,eax		; Nullifie EAX
-	mov	eax,cr3		; Recupere CR3
-	mov	cr3,eax		; Recharge CR3
-	pop	edi		; Restaure EDI
-	pop	esi		; Restaure ESI
-	mov	esp,ebp		; Restaure la pile
-	pop	ebp		; Restaure EBP
+	push 	ebp
+	mov  	ebp,esp
+	push	esi
+	push	edi
+	xor	eax,eax		; Nullify EAX
+	mov	eax,cr3		; Get CR3
+	mov	cr3,eax		; Reload CR3
+	pop	edi
+	pop	esi
+	mov	esp,ebp
+	pop	ebp
 	ret
 	
 
-	;;========================================================================
-	;; klib_invlpg(virtaddr_t)
-	;;========================================================================
-	
+	;;/**
+	;; 	Function: void klib_invlpg(virtaddr_t addr)
+	;;	-------------------------------------------
+	;;
+	;; 	Flush the tlb entry corresponding to `addr` 
+	;;
+	;;**/
 
 klib_invlpg:
-	push 	ebp         	; Sauvegarde de EBP
-	mov  	ebp,esp 	; Mise en place de la base
-	push	esi		; Sauvegarde ESI (Requis par GCC)
-	push	edi		; Sauvegarde EDI (Requis par GCC)
-	xor	eax,eax		; Nullifie EAX
-	mov  	eax,[ebp+8]	; Recupere le parametre
-	invlpg	[eax]		; Invalide le tlb
-	pop	edi		; Restaure EDI
-	pop	esi		; Restaure ESI
-	mov	esp,ebp		; Restaure la pile
-	pop	ebp		; Restaure EBP
+	push 	ebp
+	mov  	ebp,esp
+	push	esi
+	push	edi
+	xor	eax,eax
+	mov  	eax,[ebp+8]	; Get the addr
+	invlpg	[eax]		; Clear the tlb entry
+	pop	edi
+	pop	esi
+	mov	esp,ebp
+	pop	ebp
 	ret
 
 	
-	;;========================================================================
-	;; klib_mem_set(u32_t val, addr_t dest, u32_t len)
-	;;========================================================================
+	;;/**
+	;; 	Function: klib_mem_set(u32_t val, addr_t dest, u32_t len)
+	;;	---------------------------------------------------------
+	;;
+	;; 	Classical (quick & dirty) memset function
+	;;
+	;;**/
 	
 	
 klib_mem_set:
-	push 	ebp         	; Sauvegarde de EBP
-	mov  	ebp,esp 	; Mise en place de la base
-	push	esi		; Sauvegarde ESI (Requis par GCC)
-	push	edi		; Sauvegarde EDI (Requis par GCC)
-	push	ecx		; Sauvegarde ECX
-	cld			; Fixe le sens du decompte
-	mov  	eax,[ebp+8]	; Recupere la valeur
-	mov	edi,[ebp+12]	; Recupere l addresse de destination
-	mov	ecx,[ebp+16] 	; Recupere la taille
-	shr	ecx,0x2		; Divise la taille par 4
+	push 	ebp
+	mov  	ebp,esp
+	push	esi
+	push	edi
+	push	ecx
+	cld
+	mov  	eax,[ebp+8]	; Get `val`
+	mov	edi,[ebp+12]	; Get `dest`
+	mov	ecx,[ebp+16] 	; Get `len`
+	shr	ecx,0x2		; len/4
 	rep stosd		; Set !
-	pop	ecx		; Restaure ECX
-	pop	edi		; Restaure EDI
-	pop	esi		; Restaure ESI
-	mov	esp,ebp		; Restaure la pile
-	pop	ebp		; Restaure EBP
+	pop	ecx
+	pop	edi
+	pop	esi
+	mov	esp,ebp
+	pop	ebp
 	ret
 
 	
-	;;========================================================================
-	;; klib_mem_copy(addr_t src, addr_t dest, u32_t len)
-	;;========================================================================
-
+	;;/**
+	;; 	Function void klib_mem_copy(addr_t src, addr_t dest, u32_t len)
+	;;	---------------------------------------------------------------
+	;;
+	;; 	Classical (quick & dirty) memcopy function
+	;;
+	;;**/
 	
 klib_mem_copy:
-	push 	ebp         	; Sauvegarde de EBP
-	mov  	ebp,esp 	; Mise en place de la base
-	push	esi		; Sauvegarde ESI (Requis par GCC)
-	push	edi		; Sauvegarde EDI (Requis par GCC)
-	push	ecx		; Sauvegarde ECX
-	cld			; Fixe le sens du decompte
-	mov  	esi,[ebp+8]	; Recupere l addresse source
-	mov	edi,[ebp+12]	; Recupere l addresse de destination
-	mov	ecx,[ebp+16] 	; Recupere la taille
-	shr	ecx,0x2		; Divise la taille par 4
-	rep movsd		; Copie !
-	pop	ecx		; Restaure ECX
-	pop	edi		; Restaure EDI
-	pop	esi		; Restaure ESI
-	mov	esp,ebp		; Restaure la pile
-	pop	ebp		; Restaure EBP
+	push 	ebp
+	mov  	ebp,esp
+	push	esi
+	push	edi
+	push	ecx
+	cld
+	mov  	esi,[ebp+8]	; Get `src`
+	mov	edi,[ebp+12]	; Get `dest`
+	mov	ecx,[ebp+16] 	; Get `len`
+	shr	ecx,0x2		; len/4
+	rep movsd		; Copy !
+	pop	ecx
+	pop	edi
+	pop	esi
+	mov	esp,ebp
+	pop	ebp
 	ret
 
 
-	;;========================================================================
-	;; klib_sti(void)
-	;;========================================================================
+	;;/**
+	;; 
+	;; 	Function void klib_sti(void)
+	;; 	---------------------------
+	;;
+	;; 	Restore interrupts using `sti`
+	;;
+	;;**/
 	
 
 klib_sti:
-	push 	ebp         	; Sauvegarde de EBP
-	mov  	ebp,esp 	; Mise en place de la base
-	push	esi		; Sauvegarde ESI (Requis par GCC)
-	push	edi		; Sauvegarde EDI (Requis par GCC)
-	sti			; Restaure les interruptions
-	pop	edi		; Restaure EDI
-	pop	esi		; Restaure ESI
-	mov	esp,ebp		; Restaure la pile
-	pop	ebp		; Restaure EBP
+	push 	ebp
+	mov  	ebp,esp
+	push	esi
+	push	edi
+	sti			; Restore  interrupts
+	pop	edi
+	pop	esi
+	mov	esp,ebp
+	pop	ebp
 	ret
 	
 	
-	;;========================================================================
-	;; Idle thread
-	;;========================================================================
+	;;/**
+	;; 
+	;; 	Function void klib_idle(void)
+	;;	-----------------------------
+	;;
+	;; 	Code for idle thread. Just loop halting processor
+	;;
+	;;**/
 
 	
 klib_idle:
-	hlt			; Repose le processeur
+	hlt			; rest processor
 	jmp	klib_idle
-	
-	
-	;;========================================================================
-	;; Donnees
-	;;========================================================================
-
-	
-BASE	dd	0		; Base de decomposition
