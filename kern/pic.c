@@ -3,7 +3,7 @@
    pic.c
    =====
 
-   Gestion du PIC i8259A
+   PIC i8259A management
  
 **/
 
