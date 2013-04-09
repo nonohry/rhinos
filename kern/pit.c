@@ -1,7 +1,30 @@
-/*
- * Gestion du timer i82C54
- *
- */
+/**
+
+   pit.c
+   =====
+
+   i82C54 timer management
+ 
+**/
+
+
+
+
+/**
+
+   Includes
+   --------
+
+   - types.h
+   - const.h
+   - klib.h
+   - interrupt.h : Needed to create clock handler
+   - irq.h       : Needed to activate IRQ line
+   - thread.h    : struct thread needed
+   - sched.h     : sched_schedule needed
+   - pit.h       : self header
+   
+**/
 
 #include <types.h>
 #include "const.h"
@@ -14,44 +37,54 @@
 
 
 
-/*======================================================================== 
- * Declarations PRIVATE 
- *========================================================================*/
+/**
+
+   Privates
+   --------
+
+   Interrupt handler and its node
+
+**/
 
 
 PRIVATE void pit_handler(struct thread* th);
 PRIVATE struct int_node pit_irq_node;
 
 
-/*========================================================================
- * Initialise l'horloge avec une frequence
- *========================================================================*/
+/**
 
-PUBLIC u8_t pit_init()
+   Function: u8_t pit_init(void)
+   -----------------------------
+
+   Programmable Interval Timer initialization.
+   Configure clock mode and frequency.
+
+**/
+
+PUBLIC u8_t pit_init(void)
 {
   u32_t ticks;
 
-  /* Determine le nombre de pulsations horloge avant interruption */
+  /* Compute number of clock pulsations before triggering interrupt */
   ticks = PIT_MAX_FREQ/PIT_FREQ;
 
-  /* Les compteurs sont sur 16bits
-   * La valeur max est donc 2^16=65535
-   * La valeur 65536 equivaut a 0 
-   */
+  /* counter are 16 bits values
+     max value is 2^16=65535 and 65536 is in fact 0 */
+   
   if (ticks <= 65536)
     {
-      /* 65536 = 0 */
+      /* 65536 == 0 */
       ticks = (ticks==65536?0:ticks);
 
-      /* Envoie le mot de controle */
+      /* Send control word to active Mode 2 (Rate Generator) */
       klib_outb(PIT_CWREG,PIT_MODE2);
 
-      /* Envoie la frequence */
-      klib_outb(PIT_COUNTER0,(u8_t)ticks);        /* LSB d abord */
-      klib_outb(PIT_COUNTER0,(u8_t)(ticks>>8));   /* MSB ensuite */
+      /* Send frequency for this mode */
+      klib_outb(PIT_COUNTER0,(u8_t)ticks);        /* LSB first */
+      klib_outb(PIT_COUNTER0,(u8_t)(ticks>>8));   /* MSB last */
     }
   
-  /* Cree le noeud irq */
+  /* Create an irq node to setup handler */
   pit_irq_node.flih = pit_handler;
   irq_add_flih(0,&pit_irq_node);
 
@@ -59,33 +92,42 @@ PUBLIC u8_t pit_init()
 }
 
 
-/*========================================================================
- * Handler (flih) 
- *========================================================================*/
+/**
+ 
+   Function:  void pit_handler(struct thread* th)
+   ----------------------------------------------
 
+   First level interrupt handler in charge of clock.
+   For the moment, just call the scheduler.
+
+**/
 
 PRIVATE void pit_handler(struct thread* th)
 {
 
-  /* Ordonnanceur */
+  /* Scheduler */
   sched_schedule(SCHED_FROM_PIT);
 
   return;
 }
 
 
-/*========================================================================
- * Lit l horloge
- *========================================================================*/
+/**
+   
+   Function: u16_t pit_read(void)
+   ------------------------------
 
+   Read the PIT
 
-PUBLIC u16_t pit_read()
+**/
+
+PUBLIC u16_t pit_read(void)
 {
   u8_t r1,r2;
 
-  klib_outb(PIT_CWREG,PIT_LATCH); /* Active le counter latch */
-  klib_inb(PIT_COUNTER0,&r1);      /* Lit le LSB */
-  klib_inb(PIT_COUNTER0,&r2);      /* Lit le MSB */
+  klib_outb(PIT_CWREG,PIT_LATCH);  /* Activate counter latch */
+  klib_inb(PIT_COUNTER0,&r1);      /* Read LSB first */
+  klib_inb(PIT_COUNTER0,&r2);      /* Read MSB last  */
 
   return ( r1 | (r2<<8) );
 }
