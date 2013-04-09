@@ -1,27 +1,47 @@
-/*
- * Header de seg.c
- *
- */
+/**
+
+   seg.h
+   =====
+
+   Segment descriptors header
+ 
+**/
 
 #ifndef SEG_H
 #define SEG_H
 
-/*========================================================================
- * Constantes
- *========================================================================*/
 
-/* Masques pour le champ attributes de seg_desc */
+/**
 
-#define SEG_PRESENT     0x80 /* 10000000b = 0x80 - Segment Present en memoire */
-#define SEG_DPL_0       0x00 /* 00000000b = 0x00 - Niveau de Privilege 0 */
-#define SEG_DPL_1       0x20 /* 00100000b = 0x40 - Niveau de Privilege 1 */
-#define SEG_DPL_2       0x40 /* 01000000b = 0x40 - Niveau de Privilege 2 */
-#define SEG_DPL_3       0x60 /* 01100000b = 0x60 - Niveau de Privilege 3 */
-#define SEG_DATA_CODE   0x10 /* 00010000b = 0x10 - Segment de code ou de donnees */
+   Includes
+   --------
 
-#define SEG_DPL_SHIFT   5    /* Permet de determiner le DPL a partir de 1,2 ou 3 */
+   - types.h
+ 
+**/
 
-#define SEG_RO          0x00 /* Type - cf Doc Intel */
+#include <types.h>
+
+
+
+/**
+
+   Constants: Segemnt descriptor attributes 
+   ----------------------------------------
+
+**/
+
+
+#define SEG_PRESENT     0x80 /* 10000000b = 0x80  */
+#define SEG_DPL_0       0x00 /* 00000000b = 0x00  */
+#define SEG_DPL_1       0x20 /* 00100000b = 0x40  */
+#define SEG_DPL_2       0x40 /* 01000000b = 0x40  */
+#define SEG_DPL_3       0x60 /* 01100000b = 0x60  */
+#define SEG_DATA_CODE   0x10 /* 00010000b = 0x10  */
+
+#define SEG_DPL_SHIFT   5
+
+#define SEG_RO          0x00 
 #define SEG_RO_ACC      0x01 
 #define SEG_RW          0x02
 #define SEG_RW_ACC      0x03
@@ -42,7 +62,6 @@
 #define SEG_TSS         0x09
 #define SEG_LDT         0x02
 
-/* Masques pour le champs granularity de seg_desc */
 
 #define SEG_LIMIT       0x0F /* 00001111b = 0x0F */
 #define SEG_AVL         0x10 /* 00001000b = 0x10 */
@@ -50,28 +69,70 @@
 #define SEG_B           0x40 /* 01000000b = 0x40 */
 #define SEG_GRANULAR    0x80 /* 10000000b = 0x40 */
 
-#define SEG_GRANULAR_LIMIT    0xFFFFFL   /* Pas de granularite au dessous (L pour Long) */
+#define SEG_GRANULAR_LIMIT    0xFFFFFL
 
 
-/*========================================================================
- * Structures (cf Doc Intel)
- *========================================================================*/
+/**
+
+   Structure: struct seg_desc
+   --------------------------
+
+   Describe a segment decriptor.
+   Members definition follows Intel definition:
+
+      31                24 23  22  21  20 19     16 15 14  13 12 11     8 7             0
+   +------------------+---+---+---+---+--------+---+-----+---+--------+--------------+
+   |                  |   | D |   | A | Seg    |   |  D  |   |        |              |
+   |   Base 31:24     | G | / | 0 | V | Limit  | P |  P  | S |  Type  | Base 23:16   |  (4->7 bytes)
+   |                  |   | B |   | L | 19:16  |   |  L  |   |        |              |
+   +------------------+---+---+---+---+--------+---+-----+---+--------+--------------+
 
 
-/* Descripteur de Segment */
+   31                                        16 15                                   0
+   +-------------------------------------------+-------------------------------------+
+   |                                           |                                     |
+   |           Base Address 15:0               |       Segment Limit 15:0            |  (0->3 bytes)
+   |                                           |                                     |
+   +-------------------------------------------+-------------------------------------+
+
+**/
 
 PUBLIC struct seg_desc 
 {
   u16_t limit_low;
   u16_t base_low;
   u8_t base_middle;
-  u8_t attributes;     /* |P|DPL|S| Type |            */
-  u8_t granularity;    /* |G|D/B|0|AVL|Seg Lim 19:16| */
+  u8_t attributes;     /* |P|DPL|S| Type |              */
+  u8_t granularity;    /* |G|D/B|0|AVL|Seg Limit 19:16| */
   u8_t base_high;
 } __attribute__ ((packed));
 
 
-/* Descripteur de Gate */
+/**
+
+   Structure: struct gate_desc
+   ---------------------------
+
+   Describe a gate decriptor.
+   Members definition follows Intel definition:
+
+   31                                         16 15 14  13 12        8 7      5 4    0
+   +-------------------------------------------+---+-----+------------+--------+-----+
+   |                                           |   |  D  |            |        |/////|
+   |        Offset 31:16                       | P |  P  | 0 D 1 1 ?  | 0 0 0  |/////|  (4->7 byte)
+   |                                           |   |  L  |            |        |/////|
+   +-------------------------------------------+---+-----+------------+--------------+
+
+
+   31                                        16 15                                   0
+   +-------------------------------------------+-------------------------------------+
+   |                                           |                                     |
+   |           Segment Selector                |            Offset 15:0              |  (0->3 byte)
+   |                                           |                                     |
+   +-------------------------------------------+-------------------------------------+
+
+**/
+
 
 PUBLIC struct gate_desc
 {
@@ -83,9 +144,14 @@ PUBLIC struct gate_desc
 } __attribute__ ((packed));
 
 
-/*========================================================================
- * Prototypes
- *========================================================================*/
+/**
+
+   Prototypes
+   ----------
+
+   Give access to all segment descriptor creation primitives
+
+**/
 
 PUBLIC void init_code_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl);
 PUBLIC void init_data_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl);

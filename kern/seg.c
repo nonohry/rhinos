@@ -3,7 +3,7 @@
    seg.c
    =====
 
-   Segment initialisation for segmentation
+   Segment descriptors initialization for segmentation
 
  **/
 
