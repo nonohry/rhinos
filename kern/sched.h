@@ -1,26 +1,37 @@
-/*
- * sched.h
- * Header de sched.c
- *
- */
+/**
+   sched.h
+   =======
 
+   Scheduler header
+ 
+ **/
 
 #ifndef SCHED_H
 #define SCHED_H
 
 
-/*========================================================================
- * Includes
- *========================================================================*/
+/**
+ 
+   Includes
+   --------
+
+   - types.h
+   - const.h
+   - thread.h : struct thread needed
+
+**/
 
 #include <types.h>
 #include "const.h"
 #include "thread.h"
 
 
-/*========================================================================
- * Constantes
- *========================================================================*/
+/**
+   Constants: Scheduling relatives
+   -------------------------------
+
+**/
+
 
 
 #define SCHED_RUNNING_QUEUE          1
@@ -38,9 +49,15 @@
 #define SCHED_FROM_SEND              2
 #define SCHED_FROM_RECEIVE           4
 
-/*========================================================================
- * Prototypes
- *========================================================================*/
+
+/**
+
+   Prototypes
+   ----------
+
+   Give access to initialization, queue manipulation ans scheduling itself
+
+**/
 
 PUBLIC u8_t sched_init(void);
 PUBLIC u8_t sched_enqueue(u8_t queue, struct thread* th);
