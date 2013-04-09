@@ -1,39 +1,60 @@
-/*
- * proc.h
- * Header de proc.c
- *
- */
+/**
+   
+   proc.h
+   ======
 
+   Process management header
+
+**/
 
 #ifndef PROC_H
 #define PROC_H
 
 
-/*========================================================================
- * Includes
- *========================================================================*/
+/**
+ 
+   Includes
+   --------
+
+   - types.h
+   - const.h
+   - thread.h  : struct thread needed
+
+**/
 
 
 #include <types.h>
 #include "const.h"
-#include "paging.h"
 #include "thread.h"
 
 
-/*========================================================================
- * Constantes
- *========================================================================*/
+/**
+ 
+   Constant: PROC_NAMELEN
+   ----------------------
 
+   Max size of a process name
+
+**/
 
 #define PROC_NAMELEN               32
 
 
-/*========================================================================
- * Structures
- *========================================================================*/
+/**
 
+   Structure: struct thread_info
+   -----------------------------
 
-/* Helper pour le chainage des threads */
+   Helper structure to double link threads in process structure 
+   whereas a thread is already a double linked structure.
+   Members are:
+
+   - thread  : thread to link to process
+   - prev    : previous item in linked list
+   - next    : next item in linked list
+   
+**/
+
 
 PUBLIC struct thread_info
 {
@@ -43,7 +64,21 @@ PUBLIC struct thread_info
 };
 
 
-/* Structure proc */
+/**
+ 
+   Structure: struct proc 
+   ----------------------
+
+   Describe a process from the kernel point of view.
+   Members are:
+
+   - p_pd         : physical address of process page directory 
+   - v_pd;        : virtual address of process page directory 
+   - name         : process name
+   - thread_list  : threads in process
+
+
+**/
 
 PUBLIC struct proc
 {
@@ -55,10 +90,14 @@ PUBLIC struct proc
 
 
 
-/*========================================================================
- * Prototypes
- *========================================================================*/
+/**
+   
+   Prototypes
+   ----------
 
+   Give access to process initialization, creation and thread addition/removal
+
+**/
 
 PUBLIC u8_t proc_init(void);
 PUBLIC struct proc* proc_create(char* name);
