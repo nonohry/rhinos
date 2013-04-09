@@ -3,7 +3,7 @@
    pit.c
    =====
 
-   i82C54 timer management
+   i82C54 Programmable Interval Timer management
  
 **/
 
