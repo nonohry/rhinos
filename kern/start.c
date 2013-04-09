@@ -1,49 +1,88 @@
-/*
- * Code de demarrage en C 
- * Recharge GDT et IDT 
- *
- */
+/**
+
+   start.c
+   =======
+
+   Setup a controlled environnement in protected mode
+   creating an GDT and an IDT.
+
+   Retrieve useful information from multiboot header, like
+   boot modules or memory map
+   
+**/
 
 
-/*========================================================================
- * Includes 
- *========================================================================*/
+/**
+ 
+   Includes 
+   --------
 
+   - types.h
+   - const.h
+   - klib.h
+   - tables.h  : IDT and GDT descriptor needed
+   - start.h   : self header
 
+**/
+
+#include <types.h>
+#include "const.h"
 #include "klib.h"
 #include "tables.h"
 #include "start.h"
 
 
-/*========================================================================
- * Macros 
- *========================================================================*/
+/**
 
+  Macros: MIN and MAX
+  -------------------
+
+**/
 
 #define MIN(_x,_y)     ((_x)<(_y)?(_x):(_y))
 #define MAX(_x,_y)     ((_x)>(_y)?(_x):(_y))
 
 
-/*========================================================================
- * Declarations Private 
- *========================================================================*/
+/**
+
+   Privates
+   --------
+
+   Clean and truncate a memory map
+
+**/
 
 
 PRIVATE u8_t start_mmap_sanitize(struct multiboot_info* bootinfo);
 PRIVATE u8_t start_mmap_truncate32b(struct multiboot_info* bootinfo);
 
 
-/*========================================================================
- * Declarations Static
- *========================================================================*/
+/**
+ 
+   Static: start_mmap
+   ------------------
+
+   Memory map in a controlled location
+
+**/
 
 
 static struct multiboot_mmap_entry start_mmap[START_MULTIBOOT_MMAP_MAX];
 
 
-/*========================================================================
- * Fonction start_main
- *========================================================================*/
+/**
+
+   Function: void start_main(u32_t magic, physaddr_t mbi_addr)
+   -----------------------------------------------------------
+
+   Entry point.
+   Initialize serial port for external communication
+   Retrieve memory information from bootloader and correct them
+   Check boot modules (user progs)
+   Create GDT & IDT
+
+**/
+
 
 
 PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
@@ -52,20 +91,19 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
   u8_t i;
   struct multiboot_mmap_entry* mmap;
 
-  /* Initialise le port serie pour la sortie noyau */
+  /* Initialize serial port */
   klib_serial_init();
 
-  /* Affecte la structure multiboot */
+  /* Retrieve multiboot header */
   start_mbi = (struct multiboot_info*)mbi_addr;
 
-  /* Controle */
   if (magic != START_MULTIBOOT_MAGIC)
     {
       goto err_magic;
     }
       
 
-  /* Copie les entrees mmap dans un lieu maitrise si presence d un mmap */
+  /* Relocate memory map */
   if (start_mbi->flags & START_MULTIBOOT_FLAG_MMAP)
     {
       for(mmap = (struct multiboot_mmap_entry*)start_mbi->mmap_addr, i=0;
@@ -78,7 +116,7 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
 	  start_mmap[i].len = mmap->len;
 	  start_mmap[i].type = mmap->type;
 
-	  /* Trop d'entrees (buggy mmap) */
+	  /* Too much entries ! Probably buggy memory map */
 	  if (i>START_MULTIBOOT_MMAP_MAX)
 	    {
 	       goto err_mem;
@@ -88,21 +126,18 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
     }
   else
     {
-      /* Construit un memory map avec les informations upper/lower */
+      /* Build a memory memory map with upper/lower memory information */
       if (start_mbi->flags & START_MULTIBOOT_FLAG_MEMORY)
 	{
 
-	  /* S'assure de la presence de valeurs */
 	  if (!(start_mbi->mem_lower && start_mbi->mem_upper))
 	    {
 	      goto err_mem;
 	    }
 
-	  /* Nombre d'entrees */
+	  /* Number of entries in the memory map */
 	  i=3;
 	  
-	  /* Creation d'un mmap */
-
 	  start_mmap[0].size = sizeof(struct multiboot_mmap_entry);
 	  start_mmap[0].addr = 4096;
 	  start_mmap[0].len = start_mbi->mem_lower*1024;
@@ -122,30 +157,30 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
 	}
       else
 	{
-	  /* Aucune information memoire, on quitte */
+	  /* No memory information, Error */
 	   goto err_mem;
 	}
     }
 
-  /* Pointe vers la copie */
+  /* Make the multiboot hearder memory map point to our relocated memory map */
   start_mbi->mmap_addr = (u32_t)start_mmap;
-  /* Nombre d'entrees */
+  /* Set number of entries */
   start_mbi->mmap_length = i;
 
 
-  /* Corrige les eventuels chevauchements dans le  mmap */
+  /* Sanitize memory map */
   if ( start_mmap_sanitize(start_mbi) != EXIT_SUCCESS )
     {
       goto err_mem;
     }
 
-  /* Tronque a 4G si besoin */
+  /* Truncate memory at 4GB */
   if ( start_mmap_truncate32b(start_mbi) != EXIT_SUCCESS )
     {
       goto err_mem;
     }    
 
-  /* Calcule la memoire totale */
+  /* Compute total available memory */
   start_mem_total = 0;
   mmap = (struct multiboot_mmap_entry*)start_mbi->mmap_addr;
   for(i=0;i<start_mbi->mmap_length;i++)
@@ -154,20 +189,20 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
       
     }
 
-  /* Verification des modules */
+  /* Check boot modules */
   if (!((start_mbi->flags & START_MULTIBOOT_FLAG_MODS)&&(start_mbi->mods_count == CONST_BOOT_MODULES)))
     {
       goto err_mods;
     }
 
-  /* Initialise les tables du mode protege */
+  /* Initialize GDT & IDT */
   if ( (gdt_init() != EXIT_SUCCESS)||(idt_init() != EXIT_SUCCESS) ) 
     {
       goto err_tables;
     }
   klib_printf("GDT & IDT initialized\n");
   
-  /* Fin */
+  /* That's all folks */
   return;
   
  err_magic:
@@ -189,9 +224,19 @@ PUBLIC void start_main(u32_t magic, physaddr_t mbi_addr)
 
 
 
-/*========================================================================
- * Assainit le memory map e820
- *========================================================================*/
+/**
+
+   Function: u8_t start_mmap_sanitize(struct multiboot_info* bootinfo)
+   -------------------------------------------------------------------
+
+   Sanitize memory map. Memory map provided by bootloader can have overlaps.
+   The function merges these overlaps and sort the entry by starting address.
+   
+   It's a glutton algorithm that inspect entries one by one. If an overlap
+   is discovered, we merge entries in terms of entries type. If new entries
+   are created during merging, they are added at the end of the memory map.
+   
+**/
 
 
 
@@ -204,26 +249,26 @@ PRIVATE u8_t start_mmap_sanitize(struct multiboot_info* bootinfo)
 
   mmap = (struct multiboot_mmap_entry*)bootinfo->mmap_addr;
 
-  /* Parcours glouton de la table */
+  /* Glutton run through */
   for(i=0;i<bootinfo->mmap_length-1;i++)
     {
-      /* Extremite du segment */
+      /* Segment extremities */
       A=mmap[i].addr;
       B=mmap[i].len+mmap[i].addr-1;
 
       for(j=i+1;j<bootinfo->mmap_length;j++)
 	{
-	  /* (Re)Initialisation du flag */
+	  /* Flag (re)initialization  */
 	  flag = 3;
 
-	  /* Extremites du segment compare */
+	  /* comapred segment extremities */
 	  C=mmap[j].addr;
 	  D=mmap[j].len+mmap[j].addr-1;
 
-	  /* Overlap */
+	  /* Overlap ! */
 	  if ((s64_t)(MIN(B,D)-MAX(A,C))>0)
 	    {
-	      /* Differenciation des cas: flag represente le degre de confonte des segments */
+	      /* Flag represents overlap degree */
 	      if (A!=C) flag&=2;
 	      if (B!=D) flag&=1;
 
@@ -231,13 +276,12 @@ PRIVATE u8_t start_mmap_sanitize(struct multiboot_info* bootinfo)
 		{
 		case 0:
 		  {
-		    /* Creation de 3 segments */
-
+		    /* 3 new entries creation */
 		    if (bootinfo->mmap_length+1 < START_MULTIBOOT_MMAP_MAX)
 		      {
 			u8_t t0,t1,t2;
 			
-			/* Types pour chaque segment */
+			/* Types for each segment */
 			t0 = (MIN(A,C) == A ? mmap[i].type : mmap[j].type);
 			t1 = MAX(mmap[i].type,mmap[j].type);
 			t2 = (MAX(B,D) == B ? mmap[i].type : mmap[j].type);
@@ -254,11 +298,12 @@ PRIVATE u8_t start_mmap_sanitize(struct multiboot_info* bootinfo)
 			mmap[bootinfo->mmap_length].len = MAX(B,D)-MIN(B,D);
 			mmap[bootinfo->mmap_length].type = t2;
 
+			/* We have created one more entry */
 			bootinfo->mmap_length++; 
 		      }
 		    else
 		      {
-			/* Trop d'overlaps */
+			/* Too much overlaps */
 			return EXIT_FAILURE;
 		      }
 
@@ -266,10 +311,10 @@ PRIVATE u8_t start_mmap_sanitize(struct multiboot_info* bootinfo)
 		  }
 		case 1:
 		  {
-		    /* Creation de 2 segments, 1ere extremite commune */
+		    /* First extremity is shared, 2 entries creation */
 		    u8_t t0,t1;
 			
-		    /* Types pour chaque segment */
+		    /* Types for each segment */
 		    t0 = MAX(mmap[i].type,mmap[j].type);
 		    t1 = (MAX(B,D) == B ? mmap[i].type : mmap[j].type);
 
@@ -286,7 +331,7 @@ PRIVATE u8_t start_mmap_sanitize(struct multiboot_info* bootinfo)
 		  }
 		case 2:
 		  {
-		    /* Creation de 2 segments, 2eme extremite commune */
+		    /* Last extremity is shared, 2 entries creation */
 		    u8_t t0,t1;
 
 		    t0 = (MIN(A,C) == A ? mmap[i].type : mmap[j].type);
@@ -305,13 +350,13 @@ PRIVATE u8_t start_mmap_sanitize(struct multiboot_info* bootinfo)
 		  }
 		case 3:
 		  {
-		    /* Segments confondus, retrait du segment de plus faible type */
+		    /* Segments are mingled, we remove the one with lowest type */
 		    u8_t k;
 
-		    /* Prend le type le plus haut */
+		    /* Get higest type */
 		    mmap[i].type = MAX(mmap[i].type,mmap[j].type);
 		    
-		    /* Supprime le segment confondu */
+		    /* Remove mingled segment */
 		    for(k=j;k<bootinfo->mmap_length-1;k++)
 		      {
 			mmap[k]=mmap[k+1];
@@ -327,7 +372,7 @@ PRIVATE u8_t start_mmap_sanitize(struct multiboot_info* bootinfo)
 		  }
 		}
 	      
-	      /* Refait les calculs avec l entree modifiee */
+	      /* We have removed an entry */
 	      i--;
 	      break;
 
@@ -335,7 +380,7 @@ PRIVATE u8_t start_mmap_sanitize(struct multiboot_info* bootinfo)
 	}
     }
 
-  /* Tri a bulle ascendant du memory map */
+  /* Memory map bubble sort */
   do
     {
       flag=0;
@@ -343,8 +388,7 @@ PRIVATE u8_t start_mmap_sanitize(struct multiboot_info* bootinfo)
 	{
 	  if (mmap[i].addr > mmap[i+1].addr)
 	    {
-	      /* Echange des entrees */
-
+	      /* Entries exchange */
 	      tmpEntry.addr=mmap[i].addr;
 	      tmpEntry.len=mmap[i].len;
 	      tmpEntry.type=mmap[i].type;
@@ -364,25 +408,25 @@ PRIVATE u8_t start_mmap_sanitize(struct multiboot_info* bootinfo)
     }while(flag);
 
 
-  /* Lissage du memory map */
+  /* Memory map smooth */
   for(i=0;i<bootinfo->mmap_length-1;i++)
     {
-      /* Fusion des segments s ils se suivent et sont de meme type */
+      /* Merge entries if they share extremities and have same type */
       if ( (mmap[i].addr+mmap[i].len == mmap[i+1].addr)&&(mmap[i].type == mmap[i+1].type) )
 	{
-	  /* Ajuste la taille */
+	  /* Update size */
 	  mmap[i].len = mmap[i].len+mmap[i+1].len;
 
-	  /* Supprime le segment suivant */
+	  /* Remove the second entry */
 	  for(j=i+1;j<bootinfo->mmap_length-1;j++)
 	    {
 	      mmap[j]=mmap[j+1];
 	    }
 
-	  /* Met a jour le nombre d entrees */
+	  /* Update number of entries */
 	  bootinfo->mmap_length--;
 
-	  /* Recalcul avec la nouvelle entree */
+	  /* We have removed an entry */
 	  i--;
 
 	}
@@ -393,9 +437,14 @@ PRIVATE u8_t start_mmap_sanitize(struct multiboot_info* bootinfo)
 
 
 
-/*========================================================================
- * Tronque la memoire a 4G dans un memory map trie
- *========================================================================*/
+/**
+
+   Function: u8_t start_mmap_truncate32b(struct multiboot_info* bootinfo)
+   ----------------------------------------------------------------------
+
+   Truncate memory to limit it to 4GB in a sorted memory map
+
+**/
 
 
 PRIVATE u8_t start_mmap_truncate32b(struct multiboot_info* bootinfo)
@@ -408,13 +457,13 @@ PRIVATE u8_t start_mmap_truncate32b(struct multiboot_info* bootinfo)
   for(i=0;i<bootinfo->mmap_length;i++)
     {
 
-      /* Marque la memoire au dela de 4G comme reservee */
+      /* Set memory above 4GB as reserved */
       if ( (mmap[i].addr>>32)&&(mmap[i].type == START_E820_AVAILABLE) )
 	{
 	  mmap[i].type = START_E820_RESERVED;
 	}
 
-      /* Cas de l'entree disponible a cheval */
+      /* Astride available memory */
       if ((!(mmap[i].addr>>32))&& ((mmap[i].addr+mmap[i].len)>>32)&&(mmap[i].type == START_E820_AVAILABLE) )
 	{
 	  mmap[i].len = (u32_t)(-1) - mmap[i].addr;
@@ -425,4 +474,3 @@ PRIVATE u8_t start_mmap_truncate32b(struct multiboot_info* bootinfo)
   
   return EXIT_SUCCESS;
 }
-
