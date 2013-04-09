@@ -71,9 +71,8 @@ syscall.o: ../include/types.h ../include/llist.h ../include/ipc.h const.h
 syscall.o: paging.h klib.h thread.h proc.h sched.h physmem.h virtmem_slab.h
 syscall.o: virtmem_buddy.h virtmem.h syscall.h
 klib_c.o: ../include/types.h klib.h const.h paging.h
-proc.o: ../include/types.h ../include/llist.h const.h paging.h thread.h
-proc.o: ../include/ipc.h proc.h klib.h physmem.h virtmem_slab.h
-proc.o: virtmem_buddy.h
+proc.o: ../include/types.h ../include/llist.h const.h paging.h klib.h
+proc.o: virtmem_slab.h thread.h ../include/ipc.h proc.h
 main.o: ../include/types.h ../include/llist.h const.h paging.h start.h klib.h
 main.o: physmem.h virtmem_slab.h virtmem_buddy.h virtmem.h thread.h
 main.o: ../include/ipc.h proc.h sched.h irq.h interrupt.h pit.h
