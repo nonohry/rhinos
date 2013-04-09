@@ -1,29 +1,49 @@
-/*
- * Gestion des processus
- *
- */
+/**
+
+   proc.c
+   ======
+
+   Process management
+
+**/
 
 
 
-/*========================================================================
- * Includes
- *========================================================================*/
+/**
+
+   Includes
+   ========
+
+   - types.h
+   - llist.h
+   - const.h
+   - klib.h
+   - virtmem_slab.h  : cache manipulation needed
+   - paging.h        : pagination primitives needed
+   - thread.h        : struct thread needed
+   - proc.h          : self header
+
+**/
 
 
 #include <types.h>
 #include <llist.h>
 #include "const.h"
-#include "thread.h"
 #include "klib.h"
-#include "physmem.h"
 #include "virtmem_slab.h"
 #include "paging.h"
+#include "thread.h"
 #include "proc.h"
 
 
-/*========================================================================
- * Declaration Private
- *========================================================================*/
+/**
+
+   Privates
+   --------
+
+   Caches for proc, thread_info and page directory structures
+
+**/
 
 
 PRIVATE struct vmem_cache* proc_cache;
@@ -31,15 +51,21 @@ PRIVATE struct vmem_cache* thread_info_cache;
 PRIVATE struct vmem_cache* pd_cache;
 
 
-/*========================================================================
- * Initialisation
- *========================================================================*/
+/**
+
+   Function: u8_t proc_init(void)
+   ------------------------------
+
+   Process subsystem initialization.
+   Simply creates caches in slab allocator for the needed structures.
+
+**/ 
 
 
 PUBLIC u8_t proc_init(void)
 {
 
-  /* Alloue les caches */
+  /* Create caches */
 
   proc_cache = virtmem_cache_create("proc_cache",sizeof(struct proc),0,0,VIRT_CACHE_DEFAULT,NULL,NULL);
   if (proc_cache == NULL)
@@ -64,9 +90,16 @@ PUBLIC u8_t proc_init(void)
 
 
 
-/*========================================================================
- * Creation d'un processus
- *========================================================================*/
+/**
+
+   Function: struct proc* proc_create(char* name)
+   ----------------------------------------------
+
+   Create a process named `name`. 
+   It create a page directory and synchronize it with the kernel one.
+   Return the brand new process or NULL if it fails.
+
+**/
 
 
 PUBLIC struct proc* proc_create(char* name)
@@ -76,27 +109,27 @@ PUBLIC struct proc* proc_create(char* name)
   struct pde* kern_pd;
   u16_t i;
 
-  /* Allocation du processus */
+  /* Allocate a process */
   proc = (struct proc*)virtmem_cache_alloc(proc_cache,VIRT_CACHE_DEFAULT);
   if (proc == NULL)
     {
       return NULL;
     }
 
-  /* Allocation du page directory */
+  /* Allocate a page directory */
   pd = (struct pde*)virtmem_cache_alloc(pd_cache,VIRT_CACHE_DEFAULT);
   if (!pd)
     {
       goto err00;
     }
 
-  /* Petit controle du nom */
+  /* Name check */
   if (name == NULL)
     {
       name = "NONAME";
     }
 
-  /* Copie du nom */
+  /* Name copy*/
   i=0;
   while( (name[i]!=0)&&(i<PROC_NAMELEN-1) )
     {
@@ -105,20 +138,20 @@ PUBLIC struct proc* proc_create(char* name)
     }
   proc->name[i]=0;
 
-  /* Initialisation de la liste de threads */
+  /* Threads list initialization */
   LLIST_NULLIFY(proc->thread_list);
 
-  /* Nettoie le page directory */
+  /* Clean page directory */
   klib_mem_set(0,(addr_t)pd,PAGING_ENTRIES*sizeof(struct pde));
 
-  /* Synchronise le page directory avec l espace noyau */
+  /* Synchronize page directory with kernel space */
   kern_pd = (struct pde*)PAGING_GET_PD();
   for(i=0;i<CONST_KERN_HIGHMEM/CONST_PAGE_SIZE/PAGING_ENTRIES;i++)
     {
       pd[i]=kern_pd[i];
     }
 
-  /* Affecte le page directory */
+  /* link page directory to the process structure */
   proc->v_pd = pd;
   proc->p_pd = paging_virt2phys((virtaddr_t)pd);
   if (!(proc->p_pd))
@@ -135,11 +168,11 @@ PUBLIC struct proc* proc_create(char* name)
   return proc;
 
  err01:
-  /* Libere le page directory */
+  /* free page directory */
   virtmem_cache_free(pd_cache,pd);
 
  err00:
-  /* Libere le processus */
+  /* free process */
    virtmem_cache_free(proc_cache,proc);
   
 
@@ -147,9 +180,14 @@ PUBLIC struct proc* proc_create(char* name)
 }
 
 
-/*========================================================================
- * Ajout d'un thread a un processus
- *========================================================================*/
+/**
+
+   Function: u8_t proc_add_thread(struct proc* proc, struct thread* th)
+   --------------------------------------------------------------------
+
+   Add the thread `th` to the process `proc` using a helper structure thread_info
+
+**/
 
 
 PUBLIC u8_t proc_add_thread(struct proc* proc, struct thread* th)
@@ -161,27 +199,32 @@ PUBLIC u8_t proc_add_thread(struct proc* proc, struct thread* th)
       return EXIT_FAILURE;
     }
 
-  /* Alloue un thread_info */
+  /* Allocate thread_info */
   thinfo = (struct thread_info*)virtmem_cache_alloc(thread_info_cache,VIRT_CACHE_DEFAULT);
   if (thinfo == NULL)
     {
       return EXIT_FAILURE;
     }
 
-  /* Back pointer du thread sur le processus */
+  /* thread back pointer to process */
   th->proc = proc;
-  /* Affectation du thread au thread info */
+  /* Set thread in thread info */
   thinfo->thread = th;
-  /* Liaison aux threads du processus */
+  /* Link thread_info with process other threads */
   LLIST_ADD(proc->thread_list,thinfo);
 
   return EXIT_SUCCESS;
 }
 
 
-/*========================================================================
- * Retrait d'un thread d un processus
- *========================================================================*/
+/**
+
+   Function: u8_t proc_remove_thread(struct proc* proc, struct thread* th)
+   -----------------------------------------------------------------------
+
+   Remove thread `th` from process `proc`
+
+**/
 
 
 PUBLIC u8_t proc_remove_thread(struct proc* proc, struct thread* th)
@@ -193,17 +236,19 @@ PUBLIC u8_t proc_remove_thread(struct proc* proc, struct thread* th)
       return EXIT_FAILURE;
     }
 
-  /* Cherche le thread_info correspondant */
+  /* Look for the corresponding thread_info */
   thinfo = LLIST_GETHEAD(proc->thread_list);
   do
     {
       if (thinfo->thread == th)
 	{
-	  /* Enleve et libere le thread_info */
+	  /* Found ! Remove it from the list */
 	  LLIST_REMOVE(proc->thread_list, thinfo);
+	  /* Free it */
 	  virtmem_cache_free(thread_info_cache,thinfo);
 	  return EXIT_SUCCESS;
 	}
+      /* Run through linked list */
       thinfo = LLIST_NEXT(proc->thread_list,thinfo);
     }while(!LLIST_ISHEAD(proc->thread_list,thinfo));
     
