@@ -251,7 +251,7 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
 
       /* Message is delivered to receiver, set end of sending */
       th_sender->ipc.state &= ~SYSCALL_IPC_SENDING;
-      /* Sender is blocked, waiting for message processing (must be unblocked via notify or receive) */
+      /* Sender is blocked, waiting for message processing (must be unblocked via notify) */
       th_sender->next_state = THREAD_BLOCKED;
 
     }
@@ -364,19 +364,27 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
 }
 
 
-/*========================================================================
- * Notify
- *========================================================================*/
+/**
+
+   u8_t syscall_notify(struct thread* th_from, struct thread* th_to)
+   -----------------------------------------------------------------
+
+   Send a notification from `th_from` to `th_to`
+   This syscall is used by receiver to notify blocked sender that message processing is finished.
+   Simply change `th_to` state et set is ready for scheduling
+
+**/
 
 PRIVATE u8_t syscall_notify(struct thread* th_from, struct thread* th_to)
 {
   if ( (th_to->state == THREAD_BLOCKED) && (th_to->ipc.state != SYSCALL_IPC_RECEIVING) )
 	{
-	  
+	  /* Set recipient ready for scheduling */
 	  th_to->next_state = THREAD_READY;
-	  /* Fin d'envoi */
+	  /* End of sending */
 	  th_to->ipc.state &= ~SYSCALL_IPC_SENDING;
 
+	  /* Scheduler queues manipulation */
 	  sched_dequeue(SCHED_BLOCKED_QUEUE,th_to);
 	  sched_enqueue(SCHED_READY_QUEUE,th_to);
 	}
@@ -385,9 +393,18 @@ PRIVATE u8_t syscall_notify(struct thread* th_from, struct thread* th_to)
 }
 
 
-/*========================================================================
- * Helper: Copie de message
- *========================================================================*/
+/**
+
+   Function: u8_t syscall_copymsg(struct ipc_message* message, physaddr_t phys_msg, u8_t op)
+   -----------------------------------------------------------------------------------------
+
+   Helper to copy messages between 2 adress spaces. Source and destination for copy depend 
+   on operation `op`.
+   phys_msg will be mapped in current adress space. If operation is sending, `message` is copied
+   to the brand new mapped `phys_msg`. Otherwise, `phys_msg` is copied to `message`.
+
+
+**/
 
 PRIVATE u8_t syscall_copymsg(struct ipc_message* message, physaddr_t phys_msg, u8_t op)
 {
@@ -395,30 +412,30 @@ PRIVATE u8_t syscall_copymsg(struct ipc_message* message, physaddr_t phys_msg, u
   virtaddr_t virt_page;
   virtaddr_t virt_message;
   
-  /* Alloue une page virtuelle non mappee */
+  /* Allocate an unmapped virtual page */
   virt_page = (virtaddr_t)virtmem_buddy_alloc(CONST_PAGE_SIZE,VIRT_BUDDY_NOMAP);
   if ((void*)virt_page == NULL)
     {
       return EXIT_FAILURE;
     }
   
-  /* Determine la page physique du receive_message */
+  /* Get physical page containing `phys_msg` */
   phys_page = PHYS_ALIGN_INF(phys_msg);
   
-  /* Map la page physique du message avec la page virtuelle */
+  /* Map that physical page with the previous allocated virtual page */
   if (paging_map(virt_page, phys_page, PAGING_SUPER) == EXIT_FAILURE)
     {
       virtmem_buddy_free((void*)virt_page);
       return EXIT_FAILURE;
     }
       
-  /* Nettoie le cache pour la page */
+  /* Clean cache for the virtual page */
   klib_invlpg(virt_page);
 
-  /* Determine l adresse virtuelle du message */
+  /* Compute `phys_msg` virtual address for the copy */
   virt_message = virt_page + (phys_msg - phys_page);
       
-  /* Copie le message */
+  /* Message copy, depending on operation */
   switch(op)
     {
     case SYSCALL_RECEIVE:
@@ -434,13 +451,13 @@ PRIVATE u8_t syscall_copymsg(struct ipc_message* message, physaddr_t phys_msg, u
       break;
     }
       
-  /* Demap la page */
+  /* Unmap allocated page */
   paging_unmap(virt_page);
       
-  /* Nettoie le cache pour la page */
+  /* Clean cache */
   klib_invlpg(virt_page);
 
-  /* Libere la page */
+  /* Free allocated page */
   virtmem_buddy_free((void*)virt_page);
 
   return EXIT_SUCCESS;
