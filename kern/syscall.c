@@ -158,15 +158,20 @@ PUBLIC void syscall_handle(void)
 
 /**
 
-   u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, struct ipc_message* message)
-   ----------------------------------------------------------------------------------------------------
+   Function: u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, struct ipc_message* message)
+   --------------------------------------------------------------------------------------------------------------
 
 
    Pass ̀message` from `th_sender` to `th_receiver`.
    First it checks for a deadlock situation (`th_receiver` sending to `th_sender`)
+
    Then, if `th_receiver` is waiting for the message, ̀message` is copied from `th_sender` to `th_receiver`,
    `th_receiver` is set as ready for scheduling and `th_sender` is set as blocked (waiting for a notify call).
+
    If `th_receiver` is not waiting for any message, `th_sender` is set as blocked in `th_receiver` waiting list.
+
+   At last, scheduler is call because sender will be blocked in any cases.
+
 
 **/
 
@@ -228,7 +233,7 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
 	{
 
 	  th_receiver->next_state = THREAD_READY;
-	  /* Set end of receiving */
+	  /* Set end of reception */
 	  th_receiver->ipc.state &= ~SYSCALL_IPC_RECEIVING;
 
 	  /* Scheduler queues manipulations */
@@ -246,7 +251,7 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
 
       /* Message is delivered to receiver, set end of sending */
       th_sender->ipc.state &= ~SYSCALL_IPC_SENDING;
-      /* Sender is blocked, waiting for message processing (must be unblocked via notify) */
+      /* Sender is blocked, waiting for message processing (must be unblocked via notify or receive) */
       th_sender->next_state = THREAD_BLOCKED;
 
     }
@@ -263,37 +268,49 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
 }
 
 
-/*========================================================================
- * Receive
- *========================================================================*/
+
+/**
+
+   Function: u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sender, struct ipc_message* message)
+   -----------------------------------------------------------------------------------------------------------------
+
+
+   Set up the receiving state for `th_receiver`.
+   If `th_sender` is in its waiting list, retrieve sender's message and unblock sender.
+   Otherwise, `th_receiver` will blocked, waiting for `th_sender`.
+
+
+**/
 
 PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sender, struct ipc_message* message)
 {
   struct thread* th_available = NULL;
 
-  /* Indique de qui recevoir */
+  /* Set thread to receive from */
   th_receiver->ipc.receive_from = th_sender;
 
-  /* Precise la reception */
+  /* Set receive state */
   th_receiver->ipc.state |= SYSCALL_IPC_RECEIVING;
 
-  /* Le message de reception */
+  /* Set message for reception */
   th_receiver->ipc.receive_message = message;
   th_receiver->ipc.receive_phys_message = paging_virt2phys((virtaddr_t)message);  
 
-  /* Cherche un thread disponible dans la waitlist */
+  /* Look for a matching thread in receive list */
   if (!LLIST_ISNULL(th_receiver->ipc.receive_waitlist))
     {
-      
+      /* Receive from any thread, get the first available */
       if (th_sender == NULL)
 	{
 	  th_available = LLIST_GETHEAD(th_receiver->ipc.receive_waitlist);
 	}
       else
 	{
+	  /* Look for `th_sender` */
 	  struct thread* th_tmp = LLIST_GETHEAD(th_receiver->ipc.receive_waitlist);
 	  do
 	    {
+	      /* Found ! */
 	      if (th_tmp == th_sender)
 		{
 		  th_available = th_tmp;
@@ -305,23 +322,24 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
     }
 
 
-  /* Un thread disponible ? */
+  /* A matching sender found ? */
   if ( th_available != NULL )
     {
-      /* Un thread dans la wait_list: copie du message de l'emetteur dans l'espace du receveur */
+      /* Copy message from sender to receiver */ 
       if (syscall_copymsg(message,th_available->ipc.send_phys_message,SYSCALL_RECEIVE) != EXIT_SUCCESS)
 	{
 	  return IPC_FAILURE;
 	}
 
-      /* Debloque le sender au besoin */
+      /* Unblock sender if needed */
       if (th_available->state == THREAD_BLOCKED_SENDING)
 	{
            
 	  th_available->next_state = THREAD_READY;
-	  /* Fin d'envoi */
+	  /* Set end of sending */
 	  th_available->ipc.state &= ~SYSCALL_IPC_SENDING;
 
+	  /* Remove sender from receiver waiting list et set it as ready for scheduling */
 	  LLIST_REMOVE(th_receiver->ipc.receive_waitlist, th_available);
 	  if ( sched_enqueue(SCHED_READY_QUEUE, th_available) != EXIT_SUCCESS )
 	    {
@@ -330,15 +348,15 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
 
 	}
 
-        /* Fin de reception */
+      /* End of reception */
       th_receiver->ipc.state &= ~SYSCALL_IPC_RECEIVING;
       
     }
   else
     {
-      /* Pas de thread disponible : Bloque en attente de message */
+      /* No matching sender found: blocked waiting for a sender */
       th_receiver->next_state = THREAD_BLOCKED;
-       /* Ordonnance  */
+      /* Current thread (receiver) is blocked, need scheduling */
       sched_schedule(SCHED_FROM_RECEIVE);
     }
 
