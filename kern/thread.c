@@ -1,12 +1,30 @@
-/*
- * Gestion des threads
- * 
- */
+/**
+
+   thread.c
+   ========
+
+   Thread management
+
+**/
 
 
-/*========================================================================
- * Includes
- *========================================================================*/
+/**
+
+   Includes
+   --------
+
+   - types.h
+   - llist.h
+   - const.h
+   - klib.h
+   - tables.h        : tss needed
+   - virtmem_slab.h  : cache manipulation needed
+   - virtmem.h       : virt_alloc/free needed
+   - sched.h         : scheduler queues manipulation
+   - thread.h        : self header
+
+
+**/
 
 #include <types.h>
 #include <llist.h>
@@ -16,34 +34,69 @@
 #include "virtmem_slab.h"
 #include "virtmem.h"
 #include "sched.h"
-#include "physmem.h"
-#include "paging.h"
 #include "thread.h"
 
 
-/*========================================================================
- * Declaration Private
- *========================================================================*/
+/**
+
+   Privates
+   --------
+
+   thread & thread_info caches
+
+**/
 
 
 PRIVATE struct vmem_cache* thread_cache;
 PRIVATE struct vmem_cache* id_info_cache;
+
+
+/**
+
+   Private: thread_IDs
+   -------------------
+
+   Thread ID counter
+
+**/
+
+
 PRIVATE s32_t thread_IDs;
+
+
+/**
+
+   Privates
+   --------
+
+   Thread trampoline and exit
+
+
+**/
 
 PRIVATE void thread_exit(struct thread* th);
 PRIVATE void thread_cpu_trampoline(thread_cpu_func_t start_func, void* start_arg, thread_cpu_func_t exit_func, void* exit_arg);
 
 
-/*========================================================================
- * Initialisation
- *========================================================================*/
+/**
+
+   Function: u8_t thread_init(void)
+   --------------------------------
+
+   Thread subsystem initialization.
+   Create caches in slab allocator for thread and thread_info structures.
+   Initialize threads table.
+   Create a thread for current execution flow (kern_th) and set it as current thread.
+   Set up TSS.
+
+**/
 
 
 PUBLIC u8_t thread_init(void)
 {
   u16_t i;
 
-  /* Alloue des caches */
+  /* Allocate caches */
   thread_cache = virtmem_cache_create("thread_cache",sizeof(struct thread),0,0,VIRT_CACHE_DEFAULT,NULL,NULL);
   if (thread_cache == NULL)
     {
@@ -56,13 +109,13 @@ PUBLIC u8_t thread_init(void)
       return EXIT_FAILURE;
     }
 
-  /* Nullifie la hashtable */
+  /* Nullify hashtable (threads table) */
   for(i=0;i<THREAD_HASH_SIZE;i++)
     {
       LLIST_NULLIFY(thread_hashID[i]);
     }
 
-  /* Cree une coquille de thread pour le noyau */
+  /* Create a thread to structure the current execution flow */
   kern_th = (struct thread*)virtmem_cache_alloc(thread_cache,VIRT_CACHE_DEFAULT);
   if ( kern_th == NULL )
     {
@@ -78,42 +131,51 @@ PUBLIC u8_t thread_init(void)
   kern_th->name[5] = ']';
   kern_th->name[6] = 0;
 
+  /* Thread is set a running */
   kern_th->state = THREAD_RUNNING;
   kern_th->next_state = THREAD_DEAD;
 
-  /* Nice Level */
   kern_th->nice = 0;
 
-  /* Priorite */
   kern_th->sched.static_prio = THREAD_NICE2PRIO(0);
   kern_th->sched.dynamic_prio = kern_th->sched.static_prio;
   kern_th->sched.head_prio = kern_th->sched.static_prio;
 
-  /* Quantum */
+  /* Thread will not survive */
   kern_th->sched.static_quantum = 0;
   kern_th->sched.dynamic_quantum = 0;
 
-  /* Ordonnance */
+  /* Set the thread as running in scheduler */
   sched_enqueue(SCHED_RUNNING_QUEUE,kern_th);
 
-
-  /* la coquille noyau devient le thread courant */
+  /* set thread as current thread */
   cur_th = kern_th;
 
-  /* Affecte les registres de pile du TSS suivant la coquille noyau */
+  /* Set TSS for futur scheduling  */
   tss.esp0 = (u32_t)kern_th;
   tss.ss0 = CONST_KERN_SS_SELECTOR;
 
-  /* Initialise le compteur d ID global */
+  /* Initialize ID counter */
   thread_IDs = 1;
 
   return EXIT_SUCCESS;
 }
 
 
-/*========================================================================
- * Creation d un thread noyau
- *========================================================================*/
+
+/**
+
+   Function:  struct thread* thread_create_kern(const char* name, s32_t id, virtaddr_t start_entry, void* start_arg, s8_t nice_level, u8_t quantum)
+   ------------------------------------------------------------------------------------------------------------------------------------------------
+
+   Create a kernel space thread.
+   Set all necessary attributes according to parameters
+   Set up cpu context and stack for execution.
+   Link new thread with existing ones.
+
+   Return a pointer to the thread or NULL if creation fails
+
+**/
 
 
 PUBLIC struct thread* thread_create_kern(const char* name, s32_t id, virtaddr_t start_entry, void* start_arg, s8_t nice_level, u8_t quantum)

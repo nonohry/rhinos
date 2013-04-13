@@ -40,11 +40,10 @@ clean:
 
 # DO NOT DELETE
 
-start.o: ../include/types.h const.h paging.h klib.h tables.h seg.h irq.h
-start.o: interrupt.h thread.h ../include/ipc.h proc.h start.h
+start.o: ../include/types.h const.h paging.h klib.h tables.h seg.h start.h
 seg.o: ../include/types.h const.h paging.h seg.h
 tables.o: ../include/types.h const.h paging.h klib.h pic.h seg.h interrupt.h
-tables.o: thread.h ../include/ipc.h proc.h tables.h irq.h
+tables.o: thread.h ../include/ipc.h proc.h tables.h
 pic.o: ../include/types.h const.h paging.h klib.h pic.h
 pit.o: ../include/types.h const.h paging.h klib.h interrupt.h thread.h
 pit.o: ../include/ipc.h proc.h irq.h sched.h pit.h
@@ -63,8 +62,8 @@ virtmem_slab.o: start.h physmem.h virtmem_slab.h virtmem_buddy.h
 virtmem.o: ../include/types.h const.h paging.h virtmem_buddy.h virtmem_slab.h
 virtmem.o: virtmem.h
 thread.o: ../include/types.h ../include/llist.h const.h paging.h klib.h
-thread.o: tables.h seg.h irq.h interrupt.h thread.h ../include/ipc.h proc.h
-thread.o: virtmem_slab.h virtmem.h sched.h physmem.h virtmem_buddy.h
+thread.o: tables.h seg.h virtmem_slab.h virtmem.h sched.h thread.h
+thread.o: ../include/ipc.h proc.h
 sched.o: ../include/types.h ../include/llist.h klib.h const.h paging.h
 sched.o: thread.h ../include/ipc.h proc.h sched.h
 syscall.o: ../include/types.h ../include/llist.h ../include/ipc.h const.h
