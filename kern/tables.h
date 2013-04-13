@@ -1,21 +1,39 @@
-#ifndef PROT_H
-#define PROT_H
+/**
 
-/*========================================================================
- * Includes 
- *========================================================================*/
+   tables.h
+   ========
+
+   GDT & IDT initialization header
+   
+**/
+
+#ifndef TABLES_H
+#define TABLES_H
+
+
+/**
+ 
+   Includes 
+   --------
+
+   - types.h
+   - const.h
+   - seg.h    : struct [seg|gate]_desc needed
+
+**/
 
 #include <types.h>
 #include "const.h"
 #include "seg.h"
-#include "irq.h"
-
-/*========================================================================
- * Constantes
- *========================================================================*/
 
 
-/* Indexes de la GDT */
+/**
+ 
+   Constants: Indexes in GDT
+   -------------------------
+
+**/
+
 
 #define TABLES_NULL_INDEX          0
 #define TABLES_KERN_CS_INDEX       1
@@ -23,29 +41,57 @@
 #define TABLES_USER_CS_INDEX       3
 #define TABLES_USER_XS_INDEX       4                  /* DS,ES,FS,SS */
 #define TABLES_TSS_INDEX           5
-#define TABLES_MAX_INDEX           TABLES_TSS_INDEX   /* Nombre maximum d index d une GDT */
+#define TABLES_MAX_INDEX           TABLES_TSS_INDEX
 
-/* Taille de la GDT & IDT */
 
-#define TABLES_GDT_SIZE            TABLES_MAX_INDEX+1  /* Debute a 0 */
+/**
+
+   Constants: IDT & GDT size
+   -------------------------
+
+**/
+
+#define TABLES_GDT_SIZE            TABLES_MAX_INDEX+1
 #define TABLES_IDT_SIZE            52
 
-#define TABLES_SHIFT_SELECTOR      3    /* INDEX << SHIFT_SELECTOR = SELECTOR */
+
+/**
+
+   Constant: TABLES_SHIFT_SELECTOR
+   -------------------------------
+
+   Index << TABLES_SHIFT_SELECTOR = Selector
+
+**/
+
+#define TABLES_SHIFT_SELECTOR      3
 
 
-/* Limite des segments  */
+/**
 
-#define TABLES_KERN_BASE         0x0        /* Adresse de base du noyau */
-#define TABLES_KERN_LIMIT_4G     0x0        /* Limite de l'espace Noyau (4G) */
-#define TABLES_USER_BASE         0x0        /* Adresse de base de l espace utilisateur */
-#define TABLES_USER_LIMIT_4G     0x0        /* Limite de l'espace utilisateur (4G) */
+   Constants: Segments bases and limits
+   -----------------------------------
 
-/*========================================================================
- * Structures
- *========================================================================*/
+**/
+
+#define TABLES_KERN_BASE         0x0
+#define TABLES_KERN_LIMIT        0x0
+#define TABLES_USER_BASE         0x0
+#define TABLES_USER_LIMIT        0x0
 
 
-/* Descripteur de Table (GDT & LDT) */
+/**
+
+   Structure: struct table_desc
+   ----------------------------
+
+   table (IDT or GDT) descriptor.
+   Members are:
+   
+   - limit : table size
+   - base  : table base address
+
+**/
 
 PUBLIC struct table_desc
 {
@@ -53,7 +99,16 @@ PUBLIC struct table_desc
   lineaddr_t base;
 } __attribute__ ((packed));
 
-/* TSS */
+
+/**
+
+   Structure: struct tss
+   ---------------------
+
+   Describe a TSS.
+   Stick to Intel TSS description
+
+**/
 
 PUBLIC struct tss
 {
@@ -98,17 +153,30 @@ PUBLIC struct tss
 } __attribute__ ((packed));
 
 
-/*========================================================================
- * Prototypes 
- *========================================================================*/
+/**
+
+   Globals: GDT, IDT & TSS
+   -----------------------
+
+**/
 
 PUBLIC struct seg_desc gdt[TABLES_GDT_SIZE];  /* GDT */
 PUBLIC struct gate_desc idt[TABLES_IDT_SIZE]; /* IDT */
-PUBLIC struct tss tss; /* TSS */
-PUBLIC struct table_desc gdt_desc;     /* Descripteur de la GDT */
-PUBLIC struct table_desc idt_desc;     /* Descripteur de l'IDT */
+PUBLIC struct tss tss;                        /* TSS */
+PUBLIC struct table_desc gdt_desc;            /* GDT descriptor */
+PUBLIC struct table_desc idt_desc;            /* IDT descriptor */
 
-PUBLIC  u8_t gdt_init();
-PUBLIC  u8_t idt_init();
+
+/**
+
+   Prototypes
+   ----------
+
+   Give access to tables initialization
+
+**/
+
+PUBLIC  u8_t gdt_init(void);
+PUBLIC  u8_t idt_init(void);
 
 #endif

@@ -58,12 +58,12 @@ PUBLIC u8_t gdt_init(void)
   gdt_desc.base = (lineaddr_t) gdt; /* Due to memory flat model set up by bootloader, in-used adresses are linear adresses */
 
   /* Kernel space segments */  
-  init_code_seg(&gdt[TABLES_KERN_CS_INDEX],(lineaddr_t) TABLES_KERN_BASE, TABLES_KERN_LIMIT_4G, CONST_RING0);
-  init_data_seg(&gdt[TABLES_KERN_XS_INDEX],(lineaddr_t) TABLES_KERN_BASE, TABLES_KERN_LIMIT_4G, CONST_RING0);
+  init_code_seg(&gdt[TABLES_KERN_CS_INDEX],(lineaddr_t) TABLES_KERN_BASE, TABLES_KERN_LIMIT, CONST_RING0);
+  init_data_seg(&gdt[TABLES_KERN_XS_INDEX],(lineaddr_t) TABLES_KERN_BASE, TABLES_KERN_LIMIT, CONST_RING0);
 
   /* User space segments */ 
-  init_code_seg(&gdt[TABLES_USER_CS_INDEX],(lineaddr_t) TABLES_USER_BASE, TABLES_USER_LIMIT_4G, CONST_RING3);
-  init_data_seg(&gdt[TABLES_USER_XS_INDEX],(lineaddr_t) TABLES_USER_BASE, TABLES_USER_LIMIT_4G, CONST_RING3);
+  init_code_seg(&gdt[TABLES_USER_CS_INDEX],(lineaddr_t) TABLES_USER_BASE, TABLES_USER_LIMIT, CONST_RING3);
+  init_data_seg(&gdt[TABLES_USER_XS_INDEX],(lineaddr_t) TABLES_USER_BASE, TABLES_USER_LIMIT, CONST_RING3);
 
   /* Global TSS */
   init_tss_seg(&gdt[TABLES_TSS_INDEX], (lineaddr_t)&tss, sizeof(tss), CONST_RING0);
