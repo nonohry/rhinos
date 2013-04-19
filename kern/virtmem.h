@@ -1,27 +1,48 @@
-/*
- * Virtmem.h
- * Header de virtmem.c
- *
- */
+/**
+
+   virtmem.h
+   ---------
+
+   Virtual memory interface header
+
+**/
 
 #ifndef VIRTMEM_H
 #define VIRTMEM_H
 
 
-/*========================================================================
- * Includes
- *========================================================================*/
+/**
+
+   Includes
+   --------
+
+   - types.h
+   - const.h
+   - virtmem_slab.h : struct vmem_cache needed
+
+**/
 
 #include <types.h>
 #include "const.h"
 #include "virtmem_slab.h"
 
 
-/*========================================================================
- * Structures
- *========================================================================*/
+/**
 
-struct virtmem_caches
+   Structure: struct virtmem_caches
+   --------------------------------
+
+   Caches wrapper for small object allocation.
+   Members are:
+
+   - name  : cache name
+   - size  : cache objects size
+   - flags : cache flags
+   - cache : pointer to cache
+
+**/
+
+PUBLIC struct virtmem_caches
 {
   const char* name;
   u32_t size;
@@ -30,9 +51,15 @@ struct virtmem_caches
 };
 
 
-/*========================================================================
- * Prototypes
- *========================================================================*/
+/**
+ 
+   Prototypes
+   ----------
+
+   Give access to virtual memory initialization, allocation and release
+
+**/
+
 
 
 PUBLIC u8_t  virt_init(void);
