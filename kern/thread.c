@@ -171,7 +171,7 @@ PUBLIC u8_t thread_init(void)
    Create a kernel space thread.
    Set all necessary attributes according to parameters
    Set up cpu context and stack for execution.
-   Link new thread with existing ones.
+   Link new thread with existing ones in scheduler and in a hash table.
 
    Return a pointer to the thread or NULL if creation fails
 
@@ -184,7 +184,7 @@ PUBLIC struct thread* thread_create_kern(const char* name, s32_t id, virtaddr_t 
   struct id_info* thID;
   u8_t i;
 
-  /* Controles */
+  /* Sanity checks */
   if ( (start_entry == 0)
        || (nice_level > THREAD_NICE_TOP)
        || (nice_level < THREAD_NICE_BOTTOM) )
@@ -192,41 +192,42 @@ PUBLIC struct thread* thread_create_kern(const char* name, s32_t id, virtaddr_t 
       return NULL;
     }
 
-  /* Allocation dans les cache */
+  /* Allocate a thread */
   th = (struct thread*)virtmem_cache_alloc(thread_cache,VIRT_CACHE_DEFAULT);
   if ( th == NULL )
     {
       return NULL;
     }
 
-  /* Nettoie la structure */
+  /* Clean it */
   klib_mem_set(0,(addr_t)th,sizeof(struct thread));
 
  
+  /* Allocate an id_info */
   thID = (struct id_info*)virtmem_cache_alloc(id_info_cache,VIRT_CACHE_DEFAULT);
   if (thID == NULL)
     {
       goto err00;
     }
   
-  /* Alloue la pile */
+  /* Allocate a stack */
   th->stack_base = (virtaddr_t)virt_alloc(CONST_PAGE_SIZE);
   if ((void*)th->stack_base == NULL)
     {
       goto err01;
     }
   
-  /* Definit la taille de la pile */
+  /* Set stack size */
   th->stack_size = CONST_PAGE_SIZE;
 
-  /* Initialise le contexte */
+  /* Cpu context initialization */
   if (thread_cpu_init((struct cpu_info*)th,start_entry,start_arg,(virtaddr_t)thread_exit,(void*)th,th->stack_base,th->stack_size,CONST_RING0) != EXIT_SUCCESS)
     {
       goto err02;
     }
 
 
-  /* Copie du nom */
+  /* Name copy */
   i=0;
   while( (name[i]!=0)&&(i<THREAD_NAMELEN-1) )
     {
@@ -235,14 +236,14 @@ PUBLIC struct thread* thread_create_kern(const char* name, s32_t id, virtaddr_t 
     }
   th->name[i]=0;
 
-  /* Etats */
+  /* Scheduler state */
   th->state = THREAD_READY;
   th->next_state = THREAD_READY;
 
   /* Nice Level */
   th->nice = nice_level;
 
-  /* Priorite */
+  /* Priority */
   th->sched.static_prio = THREAD_NICE2PRIO(nice_level);
   th->sched.dynamic_prio = th->sched.static_prio;
   th->sched.head_prio = th->sched.static_prio;
@@ -251,10 +252,10 @@ PUBLIC struct thread* thread_create_kern(const char* name, s32_t id, virtaddr_t 
   th->sched.static_quantum = quantum;
   th->sched.dynamic_quantum = quantum;
 
-  /* Chainage */
+  /* Scheduler enqueue */
   sched_enqueue(SCHED_READY_QUEUE,th);
 
-  /* ID */
+  /* Id */
   if (id == THREAD_ID_DEFAULT)
     {
       thID->id = thread_IDs;
@@ -264,12 +265,12 @@ PUBLIC struct thread* thread_create_kern(const char* name, s32_t id, virtaddr_t 
     {
       thID->id = id;
     }
-  thID->thread = th;
 
-  /* Back pointer ID */
+  /* Back pointers */
+  thID->thread = th;
   th->id = thID;
 
-  /* Chainage ID */
+  /* Id_info linkage in hash table */
   LLIST_ADD(thread_hashID[THREAD_HASHID_FUNC(thID->id)],thID);
 
   /* IPC */
@@ -279,31 +280,42 @@ PUBLIC struct thread* thread_create_kern(const char* name, s32_t id, virtaddr_t 
   th->ipc.receive_message = NULL;
   LLIST_NULLIFY(th->ipc.receive_waitlist);
 
-
-  /* Retour */
+  /* Return */
   return th;
 
  err02:
-  /* Libere la pile */
+  /* Free stack */
   virt_free((void*)th->stack_base);
   
  err01:
-  /* Libere le id_info */
+  /* Free id_info */
   virtmem_cache_free(id_info_cache,thID);
 
  err00:
-  /* Libere le thread */
+  /* Free thread */
   virtmem_cache_free(thread_cache,th);
 
-  /* retour */
+  /* Error return */
   return NULL;
 
 }
 
 
-/*========================================================================
- * Creation d un thread utilisateur
- *========================================================================*/
+/**
+
+   Function: struct thread* thread_create_user(const char* name, s32_t id, virtaddr_t start_entry, virtaddr_t stack_base, u32_t stack_size, s8_t nice_level, u8_t quantum)
+   -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+   Create an user space thread.
+   Set all necessary attributes according to parameters
+   Set up cpu context and stack for execution.
+   Link new thread with existing ones in scheduler and  a hash table
+
+   Function is similary to kernel one, main difference is that stack is not created in the function but passed as an argument.
+
+   Return a pointer to the thread or NULL if creation fails
+
+**/
 
 
 PUBLIC struct thread* thread_create_user(const char* name, s32_t id, virtaddr_t start_entry, virtaddr_t stack_base, u32_t stack_size, s8_t nice_level, u8_t quantum)
@@ -312,7 +324,7 @@ PUBLIC struct thread* thread_create_user(const char* name, s32_t id, virtaddr_t 
   struct id_info* thID;
   u8_t i;
   
-  /* Controles */
+  /* Sanity checks */
   if ( (start_entry == 0)
        || (nice_level > THREAD_NICE_TOP)
        || (nice_level < THREAD_NICE_BOTTOM) 
@@ -322,34 +334,38 @@ PUBLIC struct thread* thread_create_user(const char* name, s32_t id, virtaddr_t 
       return NULL;
     }
 
-  /* Allocation dans les cache */
+  /* Allocate thread */
   th = (struct thread*)virtmem_cache_alloc(thread_cache,VIRT_CACHE_DEFAULT);
   if ( th == NULL )
     {
       return NULL;
     }
-   /* Nettoie la structure */
+
+  /* Clean it */
   klib_mem_set(0,(addr_t)th,sizeof(struct thread));
 
+
+  /* Allocate id_info */
   thID = (struct id_info*)virtmem_cache_alloc(id_info_cache,VIRT_CACHE_DEFAULT);
   if (thID == NULL)
     {
       goto err00;
     }
   
+  /* Set stack base address */
   th->stack_base = stack_base;
 
-  /* Definit la taille de la pile */
+  /* Set stack size */
   th->stack_size = stack_size;
 
-  /* Initialise le contexte */
+  /* Cpu context initialization */
   if (thread_cpu_init((struct cpu_info*)th,start_entry,NULL,(virtaddr_t)thread_exit,(void*)th,th->stack_base,th->stack_size,CONST_RING3) != EXIT_SUCCESS)
     {
       goto err01;
     }
 
 
-  /* Copie du nom */
+  /* Name copy */
   i=0;
   while( (name[i]!=0)&&(i<THREAD_NAMELEN-1) )
     {
@@ -358,14 +374,14 @@ PUBLIC struct thread* thread_create_user(const char* name, s32_t id, virtaddr_t 
     }
   th->name[i]=0;
 
-  /* Etats */
+  /* Scheduler state */
   th->state = THREAD_READY;
   th->next_state = THREAD_READY;
 
   /* Nice Level */
   th->nice = nice_level;
 
-  /* Priorite */
+  /* Priority */
   th->sched.static_prio = THREAD_NICE2PRIO(nice_level);
   th->sched.dynamic_prio = th->sched.static_prio;
   th->sched.head_prio = th->sched.static_prio;
@@ -374,10 +390,10 @@ PUBLIC struct thread* thread_create_user(const char* name, s32_t id, virtaddr_t 
   th->sched.static_quantum = quantum;
   th->sched.dynamic_quantum = quantum;
 
-  /* Chainage */
+  /* Scheduler enqueue */
   sched_enqueue(SCHED_READY_QUEUE,th);
 
-  /* ID */
+  /* Id */
   if (id == THREAD_ID_DEFAULT)
     {
       thID->id = thread_IDs;
@@ -387,12 +403,12 @@ PUBLIC struct thread* thread_create_user(const char* name, s32_t id, virtaddr_t 
     {
       thID->id = id;
     }
-  thID->thread = th;
 
-  /* Back pointer ID */
+  /* Back pointers */
+  thID->thread = th;
   th->id = thID;
 
-  /* Chainage ID */
+  /* id_info in hash table  */
   LLIST_ADD(thread_hashID[THREAD_HASHID_FUNC(thID->id)],thID);
 
   /* IPC */
@@ -403,48 +419,56 @@ PUBLIC struct thread* thread_create_user(const char* name, s32_t id, virtaddr_t 
   LLIST_NULLIFY(th->ipc.receive_waitlist);
 
 
-  /* Retour */
+  /* Return */
   return th;
 
  err01:
-  /* Libere le id_info */
+  /* Free id_info */
   virtmem_cache_free(id_info_cache,thID);
 
  err00:
-  /* Libere le thread */
+  /* Free thread */
   virtmem_cache_free(thread_cache,th);
 
-  /* retour */
+  /* Error return */
   return NULL;
 
 }
 
 
-/*========================================================================
- * Destruction d un thread
- *========================================================================*/
+/**
+
+   Function: u8_t thread_destroy(struct thread* th)
+   ------------------------------------------------
+
+   Destroy thread `th`.
+
+   Run through linked lists in hash table to free id_info structure.
+   Then free all allocated spaces.
+
+**/
 
 
 PUBLIC u8_t thread_destroy(struct thread* th)
 {
   u16_t i;
   struct id_info* thID;
-
-  /* Controle */
+  
   if ( th == NULL )
     {
       return EXIT_FAILURE;
     }
- 
-  /* Libere le id_info correspondant */
+  
+  /* Look for id_info */
   i=THREAD_HASHID_FUNC(th->id->id);
   if (!LLIST_ISNULL(thread_hashID[i]))
     {
       thID = LLIST_GETHEAD(thread_hashID[i]);
       do
 	{
-	  if (thID->thread == th)
+ 	  if (thID->thread == th)
 	    {
+	      /* Found ! Free it */
 	      LLIST_REMOVE(thread_hashID[i],thID);
 	      virtmem_cache_free(id_info_cache,thID);
 	      break;
@@ -453,16 +477,24 @@ PUBLIC u8_t thread_destroy(struct thread* th)
 	}while(!LLIST_ISHEAD(thread_hashID[i],thID));
     }
 
-  /* Libere simplement les parties allouees */
+  /* Simply free allocated spaces (Problem for user thread becasue of stack release !) */
   return virt_free((void*)th->stack_base) 
     &&  virtmem_cache_free(thread_cache,th);
 
 }
 
 
-/*========================================================================
- * Initialisation du contexte cpu
- *========================================================================*/
+/**
+
+   Function: u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* start_arg, virtaddr_t exit_entry, void* exit_arg, virtaddr_t stack_base, u32_t stack_size, u8_t ring)
+   ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+   Initialize a new cpu context ready for execution.
+
+   A user context does not support any argument for the moment.
+   A kernel context can have several arguments, passed through a structure `start_arg`. A trampoline is used to pass arguments to entry point.
+
+**/
 
 
 PUBLIC u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* start_arg, virtaddr_t exit_entry, void* exit_arg, virtaddr_t stack_base, u32_t stack_size, u8_t ring)
@@ -470,7 +502,7 @@ PUBLIC u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* 
   
   virtaddr_t* esp;
   
-  /* Petite verification */
+  /* Sanity checks */
   if ( (start_entry == 0)
        || (exit_entry == 0)
        || (stack_base == 0)
@@ -480,56 +512,57 @@ PUBLIC u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* 
       return EXIT_FAILURE;
     }
 
-  /* Rings autorises */
+  /* Rings */
   if ( (ring != CONST_RING0)&&(ring != CONST_RING3) )
     {
       return EXIT_FAILURE;
     }
   
-  /* Cas ring 3: pas d'arguments */
+  /* No arguments in ring 3 */
   if ( (ring==CONST_RING3)&&(start_arg!=NULL) )
     {
       return EXIT_FAILURE;
     }
 
-  /* Nettoie la pile */
+  /* Clean stack */
   klib_mem_set(0,(addr_t)stack_base,stack_size);
-  /* Recupere l'adresse de pile pour empiler les arguments */
+
+  /* Get esp (for arguments) */
   esp = (virtaddr_t*)(stack_base+stack_size);
 
-  /* Installe les registres de segments */
+  /* Set up segment registers */
   ctx->cs = (ring == CONST_RING0 ? CONST_KERN_CS_SELECTOR : CONST_USER_CS_SELECTOR);
   ctx->ds = (ring == CONST_RING0 ? CONST_KERN_DS_SELECTOR : CONST_USER_DS_SELECTOR);
   ctx->es = (ring == CONST_RING0 ? CONST_KERN_ES_SELECTOR : CONST_USER_ES_SELECTOR);
   ctx->ss = (ring == CONST_RING0 ? CONST_KERN_SS_SELECTOR : CONST_USER_SS_SELECTOR);
 
-  /* Positionne un faux code d erreur */
+  /* Fake error code */
   ctx->error_code = THREAD_CPU_FEC;
 
-  /* Active les interruptions */
+  /* Enable interrupts in EFLAGS */
   ctx->eflags = (1<<THREAD_CPU_INTFLAG_SHIFT);
 
 
-  /* Pointe EIP sur le point d entree */
+  /* EIP points to entry point */
   ctx->eip = (reg32_t)start_entry;
 
-  /* Utilisation d un trampoline (ring0) */
+  /* Trampoline in ring 0 */
   if (ring == CONST_RING0)
     {
-      /* Pointe EIP sur le trampoline */
+      /* EIP points to trampoline */
       ctx->eip = (reg32_t)thread_cpu_trampoline;
 
-      /* Arguments du trampoline */
+      /* Push trampoline args */
       *(--esp) = (virtaddr_t)exit_arg;
       *(--esp) = exit_entry;
       *(--esp) = (virtaddr_t)start_arg;
       *(--esp) = start_entry;
   
-      /* Fausse adresse de retour pour la fonction de trampoline */
+      /* Fake return address for trampoline (no return) */
       *(--esp) = 0;
     
     
-      /* Simule une pile interrompue (le switch passe par une interruption logicielle sans changement de pile pour le ring0) */
+      /* Pretend to be an interrupted stask */
       *(--esp) = ctx->eflags;
       *(--esp) = CONST_KERN_CS_SELECTOR;
       *(--esp) = ctx->eip;
@@ -539,7 +572,7 @@ PUBLIC u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* 
     }
     
 
-  /* Installe la pile */
+  /* Set up ESP */
   ctx->esp = (reg32_t)esp;
 
 
@@ -547,27 +580,33 @@ PUBLIC u8_t thread_cpu_init(struct cpu_info* ctx, virtaddr_t start_entry, void* 
 }
 
 
-/*========================================================================
- * Bascule de thread courant
- *========================================================================*/
+/**
+
+   Function: void thread_switch_to(struct thread* th)
+   --------------------------------------------------
+
+   Set `th` as the current thread. 
+   If `th` belongs to a different process, we change address space loading a new page directory
+
+**/
 
 
 PUBLIC void thread_switch_to(struct thread* th)
 {
-  /* Affecte le thread courant */
   if (th != NULL)
     {
+      /* Set `th` as current */
       cur_th = th;
       
-      /* Change le processus courant uniquement en cas de besoins */
+      /* Change current process if needed */
       if (cur_proc != th->proc)
 	{
 	  cur_proc = th->proc;
-	  /* Change l espace d adressage egalement */
+	  /* Switch address space */
 	  klib_load_CR3(cur_proc->p_pd);
 	}
 
-      /* Positionne le tss */
+      /* Set tss according to new current thread */
       tss.esp0 = (u32_t)th+sizeof(struct cpu_info);
 
     }
@@ -576,19 +615,27 @@ PUBLIC void thread_switch_to(struct thread* th)
 }
 
 
-/*========================================================================
- * Post traitement de la sauvegarde du contexte
- *========================================================================*/
+
+/**
+
+   Function: void thread_cpu_postsave(struct thread* th, reg32_t* esp)
+   -------------------------------------------------------------------
+
+   Finalize cpou context save in case of a kernel space switch.
+   
+   Simply retrieve register saved on stack by processor.
+
+**/
 
 
 PUBLIC void thread_cpu_postsave(struct thread* th, reg32_t* esp)
 {
 
 
-  /* Traitement si pas changement de privileges (Note: SS est sur 16bits) */
+  /* Check 16 bits SS to determine ring */ 
   if ((th->cpu.ss & 0xFF) == CONST_KERN_SS_SELECTOR)
     {
-      /* Recupere les registres oublies */
+      /* Retrieve remaining registers */
       cur_th->cpu.ret_addr = *(esp);
       cur_th->cpu.error_code = *(esp+1);
       cur_th->cpu.eip = *(esp+2);
@@ -602,9 +649,17 @@ PUBLIC void thread_cpu_postsave(struct thread* th, reg32_t* esp)
 }
 
 
-/*========================================================================
- * Trampoline de lancement
- *========================================================================*/
+/**
+
+   Function: void thread_cpu_trampoline(thread_cpu_func_t start_func, void* start_arg, thread_cpu_func_t exit_func, void* exit_arg)
+   --------------------------------------------------------------------------------------------------------------------------------
+
+   Trampoline for kernel thread.
+
+   Pass `start_arg`  to `start_func`. When `start_func` returns (id est thread has terminated), `exit_func` is called
+   with `exit_arg`.
+
+**/
 
 
 PRIVATE void thread_cpu_trampoline(thread_cpu_func_t start_func, void* start_arg, thread_cpu_func_t exit_func, void* exit_arg)
@@ -613,14 +668,20 @@ PRIVATE void thread_cpu_trampoline(thread_cpu_func_t start_func, void* start_arg
   start_func(start_arg);
   exit_func(exit_arg);
 
-  /* Pas de retour normalement*/
+  /* In theory, there is no return */
   return;
 }
 
 
-/*========================================================================
- * Recherche d un thread via son id_info
- *========================================================================*/
+/**
+
+   Function: struct thread* thread_id2thread(s32_t n)
+   --------------------------------------------------
+
+   Get thread based on id `n`
+
+   Return thread if found, NULL otherwise.
+**/
 
 
 PUBLIC struct thread* thread_id2thread(s32_t n)
@@ -628,20 +689,19 @@ PUBLIC struct thread* thread_id2thread(s32_t n)
   u16_t i;
   struct id_info* thID;
 
-  /* Controle */
   if ( n == 0 )
     {
       return NULL;
     }
 
-  /* Parcours de la hashtable */
+  /* Run through hash table */
   i=THREAD_HASHID_FUNC(n);
   if (!LLIST_ISNULL(thread_hashID[i]))
     {
       thID = LLIST_GETHEAD(thread_hashID[i]);
       do
 	{
-	  /* On trouve le bon ID, on renvoie le thread */
+	  /* Id found, return thread */
 	  if (thID->id == n)
 	    {
 	      return thID->thread;
@@ -650,32 +710,33 @@ PUBLIC struct thread* thread_id2thread(s32_t n)
 	}while(!LLIST_ISHEAD(thread_hashID[i],thID));
     }
   
-  /* Ici, on ne trouve rien, on retourn NULL */
+  /* Not found, return NULL */
   return NULL;
 }
 
 
-/*========================================================================
- * Sortie d un thread
- *========================================================================*/
+/**
+
+   Function: void thread_exit(struct thread* th)
+   ---------------------------------------------
+
+   Handle thread end of life
+
+**/
 
 
 PRIVATE void thread_exit(struct thread* th)
 {
-  /* Controle */
   if ( th == NULL )
     {
       return;
     }
 
-  /* Nouvel etat */
+  /* Set state */
   th->next_state = THREAD_DEAD;
 
-  /* DEBUG TEMPORAIRE: Attend une interruption ... */
+  /* Wait for an interrupt (TEMPORARY) */
   while(1){}
 
   return;
 }
-
-
-
