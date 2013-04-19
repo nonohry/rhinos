@@ -1,13 +1,26 @@
-/*
- * Virtmem.c
- * Interface de la memoire virtuelle
- *
- */
+/**
+
+   virtmem.c
+   ---------
+   
+   Virtual memory interface
+
+**/
 
 
-/*========================================================================
- * Includes
- *========================================================================*/
+/**
+ 
+   Includes
+   --------
+
+   - types.h
+   - const.h
+   - virtmem_buddy.h : Buddy system primitives needed
+   - virtmem_slab.h  : Slab allocator primitives needed
+   - virtmem.h       : Self header
+
+**/
+
 
 #include <types.h>
 #include "const.h"
@@ -16,9 +29,14 @@
 #include "virtmem.h"
 
 
-/*========================================================================
- * Declaration Private
- *========================================================================*/
+/**
+
+   Private: virt_caches
+   --------------------
+
+   Caches for small object allocation (4B to 16KB)
+
+**/
 
 PRIVATE struct virtmem_caches virt_caches[] = 
   {
@@ -39,15 +57,23 @@ PRIVATE struct virtmem_caches virt_caches[] =
   };
 
 
-/*========================================================================
- * Initilisation
- *========================================================================*/
+/**
+
+   Function: u8_t virt_init(void)
+   ------------------------------
+
+   Virtual memory interface initialization
+
+   Initialize virtual memory subsystem (buddy & slab allocator)
+   Create caches for small objects.
+
+**/
 
 PUBLIC u8_t virt_init(void)
 {
   u8_t i;
 
-  /* Initialise les backends de memoire virtuelle */
+  /* Initialize subsystems */
    if ( virtmem_cache_init() != EXIT_SUCCESS )
     {
       return EXIT_FAILURE;
@@ -59,7 +85,7 @@ PUBLIC u8_t virt_init(void)
     }
 
 
-  /* Cree les caches d allocation */
+  /* Create small objects caches */
   for(i=0;virt_caches[i].size;i++)
     {
       virt_caches[i].cache = virtmem_cache_create(virt_caches[i].name,virt_caches[i].size,0,0,virt_caches[i].flags,NULL,NULL);
@@ -73,16 +99,23 @@ PUBLIC u8_t virt_init(void)
 }
 
 
-/*========================================================================
- * Allocation
- *========================================================================*/
+/**
 
+   Function: void* virt_alloc(u32_t size)
+   --------------------------------------
+
+   Allocate a virtual memory of power of two rounded `size`.
+   Try to allocate in small objet caches. If `size` is too large, allocate in buddy.
+
+   Return start address of virtual memory block if alloacion succeed, NULL otherwise.
+
+**/
 
 PUBLIC void* virt_alloc(u32_t size)
 {
   u8_t i;
 
-  /* Cherche un cache de bonne taille */
+  /* Look for a fitting cache */
   for(i=0;virt_caches[i].size;i++)
     {
       if (virt_caches[i].size >= size)
@@ -92,21 +125,27 @@ PUBLIC void* virt_alloc(u32_t size)
     }
 
 
-  /* Sinon, alloue dans le buddy */
+  /* Cache not found, try in buddy */
   return virtmem_buddy_alloc(size,VIRT_BUDDY_NOMAP);
 }
 
 
-/*========================================================================
- * Liberation
- *========================================================================*/
+/**
+
+   Function: u8_t virt_free(void* addr)
+   ------------------------------------
+
+   Free memory block starting by `addr`.
+   Try to release memory in caches then in buddy if it fails.
+
+**/
 
 
 PUBLIC u8_t virt_free(void* addr)
 {
   u8_t i;
 
-  /* Tente de liberer dans les caches */
+  /* Try release in caches */
   for(i=0;virt_caches[i].size;i++)
     {
       if (virtmem_cache_free(virt_caches[i].cache, addr) == EXIT_SUCCESS)
@@ -115,6 +154,6 @@ PUBLIC u8_t virt_free(void* addr)
 	}
     }
 
-  /* Sinon, tente de liberer dans le buddy */
+  /* Try in buddy otherwise */
   return virtmem_buddy_free(addr);
 }
