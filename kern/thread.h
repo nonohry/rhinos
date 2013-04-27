@@ -1,7 +1,7 @@
 /**
 
    thread.h
-   --------
+   ========
 
    Thread management header
 

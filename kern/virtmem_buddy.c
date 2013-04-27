@@ -1,7 +1,7 @@
 /**
  
    virtmem_buddy.c
-   ---------------
+   ===============
 
    Virtual memory buddy allocator (big objects)
 
@@ -19,6 +19,7 @@
    - const.h
    - llist.h
    - klib.h
+   - start.h         : start_mem_total needed in VIRT_POOLLIMIT
    - physmem.h       : physical memory allocation needed
    - paging.h        : paging_map needed
    - virtmem_slab.h  : slab allocation needed
@@ -31,6 +32,7 @@
 #include "const.h"
 #include <llist.h>
 #include "klib.h"
+#include "start.h"
 #include "physmem.h"
 #include "paging.h"
 #include "virtmem_slab.h"

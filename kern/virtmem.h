@@ -1,7 +1,7 @@
 /**
 
    virtmem.h
-   ---------
+   =========
 
    Virtual memory interface header
 
