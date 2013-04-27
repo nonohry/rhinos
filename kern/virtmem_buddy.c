@@ -1,29 +1,75 @@
-/*
- * Virtmem_buddy.c
- * Allocateur de memoire virtuelle (gros objets)
- *
- */
+/**
+ 
+   virtmem_buddy.c
+   ---------------
 
+   Virtual memory buddy allocator (big objects)
+
+
+**/
+
+
+
+/**
+
+   Includes
+   ---------
+
+   - types.h
+   - const.h
+   - llist.h
+   - klib.h
+   - physmem.h       : physical memory allocation needed
+   - paging.h        : paging_map needed
+   - virtmem_slab.h  : slab allocation needed
+   - virtmem_buddy.h : self header
+
+
+**/
 
 #include <types.h>
 #include "const.h"
 #include <llist.h>
 #include "klib.h"
-#include "start.h"
 #include "physmem.h"
 #include "paging.h"
 #include "virtmem_slab.h"
 #include "virtmem_buddy.h"
 
 
-/*========================================================================
- * Declarations PRIVATE
- *========================================================================*/
+/**
+
+   Private: area_cache
+   -------------------
+
+   buddy items cache
+
+**/
 
 PRIVATE struct vmem_cache* area_cache;
 
+
+/**
+
+   Privates
+   --------
+
+   buddy system and list of allocated areas
+
+**/
+
 PRIVATE struct vmem_area* buddy_free[VIRT_BUDDY_MAX];
 PRIVATE struct vmem_area* buddy_used;
+
+
+/**
+
+   Privates
+   --------
+
+   Helpers
+
+**/
 
 PRIVATE struct vmem_area* virtmem_buddy_alloc_area(u32_t size, u8_t flags);
 PRIVATE u8_t virtmem_buddy_free_area(struct vmem_area* area);
@@ -31,11 +77,21 @@ PRIVATE u8_t virtmem_buddy_init_area(u32_t base, u32_t size);
 PRIVATE u8_t virtmem_buddy_map_area(struct vmem_area* area);
 
 
-/*========================================================================
- * Initialisation de l'allocateur
- *========================================================================*/
+/**
 
-PUBLIC u8_t virtmem_buddy_init()
+   Function: virtmem_buddy_init(void)
+   ----------------------------------
+
+   Virtual buddy initialization
+   
+   Nullify buddy lists and create buddy items cache
+   Provide arbitrary pages to make cache grow into in order to avoid recursivity with slab allocator
+   Add those arbitrary pages to `buddy_used`
+   Enter all the available memory in the buddy.
+
+**/
+
+PUBLIC u8_t virtmem_buddy_init(void)
 {
   struct vmem_area* area;
   virtaddr_t vaddr_init;
@@ -43,37 +99,40 @@ PUBLIC u8_t virtmem_buddy_init()
   u32_t i;
 
 
-  /* Initialise les listes */
+  /* Nullify buddy lists */
   for(i=0;i<VIRT_BUDDY_MAX;i++)
     {
       LLIST_NULLIFY(buddy_free[i]);
     }
   LLIST_NULLIFY(buddy_used);
 
-  /* Cree le cache des noeuds du buddy */
+  /* Create buddy items cache */
   area_cache = virtmem_cache_create("area_cache",sizeof(struct vmem_area),0,VIRT_BUDDY_MINSLABS,VIRT_CACHE_NOREAP,NULL,NULL);
   if ( area_cache == NULL)
     {
       return EXIT_FAILURE;
     }
 
-  /* Initialisation manuelle du cache */
+  /* Provide pages for "manual" cache growth */
   for(i=0;i<VIRT_BUDDY_STARTSLABS;i++)
     {
-       /* Cree une adresse virtuelle mappee pour les initialisations */
+      /* Set virtual address */
       vaddr_init = (i+VIRT_CACHE_STARTSLABS)*CONST_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT;
 
+      /* Retrieve a physical page */
       paddr_init = (physaddr_t)phys_alloc(CONST_PAGE_SIZE);
       if (!paddr_init)
 	{
 	  return EXIT_FAILURE;
 	}
+
+      /* Map virtaul address with physical page */
       if (paging_map(vaddr_init, paddr_init, PAGING_SUPER) != EXIT_SUCCESS)
 	{
 	  return EXIT_FAILURE;
 	}
 
-      /* Fait grossir cache_cache dans cette page */
+      /* make cache grow into the virtual page */
       if ( virtmem_cache_grow(area_cache,vaddr_init) != EXIT_SUCCESS )
 	{
 	  return EXIT_FAILURE;
@@ -81,9 +140,10 @@ PUBLIC u8_t virtmem_buddy_init()
 
     }
 
-  /* Entre les pages des initialisations manuelles dans buddy_used */
+  /* Set "manual" initialization pages marked as used */
   for(i=0;i<VIRT_CACHE_STARTSLABS+VIRT_BUDDY_STARTSLABS;i++)
     {
+      /* Create a fitting area for pages */
       area=(struct vmem_area*)virtmem_cache_alloc(area_cache, VIRT_CACHE_DEFAULT);
       if ( area == NULL ) 
 	{ 
@@ -93,10 +153,11 @@ PUBLIC u8_t virtmem_buddy_init()
       area->base = i*CONST_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT;
       area->size = CONST_PAGE_SIZE;
       area->index = 0;
+      /* Add area to used areas */
       LLIST_ADD(buddy_used,area);
     }
 
-  /* Initialise la memoire virtuelle disponible pour le noyau */
+  /* Enter kernel available memory into buddy */
   if ( virtmem_buddy_init_area( (VIRT_CACHE_STARTSLABS+VIRT_BUDDY_STARTSLABS)*CONST_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT,
 				CONST_KERN_HIGHMEM - ((VIRT_CACHE_STARTSLABS+VIRT_BUDDY_STARTSLABS)*CONST_PAGE_SIZE+VIRT_BUDDY_POOLLIMIT) ) != EXIT_SUCCESS )
     {
@@ -107,40 +168,48 @@ PUBLIC u8_t virtmem_buddy_init()
 }
 
 
-/*========================================================================
- * Allocation
- *========================================================================*/
+/**
+
+   Function: void* virtmem_buddy_alloc(u32_t size, u8_t flags)
+   -----------------------------------------------------------
+
+   Allocate a virtual memory chunk of `size` bytes (rounded to upper power of two).
+   If ̀flags`  is set to `VIRT_BUDDY_MAP` then the memory will be mapped physically
+
+   Return a pointer to the first byte of memory or NULL if allocation fails
+
+**/
 
 PUBLIC void* virtmem_buddy_alloc(u32_t size, u8_t flags)
 {
   struct vmem_area* area;
   struct ppage_desc* pdesc;
 
-  /* Taille minimale */
+  /* Minimum size */
   if (size < CONST_PAGE_SIZE )
     {
       size = CONST_PAGE_SIZE;
     }
 
-  /* Allocation dans le buddy */
+  /* Allocate an area in the buddy */
   area = virtmem_buddy_alloc_area(size, flags);
   if ( area == NULL)
     {
       return NULL;
     }
  
-  /* Mapping physique selon flags */
+  /* Physical map if needed */
   if ( flags & VIRT_BUDDY_MAP )
     {
       if ( virtmem_buddy_map_area(area)==EXIT_FAILURE )
 	{
-	  /* On libere area si le mapping echoue */
+	  /* free area if mapping fails */
 	  virtmem_buddy_free_area(area);
 	  return NULL;
 	}
       else
 	{
-	  /* Si le mapping reussi, tentative de lier area au descripteur physique */
+	  /* link area to the physical memory descriptor */
 	  pdesc = PHYS_GET_DESC( paging_virt2phys((virtaddr_t)area->base)  );
 	    if (!PHYS_PDESC_ISNULL(pdesc))
 	      {
@@ -150,33 +219,43 @@ PUBLIC void* virtmem_buddy_alloc(u32_t size, u8_t flags)
 	}
     }
 
-  /* Retourne l adresse de base */
+  /* Return area base address */
   return (void*)area->base;
 
 }
 
 
-/*========================================================================
- * Liberation
- *========================================================================*/
+/**
 
-PUBLIC u8_t  virtmem_buddy_free(void* addr)
+   Function: u8_t virtmem_buddy_free(void* addr)
+   ---------------------------------------------
+
+   Release virtual memory starting at `addr`
+
+   Try to get the corresponding area using physical memory descriptor.
+   Otherwise, run through `buddy_used` to find it
+   Physically unmap memory if needed then make the area go back to the buddy
+   
+
+**/
+
+PUBLIC u8_t virtmem_buddy_free(void* addr)
 {
   struct vmem_area* area;
   struct ppage_desc* pdesc;
   virtaddr_t va;
 
 
-  /* Cherche la vmem_area associee a l adresse via le descripteur physique */
+  /* Get the area using physical descriptor */
   area = NULL;
   pdesc = PHYS_GET_DESC( paging_virt2phys((virtaddr_t)addr)  );
   if ( (!PHYS_PDESC_ISNULL(pdesc)) && (!LLIST_ISNULL(pdesc->area)) )
     {
-      /* Parcourt la liste des area du descripteur */
+      /* Run through pdesc area list */
       area = LLIST_GETHEAD(pdesc->area);
       do
 	{
-	  /* Sort si l adresse est reouvee */
+	  /* Found ! */
 	  if (area->base == (virtaddr_t)addr)
 	    {
 	      break;
@@ -185,7 +264,7 @@ PUBLIC u8_t  virtmem_buddy_free(void* addr)
 	}while(!LLIST_ISHEAD(pdesc->area,area));
     }
 
-  /* Cherche la vmem_area associe dans la liste buddy_used sinon */
+  /* Otherwise, look for the area in `buddy_used` */
   if ( (area == NULL) || (area->base != (virtaddr_t)addr) )
     {
       if (!LLIST_ISNULL(buddy_used))
@@ -193,36 +272,32 @@ PUBLIC u8_t  virtmem_buddy_free(void* addr)
 	  area = LLIST_GETHEAD(buddy_used);
 	  do
 	    {
-	      /* Sort si l adresse est trouvee */
+	      /* Found ! */
 	      if (area->base == (virtaddr_t)addr)
 		{
-		  /* Enleve la zone de buddy_used */
 		  LLIST_REMOVE(buddy_used,area);
 		  break;
 		}
-	      /* Suivant */
 	      area = LLIST_NEXT(buddy_used, area);
-	      
 	    }while(!LLIST_ISHEAD(buddy_used, area));
 	}
     }
   
-  /* Libere si on a l area */
+ 
   if (  (area != NULL) && (area->base == (virtaddr_t)addr) )
     {
-      /* Demappe physiquement (aucun effet si non mappee) */
+      /* Physically unmap - no effect on unmapped memory */ 
       for(va=area->base;va<(area->base+area->size);va+=CONST_PAGE_SIZE)
 	{
 	  paging_unmap(va);
 	}
       
-      /* Reintegre l area dans le buddy */
+      /* go back to buddy */
       if ( virtmem_buddy_free_area(area) != EXIT_SUCCESS )
 	{
 	  return EXIT_FAILURE;
 	}
      
-      /* Retourne */
       return EXIT_SUCCESS;
       
     }
@@ -232,9 +307,16 @@ PUBLIC u8_t  virtmem_buddy_free(void* addr)
 
 
 
-/*========================================================================
- * Allocation (fonction reelle)
- *========================================================================*/
+/**
+
+   struct vmem_area* virtmem_buddy_alloc_area(u32_t size, u8_t flags)
+   ------------------------------------------------------------------
+
+   Helper in charge of allocating an area from buddy.
+   Allocation occurs according to usual binary buddy algorithm
+   
+
+**/
 
 PRIVATE struct vmem_area* virtmem_buddy_alloc_area(u32_t size, u8_t flags)
 {
@@ -243,7 +325,7 @@ PRIVATE struct vmem_area* virtmem_buddy_alloc_area(u32_t size, u8_t flags)
   int ind;
   struct vmem_area* area;
 
-  /* trouve la puissance de 2 superieure */
+  /* Get upper power of two */
   size = size - 1;
   size = size | (size >> 1);
   size = size | (size >> 2);
@@ -252,20 +334,20 @@ PRIVATE struct vmem_area* virtmem_buddy_alloc_area(u32_t size, u8_t flags)
   size = size | (size >> 16);
   size = size + 1;
   
-  /* En deduit l indice */
+  /* Deduct index */
   ind = klib_msb(size) - CONST_PAGE_SHIFT;
   
-  /* Si ppage_free[ind] est NULL, on cherche un niveau superieur disponible */
+  /* Find first buddy level available */ 
   for(i=ind;LLIST_ISNULL(buddy_free[i])&&(i<VIRT_BUDDY_MAX);i++)
     {}
 
-  /* Sors si on ne trouve pas de niveau disponible */
+  /* No memory available: Error */
   if ( i>=VIRT_BUDDY_MAX )
     {
       return NULL;
     }
   
-  /* Scinde "recursivement" les niveaux superieurs */
+  /* Recursively divide an upper level area to meet `ind` level */
   for(j=i;j>ind;j--)
     {
       struct vmem_area* ar1;
@@ -273,15 +355,14 @@ PRIVATE struct vmem_area* virtmem_buddy_alloc_area(u32_t size, u8_t flags)
       area = LLIST_GETHEAD(buddy_free[j]);
       LLIST_REMOVE(buddy_free[j],area);
 
-      /* Prend un vmem_area dans le cache */
+      /* Allocate a new area */
       ar1 = (struct vmem_area*)virtmem_cache_alloc(area_cache, (flags&VIRT_BUDDY_NOMINCHECK?VIRT_CACHE_NOMINCHECK:VIRT_CACHE_DEFAULT));
       if ( ar1 == NULL )
 	{
 	  return NULL;
 	}
       
-      /* Scinde le noeud en 2 noeuds */
-
+      /* Divide an area */
       ar1->base = area->base + (area->size >> 1);
       ar1->size = (area->size >> 1);
       ar1->index = area->index-1;
@@ -294,9 +375,9 @@ PRIVATE struct vmem_area* virtmem_buddy_alloc_area(u32_t size, u8_t flags)
 
     }
 
-  /* Maintenant nous avons un noeud disponible au niveau voulu */
+  /* Here, an area is necessarily available at desired level */
   area = LLIST_GETHEAD(buddy_free[ind]);
-  /* Met a jour les listes */
+  /* Update lists */
   LLIST_REMOVE(buddy_free[ind],area);
   LLIST_ADD(buddy_used,area);
   
@@ -304,20 +385,26 @@ PRIVATE struct vmem_area* virtmem_buddy_alloc_area(u32_t size, u8_t flags)
 }
 
 
-/*========================================================================
- * Liberation (fonction reelle)
- *========================================================================*/
+/**
+
+   Function: u8_t virtmem_buddy_free_area(struct vmem_area* area)
+   --------------------------------------------------------------
+
+   Helper to reintegrate an area into the buddy.
+   Used usual binary buddy algorithm. 
+
+**/
 
 
 PRIVATE u8_t virtmem_buddy_free_area(struct vmem_area* area)
 {
 
-  /* Insere "recursivement" le noeud */
+  /* Recursively reintegrate area */
   while((area->index < VIRT_BUDDY_MAX-1)&&(!LLIST_ISNULL(buddy_free[area->index])))
     {
       struct vmem_area* buddy;
       
-      /* Recherche d un buddy */
+      /* look for a buddy  */
       buddy = LLIST_GETHEAD(buddy_free[area->index]);
       
       while ( (area->base+area->size != buddy->base)
@@ -326,33 +413,40 @@ PRIVATE u8_t virtmem_buddy_free_area(struct vmem_area* area)
 	  buddy = LLIST_NEXT(buddy_free[area->index],buddy);
 	  if (LLIST_ISHEAD(buddy_free[area->index],buddy))
 	    {
-	      /* Pas de buddy, on insere */
+	      /* No buddy, insert at that level */
 	      LLIST_ADD(buddy_free[area->index],area);
 	      return EXIT_SUCCESS;
 	    }
 	}
       
-      /* Buddy trouve ici: fusion */
+      /* Buddy found here, merge areas */
       area->base = (area->base<buddy->base?area->base:buddy->base);
       area->size <<= 1;
       area->index++;
-      /* Enleve le buddy du buddy system */
+      /* Remove buddy */
       LLIST_REMOVE(buddy_free[buddy->index],buddy);
-      /* Libere le buddy */
+      /* Free buddy */
       virtmem_cache_free(area_cache,buddy);
 
     }
   
-  /* Dernier niveau ou niveau vide */
+  /* Reach last level or an empty one, insert area */
   LLIST_ADD(buddy_free[area->index],area);
   
   return EXIT_SUCCESS;
 }
 
 
-/*========================================================================
- * Initialise une zone en buddy
- *========================================================================*/
+/**
+
+   Function: u8_t virtmem_buddy_init_area(u32_t base, u32_t size)
+   --------------------------------------------------------------
+
+   Helper to enter an entire memory area defined by a base address and a size in the buddy.
+   Implements a glutton knapsack algorithm to insert successively power of two aligned areas
+   until we consume all the `size` bytes.   
+
+**/
 
 PRIVATE u8_t virtmem_buddy_init_area(u32_t base, u32_t size)
 {
@@ -364,7 +458,7 @@ PRIVATE u8_t virtmem_buddy_init_area(u32_t base, u32_t size)
 
   while (size >= CONST_PAGE_SIZE)
     {
-      /* Puissance de 2 inferieure */     
+      /* Lower power of two */
       power = size;
       power = power | (power >> 1);
       power = power | (power >> 2);
@@ -373,24 +467,25 @@ PRIVATE u8_t virtmem_buddy_init_area(u32_t base, u32_t size)
       power = power | (power >> 16);
       power = power - (power >> 1);
 
-      /* Indice dans le buddy */
+      /* Deduct index */
       ind = klib_msb(power) - CONST_PAGE_SHIFT;
 
-      /* Prend un vmem_area dans le cache */
+      /* Create an area */
       area = (struct vmem_area*)virtmem_cache_alloc(area_cache, VIRT_CACHE_DEFAULT);
       if ( area == NULL )
 	{
 	  return EXIT_FAILURE;
 	}
     
-      /* Remplit le vmem_area */
+      /* Fill the area */
       area->base = base;
       area->size = power;
       area->index = ind;
 
-      /* Insere dans le buddy */
+      /* Insert into buddy */
       LLIST_ADD(buddy_free[ind],area);
       
+      /* Remaining memory */
       size -= power;
       base += power;
     }
@@ -399,9 +494,15 @@ PRIVATE u8_t virtmem_buddy_init_area(u32_t base, u32_t size)
 }
 
 
-/*========================================================================
- * Mapping physique d une area
- *========================================================================*/
+
+/**
+
+   Function: u8_t virtmem_buddy_map_area(struct vmem_area* area)
+   -------------------------------------------------------------
+
+   Helper to physically map an area.
+
+**/
 
 
 PRIVATE u8_t virtmem_buddy_map_area(struct vmem_area* area)
@@ -419,14 +520,14 @@ PRIVATE u8_t virtmem_buddy_map_area(struct vmem_area* area)
     {
       while (sum < area->size)
 	{
-	  /* Essaie d allouer physiquement */
+	  /* Try to physically allocate */
 	  paddr = (physaddr_t)phys_alloc(n);
 	  if (paddr)
 	    {
-	      /* Incremente la taille physique allouee */
+	      /* Increment total sum allocated */
 	      sum += n;
 	      
-	      /* Mappe la memoire physique et virtuelle */
+	      /* Mapping */
 	      for(va=base,pa=paddr;
 		  va<base+n;
 		  va+=CONST_PAGE_SIZE,pa+=CONST_PAGE_SIZE)
@@ -434,21 +535,22 @@ PRIVATE u8_t virtmem_buddy_map_area(struct vmem_area* area)
 		  paging_map(va,pa,PAGING_SUPER);
 		}
 	      
-	      /* Deplace la base a mapper */
+	      /* Shift base to allocate */
 	      base += n;
 	      
 	    }
 	  else
 	    {
+	      /* Cannot allocate such a size */
 	      break;
 	    }
 	}
       
-      /* Divise la taille par 2 */
+      /* Divide size by two */
       n >>= 1;
     }
   
-  /* Si tout n est pas mappe, on demappe */
+  /* Fail to map all the area, roll back mappings */
   if ( sum < area->size )
     {
       for(va=area->base;va<(area->base+area->size);va+=CONST_PAGE_SIZE)
