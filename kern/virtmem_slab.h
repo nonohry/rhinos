@@ -1,29 +1,64 @@
-/*
- * Virtmem_slab.h
- * Header de virtmem_slab.c
- *
- */
+/**
+
+   virtmem_slab.h
+   ==============
+
+   Virtual memory slab allocator header
+
+**/
 
 #ifndef VIRTMEM_SLAB_H
 #define VIRTMEM_SLAB_H
 
 
-/*========================================================================
- * Includes
- *========================================================================*/
+/**
+ 
+   Includes
+   --------
+
+   - types.h
+   - const.h
+
+**/
 
 #include <types.h>
 #include "const.h"
 
 
-/*========================================================================
- * Constantes
- *========================================================================*/
+/**
+   
+   Constants
+   ---------
+
+   Lenghts
+
+**/
+ 
 
 #define VIRT_CACHE_NAMELEN     32
 #define VIRT_CACHE_REAPLEN     32
 
+
+/**
+
+   Constant: VIRT_CACHE_STARTSLABS
+   -------------------------------
+
+   Number of arbitrary virtual pages needed for intialization
+
+**/
+
 #define VIRT_CACHE_STARTSLABS  1
+
+
+/**
+
+   Constants
+   ---------
+
+   Reaping flags
+
+**/
 
 #define VIRT_CACHE_DEFAULT     0
 #define VIRT_CACHE_NOREAP      1
@@ -31,18 +66,50 @@
 #define VIRT_CACHE_FORCEREAP   4
 #define VIRT_CACHE_JUSTGROWN   8
 
-#define VIRT_CACHE_NOMINCHECK  3
 
+/**
+
+   Constants
+   ---------
+
+   Flags
+
+**/
+
+#define VIRT_CACHE_NOMINCHECK  3
 #define VIRT_CACHE_NOADDR      0
+
+
+/**
+
+   Constant: VIRT_CACHE_GROWSHIFT
+   ------------------------------
+
+   Binary shift to determine the need for an on-page or off-page slab
+
+**/
 
 #define VIRT_CACHE_GROWSHIFT   3   /* 2^3 = 8 */
 
-/*========================================================================
- * Structures
- *========================================================================*/
+
+/**
+
+   Structure: struct vmem_bufctl
+   -----------------------------
+
+   Describe a bufctl.
+
+   A bufctl is just an helper structure to point to a virtual memory area. 
+   Members are:
+
+   - base  : Virtual memory area base address
+   - slab  : Parent slab back pointer
+   - next  : Next bufctl in linked list
+   - prev  : Previous bufctl in linked list
+
+**/
 
 
-/* Bufctl */
 PUBLIC struct vmem_bufctl
 {
   virtaddr_t base;
@@ -52,7 +119,29 @@ PUBLIC struct vmem_bufctl
 } __attribute__ ((packed));
 
 
-/* Slab */
+
+
+/**
+
+   Structure: struct vmem_slab
+   ---------------------------
+
+   Describe a slab.
+
+   A slab is basically  a free bufctl container.
+   Membres are:
+
+   - count       : Number of free bufctl (or free objects, or free virtualmemory area)  available
+   - max_objects : Maximum free objects a slab can contain
+   - n_pages     : Number of pages needed to store an object
+   - start       : First bufctl virtual address
+   - free_buf    : List of free bufctl
+   - cache       : Parent cache back pointer
+   - next        : Next slab in linked list
+   - prev        : Previous slab in linked list
+
+**/
+
 PUBLIC struct vmem_slab
 {
   u16_t count;
@@ -66,7 +155,33 @@ PUBLIC struct vmem_slab
 } __attribute__ ((packed));
 
 
-/* Cache */
+
+/**
+
+   Structure: struct vmem_cache
+   ----------------------------
+
+   Describe a cache.
+
+   Members are:
+
+   - name          : Cache name
+   - size          : Objects size
+   - align         : Cache alignement
+   - align_offset  : Effective offset in bufctl position in slabs (computed according to `align`)
+   - min_slab_free : Minimum of free slab available in cache. Used to avoid recursivity with virtual buddy
+   - flags         : Cache flags, controling reaping
+   - constructor   : Function applied during object creation
+   - destructor    : Function applied on objects during a slab destruction
+   - slab_free     : List of free slabs
+   - slab_partial  : List of slabs in used
+   - slab_full     : List of slabs which all objects are allocated
+   - next          : Next cache in linked list
+   - prev          : Previous cache in linked list 
+
+**/
+
+
 PUBLIC struct vmem_cache
 {
   char name[VIRT_CACHE_NAMELEN];
@@ -86,9 +201,14 @@ PUBLIC struct vmem_cache
 
 
 
-/*========================================================================
- * Prototypes
- *========================================================================*/
+/**
+ 
+   Prototypes
+   ----------
+
+   Give access to caches initialization as well as caches manipulation and allocation/release primitives
+
+**/
 
 PUBLIC u8_t virtmem_cache_init(void);
 PUBLIC void* virtmem_cache_alloc(struct vmem_cache* cache, u8_t flags);
