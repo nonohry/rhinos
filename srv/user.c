@@ -1,21 +1,17 @@
-/**********************************
- * Includes
- **********************************/
+/**
+
+   user.c
+   ======
+
+   Test program that do a sendrec to a computing thread
+
+**/
+
 
 #include <types.h>
 #include <ipc.h>
 
-
-/**********************************
- * Prototypes
- **********************************/
-
 void mem_copy(addr_t src, addr_t dst, u32_t len);
-
-
-/**********************************
- * Structures
- **********************************/
 
 struct calc_msg
 {
@@ -26,9 +22,7 @@ struct calc_msg
 } __attribute__((packed));
 
 
-/**********************************
- * Main
- **********************************/
+
 
 int main()
 {
@@ -57,9 +51,7 @@ int main()
 }
 
 
-/**********************************
- * Dirty memcopy
- **********************************/
+
 
 void mem_copy(addr_t src, addr_t dst, u32_t len)
 {
