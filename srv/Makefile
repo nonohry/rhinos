@@ -6,13 +6,13 @@
 CC	=	gcc -Wall -c
 CFLAGS	=	-I../include
 
-# Fichiers source et de sortie
+# Files
 
 C_SRC	=	user.c
 C_OUT	=	${C_SRC:.c=.o}
 OBJ	=	$(ASM_OUT) $(C_OUT)
 
-# Cibles
+# Targets
 
 all: $(OBJ)
 

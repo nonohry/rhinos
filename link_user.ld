@@ -3,14 +3,14 @@ offset = 0x80000000;
 ENTRY(_start)
 SECTIONS
 {	
-	/* Programme Charge a 0x80000000 (adresse virtuelle) */
+	/* Program loaded a 0x80000000 (virtual address) */
 	. = offset;
 
-	/* Fournit les adresses de debut */
+	/* Provide start symbols */
 	PROVIDE(user_start = .);
 	PROVIDE(_user_start = .);
 	
-	/* La section de code et de donnees read-only */
+	/* Code and RO data */
 	.text : 
 	{
 		*(.text)
@@ -20,7 +20,7 @@ SECTIONS
 		. = ALIGN(4096);
       	}
 
-	/* La section de donnees initialisees */
+	/* Initialized data */
 	.data offset + SIZEOF(.text) :
   	{
 		*(.data)
@@ -29,7 +29,7 @@ SECTIONS
 		. = ALIGN(4096);
  	}
 
-	/* La section de donnees non initialisees */
+	/* Non initialized data */
   	.bss offset + SIZEOF(.text) + SIZEOF(.data) :
   	{
 		*(.bss)
@@ -38,7 +38,7 @@ SECTIONS
 		. = ALIGN(4096);
 	}
 
-	/* Fournit l adresse de fin du noyau */
+	/* Provide end symbols */
 	PROVIDE(user_end = .);
 	PROVIDE(_user_end = .);
 }

@@ -7,20 +7,18 @@ AS	=	nasm -f elf
 CC	=	gcc -Wall -c
 RM	=	rm -f
 
-# Regle de Suffixes
-
+# Suffixes rules
 .SUFFIXES: .s
 
 .s.o:
 	$(AS) $<
 
-# Fichiers source et de sortie
-
+# Files
 ASM_SRC	=	ipc.s
 ASM_OUT	=	${ASM_SRC:.s=.o}
 OBJ	=	$(ASM_OUT) 
 
-# Cibles
+# Targets
 
 all: $(OBJ)
 

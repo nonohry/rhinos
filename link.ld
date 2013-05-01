@@ -3,14 +3,14 @@ offset = 0x100000;
 ENTRY(_start)
 SECTIONS
 {	
-	/* Noyau Charge a 0x100000 */
+	/* Kernel loaded at 0x100000 */
 	. = offset;
 
-	/* Fournit les adresses de debut */
+	/* Provide start symbols */
 	PROVIDE(__CONST_KERN_START = .);
 	PROVIDE(___CONST_KERN_START = .);
 	
-	/* La section de code et de donnees read-only */
+	/* Code and RO data */
 	.text : 
 	{
 		*(.text)
@@ -20,7 +20,7 @@ SECTIONS
 		. = ALIGN(4096);
       	}
 
-	/* La section de donnees initialisees */
+	/* Initialized data */
 	.data offset + SIZEOF(.text) :
   	{
 		*(.data)
@@ -29,7 +29,7 @@ SECTIONS
 		. = ALIGN(4096);
  	}
 
-	/* La section de donnees non initialisees */
+	/* Non initialized data */
   	.bss offset + SIZEOF(.text) + SIZEOF(.data) :
   	{
 		*(.bss)
@@ -38,7 +38,7 @@ SECTIONS
 		. = ALIGN(4096);
 	}
 
-	/* Fournit l adresse de fin du noyau */
+	/* Provide end symbols */
 	PROVIDE(__CONST_KERN_END = .);
 	PROVIDE(___CONST_KERN_END = .);
 }
