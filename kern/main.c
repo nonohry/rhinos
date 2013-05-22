@@ -72,21 +72,20 @@ void Add(u16_t max)
   struct calc_msg cm;
   u32_t k=0;
 
-  m.len = sizeof(struct calc_msg);
   cm.op_code = 1;
 
   while(k<max)
     {
       cm.op_1 = k;
       cm.op_2 = k;
-      klib_mem_copy((addr_t)&cm,(addr_t)m.data,m.len);
+      klib_mem_copy((addr_t)&cm,(addr_t)m.data,sizeof(struct calc_msg));
       //klib_printf("Add - Sending %d + %d\n",cm.op_1,cm.op_2);
       if (ipc_sendrec(3,&m)!=IPC_SUCCESS)
 	{
 	   klib_printf("Add: error on IPC\n");
 	  break;
 	}
-      klib_mem_copy((addr_t)m.data,(addr_t)&cm,m.len);
+      klib_mem_copy((addr_t)m.data,(addr_t)&cm,sizeof(struct calc_msg));
       //klib_printf("Add - Receiving : %d\n",cm.op_res);
       k++;
     }
@@ -101,7 +100,7 @@ void Calc(u8_t who)
 
   while(ipc_receive(who,&m)==IPC_SUCCESS)
     {
-      klib_mem_copy((addr_t)m.data,(addr_t)&cm,m.len);
+      klib_mem_copy((addr_t)m.data,(addr_t)&cm,sizeof(struct calc_msg));
       klib_printf("Receive op %u %u from %s\n",cm.op_1, cm.op_2,(thread_id2thread(m.from))->name);
       switch(cm.op_code)
 	{     
@@ -114,7 +113,7 @@ void Calc(u8_t who)
 	default:
 	  cm.op_res = 0;
 	}
-      klib_mem_copy((addr_t)&cm,(addr_t)m.data,m.len);      
+      klib_mem_copy((addr_t)&cm,(addr_t)m.data,sizeof(struct calc_msg));      
       ipc_notify(m.from);
       ipc_send(m.from,&m);
 
@@ -131,7 +130,6 @@ void Mult(u8_t max)
   struct ipc_message m;
   struct calc_msg cm;
 
-  m.len = sizeof(struct calc_msg);
   cm.op_code = 2;
   j=max;
 
@@ -139,14 +137,14 @@ void Mult(u8_t max)
     {
       cm.op_1 = j;
       cm.op_2 = j;
-      klib_mem_copy((addr_t)&cm,(addr_t)m.data,m.len);
+      klib_mem_copy((addr_t)&cm,(addr_t)m.data,sizeof(struct calc_msg));
       //klib_printf("Mult - Sending %d * %d\n",cm.op_1,cm.op_2);
       if (ipc_sendrec(3,&m)!=IPC_SUCCESS)
 	{
 	  klib_printf("Mult: error on IPC\n");
 	  break;
 	}
-      klib_mem_copy((addr_t)m.data,(addr_t)&cm,m.len);
+      klib_mem_copy((addr_t)m.data,(addr_t)&cm,sizeof(struct calc_msg));
       //klib_printf("Mult - Receiving : %d\n",cm.op_res);
       j--;
     }

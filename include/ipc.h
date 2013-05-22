@@ -83,7 +83,6 @@
 PUBLIC struct ipc_message
 {
   s32_t from;
-  u8_t len;
   u8_t  data[IPC_DATA_LEN];
 } __attribute ((packed))__ ;
 
