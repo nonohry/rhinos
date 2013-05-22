@@ -58,10 +58,11 @@
    -----------------------
 
    Max data in an IPC message
+   Must fit in EBX, ECX, EDX so 96bits
 
 **/
 
-#define IPC_DATA_LEN  251
+#define IPC_DATA_LEN  96
 
 
 
