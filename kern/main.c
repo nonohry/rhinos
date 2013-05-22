@@ -70,7 +70,7 @@ void Add(u16_t max)
 {
   struct ipc_message m;
   struct calc_msg cm;
-  u32_t k=0;
+  u32_t k=1;
 
   cm.op_code = 1;
 

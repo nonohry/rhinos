@@ -67,6 +67,7 @@ ipc_send:
         mov     ebx,[ebp+8]
         mov     ecx,[ebp+12]
         mov     edx,IPC_SEND_NUM
+	jmp	$
         int     IPC_SYSCALL_VECTOR
         pop     edx
         pop     ecx
