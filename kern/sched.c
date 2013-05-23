@@ -305,7 +305,7 @@ PUBLIC void sched_schedule(u8_t flag)
 
       /* Switch to the new thread (set it as current) */
       thread_switch_to(new_th);
- 
+
     }
 
   return;

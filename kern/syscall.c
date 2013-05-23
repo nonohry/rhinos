@@ -17,7 +17,7 @@
 
    - types.h
    - llist.h
-   - ipc.h           : IPC constnats needed
+   - ipc.h           : IPC constants needed
    - const.h
    - klib.h
    - thread.h        : struct thread needed
@@ -53,8 +53,8 @@
 **/
 
 
-PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, struct ipc_message* message);
-PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sender, struct ipc_message* message);
+PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver);
+PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sender);
 PRIVATE u8_t syscall_notify(struct thread* th_from, struct thread* th_to);
 PRIVATE u8_t syscall_copymsg(struct ipc_message* message, physaddr_t phys_msg, u8_t op);
 
@@ -125,22 +125,19 @@ PUBLIC void syscall_handle(void)
     {
     case SYSCALL_SEND:
       {
-	res = IPC_SUCCESS; //syscall_send(cur_th, target_th, arg_message);
-	klib_printf("SEND from %s to %s\n",cur_th->name, target_th->name);
+	res = syscall_send(cur_th, target_th);
 	break;
       }
 
     case SYSCALL_RECEIVE:
       {
-	res = IPC_SUCCESS; //syscall_receive(cur_th, target_th, arg_message);
-	klib_printf("RECEIVE by %s targeting %s\n",cur_th->name, (target_th?target_th->name:"ANY"));
+	res = syscall_receive(cur_th, target_th);
 	break;
       }
 
     case SYSCALL_NOTIFY:
       {
-	res = IPC_SUCCESS;//syscall_notify(cur_th, target_th);
-	klib_printf("SEND from %s to %s\n",cur_th->name, target_th->name);
+	res = syscall_notify(cur_th, target_th);
 	break;
       }
     default:
@@ -161,8 +158,8 @@ PUBLIC void syscall_handle(void)
 
 /**
 
-   Function: u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, struct ipc_message* message)
-   --------------------------------------------------------------------------------------------------------------
+   Function: u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver)
+   ---------------------------------------------------------------------------------
 
 
    Pass ̀message` from `th_sender` to `th_receiver`.
@@ -178,7 +175,7 @@ PUBLIC void syscall_handle(void)
 
 **/
 
-PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, struct ipc_message* message)
+PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver)
 {
   struct thread* th_tmp;
 
@@ -212,25 +209,28 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
     }
 
   /* No deadlock here, get message from sender address space */ 
-  th_sender->ipc.send_message = message;
-  th_sender->ipc.send_phys_message = paging_virt2phys((virtaddr_t)message);
+  //th_sender->ipc.send_message = message;
+  //th_sender->ipc.send_phys_message = paging_virt2phys((virtaddr_t)message);
 
   /* No physical mapping for message: error */
-  if ( !th_sender->ipc.send_phys_message )
-    {
-      return IPC_FAILURE;
-    }
+  //if ( !th_sender->ipc.send_phys_message )
+  //  {
+  //    return IPC_FAILURE;
+  //  }
  
   /* Check if receiver is only receiving, and is receiving from the sender or any thread */
   if ( (th_receiver->ipc.state == SYSCALL_IPC_RECEIVING)
        && ( (th_receiver->ipc.receive_from == th_sender)||(th_receiver->ipc.receive_from == NULL) ) )
     {
       /* Receiver is willing to receive: copy message from sender to receiver */
-      if (syscall_copymsg(message,th_receiver->ipc.receive_phys_message,SYSCALL_SEND) != EXIT_SUCCESS)
-	{
-	  return IPC_FAILURE;
-	}
-      
+      //if (syscall_copymsg(message,th_receiver->ipc.receive_phys_message,SYSCALL_SEND) != EXIT_SUCCESS)
+      //	{
+      //	  return IPC_FAILURE;
+      //	}
+      th_receiver->cpu.ebx = th_sender->cpu.ebx;
+      th_receiver->cpu.ecx = th_sender->cpu.ecx;
+      th_receiver->cpu.edx = th_sender->cpu.edx;   
+
       /* Set receiver ready for scheduling */ 
       if (th_receiver->state == THREAD_BLOCKED)
 	{
@@ -274,8 +274,8 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
 
 /**
 
-   Function: u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sender, struct ipc_message* message)
-   -----------------------------------------------------------------------------------------------------------------
+   Function: u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sender)
+   ------------------------------------------------------------------------------------
 
 
    Set up the receiving state for `th_receiver`.
@@ -285,7 +285,7 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver, 
 
 **/
 
-PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sender, struct ipc_message* message)
+PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sender)
 {
   struct thread* th_available = NULL;
 
@@ -296,8 +296,8 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
   th_receiver->ipc.state |= SYSCALL_IPC_RECEIVING;
 
   /* Set message for reception */
-  th_receiver->ipc.receive_message = message;
-  th_receiver->ipc.receive_phys_message = paging_virt2phys((virtaddr_t)message);  
+  //th_receiver->ipc.receive_message = message;
+  //th_receiver->ipc.receive_phys_message = paging_virt2phys((virtaddr_t)message);  
 
   /* Look for a matching thread in receive list */
   if (!LLIST_ISNULL(th_receiver->ipc.receive_waitlist))
@@ -329,10 +329,13 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
   if ( th_available != NULL )
     {
       /* Copy message from sender to receiver */ 
-      if (syscall_copymsg(message,th_available->ipc.send_phys_message,SYSCALL_RECEIVE) != EXIT_SUCCESS)
-	{
-	  return IPC_FAILURE;
-	}
+      //if (syscall_copymsg(message,th_available->ipc.send_phys_message,SYSCALL_RECEIVE) != EXIT_SUCCESS)
+      //	{
+      //	  return IPC_FAILURE;
+      //	}
+      th_receiver->cpu.ebx = th_available->cpu.ebx;
+      th_receiver->cpu.ecx = th_available->cpu.ecx;
+      th_receiver->cpu.edx = th_available->cpu.edx;
 
       /* Unblock sender if needed */
       if (th_available->state == THREAD_BLOCKED_SENDING)
