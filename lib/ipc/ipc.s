@@ -51,6 +51,7 @@ IPC_SUCCESS		equ	0
 	;; 	Send a message to thread identified by thread id `to`
 	;; 
 	;; 	Move arguments in register to avoid trashing during context switching
+	;; 	Save `msg` into EBX, ECX and EDX, `to` into EDI and passes syscall number via ESI
 	;; 	Do a int call with appropriate interrupt vector
 	;;
 	;;**/
@@ -64,10 +65,12 @@ ipc_send:
         push    ebx
         push    ecx
 	push	edx
-        mov     ebx,[ebp+8]
-        mov     ecx,[ebp+12]
-        mov     edx,IPC_SEND_NUM
-	jmp	$
+        mov     esi,[ebp+12]
+	mov	ebx,dword [esi]
+	mov	ecx,dword [esi+4]
+	mov	edx,dword [esi+8]
+	mov	edi,[ebp+8]
+        mov     esi,IPC_SEND_NUM
         int     IPC_SYSCALL_VECTOR
         pop     edx
         pop     ecx
@@ -100,10 +103,13 @@ ipc_receive:
         push    ebx
         push    ecx
 	push	edx
-        mov     ebx,[ebp+8]
-        mov     ecx,[ebp+12]
-        mov     edx,IPC_RECEIVE_NUM
+        mov     edi,[ebp+8]
+        mov     esi,IPC_RECEIVE_NUM
         int     IPC_SYSCALL_VECTOR
+	mov     esi,[ebp+12]
+	mov	dword [esi],ebx
+	mov	dword [esi+4],ecx
+	mov	dword [esi+8],edx
         pop     edx
         pop     ecx
         pop     ebx
@@ -131,8 +137,8 @@ ipc_notify:
         push    edi
         push    ebx
         push    edx
-        mov     ebx,[ebp+8]
-        mov     edx,IPC_NOTIFY_NUM
+        mov     edi,[ebp+8]
+        mov     esi,IPC_NOTIFY_NUM
         int     IPC_SYSCALL_VECTOR
         pop     edx
         pop     ebx

@@ -90,18 +90,18 @@ PUBLIC void syscall_handle(void)
       goto end;
     }
 
-  /* Get syscall number in EDX */
-  syscall_num = (u32_t)(cur_th->cpu.edx);
+  /* Get syscall number in ESI */
+  syscall_num = (u32_t)(cur_th->cpu.esi);
 
-  /* Get destination thread (to send to or to receive from) in EBX */
-  arg_id = (s32_t)(cur_th->cpu.ebx);
+  /* Get destination thread (to send to or to receive from) in EDI */
+  arg_id = (s32_t)(cur_th->cpu.edi);
 
   /* Send & receive syscall need a message. Get it in ECX */
   if (syscall_num != SYSCALL_NOTIFY)
     {
-      arg_message = (struct ipc_message*)(cur_th->cpu.ecx);
+      //arg_message = (struct ipc_message*)(cur_th->cpu.ecx);
       /* Set message originator */
-      arg_message->from = cur_th->id->id;
+      //arg_message->from = cur_th->id->id;
     }
 
   /* Destination thread */
@@ -125,19 +125,22 @@ PUBLIC void syscall_handle(void)
     {
     case SYSCALL_SEND:
       {
-	res = syscall_send(cur_th, target_th, arg_message);
+	res = IPC_SUCCESS; //syscall_send(cur_th, target_th, arg_message);
+	klib_printf("SEND from %s to %s\n",cur_th->name, target_th->name);
 	break;
       }
 
     case SYSCALL_RECEIVE:
       {
-	res = syscall_receive(cur_th, target_th, arg_message);
+	res = IPC_SUCCESS; //syscall_receive(cur_th, target_th, arg_message);
+	klib_printf("RECEIVE by %s targeting %s\n",cur_th->name, (target_th?target_th->name:"ANY"));
 	break;
       }
 
     case SYSCALL_NOTIFY:
       {
-	res = syscall_notify(cur_th, target_th);
+	res = IPC_SUCCESS;//syscall_notify(cur_th, target_th);
+	klib_printf("SEND from %s to %s\n",cur_th->name, target_th->name);
 	break;
       }
     default:
