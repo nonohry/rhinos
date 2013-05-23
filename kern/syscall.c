@@ -93,6 +93,9 @@ PUBLIC void syscall_handle(void)
   /* Get syscall number in ESI */
   syscall_num = (u32_t)(cur_th->cpu.esi);
 
+  /* Put originator into ESI */
+  cur_th->cpu.esi = cur_th->id->id;
+
   /* Get destination thread (to send to or to receive from) in EDI */
   arg_id = (s32_t)(cur_th->cpu.edi);
 
@@ -230,7 +233,8 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver)
       th_receiver->cpu.ebx = th_sender->cpu.ebx;
       th_receiver->cpu.ecx = th_sender->cpu.ecx;
       th_receiver->cpu.edx = th_sender->cpu.edx;   
-
+      th_receiver->cpu.esi = th_sender->cpu.esi;
+  
       /* Set receiver ready for scheduling */ 
       if (th_receiver->state == THREAD_BLOCKED)
 	{
@@ -336,6 +340,7 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
       th_receiver->cpu.ebx = th_available->cpu.ebx;
       th_receiver->cpu.ecx = th_available->cpu.ecx;
       th_receiver->cpu.edx = th_available->cpu.edx;
+      th_receiver->cpu.esi = th_available->cpu.esi;
 
       /* Unblock sender if needed */
       if (th_available->state == THREAD_BLOCKED_SENDING)

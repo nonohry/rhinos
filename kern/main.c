@@ -72,8 +72,6 @@ void Add(u16_t max)
   struct calc_msg cm;
   u32_t k=1;
 
-  while(1){}
-
   cm.op_code = 1;
 
   while(k<max)
@@ -81,14 +79,14 @@ void Add(u16_t max)
       cm.op_1 = k;
       cm.op_2 = k;
       klib_mem_copy((addr_t)&cm,(addr_t)m.data,sizeof(struct calc_msg));
-      //klib_printf("Add - Sending %d + %d\n",cm.op_1,cm.op_2);
+      klib_printf("Add - Sending %d + %d\n",cm.op_1,cm.op_2);
       if (ipc_sendrec(3,&m)!=IPC_SUCCESS)
 	{
 	   klib_printf("Add: error on IPC\n");
 	  break;
 	}
       klib_mem_copy((addr_t)m.data,(addr_t)&cm,sizeof(struct calc_msg));
-      //klib_printf("Add - Receiving : %d\n",cm.op_res);
+      klib_printf("Add - Receiving : %d\n",cm.op_res);
       k++;
     }
   klib_printf(" [Quit Add....]\n");
@@ -102,8 +100,8 @@ void Calc(u8_t who)
 
   while(ipc_receive(who,&m)==IPC_SUCCESS)
     {
-       klib_mem_copy((addr_t)m.data,(addr_t)&cm,sizeof(struct calc_msg)); 
-       klib_printf("Receive op %u %u\n",cm.op_1, cm.op_2); 
+      klib_mem_copy((addr_t)m.data,(addr_t)&cm,sizeof(struct calc_msg)); 
+      klib_printf("Receive op %u %u from %s\n",cm.op_1, cm.op_2,(thread_id2thread(m.from))->name); 
       switch(cm.op_code)
       	{
       	case 1:
@@ -116,8 +114,8 @@ void Calc(u8_t who)
       	  cm.op_res = 0;
       	}
       klib_mem_copy((addr_t)&cm,(addr_t)m.data,sizeof(struct calc_msg));
-      //ipc_notify(m.from);
-      //ipc_send(m.from,&m);
+      ipc_notify(m.from);
+      ipc_send(m.from,&m);
 
     }
 
@@ -135,21 +133,20 @@ void Mult(u8_t max)
   cm.op_code = 2;
   j=max;
 
-  while(1){}
-
+ 
   while(j)
     {
       cm.op_1 = j;
       cm.op_2 = j;
       klib_mem_copy((addr_t)&cm,(addr_t)m.data,sizeof(struct calc_msg));
-      //klib_printf("Mult - Sending %d * %d\n",cm.op_1,cm.op_2);
+      klib_printf("Mult - Sending %d * %d\n",cm.op_1,cm.op_2);
       if (ipc_sendrec(3,&m)!=IPC_SUCCESS)
 	{
 	  klib_printf("Mult: error on IPC\n");
 	  break;
 	}
       klib_mem_copy((addr_t)m.data,(addr_t)&cm,sizeof(struct calc_msg));
-      //klib_printf("Mult - Receiving : %d\n",cm.op_res);
+      klib_printf("Mult - Receiving : %d\n",cm.op_res);
       j--;
     }
   klib_printf(" [Quit Mult....]\n");

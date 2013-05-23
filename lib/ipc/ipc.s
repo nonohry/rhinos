@@ -106,10 +106,11 @@ ipc_receive:
         mov     edi,[ebp+8]
         mov     esi,IPC_RECEIVE_NUM
         int     IPC_SYSCALL_VECTOR
-	mov     esi,[ebp+12]
-	mov	dword [esi],ebx
-	mov	dword [esi+4],ecx
-	mov	dword [esi+8],edx
+	mov     edi,[ebp+12]
+	mov	dword [edi],ebx
+	mov	dword [edi+4],ecx
+	mov	dword [edi+8],edx
+	mov	dword [edi+12],esi
         pop     edx
         pop     ecx
         pop     ebx

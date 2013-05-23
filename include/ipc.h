@@ -58,11 +58,11 @@
    -----------------------
 
    Max data in an IPC message
-   Must fit in EBX, ECX, EDX so 96bits
+   Must fit in EBX, ECX, EDX so 12 bytes
 
 **/
 
-#define IPC_DATA_LEN  96
+#define IPC_DATA_LEN  12
 
 
 
@@ -82,8 +82,8 @@
 
 PUBLIC struct ipc_message
 {
-  s32_t from;
   u8_t  data[IPC_DATA_LEN];
+  s32_t from;
 } __attribute ((packed))__ ;
 
 
