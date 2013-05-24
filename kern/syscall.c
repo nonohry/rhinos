@@ -22,9 +22,6 @@
    - klib.h
    - thread.h        : struct thread needed
    - sched.h         : scheduler queue manipulation
-   - physmem.h       : phys_alloc needed
-   - virtmem_buddy.h : virtual buddy allocation/release 
-   - paging.h        : mapping physical/virtual
    - syscall.h       : self header
 
 
@@ -37,9 +34,6 @@
 #include "klib.h"
 #include "thread.h"
 #include "sched.h"
-#include "physmem.h"
-#include "virtmem.h"
-#include "paging.h"
 #include "syscall.h"
 
 
@@ -197,25 +191,11 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver)
 	}
     }
 
-  /* No deadlock here, get message from sender address space */ 
-  //th_sender->ipc.send_message = message;
-  //th_sender->ipc.send_phys_message = paging_virt2phys((virtaddr_t)message);
-
-  /* No physical mapping for message: error */
-  //if ( !th_sender->ipc.send_phys_message )
-  //  {
-  //    return IPC_FAILURE;
-  //  }
- 
-  /* Check if receiver is only receiving, and is receiving from the sender or any thread */
+  /* No deadlock here, check if receiver is only receiving, and is receiving from the sender or any thread */
   if ( (th_receiver->ipc.state == SYSCALL_IPC_RECEIVING)
        && ( (th_receiver->ipc.receive_from == th_sender)||(th_receiver->ipc.receive_from == NULL) ) )
     {
       /* Receiver is willing to receive: copy message from sender to receiver */
-      //if (syscall_copymsg(message,th_receiver->ipc.receive_phys_message,SYSCALL_SEND) != EXIT_SUCCESS)
-      //	{
-      //	  return IPC_FAILURE;
-      //	}
       th_receiver->cpu.ebx = th_sender->cpu.ebx;
       th_receiver->cpu.ecx = th_sender->cpu.ecx;
       th_receiver->cpu.edx = th_sender->cpu.edx;   
@@ -285,10 +265,6 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
   /* Set receive state */
   th_receiver->ipc.state |= SYSCALL_IPC_RECEIVING;
 
-  /* Set message for reception */
-  //th_receiver->ipc.receive_message = message;
-  //th_receiver->ipc.receive_phys_message = paging_virt2phys((virtaddr_t)message);  
-
   /* Look for a matching thread in receive list */
   if (!LLIST_ISNULL(th_receiver->ipc.receive_waitlist))
     {
@@ -319,10 +295,6 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
   if ( th_available != NULL )
     {
       /* Copy message from sender to receiver */ 
-      //if (syscall_copymsg(message,th_available->ipc.send_phys_message,SYSCALL_RECEIVE) != EXIT_SUCCESS)
-      //	{
-      //	  return IPC_FAILURE;
-      //	}
       th_receiver->cpu.ebx = th_available->cpu.ebx;
       th_receiver->cpu.ecx = th_available->cpu.ecx;
       th_receiver->cpu.edx = th_available->cpu.edx;

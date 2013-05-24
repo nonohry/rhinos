@@ -65,8 +65,7 @@ thread.o: ../include/ipc.h proc.h
 sched.o: ../include/types.h ../include/llist.h klib.h const.h paging.h
 sched.o: thread.h ../include/ipc.h proc.h sched.h
 syscall.o: ../include/types.h ../include/llist.h ../include/ipc.h const.h
-syscall.o: paging.h klib.h thread.h proc.h sched.h physmem.h virtmem_slab.h
-syscall.o: virtmem_buddy.h virtmem.h syscall.h
+syscall.o: paging.h klib.h thread.h proc.h sched.h syscall.h
 klib_c.o: ../include/types.h klib.h const.h paging.h
 proc.o: ../include/types.h ../include/llist.h const.h paging.h klib.h
 proc.o: virtmem_slab.h thread.h ../include/ipc.h proc.h

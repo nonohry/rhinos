@@ -159,11 +159,7 @@ PUBLIC struct ipc_info
 {
   u8_t state;
   struct thread* send_to;
-  struct ipc_message* send_message;
-  physaddr_t send_phys_message;
   struct thread* receive_from;
-  struct ipc_message* receive_message;
-  physaddr_t receive_phys_message;
   struct thread* receive_waitlist;
 };
 
