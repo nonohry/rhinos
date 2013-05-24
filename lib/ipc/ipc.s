@@ -52,7 +52,7 @@ IPC_SUCCESS		equ	0
 	;; 
 	;; 	Move arguments in register to avoid trashing during context switching
 	;; 	Save `msg` into EBX, ECX and EDX, `to` into EDI and passes syscall number via ESI
-	;; 	Do a int call with appropriate interrupt vector
+	;; 	Do an int call with appropriate interrupt vector
 	;;
 	;;**/
 	
@@ -90,7 +90,9 @@ ipc_send:
 	;; 	Rerceived a message from thread identified by thread id `from` (or ANY for any thread)
 	;; 
 	;; 	Move arguments in register to avoid trashing during context switching
-	;; 	Do a int call with appropriate interrupt vector
+	;; 	Do an int call with appropriate interrupt vector
+	;; 	Return from interrupt will fill EBX, ECX and EDX with message `data` field.
+	;; 	Message `from` field will be placed into ESI. 
 	;;
 	;;**/
 

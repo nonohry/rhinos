@@ -56,7 +56,6 @@
 PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver);
 PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sender);
 PRIVATE u8_t syscall_notify(struct thread* th_from, struct thread* th_to);
-PRIVATE u8_t syscall_copymsg(struct ipc_message* message, physaddr_t phys_msg, u8_t op);
 
 
 /**
@@ -77,9 +76,7 @@ PUBLIC void syscall_handle(void)
 {
   struct thread* cur_th;
   struct thread* target_th;
-  struct ipc_message* arg_message;
   u32_t syscall_num;
-  s32_t arg_id;
   u8_t res;
 
   /* Get current thread */
@@ -93,36 +90,25 @@ PUBLIC void syscall_handle(void)
   /* Get syscall number in ESI */
   syscall_num = (u32_t)(cur_th->cpu.esi);
 
-  /* Put originator into ESI */
+  /* Put originator into ESI instead */
   cur_th->cpu.esi = cur_th->id->id;
 
-  /* Get destination thread (to send to or to receive from) in EDI */
-  arg_id = (s32_t)(cur_th->cpu.edi);
-
-  /* Send & receive syscall need a message. Get it in ECX */
-  if (syscall_num != SYSCALL_NOTIFY)
-    {
-      //arg_message = (struct ipc_message*)(cur_th->cpu.ecx);
-      /* Set message originator */
-      //arg_message->from = cur_th->id->id;
-    }
-
-  /* Destination thread */
-  if (arg_id == IPC_ANY)
+  /* Destination thread, stored in EDI */
+  if ((s32_t)(cur_th->cpu.edi) == IPC_ANY)
     {
       target_th = NULL;
     }
   else
     {
       /* Get thread structure from given id */
-      target_th = thread_id2thread(arg_id);
+      target_th = thread_id2thread((s32_t)(cur_th->cpu.edi));
       if ( target_th == NULL )
 	{
 	  res = IPC_FAILURE;
 	  goto end;
 	}
     }
-
+  
   /* Dispatch call to effective primitives */
   switch(syscall_num)
     {
@@ -401,75 +387,4 @@ PRIVATE u8_t syscall_notify(struct thread* th_from, struct thread* th_to)
 	}
 
   return IPC_SUCCESS;
-}
-
-
-/**
-
-   Function: u8_t syscall_copymsg(struct ipc_message* message, physaddr_t phys_msg, u8_t op)
-   -----------------------------------------------------------------------------------------
-
-   Helper to copy messages between 2 adress spaces. Source and destination for copy depend 
-   on operation `op`.
-   phys_msg will be mapped in current adress space. If operation is sending, `message` is copied
-   to the brand new mapped `phys_msg`. Otherwise, `phys_msg` is copied to `message`.
-
-
-**/
-
-PRIVATE u8_t syscall_copymsg(struct ipc_message* message, physaddr_t phys_msg, u8_t op)
-{
-  physaddr_t phys_page;
-  virtaddr_t virt_page;
-  virtaddr_t virt_message;
-  
-  /* Allocate an unmapped virtual page */
-  virt_page = (virtaddr_t)virtmem_buddy_alloc(CONST_PAGE_SIZE,VIRT_BUDDY_NOMAP);
-  if ((void*)virt_page == NULL)
-    {
-      return EXIT_FAILURE;
-    }
-  
-  /* Get physical page containing `phys_msg` */
-  phys_page = PHYS_ALIGN_INF(phys_msg);
-  
-  /* Map that physical page with the previous allocated virtual page */
-  if (paging_map(virt_page, phys_page, PAGING_SUPER) == EXIT_FAILURE)
-    {
-      virtmem_buddy_free((void*)virt_page);
-      return EXIT_FAILURE;
-    }
-      
-  /* Clean cache for the virtual page */
-  klib_invlpg(virt_page);
-
-  /* Compute `phys_msg` virtual address for the copy */
-  virt_message = virt_page + (phys_msg - phys_page);
-      
-  /* Message copy, depending on operation */
-  switch(op)
-    {
-    case SYSCALL_RECEIVE:
-      klib_mem_copy(virt_message, (addr_t)message, sizeof(struct ipc_message));
-      break;
-
-    case SYSCALL_SEND:
-      klib_mem_copy((addr_t)message, virt_message, sizeof(struct ipc_message));
-      break;
-
-    default:
-      return EXIT_FAILURE;
-      break;
-    }
-      
-  /* Unmap allocated page */
-  paging_unmap(virt_page);
-      
-  /* Clean cache */
-  klib_invlpg(virt_page);
-
-  /* Free allocated page */
-  virtmem_buddy_free((void*)virt_page);
-
-  return EXIT_SUCCESS;
 }
