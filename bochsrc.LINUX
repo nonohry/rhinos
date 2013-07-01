@@ -2,6 +2,24 @@
 # your pathname includes spaces.
 
 #=======================================================================
+# PLUGIN_CTRL:
+# Controls the presence of optional device plugins. These plugins are loaded
+# directly with this option and some of them install a config option that is
+# only available when the plugin device is loaded. The value "1" means to load
+# the plugin and "0" will unload it (if loaded before).
+#
+# These plugins will be loaded by default (if present): 'biosdev', 'extfpuirq',
+# 'gameport', 'iodebug','parallel', 'serial', 'speaker' and 'unmapped'.
+#
+# These plugins are also supported, but they are usually loaded directly with
+# their bochsrc option: 'e1000', 'es1370', 'ne2k', 'pcidev', 'pcipnic', 'sb16',
+# 'usb_ohci', 'usb_uhci' and 'usb_xhci'.
+#
+# This plugin currently must be loaded with plugin_ctrl: 'voodoo'.
+#=======================================================================
+#plugin_ctrl: unmapped=0, e1000=1 # unload 'unmapped' and load 'e1000'
+
+#=======================================================================
 # CONFIG_INTERFACE
 #
 # The configuration interface is a series of menus or dialog boxes that
@@ -36,13 +54,13 @@
 #   x              use X windows interface, cross platform
 #   win32          use native win32 libraries
 #   carbon         use Carbon library (for MacOS X)
-#   beos           use native BeOS libraries
 #   macintosh      use MacOS pre-10
 #   amigaos        use native AmigaOS libraries
 #   sdl            use SDL library, cross platform
 #   svga           use SVGALIB library for Linux, allows graphics without X11
 #   term           text only, uses curses/ncurses library, cross platform
 #   rfb            provides an interface to AT&T's VNC viewer, cross platform
+#   vncsrv         use LibVNCServer for extended RFB(VNC) support
 #   wx             use wxWidgets library, cross platform
 #   nogui          no display at all
 #
@@ -50,21 +68,27 @@
 # the "wx" display library.
 #
 # Specific options:
-# Some display libraries now support specific option to control their
-# behaviour. See the examples below for currently supported options.
+# Some display libraries now support specific options to control their
+# behaviour. These options are supported by more than one display library:
+#
+# "gui_debug"   - use GTK debugger gui (sdl, x) / Win32 debugger gui (sdl, win32)
+# "hideIPS"     - disable IPS output in status bar (rfb, sdl, vncsrv, win32, wx, x)
+# "nokeyrepeat" - turn off host keyboard repeat (sdl, win32, x)
+# "timeout"     - time (in seconds) to wait for client (rfb, vncsrv)
+#
+# See the examples below for other currently supported options.
 #=======================================================================
 #display_library: amigaos
-#display_library: beos
 #display_library: carbon
 #display_library: macintosh
 #display_library: nogui
-#display_library: rfb, options="timeout=60" # time to wait for client
+#display_library: rfb
 #display_library: sdl, options="fullscreen" # startup in fullscreen mode
 #display_library: term
-#display_library: win32, options="gui_debug" # use Win32 debugger gui
+#display_library: vncsrv
+#display_library: win32
 #display_library: wx
-#display_library: x, options="hideIPS" # disable IPS output in status bar
-#display_library: x, options="gui_debug" # use GTK debugger gui
+#display_library: x
 
 #=======================================================================
 # ROMIMAGE:
@@ -80,135 +104,240 @@
 # Bochs. The start address optional, since it can be calculated from image size.
 #=======================================================================
 romimage: file=$BXSHARE/BIOS-bochs-latest 
-#romimage: file=bios/seabios-0.5.1.bin
+#romimage: file=bios/seabios-1.6.3.bin
 #romimage: file=mybios.bin, address=0xfff80000 # 512k at memory top
 
 #=======================================================================
 # CPU:
 # This defines cpu-related parameters inside Bochs:
 #
+#  MODEL:
+#    Selects CPU configuration to emulate from pre-defined list of all
+#    supported configurations. When this option is used, the CPUID option
+#    has no effect anymore.
+#
+#  CPU configurations that can be selected:
+# -----------------------------------------------------------------
+#  pentium_mmx                Intel Pentium MMX
+#  amd_k6_2_chomper           AMD-K6(tm) 3D processor (Chomper)
+#  p2_klamath                 Intel Pentium II (Klamath)
+#  p3_katmai                  Intel Pentium III (Katmai)
+#  p4_willamette              Intel(R) Pentium(R) 4 (Willamette)
+#  core_duo_t2400_yonah       Intel(R) Core(TM) Duo CPU T2400 (Yonah)
+#  atom_n270                  Intel(R) Atom(TM) CPU N270
+#  athlon64_clawhammer        AMD Athlon(tm) 64 Processor 2800+ (Clawhammer)
+#  athlon64_venice            AMD Athlon(tm) 64 Processor 3000+ (Venice)
+#  turion64_tyler             AMD Turion(tm) 64 X2 Mobile TL-60 (Tyler)
+#  phenom_8650_toliman        AMD Phenom X3 8650 (Toliman)
+#  p4_prescott_celeron_336    Intel(R) Celeron(R) 336 (Prescott)
+#  core2_penryn_t9600         Intel Mobile Core 2 Duo T9600 (Penryn)
+#  corei5_lynnfield_750       Intel(R) Core(TM) i5   750 (Lynnfield)
+#  corei5_arrandale_m520      Intel(R) Core(TM) i5 M 520 (Arrandale)
+#  corei7_sandy_bridge_2600k  Intel(R) Core(TM) i7-2600K (Sandy Bridge)
+#  corei7_ivy_bridge_3770k    Intel(R) Core(TM) i7-3770K CPU (Ivy Bridge)
+#  corei7_haswell_4770        Intel(R) Core(TM) i7-4770 CPU (Haswell)
+#  zambezi                    AMD FX(tm)-4100 Quad-Core Processor (Zambezi)
+#
 #  COUNT:
-#  Set the number of processors:cores per processor:threads per core 
-#  when Bochs is compiled for SMP emulation.
-#  Bochs currently supports up to 8 threads running simultaniosly. 
-#  If Bochs is compiled without SMP support, it won't accept values 
-#  different from 1.
+#    Set the number of processors:cores per processor:threads per core 
+#    when Bochs is compiled for SMP emulation.
+#    Bochs currently supports up to 8 threads running simultaniosly. 
+#    If Bochs is compiled without SMP support, it won't accept values 
+#    different from 1.
 #
 #  QUANTUM:
-#  Maximum amount of instructions allowed to execute by processor before
-#  returning control to another cpu. This option exists only in Bochs 
-#  binary compiled with SMP support.
+#    Maximum amount of instructions allowed to execute by processor before
+#    returning control to another cpu. This option exists only in Bochs 
+#    binary compiled with SMP support.
 #
 #  RESET_ON_TRIPLE_FAULT:
-#  Reset the CPU when triple fault occur (highly recommended) rather than
-#  PANIC. Remember that if you trying to continue after triple fault the 
-#  simulation will be completely bogus !
+#    Reset the CPU when triple fault occur (highly recommended) rather than
+#    PANIC. Remember that if you trying to continue after triple fault the 
+#    simulation will be completely bogus !
+#
+#  CPUID_LIMIT_WINNT:
+#    Determine whether to limit maximum CPUID function to 2. This mode is
+#    required to workaround WinNT installation and boot issues.
 #
 #  MSRS:
-#  Define path to user CPU Model Specific Registers (MSRs) specification.
-#  See example in msrs.def.
+#    Define path to user CPU Model Specific Registers (MSRs) specification.
+#    See example in msrs.def.
 #
 #  IGNORE_BAD_MSRS:
-#  Ignore MSR references that Bochs does not understand; print a warning
-#  message instead of generating #GP exception. This option is enabled
-#  by default but will not be avaiable if configurable MSRs are enabled.
+#    Ignore MSR references that Bochs does not understand; print a warning
+#    message instead of generating #GP exception. This option is enabled
+#    by default but will not be avaiable if configurable MSRs are enabled.
+#
+#  MWAIT_IS_NOP:
+#    When this option is enabled MWAIT will not put the CPU into a sleep state.
+#    This option exists only if Bochs compiled with --enable-monitor-mwait.
 #
 #  IPS:
-#  Emulated Instructions Per Second. This is the number of IPS that bochs
-#  is capable of running on your machine. You can recompile Bochs with
-#  --enable-show-ips option enabled, to find your host's capability.
-#  Measured IPS value will then be logged into your log file or shown
-#  in the status bar (if supported by the gui).
+#    Emulated Instructions Per Second. This is the number of IPS that bochs
+#    is capable of running on your machine. You can recompile Bochs with
+#    --enable-show-ips option enabled, to find your host's capability.
+#    Measured IPS value will then be logged into your log file or shown
+#    in the status bar (if supported by the gui).
 #
-#  IPS is used to calibrate many time-dependent events within the bochs 
-#  simulation.  For example, changing IPS affects the frequency of VGA
-#  updates, the duration of time before a key starts to autorepeat, and
-#  the measurement of BogoMips and other benchmarks.
+#    IPS is used to calibrate many time-dependent events within the bochs 
+#    simulation.  For example, changing IPS affects the frequency of VGA
+#    updates, the duration of time before a key starts to autorepeat, and
+#    the measurement of BogoMips and other benchmarks.
 #
 #  Examples:
 #
 #  Bochs Machine/Compiler                                 Mips
-# ____________________________________________________________________
-#  2.3.7 3.2Ghz Intel Core 2 Q9770 with WinXP/g++ 3.4    50 to 55 Mips
-#  2.3.7 2.6Ghz Intel Core 2 Duo with WinXP/g++ 3.4      38 to 43 Mips
-#  2.2.6 2.6Ghz Intel Core 2 Duo with WinXP/g++ 3.4      21 to 25 Mips
-#  2.2.6 2.1Ghz Athlon XP with Linux 2.6/g++ 3.4         12 to 15 Mips
-#  2.0.1 1.6Ghz Intel P4 with Win2000/g++ 3.3             5 to  7 Mips
+# ______________________________________________________________________
+#  2.4.6 3.4Ghz Intel Core i7 2600 with Win7x64/g++ 4.5.2 85 to 95 Mips
+#  2.3.7 3.2Ghz Intel Core 2 Q9770 with WinXP/g++ 3.4     50 to 55 Mips
+#  2.3.7 2.6Ghz Intel Core 2 Duo with WinXP/g++ 3.4       38 to 43 Mips
+#  2.2.6 2.6Ghz Intel Core 2 Duo with WinXP/g++ 3.4       21 to 25 Mips
+#  2.2.6 2.1Ghz Athlon XP with Linux 2.6/g++ 3.4          12 to 15 Mips
 #=======================================================================
-cpu: count=1, ips=50000000, reset_on_triple_fault=1, ignore_bad_msrs=1, msrs="msrs.def"
+cpu: model=core2_penryn_t9600, count=1, ips=50000000, reset_on_triple_fault=1, ignore_bad_msrs=1, msrs="msrs.def"
+cpu: cpuid_limit_winnt=0
 
 #=======================================================================
 # CPUID:
 #
-# This defines features and functionality supported by Bochs emulated CPU:
+# This defines features and functionality supported by Bochs emulated CPU.
+# The option has no offect if CPU model was selected in CPU option.
 #
 #  MMX:
-#  Select MMX instruction set support.
-#  This option exists only if Bochs compiled with BX_CPU_LEVEL >= 5.
+#    Select MMX instruction set support.
+#    This option exists only if Bochs compiled with BX_CPU_LEVEL >= 5.
+#
+#  APIC:
+#    Select APIC configuration (LEGACY/XAPIC/XAPIC_EXT/X2APIC).
+#    This option exists only if Bochs compiled with BX_CPU_LEVEL >= 5.
 #
 #  SEP:
-#  Select SYSENTER/SYSEXIT instruction set support.
-#  This option exists only if Bochs compiled with BX_CPU_LEVEL >= 6.
+#    Select SYSENTER/SYSEXIT instruction set support.
+#    This option exists only if Bochs compiled with BX_CPU_LEVEL >= 6.
 #
 #  SSE:
-#  Select SSE instruction set support.
-#  Any of NONE/SSE/SSE2/SSE3/SSSE3/SSE4_1/SSE4_2 could be selected.
-#  This option exists only if Bochs compiled with BX_CPU_LEVEL >= 6.
+#    Select SSE instruction set support.
+#    Any of NONE/SSE/SSE2/SSE3/SSSE3/SSE4_1/SSE4_2 could be selected.
+#    This option exists only if Bochs compiled with BX_CPU_LEVEL >= 6.
 #
-#  XAPIC:
-#  Select XAPIC extensions support.
-#  This option exists only if Bochs compiled with BX_CPU_LEVEL >= 6.
+#  SSE4A:
+#    Select AMD SSE4A instructions support.
+#    This option exists only if Bochs compiled with BX_CPU_LEVEL >= 6.
+#
+#  MISALIGNED_SSE:
+#    Select AMD Misaligned SSE mode support.
+#    This option exists only if Bochs compiled with BX_CPU_LEVEL >= 6.
 #
 #  AES:
-#  Select AES instruction set support.
-#  This option exists only if Bochs compiled with BX_CPU_LEVEL >= 6.
+#    Select AES instruction set support.
+#    This option exists only if Bochs compiled with BX_CPU_LEVEL >= 6.
 #
 #  MOVBE:
-#  Select MOVBE Intel(R) Atom instruction support.
-#  This option exists only if Bochs compiled with BX_CPU_LEVEL >= 6.
+#    Select MOVBE Intel(R) Atom instruction support.
+#    This option exists only if Bochs compiled with BX_CPU_LEVEL >= 6.
+#
+#  ADX:
+#    Select ADCX/ADOX instructions support.
+#    This option exists only if Bochs compiled with BX_CPU_LEVEL >= 6.
 #
 #  XSAVE:
-#  Select XSAVE extensions support.
-#  This option exists only if Bochs compiled with BX_CPU_LEVEL >= 6.
+#    Select XSAVE extensions support.
+#    This option exists only if Bochs compiled with BX_CPU_LEVEL >= 6.
+#
+#  XSAVEOPT:
+#    Select XSAVEOPT instruction support.
+#    This option exists only if Bochs compiled with BX_CPU_LEVEL >= 6.
+#
+#  AVX:
+#    Select AVX/AVX2 instruction set support.
+#    This option exists only if Bochs compiled with --enable-avx option.
+#
+#  AVX_F16C:
+#    Select AVX float16 convert instructions support.
+#    This option exists only if Bochs compiled with --enable-avx option.
+#
+#  AVX_FMA:
+#    Select AVX fused multiply add (FMA) instructions support.
+#    This option exists only if Bochs compiled with --enable-avx option.
+#
+#  BMI:
+#    Select BMI1/BMI2 instructions support.
+#    This option exists only if Bochs compiled with --enable-avx option.
+#
+#  XOP:
+#    Select AMD XOP instructions support.
+#    This option exists only if Bochs compiled with --enable-avx option.
+#
+#  FMA4:
+#    Select AMD four operand FMA instructions support.
+#    This option exists only if Bochs compiled with --enable-avx option.
+#
+#  TBM:
+#    Select AMD Trailing Bit Manipulation (TBM) instructions support.
+#    This option exists only if Bochs compiled with --enable-avx option.
+#
+#  X86-64:
+#    Enable x86-64 and long mode support.
+#    This option exists only if Bochs compiled with x86-64 support.
 #
 #  1G_PAGES:
-#  Enable 1G page size support in long mode.
-#  This option exists only if Bochs compiled with x86-64 support.
+#    Enable 1G page size support in long mode.
+#    This option exists only if Bochs compiled with x86-64 support.
 #
 #  PCID:
-#  Enable Process-Context Identifiers (PCID) support in long mode.
-#  This option exists only if Bochs compiled with x86-64 support.
+#    Enable Process-Context Identifiers (PCID) support in long mode.
+#    This option exists only if Bochs compiled with x86-64 support.
 #
 #  FSGSBASE:
-#  Enable GS/GS BASE access instructions support in long mode.
-#  This option exists only if Bochs compiled with x86-64 support.
+#    Enable GS/GS BASE access instructions support in long mode.
+#    This option exists only if Bochs compiled with x86-64 support.
+#
+#  SMEP:
+#    Enable Supervisor Mode Execution Protection (SMEP) support.
+#    This option exists only if Bochs compiled with BX_CPU_LEVEL >= 6.
+#
+#  SMAP:
+#    Enable Supervisor Mode Access Prevention (SMAP) support.
+#    This option exists only if Bochs compiled with BX_CPU_LEVEL >= 6.
 #
 #  MWAIT:
-#  Select MONITOR/MWAIT instructions support.
-#  This option exists only if Bochs compiled with --enable-monitor-mwait.
+#    Select MONITOR/MWAIT instructions support.
+#    This option exists only if Bochs compiled with --enable-monitor-mwait.
 #
-#  MWAIT_IS_NOP:
-#  When this option is enabled MWAIT will not put the CPU into a sleep state.
-#  This option exists only if Bochs compiled with --enable-monitor-mwait.
+#  VMX:
+#    Select VMX extensions emulation support.
+#    This option exists only if Bochs compiled with --enable-vmx option.
+#
+#  SVM:
+#    Select AMD SVM (Secure Virtual Machine) extensions emulation support.
+#    This option exists only if Bochs compiled with --enable-svm option.
 #
 #  VENDOR_STRING:
-#  Set the CPUID vendor string returned by CPUID(0x0). This should be a
-#  twelve-character ASCII string.  
+#    Set the CPUID vendor string returned by CPUID(0x0). This should be a
+#    twelve-character ASCII string.  
 #
 #  BRAND_STRING:
-#  Set the CPUID vendor string returned by CPUID(0x80000002 .. 0x80000004).  
-#  This should be at most a forty-eight-character ASCII string.  
+#    Set the CPUID vendor string returned by CPUID(0x80000002 .. 0x80000004).  
+#    This should be at most a forty-eight-character ASCII string.  
+#
+#  LEVEL:
+#    Set emulated CPU level information returned by CPUID. Default value is
+#    determined by configure option --enable-cpu-level. Currently supported
+#    values are 5 (for Pentium and similar processors) and 6 (for P6 and
+#    later processors).
+#
+#  FAMILY:
+#    Set model information returned by CPUID. Default family value determined
+#    by configure option --enable-cpu-level.
+#
+#  MODEL:
+#    Set model information returned by CPUID. Default model value is 3.
 #
 #  STEPPING:
-#  Set stepping information returned by CPUID. Default stepping value is 3.
-#
-#  CPUID_LIMIT_WINNT:
-#  Determine whether to limit maximum CPUID function to 3. This mode is
-#  required to workaround WinNT installation and boot issues.
+#    Set stepping information returned by CPUID. Default stepping value is 3.
 #=======================================================================
-#cpuid: mmx=1, sep=1, sse=sse4_2, xapic=1, aes=1, movbe=1, xsave=1
-#cpuid: stepping=5
-#cpuid: cpuid_limit_winnt=0
+#cpuid: x86_64=1, mmx=1, sep=1, sse=sse4_2, apic=xapic, aes=1, movbe=1, xsave=1
+#cpuid: family=6, model=0x1a, stepping=5
 
 #=======================================================================
 # MEMORY
@@ -227,7 +356,7 @@ cpu: count=1, ips=50000000, reset_on_triple_fault=1, ignore_bad_msrs=1, msrs="ms
 # used all allocated host memory and wants more.
 #
 #=======================================================================
-memory: guest=32, host=32
+memory: guest=512, host=256
 
 #=======================================================================
 # OPTROMIMAGE[1-4]:
@@ -260,12 +389,25 @@ vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
 
 #=======================================================================
 # VGA:
-# Here you can specify the display extension to be used. With the value
-# 'none' you can use standard VGA with no extension. Other supported
-# values are 'vbe' for Bochs VBE and 'cirrus' for Cirrus SVGA support.
+# This defines parameters related to the VGA display
+#
+#   EXTENSION
+#     Here you can specify the display extension to be used. With the value
+#     'none' you can use standard VGA with no extension. Other supported
+#     values are 'vbe' for Bochs VBE and 'cirrus' for Cirrus SVGA support.
+#
+#   UPDATE_FREQ
+#     The VGA update frequency is based on the emulated clock and the default
+#     value is 5. Keep in mind that you must tweak the 'cpu: ips=N' directive
+#     to be as close to the number of emulated instructions-per-second your
+#     workstation can do, for this to be accurate. If the realtime sync is
+#     enabled with the 'clock' option, the value is based on the real time.
+#     This parameter can be changed at runtime.
+#
+# Examples:
+#   vga: extension=cirrus, update_freq=10
 #=======================================================================
-#vga: extension=cirrus
-vga: extension=vbe
+#vga: extension=vbe, update_freq=5
 
 #=======================================================================
 # FLOPPYA:
@@ -295,7 +437,7 @@ vga: extension=vbe
 # The optional parameter 'write_protected' can be used to control the media
 # write protect switch. By default it is turned off.
 #=======================================================================
-floppya: 1_44=disk.img, status=inserted
+floppya: 1_44=/dev/fd0, status=inserted
 #floppya: image=../1.44, status=inserted
 #floppya: 1_44=/dev/fd0H1440, status=inserted
 #floppya: 1_2=../1_2, status=inserted
@@ -338,7 +480,7 @@ ata3: enabled=0, ioaddr1=0x168, ioaddr2=0x360, irq=9
 # This defines the type and characteristics of all attached ata devices:
 #   type=       type of attached device [disk|cdrom] 
 #   mode=       only valid for disks [flat|concat|external|dll|sparse|vmware3]
-#   mode=       only valid for disks [undoable|growing|volatile|vvfat]
+#                                    [vmware4|undoable|growing|volatile|vpc|vvfat]
 #   path=       path of the image / directory
 #   cylinders=  only valid for disks
 #   heads=      only valid for disks
@@ -383,7 +525,6 @@ ata3: enabled=0, ioaddr1=0x168, ioaddr2=0x360, irq=9
 #   ata3-slave:  type=cdrom, path=iso.sample, status=inserted
 #=======================================================================
 ata0-master: type=disk, path="utils/disk.img", mode=flat, cylinders=8, heads=16, spt=63
-#ata0-master: type=disk, mode=flat, path="30M.sample"
 #ata0-master: type=disk, mode=flat, path="30M.sample", cylinders=615, heads=6, spt=17
 #ata0-master: type=disk, mode=flat, path="c.img", cylinders=0 # autodetect
 #ata0-slave: type=disk, mode=vvfat, path=/bochs/images/vvfat, journal=vvfat.redolog
@@ -418,6 +559,10 @@ boot: disk
 #  time correlation. The 'realtime' method sacrifices reproducibility to
 #  preserve performance and host-time correlation.
 #  It is possible to enable both synchronization methods.
+#
+#  RTC_SYNC:
+#  If this option is enabled together with the realtime synchronization,
+#  the RTC runs at realtime speed. This feature is disabled by default.
 #
 #  TIME0:
 #  Specifies the start (boot) time of the virtual machine. Use a time 
@@ -487,7 +632,7 @@ log: bochsout.txt
 #=======================================================================
 # LOG CONTROLS
 #
-# Bochs now has four severity levels for event logging.
+# Bochs has four severity levels for event logging.
 #   panic: cannot proceed.  If you choose to continue after a panic, 
 #          don't be surprised if you get strange behavior or crashes.
 #   error: something went wrong, but it is probably safe to continue the
@@ -496,9 +641,13 @@ log: bochsout.txt
 #   debug: messages useful only when debugging the code.  This may
 #          spit out thousands per second.
 #
-# For events of each level, you can choose to crash, report, or ignore.
-# TODO: allow choice based on the facility: e.g. crash on panics from
-#       everything except the cdrom, and only report those.
+# For events of each level, you can choose to exit Bochs ('fatal'), 'report'
+# or 'ignore'. On some guis you have the additional choice 'ask'. A gui dialog
+# appears asks how to proceed.
+#
+# It is also possible to specify the 'action' to do for each Bochs facility
+# separately (e.g. crash on panics from everything except the cdrom, and only
+# report those). See the 'log function' module list in the user documentation.
 #
 # If you are experiencing many panics, it can be helpful to change
 # the panic action to report instead of fatal.  However, be aware
@@ -509,8 +658,7 @@ log: bochsout.txt
 panic: action=ask
 error: action=report
 info: action=report
-debug: action=ignore
-#pass: action=fatal
+debug: action=ignore, pci=report # report BX_DEBUG from module 'pci'
 
 #=======================================================================
 # DEBUGGER_LOG:
@@ -521,15 +669,15 @@ debug: action=ignore
 #   debugger_log: ./debugger.out
 #=======================================================================
 #debugger_log: /dev/null
-debugger_log: debugger.out
-#debugger_log: -
+#debugger_log: debugger.out
+debugger_log: -
 
 #=======================================================================
 # COM1, COM2, COM3, COM4:
-# This defines a serial port (UART type 16550A). In the 'term' you can specify
-# a device to use as com1. This can be a real serial line, or a pty.  To use
-# a pty (under X/Unix), create two windows (xterms, usually).  One of them will
-# run bochs, and the other will act as com1. Find out the tty the com1
+# This defines a serial port (UART type 16550A). In the 'term' mode you can
+# specify a device to use as com1. This can be a real serial line, or a pty.
+# To use a pty (under X/Unix), create two windows (xterms, usually).  One of
+# them will run bochs, and the other will act as com1. Find out the tty the com1
 # window using the `tty' command, and use that as the `dev' parameter.
 # Then do `sleep 1000000' in the com1 window to keep the shell from
 # messing with things, and run bochs in the other window.  Serial I/O to
@@ -540,9 +688,8 @@ debugger_log: debugger.out
 # opens socket/named pipe and waits until a client application connects to it
 # before starting simulation. This mode is useful for remote debugging (e.g.
 # with gdb's "target remote host:port" command or windbg's command line option
-# -k com:pipe,port=\\.\pipe\pipename). Note: 'socket' is a shorthand for
-# 'socket-client' and 'pipe' for 'pipe-client'. Socket modes use simple TCP
-# communication, pipe modes use duplex byte mode pipes.
+# -k com:pipe,port=\\.\pipe\pipename). Socket modes use simple TCP communication,
+#  pipe modes use duplex byte mode pipes.
 # Other serial modes are 'null' (no input/output), 'file' (output to a file
 # specified as the 'dev' parameter), 'raw' (use the real serial port - under
 # construction for win32), 'mouse' (standard serial mouse - requires
@@ -577,10 +724,34 @@ com1: enabled=1, mode=term, dev=/dev/pts/1
 parport1: enabled=1, file="parport.out"
 
 #=======================================================================
+# SOUND:
+# This defines the lowlevel sound driver and the wave (PCM) output device
+# to be used by sound output devices. Possible values for the driver
+# parameter are 'default', 'dummy' (no output), 'alsa' (if present) and
+# 'sdl' (if present). For some drivers the wave output device must be
+# specified.
+#=======================================================================
+#sound: driver=default, wavedev=/dev/dsp
+
+#=======================================================================
+# SPEAKER:
+# This defines the PC speaker output mode. In the 'sound' mode the beep
+# is generated by the square wave generator which is a part of the
+# lowlevel sound support. The 'system' mode is only available on Linux
+# and Windows. On Linux /dev/console is used for output and on Windows
+# the Beep() function. The 'gui' mode forwards the beep to the related
+# gui methods (currently only used by the Carbon gui).
+#=======================================================================
+speaker: enabled=1, mode=system
+
+#=======================================================================
 # SB16:
 # This defines the SB16 sound emulation. It can have several of the
 # following properties.
 # All properties are in the format sb16: property=value
+# enabled:
+#      This optional property controls the presence of the SB16 emulation.
+#      The emulation is turned on unless this property is used and set to 0.
 # midi: The filename is where the midi data is sent. This can be a
 #       device or just a file if you want to record the midi data.
 # midimode:
@@ -589,7 +760,8 @@ parport1: enabled=1, file="parport.out"
 #      2=SMF file output, including headers
 #      3=output the midi data stream to the file (no midi headers and no
 #        delta times, just command and data bytes)
-# wave: This is the device/file where wave output is stored
+# wave: This is the device to be used as wave input source. The wave output
+#        device must be specified with the 'sound' bochsrc option if necessary.
 # wavemode:
 #      0=no data
 #      1=output to device (system dependent. wave denotes the device driver)
@@ -615,46 +787,61 @@ parport1: enabled=1, file="parport.out"
 #sb16: midimode=1, midi=/dev/midi00, wavemode=1, wave=/dev/dsp, loglevel=2, log=sb16.log, dmatimer=600000
 
 #=======================================================================
-# VGA_UPDATE_INTERVAL:
-# Video memory is scanned for updates and screen updated every so many
-# virtual seconds.  The default is 50000, about 20Hz. Keep in mind that
-# you must tweak the 'cpu: ips=N' directive to be as close to the number
-# of emulated instructions-per-second your workstation can do, for this
-# to be accurate.
+# ES1370:
+# This defines the ES1370 sound emulation. The parameter 'enabled' controls the
+# presence of the device. The 'wavedev' parameter is similar to the 'wave'
+# parameter of the SB16 soundcard. The emulation supports recording and playback
+# (except DAC1+DAC2 output at the same time).
 #
 # Examples:
-#   vga_update_interval: 250000
+#   es1370: enabled=1, wavedev=""    # win32
+#   es1370: enabled=1, wavedev=alsa  # Linux with ALSA
 #=======================================================================
-vga_update_interval: 300000
-
-# using for Winstone '98 tests
-#vga_update_interval:  100000
+#es1370: enabled=1, wavedev=alsa
 
 #=======================================================================
-# KEYBOARD_SERIAL_DELAY:
-# Approximate time in microseconds that it takes one character to
-# be transfered from the keyboard to controller over the serial path.
-# Examples:
-#   keyboard_serial_delay: 200
-#=======================================================================
-keyboard_serial_delay: 250
-
-#=======================================================================
-# KEYBOARD_PASTE_DELAY:
-# Approximate time in microseconds between attempts to paste
-# characters to the keyboard controller. This leaves time for the
-# guest os to deal with the flow of characters.  The ideal setting
-# depends on how your operating system processes characters.  The
-# default of 100000 usec (.1 seconds) was chosen because it works 
-# consistently in Windows.
+# KEYBOARD:
+# This defines parameters related to the emulated keyboard
 #
-# If your OS is losing characters during a paste, increase the paste
-# delay until it stops losing characters.
+#   TYPE:
+#     Type of keyboard return by a "identify keyboard" command to the
+#     keyboard controller. It must be one of "xt", "at" or "mf".
+#     Defaults to "mf". It should be ok for almost everybody. A known
+#     exception is french macs, that do have a "at"-like keyboard.
 #
+#   SERIAL_DELAY:
+#     Approximate time in microseconds that it takes one character to
+#     be transferred from the keyboard to controller over the serial path.
+#
+#   PASTE_DELAY:
+#     Approximate time in microseconds between attempts to paste
+#     characters to the keyboard controller. This leaves time for the
+#     guest os to deal with the flow of characters.  The ideal setting
+#     depends on how your operating system processes characters.  The
+#     default of 100000 usec (.1 seconds) was chosen because it works 
+#     consistently in Windows.
+#     If your OS is losing characters during a paste, increase the paste
+#     delay until it stops losing characters.
+#
+#   KEYMAP:
+#     This enables a remap of a physical localized keyboard to a
+#     virtualized us keyboard, as the PC architecture expects.
+#
+#   USER_SHORTCUT:
+#     This defines the keyboard shortcut to be sent when you press the "user"
+#     button in the headerbar. The shortcut string is a combination of maximum
+#     3 key names (listed below) separated with a '-' character.
+#     Valid key names:
+#     "alt", "bksl", "bksp", "ctrl", "del", "down", "end", "enter", "esc",
+#     "f1", ... "f12", "home", "ins", "left", "menu", "minus", "pgdwn", "pgup",
+#     "plus", "right", "shift", "space", "tab", "up", "win", "print" and "power".
+
 # Examples:
-#   keyboard_paste_delay: 100000
+#   keyboard: type=mf, serial_delay=200, paste_delay=100000
+#   keyboard: keymap=gui/keymaps/x11-pc-de.map
+#   keyboard: user_shortcut=ctrl-alt-del
 #=======================================================================
-keyboard_paste_delay: 100000
+#keyboard: type=mf, serial_delay=250
 
 #=======================================================================
 # MOUSE:
@@ -665,8 +852,8 @@ keyboard_paste_delay: 100000
 #  With the mouse type option you can select the type of mouse to emulate.
 #  The default value is 'ps2'. The other choices are 'imps2' (wheel mouse
 #  on PS/2), 'serial', 'serial_wheel' and 'serial_msys' (one com port requires
-#  setting 'mode=mouse'). To connect a mouse to an USB port, see the 'usb_uhci'
-#  or 'usb_ohci' option (requires PCI and USB support).
+#  setting 'mode=mouse'). To connect a mouse to an USB port, see the 'usb_uhci',
+#  'usb_ohci' or 'usb_xhci' options (requires PCI and USB support).
 #
 #  ENABLED:
 #  The Bochs gui creates mouse "events" unless the 'enabled' option is
@@ -717,41 +904,45 @@ private_colormap: enabled=0
 #=======================================================================
 # ne2k: NE2000 compatible ethernet adapter
 #
-# Examples:
-# ne2k: ioaddr=IOADDR, irq=IRQ, mac=MACADDR, ethmod=MODULE, ethdev=DEVICE, script=SCRIPT
+# Format:
+# ne2k: enabled=1, ioaddr=IOADDR, irq=IRQ, mac=MACADDR, ethmod=MODULE,
+#       ethdev=DEVICE, script=SCRIPT, bootrom=BOOTROM
 #
-# ioaddr, irq: You probably won't need to change ioaddr and irq, unless there
+# IOADDR, IRQ: You probably won't need to change ioaddr and irq, unless there
 # are IRQ conflicts. These arguments are ignored when assign the ne2k to a
 # PCI slot.
 #
-# mac: The MAC address MUST NOT match the address of any machine on the net.
+# MAC: The MAC address MUST NOT match the address of any machine on the net.
 # Also, the first byte must be an even number (bit 0 set means a multicast
 # address), and you cannot use ff:ff:ff:ff:ff:ff because that's the broadcast
 # address.  For the ethertap module, you must use fe:fd:00:00:00:01.  There may
 # be other restrictions too.  To be safe, just use the b0:c4... address.
 #
-# ethdev: The ethdev value is the name of the network interface on your host
+# ETHDEV: The ethdev value is the name of the network interface on your host
 # platform.  On UNIX machines, you can get the name by running ifconfig.  On
 # Windows machines, you must run niclist to get the name of the ethdev.
 # Niclist source code is in misc/niclist.c and it is included in Windows 
 # binary releases.
 #
-# script: The script value is optional, and is the name of a script that 
+# SCRIPT: The script value is optional, and is the name of a script that 
 # is executed after bochs initialize the network interface. You can use 
 # this script to configure this network interface, or enable masquerading.
 # This is mainly useful for the tun/tap devices that only exist during
 # Bochs execution. The network interface name is supplied to the script
-# as first parameter
+# as first parameter.
+#
+# BOOTROM: The bootrom value is optional, and is the name of the ROM image
+# to load. Note that this feature is only implemented for the PCI version of
+# the NE2000.
 #
 # If you don't want to make connections to any physical networks,
 # you can use the following 'ethmod's to simulate a virtual network.
 #   null: All packets are discarded, but logged to a few files.
-#   arpback: ARP is simulated. Disabled by default.
 #   vde:  Virtual Distributed Ethernet
 #   vnet: ARP, ICMP-echo(ping), DHCP and read/write TFTP are simulated.
 #         The virtual host uses 192.168.10.1.
 #         DHCP assigns 192.168.10.2 to the guest.
-#         TFTP uses the ethdev value for the root directory and doesn't
+#         TFTP uses the 'ethdev' value for the root directory and doesn't
 #         overwrite files.
 #
 #=======================================================================
@@ -764,69 +955,46 @@ private_colormap: enabled=0
 # ne2k: ioaddr=0x300, irq=9, mac=b0:c4:20:00:00:01, ethmod=null, ethdev=eth0
 # ne2k: ioaddr=0x300, irq=9, mac=b0:c4:20:00:00:01, ethmod=vde, ethdev="/tmp/vde.ctl"
 # ne2k: ioaddr=0x300, irq=9, mac=b0:c4:20:00:00:01, ethmod=vnet, ethdev="c:/temp"
+# ne2k: mac=b0:c4:20:00:00:01, ethmod=slirp, script=/usr/local/bin/slirp, bootrom=ne2k_pci.rom
 
 #=======================================================================
-# pnic: Bochs/Etherboot pseudo-NIC
+# pcipnic: Bochs/Etherboot pseudo-NIC
+#
+# Format:
+# pcipnic: enabled=1, mac=MACADDR, ethmod=MODULE, ethdev=DEVICE, script=SCRIPT,
+#          bootrom=BOOTROM
+#
+# The pseudo-NIC accepts the same syntax (for mac, ethmod, ethdev, script,
+# bootrom) and supports the same networking modules as the NE2000 adapter.
+#=======================================================================
+#pcipnic: enabled=1, mac=b0:c4:20:00:00:00, ethmod=vnet
+
+#=======================================================================
+# e1000: Intel(R) 82540EM Gigabit Ethernet adapter
+#
+# Format:
+# e1000: enabled=1, mac=MACADDR, ethmod=MODULE, ethdev=DEVICE, script=SCRIPT
+#        bootrom=BOOTROM
+#
+# The E1000 accepts the same syntax (for mac, ethmod, ethdev, script, bootrom)
+# and supports the same networking modules as the NE2000 adapter.
+#=======================================================================
+#e1000: enabled=1, mac=52:54:00:12:34:56, ethmod=slirp, script=/usr/local/bin/slirp
+
+#=======================================================================
+# PCI:
+# This option controls the presence of a PCI chipset in Bochs. Currently it only
+# supports the i440FX chipset. You can also specify the devices connected to
+# PCI slots. Up to 5 slots are available. For these combined PCI/ISA devices
+# assigning to slot is mandatory if you want to emulate the PCI model: cirrus,
+# ne2k and pcivga. These PCI-only devices are also supported, but they are
+# auto-assigned if you don't use the slot configuration: e1000, es1370, pcidev,
+# pcipnic, usb_ohci and usb_xhci.
 #
 # Example:
-# pnic: enabled=1, mac=MACADDR, ethmod=MODULE, ethdev=DEVICE, script=SCRIPT
-#
-# The pseudo-NIC accepts the same syntax (for mac, ethmod, ethdev, script) and
-# supports the same networking modules as the NE2000 adapter. In addition to
-# this, it must be assigned to a PCI slot.
+#   pci: enabled=1, chipset=i440fx, slot1=pcivga, slot2=ne2k
 #=======================================================================
-#pnic: enabled=1, mac=b0:c4:20:00:00:00, ethmod=vnet
-
-#=======================================================================
-# KEYBOARD_MAPPING:
-# This enables a remap of a physical localized keyboard to a 
-# virtualized us keyboard, as the PC architecture expects.
-# If enabled, the keymap file must be specified.
-# 
-# Examples:
-#   keyboard_mapping: enabled=1, map=gui/keymaps/x11-pc-de.map
-#=======================================================================
-keyboard_mapping: enabled=0, map=
-
-#=======================================================================
-# KEYBOARD_TYPE:
-# Type of keyboard return by a "identify keyboard" command to the
-# keyboard controler. It must be one of "xt", "at" or "mf".
-# Defaults to "mf". It should be ok for almost everybody. A known
-# exception is french macs, that do have a "at"-like keyboard.
-#
-# Examples:
-#   keyboard_type: mf
-#=======================================================================
-#keyboard_type: mf
-
-#=======================================================================
-# USER_SHORTCUT:
-# This defines the keyboard shortcut to be sent when you press the "user"
-# button in the headerbar. The shortcut string is a combination of maximum
-# 3 key names (listed below) separated with a '-' character.
-# Valid key names:
-# "alt", "bksl", "bksp", "ctrl", "del", "down", "end", "enter", "esc",
-# "f1", ... "f12", "home", "ins", "left", "menu", "minus", "pgdwn", "pgup",
-# "plus", "right", "shift", "space", "tab", "up", "win", "print" and "power".
-#
-# Example:
-#   user_shortcut: keys=ctrl-alt-del
-#=======================================================================
-#user_shortcut: keys=ctrl-alt-del
-
-#=======================================================================
-# I440FXSUPPORT:
-# This option controls the presence of the i440FX PCI chipset. You can
-# also specify the devices connected to PCI slots. Up to 5 slots are
-# available now. These devices are currently supported: ne2k, pcivga,
-# pcidev, pcipnic and usb_ohci. If Bochs is compiled with Cirrus SVGA
-# support you'll have the additional choice 'cirrus'.
-#
-# Example:
-#   i440fxsupport: enabled=1, slot1=pcivga, slot2=ne2k
-#=======================================================================
-i440fxsupport: enabled=1
+pci: enabled=1, chipset=i440fx
 
 #=======================================================================
 # USB_UHCI:
@@ -873,11 +1041,18 @@ i440fxsupport: enabled=1
 # USB_OHCI:
 # This option controls the presence of the USB OHCI host controller with a
 # 2-port hub. The portX option accepts the same device types with the same
-# syntax as the UHCI controller (see above). The OHCI HC must be assigned to
-# a PCI slot.
+# syntax as the UHCI controller (see above).
 #=======================================================================
 #usb_ohci: enabled=1
 #usb_ohci: enabled=1, port1=printer:usbprinter.bin
+
+#=======================================================================
+# USB_XHCI:
+# This option controls the presence of the experimental USB xHCI host controller
+# with a 4-port hub. The portX option accepts the same device types with the
+# same syntax as the UHCI controller (see above).
+#=======================================================================
+#usb_xhci: enabled=1
 
 #=======================================================================
 # CMOSIMAGE:
@@ -915,7 +1090,7 @@ i440fxsupport: enabled=1
 # Example:
 #   port_e9_hack: enabled=1
 #=======================================================================
-port_e9_hack: enabled=1
+#port_e9_hack: enabled=1
 
 #=======================================================================
 # DEBUG_SYMBOLS:
@@ -934,7 +1109,6 @@ port_e9_hack: enabled=1
 #=======================================================================
 #load32bitOSImage: os=nullkernel, path=../kernel.img, iolog=../vga_io.log
 #load32bitOSImage: os=linux, path=../linux.img, iolog=../vga_io.log, initrd=../initrd.img
-#text_snapshot_check: enabled=1
 #print_timestamps: enabled=1
 
 #-------------------------
@@ -948,15 +1122,6 @@ port_e9_hack: enabled=1
 # Default value is enabled=0.
 #=======================================================================
 #gdbstub: enabled=0, port=1234, text_base=0, data_base=0, bss_base=0
-
-#=======================================================================
-# PLUGIN_CTRL:
-# Controls the presence of optional plugins without a separate option.
-# By default all existing plugins are enabled. These plugins are currently
-# supported: 'acpi', 'biosdev', 'extfpuirq', 'gameport', 'iodebug',
-# 'pci_ide', 'speaker' and 'unmapped'.
-#=======================================================================
-#plugin_ctrl: biosdev=0, speaker=0
 
 #=======================================================================
 # USER_PLUGIN:
