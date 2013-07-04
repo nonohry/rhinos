@@ -17,6 +17,7 @@
    Includes
    --------
 
+   - define.h
    - types.h
    - paging.h   : macro PAGING_ALIGN_SUP needed
 

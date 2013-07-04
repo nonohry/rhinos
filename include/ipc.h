@@ -17,11 +17,12 @@
    Includes
    --------
 
-   - types.h
+   - define.h
 
 **/
 
-#include <types.h>
+
+#include <define.h>
 
 
 /**
