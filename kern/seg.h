@@ -20,6 +20,7 @@
  
 **/
 
+#include <define.h>
 #include <types.h>
 
 

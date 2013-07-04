@@ -25,6 +25,7 @@
 
 **/
 
+#include <define.h>
 #include <types.h>
 #include "const.h"
 #include "klib.h"

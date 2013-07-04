@@ -18,6 +18,7 @@
 
 **/
 
+#include <define.h>
 #include <types.h>
 #include "klib.h"
 

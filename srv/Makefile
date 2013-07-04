@@ -25,4 +25,4 @@ clean:
 
 # DO NOT DELETE
 
-user.o: ../include/types.h ../include/ipc.h
+user.o: ../include/define.h ../include/types.h ../include/ipc.h

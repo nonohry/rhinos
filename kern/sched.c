@@ -23,6 +23,7 @@
 **/
 
 
+#include <define.h>
 #include <types.h>
 #include <llist.h>
 #include "klib.h"

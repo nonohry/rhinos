@@ -24,6 +24,7 @@
 
 **/   
 
+#include <define.h>
 #include <types.h>
 #include "const.h"
 #include "virtmem_slab.h"

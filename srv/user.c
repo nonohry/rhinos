@@ -8,6 +8,7 @@
 **/
 
 
+#include <define.h>
 #include <types.h>
 #include <ipc.h>
 
