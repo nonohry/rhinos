@@ -1,9 +1,9 @@
 /**
 
-   vm.c
-   ====
+   segment.c
+   =========
 
-   Virtual Memory Setup
+   Virtual Memory Segmentation Setup
 
 
 **/
@@ -17,7 +17,7 @@
    - define.h
    - types.h
    - const.h
-   - vm.h        : self header
+   - segment.h    : self header
 
 **/
 
@@ -25,7 +25,7 @@
 #include <define.h>
 #include <types.h>
 #include "const.h"
-#include "vm.h"
+#include "segment.h"
 
 
 /**
