@@ -4,7 +4,7 @@
 ARCH	?=	x86
 
 MAKE	:=	make
-SUBDIRS	:=	kern lib srv
+SUBDIRS	:=	kern kern/arch/$(ARCH) lib srv
 RM	:=	rm -f
 KERN	:=	kern/kern
 USER	:=	srv/user
@@ -26,7 +26,7 @@ sub:
 	echo "Entering $$dir"; \
 	$(MAKE) depend; \
 	$(MAKE) all ARCH=$(ARCH); \
-	cd ..; \
+	cd -; \
 	done
 
 kern: 	sub

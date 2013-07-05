@@ -9,7 +9,7 @@ AS	:=	nasm -f elf
 CC	:=	gcc -Wall -c
 RM	:=	rm -f
 LD	:=	ld -s -T link.ld
-CFLAGS	:=	-I../../../include -I../../../include/arch/${ARCH}
+CFLAGS	:=	-I../../../include -I../../../include/arch/$(ARCH)
 
 # Suffixes rules
 .SUFFIXES: .s

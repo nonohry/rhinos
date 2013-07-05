@@ -28,7 +28,6 @@ OBJ	=	$(ASM_OUT) $(C_OUT)
 
 all: $(OBJ)
 
-
 asm:	$(ASM_OUT)
 
 depend:

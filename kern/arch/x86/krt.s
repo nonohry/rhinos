@@ -150,3 +150,4 @@ next:
 kstack:
 	times	KERN_STACK_SIZE	db 0
 kstack_top:
+	
