@@ -28,7 +28,7 @@
 
 /**
 
-   Constants: Segemnt descriptor attributes 
+   Constants: Segment descriptor attributes 
    ----------------------------------------
 
 **/
