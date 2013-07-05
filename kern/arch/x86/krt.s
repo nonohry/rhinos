@@ -1,9 +1,9 @@
 	;;/**
 	;;
-	;; 	khead.s
+	;; 	krt.s
 	;; 	=======
 	;;
-	;; 	Kernel entry point
+	;; 	Kernel Run Time
 	;;
 	;;**/
 
@@ -150,4 +150,3 @@ next:
 kstack:
 	times	KERN_STACK_SIZE	db 0
 kstack_top:
-	
