@@ -98,7 +98,7 @@
 
 **/
 
-#define VM_GDT_SIZE            TABLES_MAX_INDEX+1
+#define VM_GDT_SIZE            VM_GDT_MAX_INDEX+1
 #define VM_IDT_SIZE            52
 
 
@@ -426,5 +426,17 @@ PUBLIC struct pte
   ( (virtaddr_t)(VM_PAGING_SELFMAP<<VM_PAGING_DIRSHIFT) + (virtaddr_t)((__i)<<VM_PAGING_TBLSHIFT) )
 
 
+
+
+/**
+
+   Globals: GDT, IDT descriptors & TSS
+   -----------------------------------
+
+**/
+
+PUBLIC struct tss tss;                        /* TSS */
+PUBLIC struct table_desc gdt_desc;            /* GDT descriptor */
+PUBLIC struct table_desc idt_desc;            /* IDT descriptor */
 
 #endif
