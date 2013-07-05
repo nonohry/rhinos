@@ -1,6 +1,8 @@
 # RhinOS Makefile
 #
 
+ARCH	?=	x86
+
 MAKE	:=	make
 SUBDIRS	:=	kern lib srv
 RM	:=	rm -f
@@ -23,7 +25,7 @@ sub:
 	cd $$dir; \
 	echo "Entering $$dir"; \
 	$(MAKE) depend; \
-	$(MAKE) all; \
+	$(MAKE) all ARCH=$(ARCH); \
 	cd ..; \
 	done
 

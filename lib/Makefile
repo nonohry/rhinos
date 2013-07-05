@@ -1,9 +1,9 @@
 # RhinOS Lib Makefile
 #
 
-MAKE	=	make
-SUBDIRS	=	ipc
-RM	=	rm -f
+MAKE	:=	make
+SUBDIRS	:=	ipc
+RM	:=	rm -f
 
 
 all:	sub

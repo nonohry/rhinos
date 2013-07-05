@@ -3,14 +3,16 @@
 
 # Macros
 
-CC	=	gcc -Wall -c
-CFLAGS	=	-I../include -I../include/arch/x86
+ARCH	?=	x86
+
+CC	:=	gcc -Wall -c
+CFLAGS	:=	-I../include -I../include/arch/$(ARCH)
 
 # Files
 
-C_SRC	=	user.c
-C_OUT	=	${C_SRC:.c=.o}
-OBJ	=	$(ASM_OUT) $(C_OUT)
+C_SRC	:=	user.c
+C_OUT	:=	${C_SRC:.c=.o}
+OBJ	:=	$(ASM_OUT) $(C_OUT)
 
 # Targets
 

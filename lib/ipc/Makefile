@@ -3,9 +3,9 @@
 
 # Macros
 
-AS	=	nasm -f elf
-CC	=	gcc -Wall -c
-RM	=	rm -f
+AS	:=	nasm -f elf
+CC	:=	gcc -Wall -c
+RM	:=	rm -f
 
 # Suffixes rules
 .SUFFIXES: .s

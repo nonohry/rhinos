@@ -3,11 +3,13 @@
 
 # Macros
 
-AS	=	nasm -f elf
-CC	=	gcc -Wall -c
-RM	=	rm -f
-LD	=	ld -s -T link.ld
-CFLAGS	=	-I../include -I../include/arch/x86
+ARCH	?=	x86
+
+AS	:=	nasm -f elf
+CC	:=	gcc -Wall -c
+RM	:=	rm -f
+LD	:=	ld -s -T link.ld
+CFLAGS	:=	-I../include -I../include/arch/${ARCH}
 
 # Suffixes rules
 .SUFFIXES: .s
