@@ -1,14 +1,14 @@
 # RhinOS Makefile
 #
 
-MAKE	=	make
-SUBDIRS	=	kern lib srv
-RM	=	rm -f
-KERN	=	kern/kern
-USER	=	srv/user
-LD_KERN	=	ld -s -T link.ld
-LD_USER	=	ld -s -T link_user.ld
-CFLAGS	=	-Iinclude
+MAKE	:=	make
+SUBDIRS	:=	kern lib srv
+RM	:=	rm -f
+KERN	:=	kern/kern
+USER	:=	srv/user
+LD_KERN	:=	ld -s -T link.ld
+LD_USER	:=	ld -s -T link_user.ld
+CFLAGS	:=	-Iinclude -Iinclude/arch/x86
 
 
 # Objects

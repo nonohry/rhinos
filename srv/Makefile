@@ -4,7 +4,7 @@
 # Macros
 
 CC	=	gcc -Wall -c
-CFLAGS	=	-I../include
+CFLAGS	=	-I../include -I../include/arch/x86
 
 # Files
 
@@ -25,4 +25,4 @@ clean:
 
 # DO NOT DELETE
 
-user.o: ../include/define.h ../include/types.h ../include/ipc.h
+user.o: ../include/define.h ../include/arch/x86/types.h ../include/ipc.h
