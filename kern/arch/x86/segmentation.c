@@ -41,10 +41,9 @@ PRIVATE void init_int_gate(struct gate_desc* gate, u16_t seg, u32_t off,u8_t fla
 PRIVATE void init_tss_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl);
 PRIVATE void init_seg_desc(struct seg_desc *desc, lineaddr_t base, u32_t size);
 PRIVATE void init_gate_desc(struct gate_desc* gate, u16_t seg, u32_t off);
-
+PRIVATE u8_t gdt_init(void);
 
 PRIVATE struct seg_desc gdt[VM_GDT_SIZE];  /* GDT */
-PRIVATE struct gate_desc idt[VM_IDT_SIZE]; /* IDT */
 
 
 /**
@@ -319,7 +318,8 @@ PRIVATE void init_gate_desc(struct gate_desc* gate, u16_t seg, u32_t off)
 
 **/
  
-PUBLIC u8_t gdt_init(void)
+
+PRIVATE u8_t gdt_init(void)
 {
  
   /* GDT descriptor */
@@ -339,4 +339,5 @@ PUBLIC u8_t gdt_init(void)
 
   return EXIT_SUCCESS;
 }
+
 
