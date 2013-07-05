@@ -1,4 +1,4 @@
-# Kernel Makefile
+# x86 Makefile
 #
 
 # Macros
