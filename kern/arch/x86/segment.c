@@ -16,7 +16,7 @@
 
    - define.h
    - types.h
-   - const.h
+   - x86_const.h
    - segment.h    : self header
 
 **/
@@ -24,7 +24,7 @@
 
 #include <define.h>
 #include <types.h>
-#include "const.h"
+#include "x86_const.h"
 #include "segment.h"
 
 
@@ -327,15 +327,15 @@ PRIVATE u8_t gdt_init(void)
   gdt_desc.base = (lineaddr_t) gdt; /* Due to memory flat model set up by bootloader, in-used adresses are linear adresses */
 
   /* Kernel space segments */  
-  init_code_seg(&gdt[VM_GDT_KERN_CS_INDEX],(lineaddr_t) VM_GDT_KERN_BASE, VM_GDT_KERN_LIMIT, CONST_RING0);
-  init_data_seg(&gdt[VM_GDT_KERN_XS_INDEX],(lineaddr_t) VM_GDT_KERN_BASE, VM_GDT_KERN_LIMIT, CONST_RING0);
+  init_code_seg(&gdt[VM_GDT_KERN_CS_INDEX],(lineaddr_t) VM_GDT_KERN_BASE, VM_GDT_KERN_LIMIT, X86_CONST_RING0);
+  init_data_seg(&gdt[VM_GDT_KERN_XS_INDEX],(lineaddr_t) VM_GDT_KERN_BASE, VM_GDT_KERN_LIMIT, X86_CONST_RING0);
 
   /* User space segments */ 
-  init_code_seg(&gdt[VM_GDT_USER_CS_INDEX],(lineaddr_t) VM_GDT_USER_BASE, VM_GDT_USER_LIMIT, CONST_RING3);
-  init_data_seg(&gdt[VM_GDT_USER_XS_INDEX],(lineaddr_t) VM_GDT_USER_BASE, VM_GDT_USER_LIMIT, CONST_RING3);
+  init_code_seg(&gdt[VM_GDT_USER_CS_INDEX],(lineaddr_t) VM_GDT_USER_BASE, VM_GDT_USER_LIMIT, X86_CONST_RING3);
+  init_data_seg(&gdt[VM_GDT_USER_XS_INDEX],(lineaddr_t) VM_GDT_USER_BASE, VM_GDT_USER_LIMIT, X86_CONST_RING3);
 
   /* Global TSS */
-  init_tss_seg(&gdt[VM_GDT_TSS_INDEX], (lineaddr_t)&tss, sizeof(tss), CONST_RING0);
+  init_tss_seg(&gdt[VM_GDT_TSS_INDEX], (lineaddr_t)&tss, sizeof(tss), X86_CONST_RING0);
 
   return EXIT_SUCCESS;
 }
