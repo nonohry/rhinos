@@ -47,3 +47,35 @@ PUBLIC void serial_init(void)
 
  return;
 }
+
+
+/**
+
+   Function: void klib_putc(char c)
+   --------------------------------
+
+   Put a character on serial port
+
+**/
+
+
+PUBLIC void serial_putc(char c)
+{
+  u32_t i;
+  u8_t buf;
+
+  /* Wait for line release */
+  for(i=0;i<12345;i++)
+    {
+      x86_inb(SERIAL_PORT+5,&buf);
+      if (buf & 0x20)
+  	{
+  	  break;
+  	}
+    }
+
+  /* Put character */
+  x86_outb(SERIAL_PORT,c);
+ 
+  return;
+}

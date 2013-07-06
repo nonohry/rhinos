@@ -38,5 +38,17 @@
 #define SERIAL_MASK   0x20
 
 
+/**
+
+   Prototypes
+   ==========
+
+   Give access to serial port initialization and character output
+
+**/
+
+
+PUBLIC void serial_init(void);
+PUBLIC void serial_putc(char c);
 
 #endif

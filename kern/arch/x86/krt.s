@@ -17,17 +17,17 @@
 	;;
 	;; 	C code needed:
 	;;
-	;;	- start_main	: C initialization of GDT and IDT
+	;;	- setup_x86	: C initialization of GDT and IDT
 	;;	- gdt_desc	: GDT descriptor
 	;;	- idt_desc	: IDT descriptor
 	;; 	- main		: Kernel C main routine
 	;; 
 	;;**/
 	
-extern	start_main
-extern  gdt_desc
-extern  idt_desc
-extern  main
+extern	setup_x86
+;; extern  gdt_desc
+;; extern  idt_desc
+;; extern  main			
 
 
 
@@ -67,7 +67,7 @@ global _start
 	;; 	Function: _start
 	;; 	----------------
 	;;
-	;; 	Kernel entry point. Call start_main to initilize GDT & IDT.
+	;; 	Kernel entry point. Call setup_x86 to initialize GDT & IDT.
 	;; 	Then load GDT, IDT,  all the required selectors
 	;; 	and set up the kernel stack before jumping to C main
 	;;
@@ -77,15 +77,15 @@ global _start
 _start:
 	push	ebx
 	push 	eax
-	call	start_main
+	call	setup_x86
 	add 	esp,8
-	
-	lgdt	[gdt_desc]
-    	lidt	[idt_desc]
 
-	mov	ax,TSS_SELECTOR
-	ltr	ax
-	
+	;; 	lgdt	[gdt_desc]
+	;;     	lidt	[idt_desc]
+
+	;; 	mov	ax,TSS_SELECTOR
+	;; 	ltr	ax
+
 	jmp	next		; Clear processor cache
 
 next:
@@ -98,9 +98,9 @@ next:
 	mov     ax,SS_SELECTOR
 	mov     ss,ax
 	mov	esp,kstack_top
- 
-	jmp	CS_SELECTOR:main
 
+	;; 	jmp	CS_SELECTOR:main
+	jmp 	$		; Temporary debug
 
 	
 	;;/**
