@@ -44,11 +44,13 @@
    ==========
 
    Give access to serial port initialization and character output
+   serial_printf is a temporary function, for debug purpose only
 
 **/
 
 
 PUBLIC void serial_init(void);
+PUBLIC void serial_printf(const char* str,...);
 PUBLIC void serial_putc(char c);
 
 #endif

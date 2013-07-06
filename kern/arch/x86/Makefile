@@ -39,7 +39,8 @@ clean:
 
 # DO NOT DELETE
 
-setup.o: ../../../include/define.h ../../../include/arch/x86/types.h setup.h
+setup.o: ../../../include/define.h ../../../include/arch/x86/types.h serial.h
+setup.o: setup.h
 segment.o: ../../../include/define.h ../../../include/arch/x86/types.h
 segment.o: x86_const.h segment.h
 serial.o: ../../../include/define.h ../../../include/arch/x86/types.h

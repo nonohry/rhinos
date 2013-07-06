@@ -15,12 +15,14 @@
 
    - define.h
    - types.h
+   - serial.h       : output on serial port
    - setup.h        : self header
 
 **/
 
 #include <define.h>
 #include <types.h>
+#include "serial.h"
 #include "setup.h"
 
 
@@ -41,6 +43,14 @@
 
 PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
 {
+
+  /* Initialize serial port */
+  serial_init();
+
+  /* Hello world */
+  serial_printf("Hello World !\n");
+
+  /* Debug loop */
   while(1)
     {}
 
