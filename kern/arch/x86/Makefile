@@ -18,9 +18,9 @@ CFLAGS	:=	-I../../../include -I../../../include/arch/$(ARCH)
 	$(AS) $<
 
 # Files
-ASM_SRC	=	krt.s 
+ASM_SRC	=	krt.s x86_lib.s
 ASM_OUT	=	${ASM_SRC:.s=.o}
-C_SRC	=	segment.c
+C_SRC	=	segment.c serial.c
 C_OUT	=	${C_SRC:.c=.o}
 OBJ	=	$(ASM_OUT) $(C_OUT)
 
@@ -41,3 +41,5 @@ clean:
 
 segment.o: ../../../include/define.h ../../../include/arch/x86/types.h
 segment.o: x86_const.h segment.h
+serial.o: ../../../include/define.h ../../../include/arch/x86/types.h
+serial.o: x86_lib.h serial.h

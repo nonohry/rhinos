@@ -15,7 +15,7 @@
 
    - define.h
    - types.h
-   - klib.h.h            : self header
+   - klib.h            : self header
 
 **/
 
