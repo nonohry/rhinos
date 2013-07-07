@@ -48,7 +48,7 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
   serial_init();
 
   /* Hello world */
-  serial_printf("Hello World !\n");
+  serial_printf("Hello Mad World !\n");
 
   /* Debug loop */
   while(1)

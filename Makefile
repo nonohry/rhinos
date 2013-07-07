@@ -4,7 +4,7 @@
 ARCH	?=	x86
 
 MAKE	:=	make
-SUBDIRS	:=	kern kern/arch/$(ARCH) lib srv
+SUBDIRS	:=	kern lib srv kern/arch/$(ARCH)
 RM	:=	rm -f
 KERN	:=	kern/kern
 USER	:=	srv/user
