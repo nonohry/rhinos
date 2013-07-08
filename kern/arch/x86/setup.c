@@ -64,18 +64,6 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
       goto err_mem;
     }
 
-  u8_t i;
-  struct multiboot_mmap_entry* mmap = (u32_t)mbi->mmap_addr;
-  serial_printf("Memory Map:\n");
-
-  for(i=0;i<mbi->mmap_length;i++)
-    {
-	  serial_printf("0x%x%x \t 0x%x%x \t 0x%x\n",
-			(u32_t)((mmap[i].addr)>>32),(u32_t)(mmap[i].addr),
-			(u32_t)((mmap[i].len)>>32),(u32_t)(mmap[i].len),
-			mmap[i].type);
-    }
-
   /* Debug loop */
   while(1)
     {}
