@@ -54,18 +54,6 @@
 #define MULTIBOOT_MMAP_MAX       128
 
 
-/**
-   
-   Constants: types of memory in a E820 memory map
-   -----------------------------------------------
-
-**/
-
-#define E820_AVAILABLE    0x1
-#define E820_RESERVED     0x2
-#define E820_ACPI         0x3
-#define E820_ACPI_NVS     0x4
-
 
 /**
 
@@ -150,10 +138,22 @@ PUBLIC struct multiboot_mod_entry
 }__attribute__((packed));
 
 
+
+
+/** 
+
+    Global: multiboot information structure
+    ----------------------------------------
+
+**/
+
+struct multiboot_info* mbi;
+
+
 /**
 
    Prototypes
-   ==========
+   ----------
 
    Give access to main setup function
 
