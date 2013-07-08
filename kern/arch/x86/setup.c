@@ -59,6 +59,7 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
       goto err_magic;
     }
 
+  /* Setup e820 memory map */
   if (e820_setup(mbi) != EXIT_SUCCESS)
     {
       goto err_mem;
