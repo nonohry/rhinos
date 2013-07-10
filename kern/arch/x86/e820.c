@@ -69,7 +69,7 @@ PRIVATE u8_t e820_truncate32b(struct multiboot_info* bootinfo);
 **/
 
 
-static struct multiboot_mmap_entry mmap[MULTIBOOT_MMAP_MAX];
+struct multiboot_mmap_entry mmap[MULTIBOOT_MMAP_MAX];
 
 
 /**
@@ -160,12 +160,13 @@ PUBLIC u8_t e820_setup(struct multiboot_info* bootinfo)
       return EXIT_FAILURE;
     }
   
-  /* Truncate memory at 4GB */
+  
+  /* Truncate memory at 4GB */ 
   if ( e820_truncate32b(bootinfo) != EXIT_SUCCESS )
     {
       return EXIT_FAILURE;
     } 
-
+  
   return EXIT_SUCCESS;
 }
 
