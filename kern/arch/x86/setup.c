@@ -68,7 +68,11 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
       goto err_mem;
     }
   
+  /* Kernel boundaries */
+  serial_printf("Kernel is at 0x%x - 0x%x\n",X86_CONST_KERN_START,X86_CONST_KERN_END);
+  
   /* Boot modules */
+  serial_printf("Boot modules list is at 0x%x\n",mbi->mods_addr);
   for(i=0,mod_entry=(struct multiboot_mod_entry*)mbi->mods_addr;
       i<mbi->mods_count;
       i++,mod_entry++)
