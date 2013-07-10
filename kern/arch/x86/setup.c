@@ -48,6 +48,9 @@
 
 PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
 {
+  struct multiboot_mod_entry* mod_entry;
+  u8_t i;
+
   /* Initialize serial port */
   serial_init();
 
@@ -64,6 +67,18 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
     {
       goto err_mem;
     }
+
+  /* Boot modules */
+  serial_printf("%d modules at 0x%x\n",mbi->mods_count,mbi->mods_addr); 
+  for(i=0,mod_entry=(struct multiboot_mod_entry*)mbi->mods_addr;
+      i<mbi->mods_count;
+      i++,mod_entry++)
+    {
+      serial_printf("0x%x - 0x%x\n",
+		    mod_entry->start,
+		    mod_entry->end);
+    }
+
 
   /* Debug loop */
   while(1)
