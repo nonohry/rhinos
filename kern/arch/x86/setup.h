@@ -52,6 +52,7 @@
 #define MULTIBOOT_FLAG_VIDEO     0x800
 
 #define MULTIBOOT_MMAP_MAX       128
+#define MULTIBOOT_MODS_COUNT     3
 
 
 
@@ -147,7 +148,7 @@ PUBLIC struct multiboot_mod_entry
 
 **/
 
-struct multiboot_info* mbi;
+static struct multiboot_info mbi  __attribute__((section(".data")));;
 
 
 /**

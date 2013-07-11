@@ -25,7 +25,7 @@
 	
 global x86_outb
 global x86_inb
-
+global x86_mem_copy
 
 	
 	;;/**
@@ -76,3 +76,33 @@ x86_inb:
 	mov	esp,ebp
 	pop	ebp
 	ret
+
+
+	;;/**
+	;; 	Function void x86_mem_copy(addr_t src, addr_t dest, u32_t len)
+	;;	--------------------------------------------------------------
+	;;
+	;; 	Classical (quick & dirty) memcopy function
+	;;
+	;;**/
+
+	
+x86_mem_copy:
+	push 	ebp
+	mov  	ebp,esp
+	push	esi
+	push	edi
+	push	ecx
+	cld
+	mov  	esi,[ebp+8]	; Get `src`
+	mov	edi,[ebp+12]	; Get `dest`
+	mov	ecx,[ebp+16] 	; Get `len`
+	shr	ecx,0x2		; len/4
+	rep movsd		; Copy !
+	pop	ecx
+	pop	edi
+	pop	esi
+	mov	esp,ebp
+	pop	ebp
+	ret
+	

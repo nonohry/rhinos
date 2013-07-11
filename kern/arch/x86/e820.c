@@ -69,7 +69,7 @@ PRIVATE u8_t e820_truncate32b(struct multiboot_info* bootinfo);
 **/
 
 
-static struct multiboot_mmap_entry mmap[MULTIBOOT_MMAP_MAX];
+static struct multiboot_mmap_entry mmap[MULTIBOOT_MMAP_MAX] __attribute__((section(".data")));
 
 
 /**
