@@ -68,56 +68,45 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
   /* Initialize serial port */
   serial_init();
 
-  serial_printf("Multiboot Structure is at 0x%x\n",mbi_addr);
+  /* Multiboot check */
+  if (magic != MULTIBOOT_MAGIC)
+    {
+      goto err;
+    }
 
   /* Retrieve multiboot header */
   x86_mem_copy(mbi_addr,(u32_t)&mbi,sizeof(struct multiboot_info));
-	       
-  serial_printf("New multiboot Structure is at 0x%x\n",(u32_t)&mbi);
-  
-
-  if (magic != MULTIBOOT_MAGIC)
-    {
-      goto err_magic;
-    }
-  
-  serial_printf("Grub Memory map is at 0x%x\n",mbi.mmap_addr);
-
 
   /* Setup e820 memory map */
   if (e820_setup(&mbi) != EXIT_SUCCESS)
     {
-      goto err_mem;
+      serial_printf("Memory Error\n");
+      goto err;
+    }
+  
+  /* Check boot modules */
+  if (mbi.mods_count != MULTIBOOT_MODS_COUNT)
+    {
+      serial_printf("Boot modules count error\n");
+      goto err;
     }
 
-  serial_printf("New Memory map is at 0x%x\n",mbi.mmap_addr);
-  
-  /* Kernel boundaries */
-  serial_printf("Kernel is at 0x%x - 0x%x\n",X86_CONST_KERN_START,X86_CONST_KERN_END);
-  
-  /* Boot modules */
-  serial_printf("Boot modules list is at 0x%x\n",mbi.mods_addr);
+  /* Relocate boot modules lists */
   for(i=0,mod_entry=(struct multiboot_mod_entry*)mbi.mods_addr;
       i<mbi.mods_count;
       i++,mod_entry++)
     {
-      serial_printf("0x%x - 0x%x %s\n",
-		    mod_entry->start,
-		    mod_entry->end,
-		    mod_entry->cmdline);
+      
+      mods_list[i] = *mod_entry;
+
     }
 
-  serial_printf("New boot modules list is at 0x%x\n",(u32_t)mods_list);
 
   /* Debug loop */
   while(1)
     {}
 
- err_mem:
-
-  serial_printf("Memory Error\n");
-
- err_magic:
+ err:
 
   serial_printf("Multiboot Error\n");
 
