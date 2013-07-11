@@ -16,6 +16,7 @@
    - define.h
    - types.h
    - x86_const.h
+   - x86_lib.h
    - serial.h       : output on serial port
    - e820.h         : e820 memory map
    - setup.h        : self header
@@ -64,6 +65,7 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
 {
   struct multiboot_mod_entry* mod_entry;
   u8_t i;
+  u32_t limit;
 
   /* Initialize serial port */
   serial_init();
@@ -98,10 +100,38 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
     {
       
       mods_list[i] = *mod_entry;
-
     }
 
+  /* Relocate boot modules */
+  limit = X86_ALIGN_SUP(X86_CONST_KERN_END);
+  for(i=0;i<MULTIBOOT_MODS_COUNT;i++)
+    {
+ 
+      if (mods_list[i].start >= limit)
+	{
+	  /* Copy boot module */
+	  x86_mem_copy(mods_list[i].start,limit,mods_list[i].end - mods_list[i].start + 1);
 
+	  /* Update module list */
+	  mods_list[i].end = limit + mods_list[i].end - mods_list[i].start + 1;
+	  mods_list[i].start = limit;
+
+	  limit += X86_ALIGN_SUP((mods_list[i].end - mods_list[i].start + 1));
+
+	}
+      else
+	{
+	  serial_printf("Overlapping boot module: 0x%x - 0x%x\n",mods_list[i].start,mods_list[i].end);
+	  goto err;
+	}
+    }
+
+  /* Update multiboot info boot modules part */
+  mbi.mods_addr = (u32_t)mods_list;
+
+  /* Note: `limit` is now the first available byte address in upper mem */
+
+  
   /* Debug loop */
   while(1)
     {}

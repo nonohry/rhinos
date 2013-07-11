@@ -45,4 +45,4 @@ e820.o: x86_const.h serial.h setup.h e820.h
 segment.o: ../../../include/define.h ../../../include/arch/x86/types.h
 segment.o: x86_const.h segment.h
 serial.o: ../../../include/define.h ../../../include/arch/x86/types.h
-serial.o: x86_lib.h serial.h
+serial.o: x86_lib.h x86_const.h serial.h
