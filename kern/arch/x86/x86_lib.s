@@ -27,6 +27,9 @@ global x86_outb
 global x86_inb
 global x86_mem_copy
 global x86_mem_set
+global x86_load_pd
+global x86_activate_paging
+
 	
 	;;/**
 	;;
@@ -129,6 +132,57 @@ x86_mem_set:
 	shr	ecx,0x2		; len/4
 	rep stosd		; Set !
 	pop	ecx
+	pop	edi
+	pop	esi
+	mov	esp,ebp
+	pop	ebp
+	ret
+
+
+	;;/**
+	;; 
+	;; 	Function: void x86_load_pd(u32_t pd)
+	;;	-------------------------------------
+	;;
+	;; 	Load the page directory `pd` inr CR3 processor register
+	;;
+	;;**/
+
+	
+x86_load_pd:
+	push 	ebp
+	mov  	ebp,esp
+	push	esi
+	push	edi
+	mov  	eax,[ebp+8]	; move `pd` in EAX	
+	mov	cr3,eax		; load CR3
+	pop	edi		; Restaure EDI
+	pop	esi
+	mov	esp,ebp
+	pop	ebp
+	ret	
+
+
+	;;/**
+	;; 
+	;; 	Function: void x86_activate_paging(void)
+	;;	----------------------------------------
+	;;
+	;;	Activate paging through CR0 register
+	;;
+	;;**/
+	
+	
+
+x86_activate_paging:
+	push 	ebp
+	mov  	ebp,esp
+	push	esi
+	push	edi
+	xor	eax,eax		; Nullify EAX
+	mov	eax,cr0		; Get CR0 in EAX
+	or	eax, 0x80000000	; Activate PG bit (pagination)
+	mov	cr0,eax		; Set CR0 to activate pagination
 	pop	edi
 	pop	esi
 	mov	esp,ebp
