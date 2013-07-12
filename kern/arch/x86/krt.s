@@ -25,7 +25,7 @@
 	;;**/
 	
 extern	setup_x86
-;; extern  gdt_desc
+extern  gdt_desc
 ;; extern  idt_desc
 ;; extern  main			
 
@@ -80,11 +80,11 @@ _start:
 	call	setup_x86
 	add 	esp,8
 
-	;; 	lgdt	[gdt_desc]
+	lgdt	[gdt_desc]
 	;;     	lidt	[idt_desc]
 
-	;; 	mov	ax,TSS_SELECTOR
-	;; 	ltr	ax
+	mov	ax,TSS_SELECTOR
+	ltr	ax
 
 	jmp	next		; Clear processor cache
 
@@ -98,6 +98,13 @@ next:
 	mov     ax,SS_SELECTOR
 	mov     ss,ax
 	mov	esp,kstack_top
+	jmp	CS_SELECTOR:paging
+
+paging:
+	xor	eax,eax		; Nullify EAX
+	mov	eax,cr0		; Get CR0 in EAX
+	or	eax, 0x80000000	; Activate PG bit (pagination)
+	mov	cr0,eax		; Set CR0 to activate paging
 
 	;; 	jmp	CS_SELECTOR:main
 	jmp 	$		; Temporary debug

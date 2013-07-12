@@ -47,6 +47,7 @@
 PUBLIC u8_t vm_paging_setup(physaddr_t base)
 {
   u16_t i;
+  physaddr_t p;
   struct pte* table;
 
   /* Allocate kernel page directory */
@@ -90,10 +91,23 @@ PUBLIC u8_t vm_paging_setup(physaddr_t base)
 
 
 
+  /* Identity-map kernel space */
+  for(p=X86_ALIGN_INF(X86_CONST_KERN_START);
+      p<X86_ALIGN_SUP(base);
+      p+=X86_CONST_PAGE_SIZE)
+    {
+      if (vm_paging_map((virtaddr_t)p, p) == EXIT_FAILURE)
+	{
+	  return EXIT_FAILURE;
+	}
+    }
 
+  /* Load kernel page directory */
+  x86_load_pd((physaddr_t)kern_pd);
 
   return EXIT_SUCCESS;
 }
+
 
 
 
@@ -148,6 +162,7 @@ PUBLIC u8_t vm_paging_map(virtaddr_t vaddr, physaddr_t paddr)
 
   return EXIT_SUCCESS;
 }
+
 
 
 /**

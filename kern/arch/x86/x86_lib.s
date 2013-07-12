@@ -28,7 +28,6 @@ global x86_inb
 global x86_mem_copy
 global x86_mem_set
 global x86_load_pd
-global x86_activate_paging
 
 	
 	;;/**
@@ -161,30 +160,3 @@ x86_load_pd:
 	mov	esp,ebp
 	pop	ebp
 	ret	
-
-
-	;;/**
-	;; 
-	;; 	Function: void x86_activate_paging(void)
-	;;	----------------------------------------
-	;;
-	;;	Activate paging through CR0 register
-	;;
-	;;**/
-	
-	
-
-x86_activate_paging:
-	push 	ebp
-	mov  	ebp,esp
-	push	esi
-	push	edi
-	xor	eax,eax		; Nullify EAX
-	mov	eax,cr0		; Get CR0 in EAX
-	or	eax, 0x80000000	; Activate PG bit (pagination)
-	mov	cr0,eax		; Set CR0 to activate pagination
-	pop	edi
-	pop	esi
-	mov	esp,ebp
-	pop	ebp
-	ret
