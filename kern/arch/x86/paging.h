@@ -180,4 +180,29 @@ PUBLIC struct pte
 
 
 
+/**
+
+   Global: kern_pd
+   ---------------
+
+   Kernel page directory
+
+
+**/
+
+
+PUBLIC struct pde* kern_pd;
+
+/**
+
+   Prototypes
+   ----------
+
+   Give access to paging setup
+
+**/
+
+PUBLIC u8_t paging_setup(physaddr_t base);
+
+
 #endif
