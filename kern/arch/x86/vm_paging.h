@@ -1,14 +1,14 @@
 /**
 
-   paging.h
-   ========
+   vm_paging.h
+   ===========
 
-   x86 Paging header. 
+   Virtual Memory Paging header. 
  
 **/
 
-#ifndef PAGING_H
-#define PAGING_H
+#ifndef VM_PAGING_H
+#define VM_PAGING_H
 
 
 /**

@@ -26,7 +26,7 @@
 global x86_outb
 global x86_inb
 global x86_mem_copy
-
+global x86_mem_set
 	
 	;;/**
 	;;
@@ -105,4 +105,32 @@ x86_mem_copy:
 	mov	esp,ebp
 	pop	ebp
 	ret
+
 	
+;;/**
+	;; 	Function: x86_mem_set(u32_t val, addr_t dest, u32_t len)
+	;;	---------------------------------------------------------
+	;;
+	;; 	Classical (quick & dirty) memset function
+	;;
+	;;**/
+	
+	
+x86_mem_set:
+	push 	ebp
+	mov  	ebp,esp
+	push	esi
+	push	edi
+	push	ecx
+	cld
+	mov  	eax,[ebp+8]	; Get `val`
+	mov	edi,[ebp+12]	; Get `dest`
+	mov	ecx,[ebp+16] 	; Get `len`
+	shr	ecx,0x2		; len/4
+	rep stosd		; Set !
+	pop	ecx
+	pop	edi
+	pop	esi
+	mov	esp,ebp
+	pop	ebp
+	ret

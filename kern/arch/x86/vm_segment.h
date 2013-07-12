@@ -1,15 +1,15 @@
 /**
 
-   segment.h
-   ==============
+   vm_segment.h
+   =============
 
    Virtual Memory Segmentation Setup Header 
 
 **/
 
 
-#ifndef SEGMENT_H
-#define SEGMENT_H
+#ifndef VM_SEGMENT_H
+#define VM_SEGMENT_H
 
 
 /**

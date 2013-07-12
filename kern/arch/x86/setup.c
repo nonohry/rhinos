@@ -19,6 +19,8 @@
    - x86_lib.h
    - serial.h       : output on serial port
    - e820.h         : e820 memory map
+   - vm_segment.h   : segmentation setup
+   - vm_paging.h    : paging setup
    - setup.h        : self header
 
 **/
@@ -29,6 +31,8 @@
 #include "x86_lib.h"
 #include "serial.h"
 #include "e820.h"
+#include "vm_segment.h"
+#include "vm_paging.h"
 #include "setup.h"
 
 
@@ -130,7 +134,7 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
   mbi.mods_addr = (u32_t)mods_list;
 
   /* Note: `limit` is now the first available byte address in upper mem */
-
+  paging_setup(limit);
   
   /* Debug loop */
   while(1)

@@ -148,7 +148,7 @@ PUBLIC struct multiboot_mod_entry
 
 **/
 
-static struct multiboot_info mbi  __attribute__((section(".data")));;
+struct multiboot_info mbi;
 
 
 /**
