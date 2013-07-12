@@ -152,7 +152,7 @@ PUBLIC u8_t paging_map(virtaddr_t vaddr, physaddr_t paddr, u8_t flags)
   pte = PAGING_GET_PTE(vaddr);
   pd = (flags&PAGING_IDENTITY?kern_PD:(struct pde*)PAGING_GET_PD());
 
-  /* Cannot map self ampping area */
+  /* Cannot map self mapping area */
   if ( pde == PAGING_SELFMAP )
     {
       return EXIT_FAILURE;

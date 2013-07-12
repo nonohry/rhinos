@@ -94,3 +94,106 @@ PUBLIC u8_t vm_paging_setup(physaddr_t base)
 
   return EXIT_SUCCESS;
 }
+
+
+
+/**
+
+   Function: u8_t vm_paging_map(virtaddr_t vaddr, physaddr_t paddr)
+   ----------------------------------------------------------------
+
+
+   Associate `vaddr` and `paddr` in kernel space.
+
+
+**/
+
+
+PUBLIC u8_t vm_paging_map(virtaddr_t vaddr, physaddr_t paddr)
+{
+
+  struct pte* table;
+  u16_t pde,pte;
+
+  /* Get page directory and page table entries from `vaddr` */
+  pde = VM_PAGING_GET_PDE(vaddr);
+  pte = VM_PAGING_GET_PTE(vaddr);
+
+  /* Cannot map self mapping area */
+  if ( pde == VM_PAGING_SELFMAP )
+    {
+      return EXIT_FAILURE;
+    }
+
+  /* Kernel PDE must be pre-allocated */
+  if (!(kern_pd[pde].present))
+    {
+      return EXIT_FAILURE;
+    }
+
+  /* Retrieve page table */
+  table = (struct pte*)(kern_pd[pde].baseaddr<<VM_PAGING_BASESHIFT);
+  
+  /* If page table entry exists, mapping already exists (not good) */
+  if (table[pte].present)
+    {
+      return EXIT_FAILURE;
+    }
+
+  /* Point page table entry to the desired physical page */
+  table[pte].present = 1;
+  table[pte].rw = 1;
+  table[pte].user = 0;
+  table[pte].baseaddr = paddr >> VM_PAGING_BASESHIFT;
+
+  return EXIT_SUCCESS;
+}
+
+
+/**
+
+   Function: u8_t vm_paging_unmap(virtaddr_t vaddr)
+   ------------------------------------------------
+
+
+   Remove the association virtual/physical corresponding to the virtaul address `vaddr` in kernel page directory
+
+**/
+
+
+PUBLIC u8_t vm_paging_unmap(virtaddr_t vaddr)
+{
+  struct pte* table;
+  u16_t pde,pte;
+
+
+  /* Get page directory and page table entries from `vaddr` */ 
+  pde = VM_PAGING_GET_PDE(vaddr);
+  pte = VM_PAGING_GET_PTE(vaddr);
+ 
+
+  /* Check page table entry existence as well as validity in regards to self mapping */
+  if ( (pde == VM_PAGING_SELFMAP)||(!kern_pd[pde].present) )
+    {
+      return EXIT_FAILURE;
+    }
+
+  /* Get page table */
+  table = (struct pte*)(kern_pd[pde].baseaddr<<VM_PAGING_BASESHIFT);
+
+  /* No page table ? Error */
+  if (!table[pte].present)
+    {
+      return EXIT_FAILURE;
+    }
+
+  /* Nullify the corresponding page table entry */
+  table[pte].present=0;
+  table[pte].rw=0;
+  table[pte].user=0;
+  table[pte].baseaddr=0;
+
+  return EXIT_SUCCESS;
+	   
+}
+  

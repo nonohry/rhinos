@@ -198,11 +198,12 @@ PUBLIC struct pde* kern_pd;
    Prototypes
    ----------
 
-   Give access to paging setup
+   Give access to paging setup and un/mapping
 
 **/
 
 PUBLIC u8_t vm_paging_setup(physaddr_t base);
-
+PUBLIC u8_t vm_paging_map(virtaddr_t vaddr, physaddr_t paddr);
+PUBLIC u8_t vm_paging_unmap(virtaddr_t vaddr);
 
 #endif
