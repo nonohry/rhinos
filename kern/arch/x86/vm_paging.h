@@ -202,7 +202,7 @@ PUBLIC struct pde* kern_pd;
 
 **/
 
-PUBLIC u8_t paging_setup(physaddr_t base);
+PUBLIC u8_t vm_paging_setup(physaddr_t base);
 
 
 #endif

@@ -44,20 +44,16 @@
 **/
 
 
-PUBLIC u8_t paging_setup(physaddr_t base)
+PUBLIC u8_t vm_paging_setup(physaddr_t base)
 {
   u16_t i;
   struct pte* table;
-
-  serial_printf("init base: 0x%x\n",base);
 
   /* Allocate kernel page directory */
   kern_pd = (struct pde*)base;
 
   /* Update `base` */
   base += VM_PAGING_ENTRIES*sizeof(struct pde);
-
-  serial_printf("base after kern_pd: 0x%x\n",base);
 
   /* Clean page directory */
   x86_mem_set(0,(addr_t)kern_pd,VM_PAGING_ENTRIES*sizeof(struct pde));
@@ -81,8 +77,7 @@ PUBLIC u8_t paging_setup(physaddr_t base)
       table = (struct pte*)base;
       /* Update `base` */
       base += VM_PAGING_ENTRIES*sizeof(struct pte);
-      serial_printf("base after page table n°%d: 0x%x\n",i,base);
-
+  
       /* Point page directory entry `i` to that new physical page */
       kern_pd[i].present = 1;
       kern_pd[i].rw = 1;
@@ -92,6 +87,8 @@ PUBLIC u8_t paging_setup(physaddr_t base)
       /* Clean page table */
       x86_mem_set(0,(addr_t)table,VM_PAGING_ENTRIES*sizeof(struct pte));
     }
+
+
 
 
 

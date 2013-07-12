@@ -134,7 +134,10 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
   mbi.mods_addr = (u32_t)mods_list;
 
   /* Note: `limit` is now the first available byte address in upper mem */
-  paging_setup(limit);
+
+  /* Memory model setup */
+  vm_segment_setup();
+  vm_paging_setup(limit);
   
   /* Debug loop */
   while(1)

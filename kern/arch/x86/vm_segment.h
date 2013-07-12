@@ -285,4 +285,16 @@ PUBLIC struct tss
 PUBLIC struct tss tss;                        /* TSS */
 PUBLIC struct table_desc gdt_desc;            /* GDT descriptor */
 
+
+/** 
+
+    Prototypes
+    ----------
+
+    Give access to segmentation setup
+
+**/
+
+PUBLIC u8_t vm_segment_setup(void);
+
 #endif

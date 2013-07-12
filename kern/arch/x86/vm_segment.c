@@ -35,20 +35,72 @@
 
 **/
 
-PRIVATE void init_code_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl);
-PRIVATE void init_data_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl);
-PRIVATE void init_int_gate(struct gate_desc* gate, u16_t seg, u32_t off,u8_t flags);
-PRIVATE void init_tss_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl);
-PRIVATE void init_seg_desc(struct seg_desc *desc, lineaddr_t base, u32_t size);
-PRIVATE void init_gate_desc(struct gate_desc* gate, u16_t seg, u32_t off);
-PRIVATE u8_t gdt_init(void);
-
-PRIVATE struct seg_desc gdt[VM_GDT_SIZE];  /* GDT */
+PRIVATE void create_code_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl);
+PRIVATE void create_data_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl);
+PRIVATE void create_int_gate(struct gate_desc* gate, u16_t seg, u32_t off,u8_t flags);
+PRIVATE void create_tss_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl);
+PRIVATE void create_seg_desc(struct seg_desc *desc, lineaddr_t base, u32_t size);
+PRIVATE void create_gate_desc(struct gate_desc* gate, u16_t seg, u32_t off);
 
 
 /**
 
-   Function: void init_code_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl)
+   Static: gdt
+   -----------
+
+   Global Descriptors Table
+
+**/
+
+static struct seg_desc gdt[VM_GDT_SIZE]__attribute__((section(".data")));
+
+
+/**
+
+   Function: u8_t vm_segment_setup(void)
+   -------------------------------------
+
+   Global Descriptors Table  initialization.
+   Set up a memory flat model by defining only 2 segmented spaces
+   
+   1- Kernel space : Ring 0 space from 0  to 4GB
+   2- User space   : Ring 3 space from 0 to 4GB
+
+   Each space has a code segment for programs code and a data segment for everything else.
+   
+   Kernel uses only one Task State Segment for task switching (just to save ESP0). That TSS is also
+   defined in the GDT.
+
+**/
+ 
+
+PUBLIC u8_t vm_segment_setup(void)
+{
+ 
+  /* GDT descriptor */
+  gdt_desc.limit = sizeof(gdt) - 1;  
+  gdt_desc.base = (lineaddr_t) gdt; /* Due to memory flat model set up by bootloader, in-used adresses are linear adresses */
+
+  /* Kernel space segments */  
+  create_code_seg(&gdt[VM_GDT_KERN_CS_INDEX],(lineaddr_t) VM_GDT_KERN_BASE, VM_GDT_KERN_LIMIT, X86_CONST_RING0);
+  create_data_seg(&gdt[VM_GDT_KERN_XS_INDEX],(lineaddr_t) VM_GDT_KERN_BASE, VM_GDT_KERN_LIMIT, X86_CONST_RING0);
+
+  /* User space segments */ 
+  create_code_seg(&gdt[VM_GDT_USER_CS_INDEX],(lineaddr_t) VM_GDT_USER_BASE, VM_GDT_USER_LIMIT, X86_CONST_RING3);
+  create_data_seg(&gdt[VM_GDT_USER_XS_INDEX],(lineaddr_t) VM_GDT_USER_BASE, VM_GDT_USER_LIMIT, X86_CONST_RING3);
+
+  /* Global TSS */
+  create_tss_seg(&gdt[VM_GDT_TSS_INDEX], (lineaddr_t)&tss, sizeof(tss), X86_CONST_RING0);
+
+  return EXIT_SUCCESS;
+}
+
+
+
+
+/**
+
+   Function: void create_code_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl)
    ------------------------------------------------------------------------------------------
 
    Create the code segment descriptor `desc` starting at `base` address with len `size` and acces 
@@ -63,11 +115,11 @@ PRIVATE struct seg_desc gdt[VM_GDT_SIZE];  /* GDT */
 **/
 
 
-PRIVATE void init_code_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl)
+PRIVATE void create_code_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl)
 {
 
   /* Generic initialization */
-  init_seg_desc(desc,base,size);
+  create_seg_desc(desc,base,size);
 
   /* D Flag (32bits) */
   desc->granularity |= VM_SEG_D;
@@ -84,7 +136,7 @@ PRIVATE void init_code_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u
 
 /**
 
-   Function: void init_data_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl)
+   Function: void create_data_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl)
    ------------------------------------------------------------------------------------------
 
    Create the code segment descriptor `desc` starting at `base` address with len `size` and acces 
@@ -99,11 +151,11 @@ PRIVATE void init_code_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u
 **/
 
 
-PRIVATE void init_data_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl)
+PRIVATE void create_data_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl)
 {
 
   /* Generic initialization */
-  init_seg_desc(desc,base,size);
+  create_seg_desc(desc,base,size);
 
   /* B Flag*/
   desc->granularity |= VM_SEG_B;
@@ -119,7 +171,7 @@ PRIVATE void init_data_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u
 
 /**
 
-   Function: void init_int_gate(struct gate_desc* gate, u16_t seg, u32_t off,u8_t flags)
+   Function: void create_int_gate(struct gate_desc* gate, u16_t seg, u32_t off,u8_t flags)
    -------------------------------------------------------------------------------------
 
   
@@ -155,12 +207,12 @@ PRIVATE void init_data_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u
 
 
 
-PRIVATE void init_int_gate(struct gate_desc* gate, u16_t seg, u32_t off,u8_t flags)
+PRIVATE void create_int_gate(struct gate_desc* gate, u16_t seg, u32_t off,u8_t flags)
 {
   u8_t magic = 14;  /* 14 = 00001110b */
 
   /* Generic initialization */
-  init_gate_desc(gate,seg,off);
+  create_gate_desc(gate,seg,off);
 
   /* Attributes (bits 32 to 48) */
   gate->attributes = magic | flags;
@@ -174,7 +226,7 @@ PRIVATE void init_int_gate(struct gate_desc* gate, u16_t seg, u32_t off,u8_t fla
 
 /**
 
-   Function: void init_tss_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl)
+   Function: void create_tss_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl)
    -----------------------------------------------------------------------------------------
 
    Initialize TSS segment descriptor `desc` starting at `base` address with len `size` and acces 
@@ -186,11 +238,11 @@ PRIVATE void init_int_gate(struct gate_desc* gate, u16_t seg, u32_t off,u8_t fla
 **/
 
 
-PRIVATE void init_tss_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl)
+PRIVATE void create_tss_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl)
 {
 
   /* Generic initialization */
-  init_seg_desc(desc,base,size);
+  create_seg_desc(desc,base,size);
 
   /* Attributes */
   desc->attributes = (dpl << VM_SEG_DPL_SHIFT) | VM_SEG_PRESENT | VM_SEG_TSS;
@@ -204,7 +256,7 @@ PRIVATE void init_tss_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8
 
 /**
 
-   Function: void init_seg_desc(struct seg_desc *desc, lineaddr_t base, u32_t size)
+   Function: void create_seg_desc(struct seg_desc *desc, lineaddr_t base, u32_t size)
    --------------------------------------------------------------------------------
 
    Initialize segment descriptor `desc` starting at `base` address with len `size`.
@@ -244,7 +296,7 @@ PRIVATE void init_tss_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8
 **/
    
 
-PRIVATE void init_seg_desc(struct seg_desc *desc, lineaddr_t base, u32_t size)
+PRIVATE void create_seg_desc(struct seg_desc *desc, lineaddr_t base, u32_t size)
 {
 
   /* Base address */
@@ -274,16 +326,16 @@ PRIVATE void init_seg_desc(struct seg_desc *desc, lineaddr_t base, u32_t size)
 
 /**
 
-   Function: void init_gate_desc(struct gate_desc* gate, u16_t seg, u32_t off)
+   Function: void create_gate_desc(struct gate_desc* gate, u16_t seg, u32_t off)
    ---------------------------------------------------------------------------
 
    Create the gate decriptor `gate` with segment selector `seg` and  offset `off`.
-   Gate descriptors structures are described in `init_int_gate` and `init_trap_gate`
+   Gate descriptors structures are described in `create_int_gate` and `create_trap_gate`
 
 **/
 
 
-PRIVATE void init_gate_desc(struct gate_desc* gate, u16_t seg, u32_t off)
+PRIVATE void create_gate_desc(struct gate_desc* gate, u16_t seg, u32_t off)
 {
 
   /* Offset */
@@ -300,44 +352,5 @@ PRIVATE void init_gate_desc(struct gate_desc* gate, u16_t seg, u32_t off)
 }
 
 
-/**
-
-   Function: u8_t gdt_init(void)
-   -----------------------------
-
-   Global Descriptors Table  initialization.
-   Set up a memory flat model by defining only 2 segmented spaces
-   
-   1- Kernel space : Ring 0 space from 0  to 4GB
-   2- User space   : Ring 3 space from 0 to 4GB
-
-   Each space has a code segment for programs code and a data segment for everything else.
-   
-   Kernel uses only one Task State Segment for task switching (just to save ESP0). That TSS is also
-   defined in the GDT.
-
-**/
- 
-
-PRIVATE u8_t gdt_init(void)
-{
- 
-  /* GDT descriptor */
-  gdt_desc.limit = sizeof(gdt) - 1;  
-  gdt_desc.base = (lineaddr_t) gdt; /* Due to memory flat model set up by bootloader, in-used adresses are linear adresses */
-
-  /* Kernel space segments */  
-  init_code_seg(&gdt[VM_GDT_KERN_CS_INDEX],(lineaddr_t) VM_GDT_KERN_BASE, VM_GDT_KERN_LIMIT, X86_CONST_RING0);
-  init_data_seg(&gdt[VM_GDT_KERN_XS_INDEX],(lineaddr_t) VM_GDT_KERN_BASE, VM_GDT_KERN_LIMIT, X86_CONST_RING0);
-
-  /* User space segments */ 
-  init_code_seg(&gdt[VM_GDT_USER_CS_INDEX],(lineaddr_t) VM_GDT_USER_BASE, VM_GDT_USER_LIMIT, X86_CONST_RING3);
-  init_data_seg(&gdt[VM_GDT_USER_XS_INDEX],(lineaddr_t) VM_GDT_USER_BASE, VM_GDT_USER_LIMIT, X86_CONST_RING3);
-
-  /* Global TSS */
-  init_tss_seg(&gdt[VM_GDT_TSS_INDEX], (lineaddr_t)&tss, sizeof(tss), X86_CONST_RING0);
-
-  return EXIT_SUCCESS;
-}
 
 
