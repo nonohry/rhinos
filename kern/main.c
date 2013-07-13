@@ -33,7 +33,7 @@
 
    Kernel main function
 
-   It is responsible for initializing kernel services and launch servers
+   It is responsible for initializing kernel services and launching servers
 
 **/
 
