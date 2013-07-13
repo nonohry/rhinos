@@ -10,8 +10,8 @@
 **/
 
 
-#ifndef VM_ARCH_H
-#define VM_ARCH_H
+#ifndef ARCH_VM_H
+#define ARCH_VM_H
 
 
 /**
