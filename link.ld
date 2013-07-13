@@ -38,6 +38,11 @@ SECTIONS
 		. = ALIGN(4096);
 	}
 
+ 	/DISCARD/ : 
+	{ 
+		*(.eh_frame)
+	}
+
 	/* Provide end symbols */
 	PROVIDE(__CONST_KERN_END = .);
 	PROVIDE(___CONST_KERN_END = .);
