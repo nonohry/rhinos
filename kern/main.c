@@ -23,7 +23,7 @@
 
 #include <define.h>
 #include <types.h>
-#include <arch_io>
+#include <arch_io.h>
 
 
 /**
@@ -41,7 +41,7 @@
 PUBLIC int main(void)
 {
 
-  arch_printf("Hello World !\n");
+  arch_printf("Hello World (from main) !\n");
 
   while(1)
     {

@@ -34,29 +34,15 @@
 
 /** 
 
-    Function Pointers
-    -----------------
+    Function Pointer
+    ----------------
 
-    Glue for map & unmap
-
-**/
-
-
-PUBLIC void (*arch_printf)(const char* str,...);
-
-
-
-/**
-
-   Function Pointers Assignement
-   -----------------------------
-
-   Define arch_map & arch_unmap
+    Glue for printf
 
 **/
 
 
-arch_printf = &serial_printf;
+PUBLIC void (*arch_printf)(const char* str,...) = &serial_printf;
 
 
 #endif
