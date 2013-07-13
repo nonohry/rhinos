@@ -137,7 +137,7 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
 
   /* Memory model setup */
   vm_segment_setup();
-  vm_paging_setup(limit);
+  vm_paging_setup(&limit);
 
   return;
 

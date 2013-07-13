@@ -32,8 +32,8 @@
 
 /**
 
-   Function: u8_t paging_setup(addr_t base)
-   ----------------------------------------
+   Function: u8_t paging_setup(physaddr_t* base)
+   ---------------------------------------------
 
    Setup paging, using `base` as the start of a memory pool to create objects required for initilization.
 
@@ -44,17 +44,17 @@
 **/
 
 
-PUBLIC u8_t vm_paging_setup(physaddr_t base)
+PUBLIC u8_t vm_paging_setup(physaddr_t* base)
 {
   u16_t i;
   physaddr_t p;
   struct pte* table;
 
   /* Allocate kernel page directory */
-  kern_pd = (struct pde*)base;
+  kern_pd = (struct pde*)*base;
 
   /* Update `base` */
-  base += VM_PAGING_ENTRIES*sizeof(struct pde);
+  *base += VM_PAGING_ENTRIES*sizeof(struct pde);
 
   /* Clean page directory */
   x86_mem_set(0,(addr_t)kern_pd,VM_PAGING_ENTRIES*sizeof(struct pde));
@@ -75,9 +75,9 @@ PUBLIC u8_t vm_paging_setup(physaddr_t base)
 	}
          
       /* Allocate a page table */
-      table = (struct pte*)base;
+      table = (struct pte*)*base;
       /* Update `base` */
-      base += VM_PAGING_ENTRIES*sizeof(struct pte);
+      *base += VM_PAGING_ENTRIES*sizeof(struct pte);
   
       /* Point page directory entry `i` to that new physical page */
       kern_pd[i].present = 1;
@@ -93,7 +93,7 @@ PUBLIC u8_t vm_paging_setup(physaddr_t base)
 
   /* Identity-map kernel space */
   for(p=X86_ALIGN_INF(X86_CONST_KERN_START);
-      p<X86_ALIGN_SUP(base);
+      p<X86_ALIGN_SUP(*base);
       p+=X86_CONST_PAGE_SIZE)
     {
       if (vm_paging_map((virtaddr_t)p, p) == EXIT_FAILURE)
