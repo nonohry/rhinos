@@ -27,7 +27,7 @@
 extern	setup_x86
 extern  gdt_desc
 ;; extern  idt_desc
-;; extern  main			
+extern  main			
 
 
 
@@ -106,9 +106,8 @@ paging:
 	or	eax, 0x80000000	; Activate PG bit (pagination)
 	mov	cr0,eax		; Set CR0 to activate paging
 
-	;; 	jmp	CS_SELECTOR:main
-	jmp 	$		; Temporary debug
-
+	jmp	CS_SELECTOR:main
+	
 	
 	;;/**
 	;;
