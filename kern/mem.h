@@ -38,7 +38,7 @@
 
 
 
-PUBLIC u8_t mem_init(void);
+PUBLIC u8_t mem_setup(void);
 
 
 #endif

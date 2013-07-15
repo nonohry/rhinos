@@ -68,8 +68,8 @@ struct mem_desc
 
 /**
 
-   Function: u8_t mem_init(void)
-   -----------------------------
+   Function: u8_t mem_setup(void)
+   ------------------------------
 
    Memory manager initialization.
    Allocate a page to create internal structures
@@ -77,13 +77,13 @@ struct mem_desc
 **/
 
 
-PUBLIC u8_t mem_init(void)
+PUBLIC u8_t mem_setup(void)
 {
 
   struct boot_mmap_entry* e;
   u16_t i;
 
-  /* look for memory map entry containing kernel */
+  /* look for the memory map entry containing kernel */
   for(i=0,e=(struct boot_mmap_entry*)boot.mmap_addr;
       (i<boot.mmap_length)&&(e->addr != ARCH_CONST_KERN_START);
       i++,e++)
@@ -101,7 +101,8 @@ PUBLIC u8_t mem_init(void)
       return EXIT_FAILURE;
     }
       
-      
+
+  
 
   arch_printf("Kernel in 0x%x (0x%x,%d)\n",(u32_t)e->addr,(u32_t)e->len,e->type);
 

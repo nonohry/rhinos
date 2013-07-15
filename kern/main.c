@@ -45,7 +45,7 @@ PUBLIC int main(void)
 {
 
   arch_printf("Hello World (from main) !\n");
-  if (mem_init() != EXIT_SUCCESS)
+  if (mem_setup() != EXIT_SUCCESS)
     {
       arch_printf("Unable to intialize kernel memory manager\n");
       goto err;
