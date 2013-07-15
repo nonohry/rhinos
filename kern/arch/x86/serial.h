@@ -29,17 +29,6 @@
 
 /**
 
-   Constants: Serial Port Relatives
-   --------------------------------
-
-**/
-
-#define SERIAL_PORT   0x3f8
-#define SERIAL_MASK   0x20
-
-
-/**
-
    Prototypes
    ==========
 

@@ -30,21 +30,6 @@
 #include "setup.h"
 
 
-
-/**
-   
-   Constants: types of memory in a E820 memory map
-   -----------------------------------------------
-
-**/
-
-#define E820_AVAILABLE    0x1
-#define E820_RESERVED     0x2
-#define E820_ACPI         0x3
-#define E820_ACPI_NVS     0x4
-
-
-
 /**
    
    Prototype

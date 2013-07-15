@@ -25,6 +25,7 @@
 #include <define.h>
 #include <types.h>
 #include <arch_io.h>
+#include "mem.h"
 #include "boot.h"
 
 
@@ -44,11 +45,14 @@ PUBLIC int main(void)
 {
 
   arch_printf("Hello World (from main) !\n");
-  serial_printf("Got %d boot modules, mmap at 0x%x and first available byte at 0x%x\n",
-		boot.mods_count,
-		boot.mmap_addr,
-		boot.start);
+  if (mem_init() != EXIT_SUCCESS)
+    {
+      arch_printf("Unable to intialize kernel memory manager\n");
+      goto err;
+    }
 
+ err:
+ 
   while(1)
     {
     }

@@ -42,8 +42,8 @@
 **/
 
 
-PUBLIC u8_t (*arch_vm_map)(virtaddr_t vaddr, physaddr_t paddr) = &vm_paging_map;
-PUBLIC u8_t (*arch_vm_unmap)(virtaddr_t vaddr) = &vm_paging_unmap;
+PRIVATE u8_t (*arch_vm_map)(virtaddr_t vaddr, physaddr_t paddr) = &vm_paging_map;
+PRIVATE u8_t (*arch_vm_unmap)(virtaddr_t vaddr) = &vm_paging_unmap;
 
 
 #endif

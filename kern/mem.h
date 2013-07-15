@@ -27,5 +27,18 @@
 #include <types.h>
 
 
+/**
+
+   Prototypes
+   ==========
+
+   Give access to memory manager initialization as well as allocation/release primitives
+
+**/
+
+
+
+PUBLIC u8_t mem_init(void);
+
 
 #endif

@@ -31,19 +31,19 @@
 #include "setup.h"
 #include "e820.h"
 
+
+
 /**
-
-   Privates
-   --------
-
-   Clean and truncate a memory map
+   
+   Constants: types of memory in a E820 memory map
+   -----------------------------------------------
 
 **/
 
-
-PRIVATE u8_t e820_sanitize(struct multiboot_info* bootinfo);
-PRIVATE u8_t e820_truncate32b(struct multiboot_info* bootinfo);
-
+#define E820_AVAILABLE    0x1
+#define E820_RESERVED     0x2
+#define E820_ACPI         0x3
+#define E820_ACPI_NVS     0x4
 
 
 /**
@@ -56,6 +56,20 @@ PRIVATE u8_t e820_truncate32b(struct multiboot_info* bootinfo);
 
 #define MIN(_x,_y)     ((_x)<(_y)?(_x):(_y))
 #define MAX(_x,_y)     ((_x)>(_y)?(_x):(_y))
+
+
+/**
+
+   Privates
+   --------
+
+   Clean and truncate a memory map
+
+**/
+
+
+PRIVATE u8_t e820_sanitize(struct multiboot_info* bootinfo);
+PRIVATE u8_t e820_truncate32b(struct multiboot_info* bootinfo);
 
 
 

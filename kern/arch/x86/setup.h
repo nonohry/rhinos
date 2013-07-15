@@ -28,6 +28,7 @@
 
 
 
+
 /**
    
    Constants: Multiboot header relatives
@@ -50,6 +51,15 @@
 #define MULTIBOOT_FLAG_BLNAME    0x200
 #define MULTIBOOT_FLAG_APM       0x400
 #define MULTIBOOT_FLAG_VIDEO     0x800
+
+
+
+/**
+   
+   Constants: Multiboot relatives
+   ------------------------------
+
+**/
 
 #define MULTIBOOT_MMAP_MAX       128
 #define MULTIBOOT_MODS_COUNT     3

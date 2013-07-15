@@ -49,9 +49,4 @@
 #define ARCH_CONST_PAGE_SHIFT             X86_CONST_PAGE_SHIFT
 
 
-
-
-
-
-
 #endif

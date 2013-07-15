@@ -42,7 +42,7 @@
 **/
 
 
-PUBLIC void (*arch_printf)(const char* str,...) = &serial_printf;
+PRIVATE void (*arch_printf)(const char* str,...) = &serial_printf;
 
 
 #endif
