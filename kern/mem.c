@@ -18,6 +18,7 @@
    - types.h
    - arch_const.h  : page size
    - arch_io.h     : output primitives
+   - arch_vm.h     : architecture dependant virtual memory
    - boot.h        : boot information
    - mem.h
 
@@ -28,53 +29,22 @@
 #include <types.h>
 #include <arch_const.h>
 #include <arch_io.h>
+#include <arch_vm.h>
 #include "boot.h"
 #include "mem.h"
 
 
 /**
 
-   Constants: Memory states
-   ------------------------
+   Gloabl: mem_addr
+   ----------------
+
+   Memory page address containing internal structures
 
 **/
 
 
-#define MEM_FREE     0
-#define MEM_USED     1
-
-
-/**
-
-   Constant: MEM_NEEDED
-   --------------------
-
-   Minimal memory needed for initialization (in pages)
-
-**/
-
-#define MEM_NEEDED   3
-
-
-/**
-
-   Structure: struct mem_desc
-   --------------------------
-
-   Internal structure used by memory manger to track memory chunks state
-   Members are self-explanatory
-
-
-**/
-
-
-struct mem_desc
-{
-  physaddr_t addr;
-  u32_t len;
-  u8_t state;
-}__attribute__((packed));
-
+addr_t mem_addr;
 
 
 /**
@@ -118,13 +88,17 @@ PUBLIC u8_t mem_setup(void)
       return EXIT_FAILURE;
     }
  
-  /* Enough room for us ? */
-  if ((e->len - boot.start) < ARCH_CONST_PAGE_SIZE*MEM_NEEDED)
+  /* Assign `mem_addr` */
+  mem_addr = boot.start;
+
+  /* identity map it */
+  if (arch_vm_map(mem_addr,mem_addr) != EXIT_SUCCESS)
     {
       return EXIT_FAILURE;
     }
+  
+  /* Nullify page  */
+  arch_memset(0,mem_addr,ARCH_CONST_PAGE_SIZE);
 
-  
-  
   return EXIT_SUCCESS;
 }

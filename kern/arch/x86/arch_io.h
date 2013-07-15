@@ -29,20 +29,21 @@
 #include <define.h>
 #include <types.h>
 #include "serial.h"
-
+#include "x86_lib.h"
 
 
 /** 
 
-    Function Pointer
-    ----------------
+    Function Pointers
+    -----------------
 
-    Glue for printf
+    Glue for printf, memset and memcopy
 
 **/
 
 
-PRIVATE void (*arch_printf)(const char* str,...) = &serial_printf;
-
+PRIVATE void (*arch_printf)(const char* str,...)__attribute__((unused)) = &serial_printf;
+PRIVATE void (*arch_memset)(u32_t val, addr_t dest, u32_t len)__attribute__((unused)) = &x86_mem_set;
+PRIVATE void (*arch_memcopy)(addr_t src, addr_t dest, u32_t len)__attribute__((unused)) = &x86_mem_copy;
 
 #endif

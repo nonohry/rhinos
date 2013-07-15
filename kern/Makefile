@@ -41,6 +41,9 @@ clean:
 # DO NOT DELETE
 
 main.o: ../include/define.h ../include/arch/x86/types.h arch/x86/arch_io.h
-main.o: arch/x86/serial.h mem.h boot.h
+main.o: arch/x86/serial.h arch/x86/x86_lib.h arch/x86/x86_const.h mem.h
+main.o: boot.h
 mem.o: ../include/define.h ../include/arch/x86/types.h arch/x86/arch_const.h
-mem.o: arch/x86/x86_const.h arch/x86/arch_io.h arch/x86/serial.h boot.h mem.h
+mem.o: arch/x86/x86_const.h arch/x86/arch_io.h arch/x86/serial.h
+mem.o: arch/x86/x86_lib.h arch/x86/arch_vm.h arch/x86/vm_paging.h boot.h
+mem.o: mem.h
