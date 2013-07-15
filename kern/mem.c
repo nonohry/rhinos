@@ -44,6 +44,17 @@
 #define MEM_USED     1
 
 
+/**
+
+   Constant: MEM_NEEDED
+   --------------------
+
+   Minimal memory needed for initialization (in pages)
+
+**/
+
+#define MEM_NEEDED   3
+
 
 /**
 
@@ -100,12 +111,20 @@ PUBLIC u8_t mem_setup(void)
     {
       return EXIT_FAILURE;
     }
-      
+     
+  /* Assume `boot.start` is in the entry */
+  if ((boot.start > (e->addr+e->len))||(boot.start < e->addr))
+    {
+      return EXIT_FAILURE;
+    }
+ 
+  /* Enough room for us ? */
+  if ((e->len - boot.start) < ARCH_CONST_PAGE_SIZE*MEM_NEEDED)
+    {
+      return EXIT_FAILURE;
+    }
 
   
-
-  arch_printf("Kernel in 0x%x (0x%x,%d)\n",(u32_t)e->addr,(u32_t)e->len,e->type);
-
   
   return EXIT_SUCCESS;
 }
