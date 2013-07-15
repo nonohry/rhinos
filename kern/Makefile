@@ -41,4 +41,4 @@ clean:
 # DO NOT DELETE
 
 main.o: ../include/define.h ../include/arch/x86/types.h arch/x86/arch_io.h
-main.o: arch/x86/serial.h
+main.o: arch/x86/serial.h boot.h

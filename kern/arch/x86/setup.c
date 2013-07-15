@@ -15,6 +15,7 @@
 
    - define.h
    - types.h
+   - boot.h         : Kernel boot info structure
    - x86_const.h
    - x86_lib.h
    - serial.h       : output on serial port
@@ -27,6 +28,7 @@
 
 #include <define.h>
 #include <types.h>
+#include <boot.h>
 #include "x86_const.h"
 #include "x86_lib.h"
 #include "serial.h"
@@ -133,17 +135,33 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
   /* Update multiboot info boot modules part */
   mbi.mods_addr = (u32_t)mods_list;
 
+  /* Memory model setup */
+  if (vm_segment_setup() != EXIT_SUCCESS)
+    {
+      serial_printf("Segmentation setup error\n");
+      goto err;
+    }
+
+  if (vm_paging_setup(&limit) != EXIT_SUCCESS)
+    {
+      serial_printf("Paging setup error\n");
+      goto err;
+    }
+
   /* Note: `limit` is now the first available byte address in upper mem */
 
-  /* Memory model setup */
-  vm_segment_setup();
-  vm_paging_setup(&limit);
+  /* Fill kernel boot info structure */
+  boot.mods_count = mbi.mods_count;
+  boot.mods_addr = mbi.mods_addr;
+  boot.mmap_length = mbi.mmap_length;
+  boot.mmap_addr = mbi.mmap_addr;
+  boot.start = limit;
 
   return;
 
  err:
 
-  serial_printf("Multiboot Error\n");
+  serial_printf("Setup Error\n");
 
   /* Debug loop */
   while(1)
