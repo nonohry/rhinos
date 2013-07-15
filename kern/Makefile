@@ -21,7 +21,7 @@ CFLAGS	:=	-I../include -I../include/arch/${ARCH} -Iarch/${ARCH}
 ASM_SRC	=	#khead.s klib_s.s interrupt.s
 ASM_OUT	=	${ASM_SRC:.s=.o}
 #C_SRC	=	start.c seg.c tables.c pic.c pit.c irq.c exceptions.c physmem.c paging.c virtmem_buddy.c virtmem_slab.c virtmem.c thread.c sched.c syscall.c klib_c.c proc.c main.c 
-C_SRC 	=	main.c
+C_SRC 	=	main.c mem.c
 C_OUT	=	${C_SRC:.c=.o}
 OBJ	=	$(ASM_OUT) $(C_OUT)
 

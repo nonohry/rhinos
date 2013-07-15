@@ -29,6 +29,18 @@
 
 
 /**
+   
+   Constants: types of memory in a memory map
+   -------------------------------------------
+
+**/
+
+#define BOOT_AVAILABLE    0x1
+#define BOOT_RESERVED     0x2
+#define BOOT_ACPI         0x3
+#define BOOT_ACPI_NVS     0x4
+
+/**
 
    Structure: struct boot_info
    ---------------------------
