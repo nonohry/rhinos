@@ -40,5 +40,6 @@
 
 PUBLIC u8_t mem_setup(void);
 PUBLIC void* mem_alloc(size_t n);
+PUBLIC u8_t mem_free(void* addr);
 
 #endif

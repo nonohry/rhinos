@@ -171,3 +171,21 @@ PUBLIC void* mem_alloc(size_t n)
 
   return NULL;
 }
+
+
+/**
+
+   Function: u8_t mem_free(void* addr)
+   -----------------------------------
+
+   Free memory starting at `addr`
+
+   In this basic watermark allocator, there is no memory release.
+
+**/
+ 
+PUBLIC u8_t mem_free(void* addr)
+{
+  /* Always succeeds */
+  return EXIT_SUCCESS;
+}
