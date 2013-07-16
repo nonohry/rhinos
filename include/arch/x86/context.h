@@ -14,7 +14,7 @@
 
 /**
 
-   includes
+   Includes
    --------
 
    - types.h
