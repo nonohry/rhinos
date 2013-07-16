@@ -33,6 +33,7 @@ typedef short s16_t;
 typedef int   s32_t;
 typedef long long int s64_t;
 
+typedef unsigned int  size_t;
 
 /**
    

@@ -39,6 +39,6 @@
 
 
 PUBLIC u8_t mem_setup(void);
-
+PUBLIC void* mem_alloc(size_t n);
 
 #endif

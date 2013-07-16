@@ -34,17 +34,42 @@
 #include "mem.h"
 
 
+
+
 /**
 
-   Gloabl: mem_addr
-   ----------------
+   Structure: struct wm_allocator
+   ------------------------------
 
-   Memory page address containing internal structures
+   Describe the watermark allocator.
+   Members are:
+   
+      - base  : base address, corresponding to the page in which allocations occur
+      - wm    : watermark, id est current first available byte in page
+      - limit : limit address
+
+**/
+
+struct wm_allocator
+{
+  addr_t base;
+  addr_t wm;
+  addr_t limit;
+};
+
+
+
+/**
+
+   Gloabl: mem_wm
+   --------------
+
+   Global watermark allocator
 
 **/
 
 
-addr_t mem_addr;
+struct wm_allocator mem_wm;
 
 
 /**
@@ -53,7 +78,7 @@ addr_t mem_addr;
    ------------------------------
 
    Memory manager initialization.
-   Allocate a page to create internal structures
+   Reserve a physical page for allocation and identity map it
 
 **/
 
@@ -87,18 +112,62 @@ PUBLIC u8_t mem_setup(void)
     {
       return EXIT_FAILURE;
     }
- 
-  /* Assign `mem_addr` */
-  mem_addr = boot.start;
 
-  /* identity map it */
-  if (arch_vm_map(mem_addr,mem_addr) != EXIT_SUCCESS)
+  /* Hope there is enough room */
+  if (e->len <  ARCH_CONST_PAGE_SIZE)
+    {
+      return EXIT_FAILURE;
+    }
+ 
+  /* Initialize allocator (note that values are page aligned) */
+  mem_wm.base  = boot.start;
+  mem_wm.limit = mem_wm.base + ARCH_CONST_PAGE_SIZE;
+  mem_wm.wm = mem_wm.base;
+
+  /* identity map  */
+  if (arch_vm_map(mem_wm.base,mem_wm.base) != EXIT_SUCCESS)
     {
       return EXIT_FAILURE;
     }
   
   /* Nullify page  */
-  arch_memset(0,mem_addr,ARCH_CONST_PAGE_SIZE);
+  arch_memset(0,mem_wm.base,ARCH_CONST_PAGE_SIZE);
+
+  /* Update first available byte */
+  boot.start = mem_wm.limit;
 
   return EXIT_SUCCESS;
+}
+
+
+
+/**
+
+   Function: void* mem_alloc(size_t n)
+   -----------------------------------
+
+   Allocate a memory chunk of `n` bytes
+
+   Simply update watermark and return its previous value if allocator's limit is not reached.
+   Chunk size is in fact rounded to superior even.
+
+**/
+ 
+PUBLIC void* mem_alloc(size_t n)
+{
+  
+  size_t size;
+
+  /* Allocate an even size */
+  size = (n&1?n+1:n);
+  
+  /* Limit not reached */
+  if (mem_wm.wm+size < mem_wm.limit)
+    {
+      /* Update wm */
+      mem_wm.wm += size;
+      return (void*)(mem_wm.wm - size);
+    }
+
+  return NULL;
 }

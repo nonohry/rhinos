@@ -17,7 +17,6 @@
    - define.h
    - types.h
    - x86_const.h
-   - serial.h      : output on serial port
    - setup.h       : multiboot information
    - e820.h        : self header
 
@@ -27,7 +26,6 @@
 #include <define.h>
 #include <types.h>
 #include "x86_const.h"
-#include "serial.h"
 #include "setup.h"
 #include "e820.h"
 

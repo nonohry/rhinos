@@ -51,6 +51,12 @@ PUBLIC int main(void)
       goto err;
     }
 
+  char* a;
+  while( (a=(char*)mem_alloc(99)) != NULL)
+    {
+      arch_printf("Allocation success: 0x%x\n",(u32_t)a);
+    }
+
  err:
  
   while(1)

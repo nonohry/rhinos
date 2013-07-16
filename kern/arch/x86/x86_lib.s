@@ -81,7 +81,7 @@ x86_inb:
 
 
 	;;/**
-	;; 	Function void x86_mem_copy(addr_t src, addr_t dest, u32_t len)
+	;; 	Function void x86_mem_copy(addr_t src, addr_t dest, size_t len)
 	;;	--------------------------------------------------------------
 	;;
 	;; 	Classical (quick & dirty) memcopy function
@@ -110,7 +110,7 @@ x86_mem_copy:
 
 	
 ;;/**
-	;; 	Function: x86_mem_set(u32_t val, addr_t dest, u32_t len)
+	;; 	Function: x86_mem_set(u32_t val, addr_t dest, size_t len)
 	;;	---------------------------------------------------------
 	;;
 	;; 	Classical (quick & dirty) memset function

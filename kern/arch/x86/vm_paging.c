@@ -16,7 +16,6 @@
    - define.h
    - types.h
    - x86_lib.h
-   - serial.h
    - vm_paging.h   : self header
  
 **/
@@ -25,7 +24,6 @@
 #include <define.h>
 #include <types.h>
 #include "x86_lib.h"
-#include "serial.h"
 #include "vm_paging.h"
 
 
@@ -217,8 +215,12 @@ PUBLIC struct pde* kern_pd;
 PUBLIC u8_t vm_paging_setup(physaddr_t* base)
 {
   u16_t i;
-  physaddr_t p;
+  physaddr_t b,p;
   struct pte* table;
+
+
+  /* Save `*base` */
+  b = *base;
 
   /* Allocate kernel page directory */
   kern_pd = (struct pde*)*base;
@@ -263,7 +265,7 @@ PUBLIC u8_t vm_paging_setup(physaddr_t* base)
 
   /* Identity-map kernel space */
   for(p=X86_ALIGN_INF(X86_CONST_KERN_START);
-      p<X86_ALIGN_SUP(*base);
+      p<X86_ALIGN_SUP(X86_CONST_KERN_END);
       p+=X86_CONST_PAGE_SIZE)
     {
       if (vm_paging_map((virtaddr_t)p, p) == EXIT_FAILURE)
@@ -272,9 +274,21 @@ PUBLIC u8_t vm_paging_setup(physaddr_t* base)
 	}
     }
 
+  
+  /* Identity-map paging structures */
+  for(p=X86_ALIGN_INF(b);
+      p<X86_ALIGN_SUP(*base);
+      p+=X86_CONST_PAGE_SIZE)
+    {
+      if (vm_paging_map((virtaddr_t)p, p) == EXIT_FAILURE)
+	{
+	  return EXIT_FAILURE;
+	}
+    }
+  
   /* Load kernel page directory */
   x86_load_pd((physaddr_t)kern_pd);
-
+  
   return EXIT_SUCCESS;
 }
 
