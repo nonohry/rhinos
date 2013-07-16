@@ -66,6 +66,12 @@ PUBLIC int main(void)
       arch_printf("My stack is at 0x%x and is 0x%x bytes long\n",
 		  th->stack_base,
 		  th->stack_size);
+      arch_printf("My context is:\n");
+      arch_printf(" gs: 0x%x \n fs: 0x%x \n es: 0x%x \n ds: 0x%x \n",th->ctx.gs,th->ctx.fs,th->ctx.es,th->ctx.ds);
+      arch_printf(" edi: 0x%x \n esi: 0x%x \n ebp: 0x%x \n esp2: 0x%x \n",th->ctx.edi,th->ctx.esi,th->ctx.ebp,th->ctx.orig_esp);
+      arch_printf(" ebx: 0x%x \n edx: 0x%x \n ecx: 0x%x \n eax: 0x%x \n",th->ctx.ebx,th->ctx.edx,th->ctx.ecx,th->ctx.eax);
+      arch_printf(" ret_addr: 0x%x \n error: 0x%x \n eip: 0x%x \n cs: 0x%x \n",th->ctx.ret_addr,th->ctx.error_code,th->ctx.eip,th->ctx.cs);
+      arch_printf(" eflags: 0x%x \n esp: 0x%x \n ss: 0x%x \n",th->ctx.eflags,th->ctx.esp,th->ctx.ss);
     }
 
   err:
