@@ -17,6 +17,7 @@
    - define.h
    - types.h
    - llist.h
+   - arch_io.h
    - context.h  : CPU context 
    - thread.h   : self header
 
@@ -26,5 +27,70 @@
 #include <define.h>
 #include <types.h>
 #include <llist.h>
+#include <arch_io.h>
 #include <context.h>
+#include "mem.h"
 #include "thread.h"
+
+
+
+/**
+
+   Function: struct thread* thread_create(const char* name, virtaddr_t base, virtaddr_t stack_base, size_t stack_size)
+   -------------------------------------------------------------------------------------------------------------------
+
+
+**/
+
+
+PUBLIC struct thread* thread_create(const char* name, virtaddr_t base, virtaddr_t stack_base, size_t stack_size)
+{
+  u8_t i;
+  struct thread* th;
+
+  /* Sanity checks */
+  if (!((base)&&(stack_base)&&(stack_size)))
+    {
+      return NULL;
+    }
+
+  /* Allocate a thread structure */
+  th = (struct thread*)mem_alloc(sizeof(struct thread));
+  if (th == NULL)
+    {
+      return NULL;
+    }
+
+  /* Clean it */
+  arch_memset(0,(addr_t)th,sizeof(struct thread));
+
+  /* Name copy */
+  i=0;
+  while( (name[i]!=0)&&(i<THREAD_NAMELEN-1) )
+    {
+      th->name[i] = name[i];
+      i++;
+    }
+  th->name[i]=0;
+
+  /* Set stack  */
+  th->stack_base = stack_base;
+  th->stack_size = stack_size;
+
+  /* Set up context */
+  if (ctx_setup((struct context*)th,
+		base,
+		th->stack_base,
+		th->stack_size) != EXIT_SUCCESS)
+    {
+      goto err;
+    }
+
+  return th;
+
+ err:
+  
+  mem_free(th);
+  return NULL;
+  
+}

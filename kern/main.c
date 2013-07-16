@@ -26,6 +26,7 @@
 #include <types.h>
 #include <arch_io.h>
 #include "mem.h"
+#include "thread.h"
 #include "boot.h"
 
 
@@ -49,6 +50,22 @@ PUBLIC int main(void)
     {
       arch_printf("Unable to intialize kernel memory manager\n");
       goto err;
+    }
+
+  
+  virtaddr_t s = (virtaddr_t)mem_alloc(64);
+  struct thread* th = thread_create("toto",
+				    0xBADBEEF,
+				    s,
+				    64);
+
+  if (th != NULL)
+    {
+      arch_printf("Hello my name is %s\n",th->name);
+      arch_printf("My entry point is at 0x%x\n",th->ctx.eip);
+      arch_printf("My stack is at 0x%x and is 0x%x bytes long\n",
+		  th->stack_base,
+		  th->stack_size);
     }
 
   err:

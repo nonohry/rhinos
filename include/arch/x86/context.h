@@ -59,4 +59,16 @@ PUBLIC struct context
 } __attribute__ ((packed));
 
 
+
+/**
+
+   Prototypes
+   ----------
+
+   Define symble for context setup
+
+**/
+
+PUBLIC u8_t ctx_setup(struct context* ctx, virtaddr_t base, virtaddr_t stack_base, size_t stack_size);
+
 #endif

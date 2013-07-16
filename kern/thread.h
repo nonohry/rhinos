@@ -124,14 +124,27 @@ PUBLIC struct thread
   virtaddr_t stack_base;
   size_t stack_size;
   //struct proc* proc;
-  enum state state;
-  enum state next_state;
+  //enum state state;
+  //enum state next_state;
   //s8_t nice;
   //struct sched sched;
   //struct ipc_info ipc;
   struct thread* prev;
   struct thread* next;
 }__attribute__ ((packed));
+
+
+/**
+
+   Prototypes
+   ----------
+
+   Give access to thread creation
+
+**/
+
+
+PUBLIC struct thread* thread_create(const char* name, virtaddr_t base, virtaddr_t stack_base, size_t stack_size);
 
 
 #endif
