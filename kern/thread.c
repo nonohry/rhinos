@@ -18,7 +18,7 @@
    - types.h
    - llist.h
    - arch_io.h
-   - context.h  : CPU context
+   - arch_ctx.h : CPU context
    - mem.h      : memory allocation
    - sched.h    : scheduler
    - thread.h   : self header
@@ -30,7 +30,7 @@
 #include <types.h>
 #include <llist.h>
 #include <arch_io.h>
-#include <context.h>
+#include <arch_ctx.h>
 #include "mem.h"
 #include "sched.h"
 #include "thread.h"
@@ -81,7 +81,7 @@ PUBLIC struct thread* thread_create(const char* name, virtaddr_t base, virtaddr_
   th->stack_size = stack_size;
 
   /* Set up context */
-  if (ctx_setup((struct context*)th,
+  if (arch_ctx_setup((arch_ctx_t*)th,
 		base,
 		th->stack_base,
 		th->stack_size) != EXIT_SUCCESS)

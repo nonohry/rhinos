@@ -18,7 +18,7 @@
    - define.h
    - types.h
    - llist.h
-   - context.h  : CPU context 
+   - arch_ctx.h : CPU context 
    - thread.h   : self header
 
 **/
@@ -27,7 +27,7 @@
 #include <define.h>
 #include <types.h>
 #include <llist.h>
-#include <context.h>
+#include <arch_ctx.h>
 
 
 /**
@@ -118,7 +118,7 @@ PUBLIC struct sched
 
 PUBLIC struct thread
 {
-  struct context ctx;
+  arch_ctx_t ctx;
   char name[THREAD_NAMELEN];
   //  struct id_info* id;
   virtaddr_t stack_base;

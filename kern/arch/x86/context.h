@@ -35,7 +35,7 @@
 
 **/
 
-PUBLIC struct context
+PUBLIC struct x86_context
 {
   reg16_t gs;
   reg16_t fs;
@@ -69,6 +69,6 @@ PUBLIC struct context
 
 **/
 
-PUBLIC u8_t ctx_setup(struct context* ctx, virtaddr_t base, virtaddr_t stack_base, size_t stack_size);
+PUBLIC u8_t ctx_setup(struct x86_context* ctx, virtaddr_t base, virtaddr_t stack_base, size_t stack_size);
 
 #endif

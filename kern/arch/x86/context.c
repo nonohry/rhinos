@@ -26,6 +26,7 @@
 #include "context.h"
 #include "x86_lib.h"
 
+
 /** 
     Constants: INTFLAG_SHIFT 
     ------------------------
@@ -40,8 +41,8 @@
 
 /**
 
-   Function: u8_t ctx_setup(struct context* ctx, virtaddr_t base, virtaddr_t stack_base, size_t stack_size)
-   --------------------------------------------------------------------------------------------------------
+   Function: u8_t ctx_setup(struct x86_context* ctx, virtaddr_t base, virtaddr_t stack_base, size_t stack_size)
+   ------------------------------------------------------------------------------------------------------------
 
    Set up a cpu context.
 
@@ -51,7 +52,7 @@
 
 
 
-PUBLIC u8_t ctx_setup(struct context* ctx, virtaddr_t base, virtaddr_t stack_base, size_t stack_size)
+PUBLIC u8_t ctx_setup(struct x86_context* ctx, virtaddr_t base, virtaddr_t stack_base, size_t stack_size)
 {
   /* Sanity checks */
   if (!((base)&&(stack_base)&&(stack_size)))
