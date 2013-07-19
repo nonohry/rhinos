@@ -19,7 +19,7 @@ CFLAGS	:=	-I../../../include -I../../../include/arch/$(ARCH) -I../..
 # Files
 ASM_SRC	=	krt.s x86_lib.s
 ASM_OUT	=	${ASM_SRC:.s=.o}
-C_SRC	=	setup.c e820.c vm_segment.c vm_paging.c serial.c context.c
+C_SRC	=	setup.c e820.c vm_segment.c vm_paging.c serial.c context.c pic.o
 C_OUT	=	${C_SRC:.c=.o}
 OBJ	=	$(ASM_OUT) $(C_OUT)
 
