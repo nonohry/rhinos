@@ -29,6 +29,9 @@
 #include "thread.h"
 #include "irq.h"
 #include "boot.h"
+#include "thread.h"
+#include "sched.h"
+#include "clock.h"
 
 
 /**
@@ -60,26 +63,27 @@ PUBLIC int main(void)
       goto err;
     }
 
-  virtaddr_t s = (virtaddr_t)mem_alloc(64);
-  struct thread* th = thread_create("toto",
-				    0xBADBEEF,
-				    s,
-				    64);
-
-  if (th != NULL)
+  if (clock_setup() != EXIT_SUCCESS)
     {
-      arch_printf("Hello my name is %s\n",th->name);
-      arch_printf("My entry point is at 0x%x\n",th->ctx.eip);
-      arch_printf("My stack is at 0x%x and is 0x%x bytes long\n",
-		  th->stack_base,
-		  th->stack_size);
-      arch_printf("My context is:\n");
-      arch_printf(" gs: 0x%x \n fs: 0x%x \n es: 0x%x \n ds: 0x%x \n",th->ctx.gs,th->ctx.fs,th->ctx.es,th->ctx.ds);
-      arch_printf(" edi: 0x%x \n esi: 0x%x \n ebp: 0x%x \n esp2: 0x%x \n",th->ctx.edi,th->ctx.esi,th->ctx.ebp,th->ctx.orig_esp);
-      arch_printf(" ebx: 0x%x \n edx: 0x%x \n ecx: 0x%x \n eax: 0x%x \n",th->ctx.ebx,th->ctx.edx,th->ctx.ecx,th->ctx.eax);
-      arch_printf(" ret_addr: 0x%x \n error: 0x%x \n eip: 0x%x \n cs: 0x%x \n",th->ctx.ret_addr,th->ctx.error_code,th->ctx.eip,th->ctx.cs);
-      arch_printf(" eflags: 0x%x \n esp: 0x%x \n ss: 0x%x \n",th->ctx.eflags,th->ctx.esp,th->ctx.ss);
+      arch_printf("Unable to intialize clock\n");
+      goto err;
     }
+
+
+  struct thread* kern_th = (struct thread*)mem_alloc(sizeof(struct thread));
+  kern_th->ctx.ss = 16;
+  kern_th->name[0] = '[';
+  kern_th->name[1] = 'K';
+  kern_th->name[2] = 'e';
+  kern_th->name[3] = 'r';
+  kern_th->name[4] = 'n';
+  kern_th->name[5] = ']';
+  kern_th->name[6] = 0;
+
+  kern_th->state = THREAD_READY;
+  sched_enqueue(SCHED_READY_QUEUE,kern_th);
+  cur_th = kern_th;
+
 
   err:
  

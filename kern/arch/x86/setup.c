@@ -23,6 +23,7 @@
    - vm_segment.h   : segmentation setup
    - vm_paging.h    : paging setup
    - pic.h          : pic setup
+   - pit.h          : pit setup
    - setup.h        : self header
 
 **/
@@ -36,6 +37,7 @@
 #include "e820.h"
 #include "vm_segment.h"
 #include "pic.h"
+#include "pit.h"
 #include "vm_paging.h"
 #include "setup.h"
 
@@ -141,10 +143,16 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
   /* Setup PIC */
   if (pic_setup() != EXIT_SUCCESS)
     {
-      serial_printf("PIT setup error\n");
+      serial_printf("PIC setup error\n");
       goto err;
     }
 
+  /* Setup PIT */
+  if (pit_setup() != EXIT_SUCCESS)
+    {
+      serial_printf("PIT setup error\n");
+      goto err;
+    }
 
   /* Memory model setup */
   if (vm_segment_setup() != EXIT_SUCCESS)

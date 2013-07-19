@@ -1,31 +1,39 @@
 /**
 
-   pit.h
+   pit.c
    =====
 
-   PIT i82C54 header
-   
+   i82C54 Programmable Interval Timer management
+ 
 **/
 
 
-#ifndef PIT_H
-#define PIT_H
 
 
 /**
-   
-   Includes 
+
+   Includes
    --------
 
    - define.h
    - types.h
    - const.h
- 
+   - klib.h
+   - interrupt.h : Needed to create clock handler
+   - irq.h       : Needed to activate IRQ line
+   - thread.h    : struct thread needed
+   - sched.h     : sched_schedule needed
+   - pit.h       : self header
+   
 **/
+
 
 #include <define.h>
 #include <types.h>
-#include "const.h"
+#include "x86_lib.h"
+#include "pit.h"
+
+
 
 
 /**
@@ -87,16 +95,39 @@
 #define PIT_LATCH        0x00   /* 00000000b Counter Latch pour le compteur 0 */
 
 
+
 /**
 
-   Prototypes 
-   ----------
+   Function: u8_t pit_setup(void)
+   -----------------------------
 
-   Give acces to PIT intialization and reads/
+   Programmable Interval Timer initialization.
+   Configure clock mode and frequency.
 
 **/
 
-PUBLIC u8_t pit_init();
-PUBLIC u16_t pit_read();
+PUBLIC u8_t pit_setup(void)
+{
+  u32_t ticks;
 
-#endif
+  /* Compute number of clock pulsations before triggering interrupt */
+  ticks = PIT_MAX_FREQ/PIT_FREQ;
+
+  /* counter are 16 bits values
+     max value is 2^16=65535 and 65536 is in fact 0 */
+   
+  if (ticks <= 65536)
+    {
+      /* 65536 == 0 */
+      ticks = (ticks==65536?0:ticks);
+
+      /* Send control word to active Mode 2 (Rate Generator) */
+      x86_outb(PIT_CWREG,PIT_MODE2);
+
+      /* Send frequency for this mode */
+      x86_outb(PIT_COUNTER0,(u8_t)ticks);        /* LSB first */
+      x86_outb(PIT_COUNTER0,(u8_t)(ticks>>8));   /* MSB last */
+    }
+  
+  return EXIT_SUCCESS;
+}

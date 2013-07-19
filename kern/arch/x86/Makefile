@@ -19,7 +19,7 @@ CFLAGS	:=	-I../../../include -I../../../include/arch/$(ARCH) -I../..
 # Files
 ASM_SRC	=	krt.s x86_lib.s interrupt.s
 ASM_OUT	=	${ASM_SRC:.s=.o}
-C_SRC	=	setup.c e820.c vm_segment.c vm_paging.c serial.c context.c pic.c exceptions.c
+C_SRC	=	setup.c e820.c vm_segment.c vm_paging.c serial.c context.c pic.c exceptions.c pit.c
 C_OUT	=	${C_SRC:.c=.o}
 OBJ	=	$(ASM_OUT) $(C_OUT)
 
@@ -40,7 +40,7 @@ clean:
 
 setup.o: ../../../include/define.h ../../../include/arch/x86/types.h
 setup.o: ../../boot.h x86_const.h x86_lib.h serial.h e820.h setup.h
-setup.o: vm_segment.h pic.h vm_paging.h
+setup.o: vm_segment.h pic.h pit.h vm_paging.h
 e820.o: ../../../include/define.h ../../../include/arch/x86/types.h
 e820.o: x86_const.h setup.h e820.h
 vm_segment.o: ../../../include/define.h ../../../include/arch/x86/types.h
@@ -55,3 +55,5 @@ pic.o: ../../../include/define.h ../../../include/arch/x86/types.h x86_lib.h
 pic.o: x86_const.h pic.h
 exceptions.o: ../../../include/define.h ../../../include/arch/x86/types.h
 exceptions.o: serial.h context.h exceptions.h
+pit.o: ../../../include/define.h ../../../include/arch/x86/types.h x86_lib.h
+pit.o: x86_const.h pit.h
