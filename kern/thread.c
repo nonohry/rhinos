@@ -18,7 +18,9 @@
    - types.h
    - llist.h
    - arch_io.h
-   - context.h  : CPU context 
+   - context.h  : CPU context
+   - mem.h      : memory allocation
+   - sched.h    : scheduler
    - thread.h   : self header
 
 **/
@@ -30,6 +32,7 @@
 #include <arch_io.h>
 #include <context.h>
 #include "mem.h"
+#include "sched.h"
 #include "thread.h"
 
 
@@ -85,6 +88,10 @@ PUBLIC struct thread* thread_create(const char* name, virtaddr_t base, virtaddr_
     {
       goto err;
     }
+
+  /* Link in scheduler */
+  th->state = THREAD_READY;
+  sched_enqueue(SCHED_READY_QUEUE,th);
 
   return th;
 

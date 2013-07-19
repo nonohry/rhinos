@@ -124,7 +124,7 @@ PUBLIC struct thread
   virtaddr_t stack_base;
   size_t stack_size;
   //struct proc* proc;
-  //enum state state;
+  enum state state;
   //enum state next_state;
   //s8_t nice;
   //struct sched sched;

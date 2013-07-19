@@ -103,7 +103,7 @@
    ---------
 
    Add a new item. 
-   The new item is placed at the head of the list
+   The new item is placed at the end of the list
 
 **/
 
