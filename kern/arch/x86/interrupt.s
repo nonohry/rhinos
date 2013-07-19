@@ -69,17 +69,17 @@ global	excep_18
 	;;
 	;;	- irq_handle_flih	: IRQ generic handler
 	;;	- excep_handle		: exception generic handler
-	;;	- cur_th		: current thread
-	;; 	- thread_cpu_postsave	: helper to save context in case of ring jump
+	;; 	- ctx_postsave	        : helper to save context in case of ring jump
 	;; 	- syscall_handle	: syscall generic handler
 	;; 
 	;;**/
 	
 extern	irq_handle_flih
 extern	excep_handle
-extern	cur_th
-extern	thread_cpu_postsave
-extern	syscall_handle
+extern	ctx_postsave
+extern  cur_th
+	
+	;; 	extern	syscall_handle
 
 
 	;;/**
@@ -190,7 +190,6 @@ extern	syscall_handle
 %macro	hwint_generic0	1
 	push	FAKE_ERROR
    	call	save_ctx
-	push	dword [cur_th]
 	push	%1
  	call	irq_handle_flih
 	add	esp,8
@@ -212,7 +211,6 @@ extern	syscall_handle
 %macro	hwint_generic1	1
 	push	FAKE_ERROR
 	call	save_ctx
-	push	dword [cur_th]
 	push	%1
 	call	irq_handle_flih
 	add	esp,8
@@ -299,7 +297,7 @@ hwint_15:
 swint_syscall:
         push    FAKE_ERROR
         call    save_ctx
-        call    syscall_handle
+	;;        call    syscall_handle
         call    restore_ctx
 	
 	
@@ -338,7 +336,7 @@ save_ctx:
 	;; Call thread_cpu_postsave to save remaining registers in case of an interrupted kernel thread 
 	push	dword [save_esp]
 	push 	dword [cur_th]
-	call	thread_cpu_postsave
+	call	ctx_postsave
 	add	esp,8
 
 	;; Get the save stack to return to caller
@@ -522,4 +520,3 @@ excep_next:
 int_stack:
 	times	INT_STACK_SIZE	db 0
 int_stack_top:
-	

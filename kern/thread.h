@@ -134,6 +134,20 @@ PUBLIC struct thread
 }__attribute__ ((packed));
 
 
+
+
+/** 
+
+    Global: cur_th
+    --------------
+
+    Current running thread
+
+**/
+
+PUBLIC struct thread* cur_th;
+
+
 /**
 
    Prototypes

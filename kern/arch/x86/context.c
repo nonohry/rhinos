@@ -16,6 +16,7 @@
    - define.h
    - types.h
    - context.h
+   - x86_const.h
    - x86_lib.h
 
 **/
@@ -23,8 +24,10 @@
 
 #include <define.h>
 #include <types.h>
-#include "context.h"
+#include "x86_const.h"
 #include "x86_lib.h"
+#include "context.h"
+
 
 
 /** 
@@ -82,4 +85,37 @@ PUBLIC u8_t ctx_setup(struct x86_context* ctx, virtaddr_t base, virtaddr_t stack
   ctx->esp = (reg32_t)(stack_base+stack_size);
 
   return EXIT_SUCCESS;
+}
+
+
+/**
+
+   Function: void thread_cpu_postsave(struct x86_context* ctx, reg32_t* esp)
+   -------------------------------------------------------------------------
+
+   Finalize cpou context save in case of a kernel space switch.
+   
+   Simply retrieve register saved on stack by processor.
+
+**/
+
+
+PUBLIC void ctx_postsave(struct x86_context* ctx, reg32_t* esp)
+{
+
+
+  /* Check 16 bits SS to determine ring */ 
+  if ((ctx->ss & 0xFF) == X86_CONST_KERN_SS_SELECTOR)
+    {
+      /* Retrieve remaining registers */
+      ctx->ret_addr = *(esp);
+      ctx->error_code = *(esp+1);
+      ctx->eip = *(esp+2);
+      ctx->cs = *(esp+3);
+      ctx->eflags = *(esp+4);
+      ctx->esp = (reg32_t)(esp);
+      ctx->ss = X86_CONST_KERN_SS_SELECTOR;
+    }
+   
+  return;
 }

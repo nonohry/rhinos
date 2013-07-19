@@ -17,9 +17,9 @@ CFLAGS	:=	-I../../../include -I../../../include/arch/$(ARCH) -I../..
 	$(AS) $<
 
 # Files
-ASM_SRC	=	krt.s x86_lib.s
+ASM_SRC	=	krt.s x86_lib.s interrupt.s
 ASM_OUT	=	${ASM_SRC:.s=.o}
-C_SRC	=	setup.c e820.c vm_segment.c vm_paging.c serial.c context.c pic.o
+C_SRC	=	setup.c e820.c vm_segment.c vm_paging.c serial.c context.c pic.c exceptions.c
 C_OUT	=	${C_SRC:.c=.o}
 OBJ	=	$(ASM_OUT) $(C_OUT)
 
@@ -50,4 +50,8 @@ vm_paging.o: x86_lib.h x86_const.h vm_paging.h
 serial.o: ../../../include/define.h ../../../include/arch/x86/types.h
 serial.o: x86_lib.h x86_const.h serial.h
 context.o: ../../../include/define.h ../../../include/arch/x86/types.h
-context.o: context.h x86_lib.h x86_const.h
+context.o: x86_const.h x86_lib.h context.h
+pic.o: ../../../include/define.h ../../../include/arch/x86/types.h x86_lib.h
+pic.o: x86_const.h pic.h
+exceptions.o: ../../../include/define.h ../../../include/arch/x86/types.h
+exceptions.o: serial.h context.h exceptions.h

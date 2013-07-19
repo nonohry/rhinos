@@ -7,8 +7,10 @@
 
 **/
 
+
 #ifndef EXCEPTIONS_H
 #define EXCEPTIONS_H
+
 
 /**
 
@@ -17,15 +19,14 @@
 
    - define.h
    - types.h
-   - const.h
-   - thread.h      : struct thread needed
+   - context.h      : CPU context needed
    
 **/
 
+
 #include <define.h>
 #include <types.h>
-#include "const.h"
-#include "thread.h"
+#include "context.h"
 
 
 /**
@@ -37,6 +38,6 @@
 
 **/
 
-PUBLIC void excep_handle(u32_t num, struct thread* th);
+PUBLIC void excep_handle(u32_t num, struct x86_context* ctx);
 
 #endif

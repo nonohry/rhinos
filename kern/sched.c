@@ -184,11 +184,12 @@ PUBLIC u8_t sched_dequeue(u8_t queue, struct thread* th)
 
 PUBLIC void sched_schedule()
 {
-  struct thread* cur_th;
+  struct thread* th;
 
-  cur_th = LLIST_GETHEAD(sched_ready);
-  sched_dequeue(SCHED_READY_QUEUE,cur_th);
-  sched_enqueue(SCHED_READY_QUEUE,cur_th);
+  th = LLIST_GETHEAD(sched_ready);
+  sched_dequeue(SCHED_READY_QUEUE,th);
+  sched_enqueue(SCHED_READY_QUEUE,th);
+  cur_th = th;
 
   return;
 }
