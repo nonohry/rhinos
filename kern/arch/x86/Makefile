@@ -40,7 +40,7 @@ clean:
 
 setup.o: ../../../include/define.h ../../../include/arch/x86/types.h
 setup.o: ../../boot.h x86_const.h x86_lib.h serial.h e820.h setup.h
-setup.o: vm_segment.h vm_paging.h
+setup.o: vm_segment.h pic.h vm_paging.h
 e820.o: ../../../include/define.h ../../../include/arch/x86/types.h
 e820.o: x86_const.h setup.h e820.h
 vm_segment.o: ../../../include/define.h ../../../include/arch/x86/types.h

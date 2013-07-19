@@ -22,6 +22,7 @@
    - e820.h         : e820 memory map
    - vm_segment.h   : segmentation setup
    - vm_paging.h    : paging setup
+   - pic.h          : pic setup
    - setup.h        : self header
 
 **/
@@ -34,6 +35,7 @@
 #include "serial.h"
 #include "e820.h"
 #include "vm_segment.h"
+#include "pic.h"
 #include "vm_paging.h"
 #include "setup.h"
 
@@ -134,6 +136,15 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
 
   /* Update multiboot info boot modules part */
   mbi.mods_addr = (u32_t)mods_list;
+
+
+  /* Setup PIC */
+  if (pic_setup() != EXIT_SUCCESS)
+    {
+      serial_printf("PIT setup error\n");
+      goto err;
+    }
+
 
   /* Memory model setup */
   if (vm_segment_setup() != EXIT_SUCCESS)
