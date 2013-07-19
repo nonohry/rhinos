@@ -101,7 +101,7 @@
    S(i) is set to 1 if the line is connected to a slave
 
    
-   ### Slace Structure:
+   ### Slave Structure:
 
    
    +---+---+---+------+-----+-----+------+-----+
