@@ -20,15 +20,12 @@
 
    - define.h
    - types.h
-   - const.h
    - thread.h      : struct thread needed
    
 **/
 
 #include <define.h>
 #include <types.h>
-#include "const.h"
-#include "thread.h"
 
 
 /**
@@ -77,30 +74,5 @@ EXTERN void excep_14(void);
 EXTERN void excep_16(void);
 EXTERN void excep_17(void);
 EXTERN void excep_18(void);
-
-
-
-/**
-
-   Structure: struct int_node
-   --------------------------
-
-   Link all the first level interrupt handlers  sharing the same IRQ.
-   Members are:
-
-   - flih     : first level interrupt handler 
-   - prev     : previous item in the linked list 
-   - next     : next item in the linked list
-
-**/
-   
-
-PUBLIC struct int_node
-{
-  void (*flih)(struct thread* th);
-  struct int_node* prev;
-  struct int_node* next;
-};
-
 
 #endif

@@ -27,6 +27,7 @@
 #include <arch_io.h>
 #include "mem.h"
 #include "thread.h"
+#include "irq.h"
 #include "boot.h"
 
 
@@ -53,6 +54,12 @@ PUBLIC int main(void)
     }
 
   
+  if (irq_setup() != EXIT_SUCCESS)
+    {
+      arch_printf("Unable to intialize IRQ subsystem\n");
+      goto err;
+    }
+
   virtaddr_t s = (virtaddr_t)mem_alloc(64);
   struct thread* th = thread_create("toto",
 				    0xBADBEEF,

@@ -15,25 +15,30 @@
 
    - define.h
    - types.h
-   - const.h
    - llist.h
-   - klib.h
-   - interrupt.h      : struct int_node needed
-   - pic.h            : physically enable/disable IRQ line
-   - thread.h         : struct thread needed
+   - arch_hw.h        : PIT manipulation
    - irq.h            : self header
 
 **/
 
 #include <define.h>
 #include <types.h>
-#include "const.h"
 #include <llist.h>
-#include "klib.h"
-#include "interrupt.h"
-#include "pic.h"
-#include "thread.h"
+#include <arch_hw.h>
 #include "irq.h"
+
+
+/**
+
+   Constant: IRQ_VECTORS
+   ---------------------
+
+   Number of vectors
+
+**/
+
+#define IRQ_VECTORS   16
+
 
 
 /**
@@ -45,19 +50,19 @@
 
 **/
 
-PRIVATE struct int_node* irq_flih[IRQ_VECTORS];
+PRIVATE struct irq_node* irq_flih[IRQ_VECTORS];
 
 
 /**
 
-   Function: u8_t irq_init(void)
+   Function: u8_t irq_setup(void)
    -----------------------------
 
    Simply initialize linked lists in irq_flih
 
 **/
 
-PUBLIC u8_t irq_init(void)
+PUBLIC u8_t irq_setup(void)
 {
   u8_t i;
 
@@ -82,7 +87,7 @@ PUBLIC u8_t irq_init(void)
 
 PUBLIC void irq_enable(u8_t irq)
 {
-  pic_enable_irq(irq);
+  arch_enable_irq(irq);
   return;
 }
 
@@ -98,7 +103,7 @@ PUBLIC void irq_enable(u8_t irq)
 
 PUBLIC void irq_disable(u8_t irq)
 {
-  pic_disable_irq(irq);
+  arch_disable_irq(irq);
   return;
 }
 
@@ -112,7 +117,7 @@ PUBLIC void irq_disable(u8_t irq)
 
 **/
 
-PUBLIC void irq_add_flih(u8_t irq, struct int_node* node)
+PUBLIC void irq_add_flih(u8_t irq, struct irq_node* node)
 {
   if (irq < IRQ_VECTORS)
     {
@@ -133,7 +138,7 @@ PUBLIC void irq_add_flih(u8_t irq, struct int_node* node)
 
 **/
 
-PUBLIC void irq_remove_flih(u8_t irq, struct int_node* node)
+PUBLIC void irq_remove_flih(u8_t irq, struct irq_node* node)
 {
   if (irq < IRQ_VECTORS)
     {
@@ -150,8 +155,8 @@ PUBLIC void irq_remove_flih(u8_t irq, struct int_node* node)
 
 /**
 
-   Function: void irq_handle_flih(u8_t irq, struct thread* th)
-   -----------------------------------------------------------
+   Function: void irq_handle_flih(u8_t irq)
+   ----------------------------------------
 
    Flih handler. Run through the correct linked list executing the flih.
    All the flih for a given IRQ vector are executed. The flih must return immediately
@@ -159,19 +164,19 @@ PUBLIC void irq_remove_flih(u8_t irq, struct int_node* node)
 
 **/
 
-PUBLIC void irq_handle_flih(u8_t irq, struct thread* th)
+PUBLIC void irq_handle_flih(u8_t irq)
 {
   if (irq < IRQ_VECTORS)
     {
       if (!LLIST_ISNULL(irq_flih[irq]))
 	{
-	  struct int_node* node;
+	  struct irq_node* node;
 
 	   node = irq_flih[irq];
 	   do
 	     {
 	       /* Execute the flih */
-	       node->flih(th);
+	       node->flih();
 	       /* Run through the list */
 	       node = LLIST_NEXT(irq_flih[irq],node);
 

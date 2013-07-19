@@ -18,27 +18,37 @@
 
    - define.h
    - types.h
-   - const.h
    - interrupt.h      : struct int_node needed
    
 **/
 
 #include <define.h>
 #include <types.h>
-#include "const.h"
 #include "interrupt.h"
+
 
 
 /**
 
-   Constant: IRQ_VECTORS
-   ---------------------
+   Structure: struct int_node
+   --------------------------
 
-   Number of vectors
+   Link all the first level interrupt handlers  sharing the same IRQ.
+   Members are:
+
+   - flih     : first level interrupt handler 
+   - prev     : previous item in the linked list 
+   - next     : next item in the linked list
 
 **/
+   
 
-#define IRQ_VECTORS   16
+PUBLIC struct irq_node
+{
+  void (*flih)();
+  struct irq_node* prev;
+  struct irq_node* next;
+};
 
 
 /**
@@ -56,11 +66,11 @@
 **/
 
 
-PUBLIC u8_t irq_init(void);
+PUBLIC u8_t irq_setup(void);
 PUBLIC void irq_enable(u8_t irq);
 PUBLIC void irq_disable(u8_t irq);
-PUBLIC void irq_add_flih(u8_t irq, struct int_node* node);
-PUBLIC void irq_remove_flih(u8_t irq, struct int_node* node);
-PUBLIC void irq_handle_flih(u8_t irq, struct thread* th);
+PUBLIC void irq_add_flih(u8_t irq, struct irq_node* node);
+PUBLIC void irq_remove_flih(u8_t irq, struct irq_node* node);
+PUBLIC void irq_handle_flih(u8_t irq);
 
 #endif
