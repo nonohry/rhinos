@@ -51,6 +51,8 @@
 PUBLIC int main(void)
 {
 
+  u16_t i;
+
   arch_printf("Hello World (from main) !\n");
 
   if (mem_setup() != EXIT_SUCCESS)
@@ -88,11 +90,15 @@ PUBLIC int main(void)
   cur_th = kern_th;
 
   arch_sti();
-
-  err:
  
+ err:
+  
   while(1)
     {
+      arch_printf("_");
+      for(i=0;i<4321;i++)
+	{}
+
     }
 
   return EXIT_SUCCESS;
