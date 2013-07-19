@@ -71,5 +71,6 @@ EXTERN void x86_inb(u16_t,u8_t*);
 EXTERN void x86_mem_copy(addr_t src, addr_t dest, size_t len);
 EXTERN void x86_mem_set(u32_t val, addr_t dest, size_t len);
 EXTERN void x86_load_pd(physaddr_t pd);
+EXTERN void x86_sti(void);
 
 #endif

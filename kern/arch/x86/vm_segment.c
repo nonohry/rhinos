@@ -165,49 +165,14 @@ PUBLIC struct seg_desc
 } __attribute__ ((packed));
 
 
-/**
-
-   Structure: struct gate_desc
-   ---------------------------
-
-   Describe a gate decriptor.
-   Members definition follows Intel definition:
-
-   31                                         16 15 14  13 12        8 7      5 4    0
-   +-------------------------------------------+---+-----+------------+--------+-----+
-   |                                           |   |  D  |            |        |/////|
-   |        Offset 31:16                       | P |  P  | 0 D 1 1 ?  | 0 0 0  |/////|  (4->7 byte)
-   |                                           |   |  L  |            |        |/////|
-   +-------------------------------------------+---+-----+------------+--------------+
-
-
-   31                                        16 15                                   0
-   +-------------------------------------------+-------------------------------------+
-   |                                           |                                     |
-   |           Segment Selector                |            Offset 15:0              |  (0->3 byte)
-   |                                           |                                     |
-   +-------------------------------------------+-------------------------------------+
-
-**/
-
-
-PUBLIC struct gate_desc
-{
-  u16_t offset_low;
-  u16_t segment;
-  u8_t zero;
-  u8_t attributes;   /* |P|DPL|0111?| */
-  u16_t offset_high;
-} __attribute__ ((packed));
-
 
 
 /**
 
-   Structure: struct table_desc
-   ----------------------------
+   Structure: struct gdt_desc
+   --------------------------
 
-   table (IDT or GDT) descriptor.
+   GDT descriptor.
    Members are:
    
    - limit : table size
@@ -216,7 +181,7 @@ PUBLIC struct gate_desc
 **/
 
 
-PUBLIC struct table_desc
+PUBLIC struct gdt_desc
 {
   u16_t limit;
   lineaddr_t base;
@@ -285,10 +250,8 @@ PUBLIC struct tss
 
 PRIVATE void create_code_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl);
 PRIVATE void create_data_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl);
-PRIVATE void create_int_gate(struct gate_desc* gate, u16_t seg, u32_t off,u8_t flags);
 PRIVATE void create_tss_seg(struct seg_desc *desc, lineaddr_t base, u32_t size, u8_t dpl);
 PRIVATE void create_seg_desc(struct seg_desc *desc, lineaddr_t base, u32_t size);
-PRIVATE void create_gate_desc(struct gate_desc* gate, u16_t seg, u32_t off);
 
 
 /**
@@ -299,7 +262,7 @@ PRIVATE void create_gate_desc(struct gate_desc* gate, u16_t seg, u32_t off);
 **/
 
 PUBLIC struct tss tss;                        /* TSS */
-PUBLIC struct table_desc gdt_desc;            /* GDT descriptor */
+PUBLIC struct gdt_desc gdt_desc;            /* GDT descriptor */
 
 
 
@@ -429,60 +392,6 @@ PRIVATE void create_data_seg(struct seg_desc *desc, lineaddr_t base, u32_t size,
 
 
 
-/**
-
-   Function: void create_int_gate(struct gate_desc* gate, u16_t seg, u32_t off,u8_t flags)
-   -------------------------------------------------------------------------------------
-
-  
-   Initialize interrupt gate descriptor `gate` with segment selector `seg` and  offset `off`.
-   Interrupt gates have the following 8 bytes structure:
-
-
-   31                                         16 15 14  13 12        8 7      5 4    0
-   +-------------------------------------------+---+-----+------------+--------+-----+
-   |                                           |   |  D  |            |        |/////|
-   |        Offset 31:16                       | P |  P  | 0 D 1 1 0  | 0 0 0  |/////|  (4->7 byte)
-   |                                           |   |  L  |            |        |/////|
-   +-------------------------------------------+---+-----+------------+--------------+
-
-
-   31                                        16 15                                   0
-   +-------------------------------------------+-------------------------------------+
-   |                                           |                                     |
-   |           Segment Selector                |            Offset 15:0              |  (0->3 byte)
-   |                                           |                                     |
-   +-------------------------------------------+-------------------------------------+
-
-
-   with fields:
-
-   - DPL      : Descriptor Privilege Level
-   - Offset   : ISR Offset in segment
-   - P        : Present flag
-   - Selector : ISR code Segment Selector
-   - D        : Gate size (1=32bits, 0=16bits)
-
-**/
-
-
-
-PRIVATE void create_int_gate(struct gate_desc* gate, u16_t seg, u32_t off,u8_t flags)
-{
-  u8_t magic = 14;  /* 14 = 00001110b */
-
-  /* Generic initialization */
-  create_gate_desc(gate,seg,off);
-
-  /* Attributes (bits 32 to 48) */
-  gate->attributes = magic | flags;
-
-  return;
-}
-
-
-
-
 
 /**
 
@@ -578,36 +487,6 @@ PRIVATE void create_seg_desc(struct seg_desc *desc, lineaddr_t base, u32_t size)
     }
 
   
-  return;
-}
-
-
-
-
-/**
-
-   Function: void create_gate_desc(struct gate_desc* gate, u16_t seg, u32_t off)
-   ---------------------------------------------------------------------------
-
-   Create the gate decriptor `gate` with segment selector `seg` and  offset `off`.
-   Gate descriptors structures are described in `create_int_gate` and `create_trap_gate`
-
-**/
-
-
-PRIVATE void create_gate_desc(struct gate_desc* gate, u16_t seg, u32_t off)
-{
-
-  /* Offset */
-  gate->offset_low = off;
-  gate->offset_high = off >> 16;
-
-  /* Code segment */
-  gate->segment = seg;
-
-  /* Zero byte */
-  gate->zero = 0;
-
   return;
 }
 

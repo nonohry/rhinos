@@ -26,7 +26,7 @@
 	
 extern	setup_x86
 extern  gdt_desc
-;; extern  idt_desc
+extern  idt_desc
 extern  main			
 
 
@@ -81,7 +81,7 @@ _start:
 	add 	esp,8
 
 	lgdt	[gdt_desc]
-	;;     	lidt	[idt_desc]
+     	lidt	[idt_desc]
 
 	mov	ax,TSS_SELECTOR
 	ltr	ax

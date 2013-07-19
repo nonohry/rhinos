@@ -21,7 +21,8 @@
 
    - define.h
    - types.h
-   - pic.h    : x86 pit functions
+   - pic.h     : x86 pit functions
+   - x86_lib.h : sti
  
 **/
 
@@ -29,6 +30,7 @@
 #include <define.h>
 #include <types.h>
 #include "pic.h"
+#include "x86_lib.h"
 
 
 /** 
@@ -36,13 +38,14 @@
     Function Pointers
     -----------------
 
-    Glue for pit
+    Glue for pit, sti
 
 **/
 
 
 PRIVATE u8_t (*arch_enable_irq)(u8_t n)__attribute__((unused)) = &pic_enable_irq;
 PRIVATE u8_t (*arch_disable_irq)(u8_t n)__attribute__((unused)) = &pic_disable_irq;
+PRIVATE void (*arch_sti)(void)__attribute__((unused)) = &x86_sti;
 
 
 #endif

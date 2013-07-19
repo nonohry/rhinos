@@ -16,8 +16,9 @@
    
    - define.h
    - types.h
-   - arch_io   : architecture dependent io library
-   - boot.h    : structure boot_info
+   - arch_io.h   : architecture dependent io library
+   - arch_hw.h   : architecture dependent sti
+   - boot.h      : structure boot_info
 
 **/
 
@@ -25,6 +26,7 @@
 #include <define.h>
 #include <types.h>
 #include <arch_io.h>
+#include <arch_hw.h>
 #include "mem.h"
 #include "thread.h"
 #include "irq.h"
@@ -50,6 +52,7 @@ PUBLIC int main(void)
 {
 
   arch_printf("Hello World (from main) !\n");
+
   if (mem_setup() != EXIT_SUCCESS)
     {
       arch_printf("Unable to intialize kernel memory manager\n");
@@ -84,6 +87,7 @@ PUBLIC int main(void)
   sched_enqueue(SCHED_READY_QUEUE,kern_th);
   cur_th = kern_th;
 
+  arch_sti();
 
   err:
  

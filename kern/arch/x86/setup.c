@@ -24,6 +24,7 @@
    - vm_paging.h    : paging setup
    - pic.h          : pic setup
    - pit.h          : pit setup
+   - interrupt.h    : interrupt setup
    - setup.h        : self header
 
 **/
@@ -39,6 +40,7 @@
 #include "pic.h"
 #include "pit.h"
 #include "vm_paging.h"
+#include "interrupt.h"
 #include "setup.h"
 
 
@@ -151,6 +153,13 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
   if (pit_setup() != EXIT_SUCCESS)
     {
       serial_printf("PIT setup error\n");
+      goto err;
+    }
+
+  /* Setup Interrupts */
+  if (interrupt_setup() != EXIT_SUCCESS)
+    {
+      serial_printf("Interrupt setup error\n");
       goto err;
     }
 

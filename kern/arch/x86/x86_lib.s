@@ -28,7 +28,7 @@ global x86_inb
 global x86_mem_copy
 global x86_mem_set
 global x86_load_pd
-
+global x86_sti
 	
 	;;/**
 	;;
@@ -160,3 +160,26 @@ x86_load_pd:
 	mov	esp,ebp
 	pop	ebp
 	ret	
+
+
+	;;/**
+	;; 
+	;; 	Function: void x86_sti(void)
+	;; 	----------------------------
+	;;
+	;; 	Restore interrupts using `sti`
+	;;
+	;;**/
+	
+
+x86_sti:
+	push 	ebp
+	mov  	ebp,esp
+	push	esi
+	push	edi
+	sti			; Restore  interrupts
+	pop	edi
+	pop	esi
+	mov	esp,ebp
+	pop	ebp
+	ret
