@@ -18,7 +18,7 @@
 
    - define.h
    - types.h
-   - const.h
+   - arch_vm.h : architecture dependant virtual memory
    - thread.h  : struct thread needed
 
 **/
@@ -26,7 +26,7 @@
 
 #include <define.h>
 #include <types.h>
-#include "const.h"
+#include <arch_vm.h>
 #include "thread.h"
 
 
@@ -42,29 +42,6 @@
 #define PROC_NAMELEN               32
 
 
-/**
-
-   Structure: struct thread_info
-   -----------------------------
-
-   Helper structure to double link threads in process structure 
-   whereas a thread is already a double linked structure.
-   Members are:
-
-   - thread  : thread to link to process
-   - prev    : previous item in linked list
-   - next    : next item in linked list
-   
-**/
-
-
-PUBLIC struct thread_info
-{
-  struct thread* thread;
-  struct thread_info* prev;
-  struct thread_info* next;
-};
-
 
 /**
  
@@ -74,8 +51,7 @@ PUBLIC struct thread_info
    Describe a process from the kernel point of view.
    Members are:
 
-   - p_pd         : physical address of process page directory 
-   - v_pd;        : virtual address of process page directory 
+   - addr_space   : address space
    - name         : process name
    - thread_list  : threads in process
 
@@ -84,8 +60,7 @@ PUBLIC struct thread_info
 
 PUBLIC struct proc
 {
-  physaddr_t p_pd;
-  struct pde* v_pd;
+  addrspace_t addr_space; 
   char name[PROC_NAMELEN];
   struct thread_info* thread_list;
 }__attribute__ ((packed));

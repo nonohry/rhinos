@@ -198,6 +198,20 @@ PUBLIC struct pte
 PUBLIC struct pde* kern_pd;
 
 
+
+/**
+
+   Privates
+   --------
+
+   Virtual to physical address conversion
+
+**/
+
+
+PRIVATE physaddr_t vm_tophys(virtaddr_t vaddr);
+
+
 /**
 
    Function: u8_t paging_setup(physaddr_t* base)
@@ -396,3 +410,81 @@ PUBLIC u8_t vm_paging_unmap(virtaddr_t vaddr)
 	   
 }
   
+
+/**
+
+   Function: u8_t vm_switch_to(virtaddr_t pd_addr)
+   -----------------------------------------------
+
+
+   Switch to page directory `pd_addr`
+
+**/
+
+
+PUBLIC u8_t vm_switch_to(virtaddr_t pd_addr)
+{
+  physaddr_t paddr;
+
+  /* Get page directory physical address */
+  paddr = vm_tophys(pd_addr);
+  if (!paddr)
+    {
+      return EXIT_FAILURE;
+    }
+
+  /* Load new page directory */
+  x86_load_pd(paddr);
+
+  return EXIT_SUCCESS;
+  
+
+}
+
+
+
+/**
+   
+   Function: physaddr_t vm_tophys(virtaddr_t vaddr)
+   ------------------------------------------------
+
+   Return the physical address mapped to `vaddr`. 
+   If such a mapping does not exist, return 0.
+
+**/
+
+
+PRIVATE physaddr_t vm_tophys(virtaddr_t vaddr)
+{
+  struct pde* pd;
+  struct pte* table;
+  u16_t pde,pte;
+  u32_t offset;
+
+  /* Get current page directory, page directory entry and page table entry linked to `vaddr` */ 
+  pde = VM_PAGING_GET_PDE(vaddr);
+  pte = VM_PAGING_GET_PTE(vaddr);
+  pd = (struct pde*)VM_PAGING_GET_PD();
+
+  /* Offset in physical page */
+  offset = vaddr & VM_PAGING_OFFMASK;
+
+  /* No page directory entry ? Error */
+  if ( !pd[pde].present )
+    {
+      return 0;
+    }
+ 
+  /* Get page table */
+  table = (struct pte*)(VM_PAGING_GET_PT(pde));
+
+  /* No page table entry ? Error */
+  if ( !table[pte].present )
+    {
+      return 0;
+    }
+ 
+  /* Return physical address */
+  return (((table[pte].baseaddr)<<VM_PAGING_BASESHIFT)+offset);
+
+}
