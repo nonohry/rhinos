@@ -32,8 +32,6 @@
 
 **/
 
-
-
 #define SCHED_RUNNING_QUEUE          1
 #define SCHED_READY_QUEUE            2
 #define SCHED_BLOCKED_QUEUE          3
@@ -53,6 +51,6 @@
 PUBLIC u8_t sched_setup(void);
 PUBLIC u8_t sched_enqueue(u8_t queue, struct thread* th);
 PUBLIC u8_t sched_dequeue(u8_t queue, struct thread* th);
-PUBLIC void sched_schedule();
+PUBLIC struct thread* sched_elect();
 
 #endif

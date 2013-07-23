@@ -159,6 +159,6 @@ PUBLIC struct thread* cur_th;
 
 
 PUBLIC struct thread* thread_create(const char* name, virtaddr_t base, virtaddr_t stack_base, size_t stack_size);
-
+PUBLIC u8_t thread_switch_to(struct thread* th);
 
 #endif

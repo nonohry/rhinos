@@ -101,3 +101,25 @@ PUBLIC struct thread* thread_create(const char* name, virtaddr_t base, virtaddr_
   return NULL;
   
 }
+
+
+/**
+
+   Function: u8_t thread_switch_to(thread* th)
+   -------------------------------------------
+
+   Switch current thread to `th`
+
+**/
+
+
+PUBLIC u8_t thread_switch_to(struct thread* th)
+{
+  if (th)
+    {
+      cur_th = th;
+      return EXIT_SUCCESS;
+    }
+
+  return EXIT_FAILURE;
+}

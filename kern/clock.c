@@ -18,6 +18,8 @@
    - define.h
    - types.h
    - irq.h     : irq_node needed
+   - thread.h  : thread switch needed
+   - sched.h   : scheduler needed
    - clock.h   : self header
 
 **/
@@ -27,6 +29,7 @@
 #include <types.h>
 #include <arch_io.h>
 #include "irq.h"
+#include "thread.h"
 #include "sched.h"
 #include "clock.h"
 
@@ -92,10 +95,13 @@ PUBLIC u8_t clock_setup(void)
 PRIVATE void clock_handler()
 {
 
+  struct thread* th;
+
   arch_printf(" TICK! ");
 
   /* Scheduler */
-  sched_schedule();
+  th = sched_elect();
+  thread_switch_to(th);
 
   return;
 }

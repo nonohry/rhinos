@@ -17,12 +17,7 @@
 
    - define.h
    - types.h
-   - const.h
-   - klib.h
-   - interrupt.h : Needed to create clock handler
-   - irq.h       : Needed to activate IRQ line
-   - thread.h    : struct thread needed
-   - sched.h     : sched_schedule needed
+   - x86_lib.h
    - pit.h       : self header
    
 **/
