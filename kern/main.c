@@ -91,6 +91,9 @@ PUBLIC int main(void)
 
   arch_sti();
  
+ int* p = 0x800000;
+ *p = 9;
+
  err:
   
   while(1)
