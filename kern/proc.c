@@ -17,10 +17,7 @@
    - define.h
    - types.h
    - llist.h
-   - const.h
-   - klib.h
-   - virtmem_slab.h  : cache manipulation needed
-   - paging.h        : pagination primitives needed
+   - mem.h
    - thread.h        : struct thread needed
    - proc.h          : self header
 
@@ -30,65 +27,9 @@
 #include <define.h>
 #include <types.h>
 #include <llist.h>
-#include "const.h"
-#include "klib.h"
-#include "virtmem_slab.h"
-#include "paging.h"
+#include "mem.h"
 #include "thread.h"
 #include "proc.h"
-
-
-/**
-
-   Privates
-   --------
-
-   Caches for proc, thread_info and page directory structures
-
-**/
-
-
-PRIVATE struct vmem_cache* proc_cache;
-PRIVATE struct vmem_cache* thread_info_cache;
-PRIVATE struct vmem_cache* pd_cache;
-
-
-/**
-
-   Function: u8_t proc_init(void)
-   ------------------------------
-
-   Process subsystem initialization.
-   Simply creates caches in slab allocator for the needed structures.
-
-**/ 
-
-
-PUBLIC u8_t proc_init(void)
-{
-
-  /* Create caches */
-
-  proc_cache = virtmem_cache_create("proc_cache",sizeof(struct proc),0,0,VIRT_CACHE_DEFAULT,NULL,NULL);
-  if (proc_cache == NULL)
-    {
-      return EXIT_FAILURE;
-    }
- 
-  thread_info_cache = virtmem_cache_create("thread_info_cache",sizeof(struct thread_info),0,0,VIRT_CACHE_DEFAULT,NULL,NULL);
-  if (thread_info_cache == NULL)
-    {
-      return EXIT_FAILURE;
-    }
-
-  pd_cache = virtmem_cache_create("pd_cache",PAGING_ENTRIES*sizeof(struct pde),0,0,VIRT_CACHE_DEFAULT,NULL,NULL);
-  if (pd_cache == NULL)
-    {
-      return EXIT_FAILURE;
-    }
-
-  return EXIT_SUCCESS;
-}
 
 
 
@@ -107,22 +48,13 @@ PUBLIC u8_t proc_init(void)
 PUBLIC struct proc* proc_create(char* name)
 {
   struct proc* proc;
-  struct pde*  pd;
-  struct pde* kern_pd;
   u16_t i;
 
   /* Allocate a process */
-  proc = (struct proc*)virtmem_cache_alloc(proc_cache,VIRT_CACHE_DEFAULT);
+  proc = (struct proc*)mem_alloc(sizeof(struct proc));
   if (proc == NULL)
     {
       return NULL;
-    }
-
-  /* Allocate a page directory */
-  pd = (struct pde*)virtmem_cache_alloc(pd_cache,VIRT_CACHE_DEFAULT);
-  if (!pd)
-    {
-      goto err00;
     }
 
   /* Name check */
@@ -169,14 +101,6 @@ PUBLIC struct proc* proc_create(char* name)
 
   return proc;
 
- err01:
-  /* free page directory */
-  virtmem_cache_free(pd_cache,pd);
-
- err00:
-  /* free process */
-   virtmem_cache_free(proc_cache,proc);
-  
 
   return NULL;
 }

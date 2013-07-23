@@ -97,10 +97,12 @@ PRIVATE void clock_handler()
 
   struct thread* th;
 
-  arch_printf(" TICK! ");
-
   /* Scheduler */
   th = sched_elect();
+  if (th)
+    {
+      arch_printf(" Elected: %s ", th->name);
+    }
   thread_switch_to(th);
 
   return;
