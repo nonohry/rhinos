@@ -26,6 +26,25 @@
 
 
 
+/**
+
+   Constants: Page fault error codes
+   ---------------------------------
+
+**/
+
+
+#define VM_PF_SUPER_READ_NONPRESENT       0
+#define VM_PF_SUPER_READ_PROTECTION       1
+#define VM_PF_SUPER_WRITE_NONPRESENT      2
+#define VM_PF_SUPER_WRITE_PROTECTION      3
+
+#define VM_PF_USER_READ_NONPRESENT        4
+#define VM_PF_USER_READ_PROTECTION        5
+#define VM_PF_USER_WRITE_NONPRESENT       6
+#define VM_PF_USER_WRITE_PROTECTION       7
+
+
 
 /**
 

@@ -50,7 +50,6 @@
 
 
 
-
 /**
 
    Structure: struct pde
@@ -440,7 +439,6 @@ PUBLIC u8_t vm_switch_to(virtaddr_t pd_addr)
   
 
 }
-
 
 
 /**

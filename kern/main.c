@@ -92,6 +92,8 @@ PUBLIC int main(void)
   arch_sti();
  
  int* p = 0x800000;
+ 
+ //int pp = *p;
  *p = 9;
 
  err:
