@@ -28,6 +28,7 @@ global x86_inb
 global x86_mem_copy
 global x86_mem_set
 global x86_load_pd
+global x86_get_pf_addr
 global x86_sti
 	
 	;;/**
@@ -143,7 +144,7 @@ x86_mem_set:
 	;; 	Function: void x86_load_pd(u32_t pd)
 	;;	-------------------------------------
 	;;
-	;; 	Load the page directory `pd` inr CR3 processor register
+	;; 	Load the page directory `pd` in CR3 processor register
 	;;
 	;;**/
 
@@ -161,6 +162,28 @@ x86_load_pd:
 	pop	ebp
 	ret	
 
+	;;/**
+	;; 
+	;; 	Function: virtaddr_t x86_get_pf_addr(void)
+	;;	------------------------------------------
+	;;
+	;; 	Get page faulting address from CR2 register
+	;;
+	;;**/
+
+	
+x86_get_pf_addr:
+	push 	ebp
+	mov  	ebp,esp
+	push	esi
+	push	edi
+	xor  	eax,eax		; move `pd` in EAX	
+	mov	eax, cr2	; load CR3
+	pop	edi		; Restaure EDI
+	pop	esi
+	mov	esp,ebp
+	pop	ebp
+	ret	
 
 	;;/**
 	;; 

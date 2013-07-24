@@ -15,7 +15,8 @@
 
    - define.h
    - types.h
-   - x86_lib.h
+   - x86_lib.h     : memset
+   - context.h     : struct context
    - vm_paging.h   : self header
  
 **/
@@ -23,7 +24,9 @@
 
 #include <define.h>
 #include <types.h>
+#include "serial.h"
 #include "x86_lib.h"
+#include "context.h"
 #include "vm_paging.h"
 
 
@@ -439,6 +442,98 @@ PUBLIC u8_t vm_switch_to(virtaddr_t pd_addr)
   
 
 }
+
+
+/**
+
+   Function: u8_t vm_pf_resolvable(struct context* ctx)
+   ----------------------------------------------------
+
+   Return TRUE if page fault error code in `ctx` is a non present error
+   Return FALSE otherwise
+
+**/
+
+
+PUBLIC u8_t vm_pf_resolvable(struct x86_context* ctx)
+{
+       switch(ctx->error_code)
+	{
+	case VM_PF_SUPER_READ_NONPRESENT:
+	case VM_PF_SUPER_WRITE_NONPRESENT:
+	case VM_PF_USER_READ_NONPRESENT:
+	case VM_PF_USER_WRITE_NONPRESENT:
+	  return TRUE;
+	  break;
+	default:
+	  return FALSE;
+	  break;
+	}
+}
+
+
+/** 
+    
+    Function: u8_t vm_pf_fix(virtaddr_t vaddr, physaddr_t paddr, u8_t rw, u8_t super)
+    ---------------------------------------------------------------------------------
+
+    Resolve page fault by mapping `paddr` with `vaddr` 
+    or by creating page table corrsponding to `vaddr` in `paddr`
+
+**/
+
+
+PUBLIC u8_t vm_pf_fix(virtaddr_t vaddr, physaddr_t paddr, u8_t rw, u8_t super)
+{
+  struct pde* pd;
+  struct pte* table;
+  u16_t pde,pte;
+
+  /* Get current page directory, page directory entry and page table entry linked to `vaddr` */ 
+  pde = VM_PAGING_GET_PDE(vaddr);
+  pte = VM_PAGING_GET_PTE(vaddr);
+  pd = (struct pde*)VM_PAGING_GET_PD();
+  
+  /* Self map check */
+  if ( pde == VM_PAGING_SELFMAP )
+    {
+      return EXIT_FAILURE;
+    }
+
+  /* No Page Table */
+  if ( !(pd[pde].present) )
+    {
+      table = (struct pte*)paddr;
+      pd[pde].present = 1;
+      pd[pde].rw = rw;
+      pd[pde].user = super?0:1;
+      pd[pde].baseaddr = paddr >> VM_PAGING_BASESHIFT;
+
+      /* Clear table */
+      x86_mem_set(0,(addr_t)VM_PAGING_GET_PT(pde),VM_PAGING_ENTRIES*sizeof(struct pte));
+
+      return EXIT_SUCCESS;
+    }
+
+
+
+  /* No physical page */
+  table = (struct pte*)VM_PAGING_GET_PT(pde);
+  if ( !(table[pte].present) )
+    {
+      table[pte].present = 1;
+      table[pte].rw = rw;
+      table[pte].user = super?0:1;
+      table[pte].baseaddr = paddr >> VM_PAGING_BASESHIFT;
+
+      return EXIT_SUCCESS;
+    }
+
+
+  return EXIT_FAILURE;
+
+}
+
 
 
 /**

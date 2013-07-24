@@ -47,8 +47,8 @@ main.o: arch/x86/arch_ctx.h arch/x86/context.h irq.h arch/x86/interrupt.h
 main.o: boot.h sched.h clock.h
 mem.o: ../include/define.h ../include/arch/x86/types.h arch/x86/arch_const.h
 mem.o: arch/x86/x86_const.h arch/x86/arch_io.h arch/x86/serial.h
-mem.o: arch/x86/x86_lib.h arch/x86/arch_vm.h arch/x86/vm_paging.h boot.h
-mem.o: mem.h
+mem.o: arch/x86/x86_lib.h arch/x86/arch_vm.h arch/x86/arch_ctx.h
+mem.o: arch/x86/context.h arch/x86/vm_paging.h boot.h mem.h
 thread.o: ../include/define.h ../include/arch/x86/types.h ../include/llist.h
 thread.o: arch/x86/arch_io.h arch/x86/serial.h arch/x86/x86_lib.h
 thread.o: arch/x86/x86_const.h arch/x86/arch_ctx.h arch/x86/context.h mem.h
