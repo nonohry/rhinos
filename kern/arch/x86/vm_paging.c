@@ -24,7 +24,6 @@
 
 #include <define.h>
 #include <types.h>
-#include "serial.h"
 #include "x86_lib.h"
 #include "context.h"
 #include "vm_paging.h"
@@ -450,7 +449,7 @@ PUBLIC u8_t vm_switch_to(virtaddr_t pd_addr)
    ----------------------------------------------------
 
    Return TRUE if page fault error code in `ctx` is a non present error
-   Return FALSE otherwise
+   Return VM_PF_UNRESOLVABLE otherwise
 
 **/
 
@@ -463,10 +462,50 @@ PUBLIC u8_t vm_pf_resolvable(struct x86_context* ctx)
 	case VM_PF_SUPER_WRITE_NONPRESENT:
 	case VM_PF_USER_READ_NONPRESENT:
 	case VM_PF_USER_WRITE_NONPRESENT:
-	  return TRUE;
+	  {
+	    virtaddr_t vaddr;
+	    struct pde* pd;
+	    struct pte* table;
+	    u16_t pde,pte;
+
+	    /* Get faulting address */
+	    vaddr =  x86_get_pf_addr();
+
+	    /* Get current page directory, page directory entry and page table entry linked to `vaddr` */ 
+	    pde = VM_PAGING_GET_PDE(vaddr);
+	    pte = VM_PAGING_GET_PTE(vaddr);
+	    pd = (struct pde*)VM_PAGING_GET_PD();
+	    
+	    /* Self map check */
+	    if ( pde == VM_PAGING_SELFMAP )
+	      {
+		return VM_PF_UNRESOLVABLE;
+	      }
+
+	    /* Possible page fault causes */
+	    if ( !(pd[pde].present) )
+	      {
+		/* Missing Page table */
+		return VM_PF_INTERNAL;
+	      }
+	    else
+	      {
+		table = (struct pte*)VM_PAGING_GET_PT(pde);
+		if ( !(table[pte].present) )
+		  {
+		    /* Missing physical page */
+		    return VM_PF_EXTERNAL;
+		  }
+		else
+		  {
+		    /* wtf ? */
+		    return VM_PF_UNRESOLVABLE;
+		  }
+	      }
+	  }
 	  break;
 	default:
-	  return FALSE;
+	  return VM_PF_UNRESOLVABLE;
 	  break;
 	}
 }
@@ -474,16 +513,17 @@ PUBLIC u8_t vm_pf_resolvable(struct x86_context* ctx)
 
 /** 
     
-    Function: u8_t vm_pf_fix(virtaddr_t vaddr, physaddr_t paddr, u8_t rw, u8_t super)
-    ---------------------------------------------------------------------------------
+    Function: u8_t vm_pf_fix(virtaddr_t vaddr, physaddr_t paddr, u8_t flag, u8_t rw, u8_t super)
+    --------------------------------------------------------------------------------------------
 
     Resolve page fault by mapping `paddr` with `vaddr` 
-    or by creating page table corrsponding to `vaddr` in `paddr`
+    or by creating page table corresponding to `vaddr` in `paddr`
+    depending on `flag`
 
 **/
 
 
-PUBLIC u8_t vm_pf_fix(virtaddr_t vaddr, physaddr_t paddr, u8_t rw, u8_t super)
+PUBLIC u8_t vm_pf_fix(virtaddr_t vaddr, physaddr_t paddr, u8_t flag, u8_t rw, u8_t super)
 {
   struct pde* pd;
   struct pte* table;
@@ -501,7 +541,7 @@ PUBLIC u8_t vm_pf_fix(virtaddr_t vaddr, physaddr_t paddr, u8_t rw, u8_t super)
     }
 
   /* No Page Table */
-  if ( !(pd[pde].present) )
+  if ( (!(pd[pde].present))&&(flag == VM_PF_INTERNAL) )
     {
       table = (struct pte*)paddr;
       pd[pde].present = 1;
@@ -519,7 +559,7 @@ PUBLIC u8_t vm_pf_fix(virtaddr_t vaddr, physaddr_t paddr, u8_t rw, u8_t super)
 
   /* No physical page */
   table = (struct pte*)VM_PAGING_GET_PT(pde);
-  if ( !(table[pte].present) )
+  if ( (!(table[pte].present))&&(flag == VM_PF_EXTERNAL) )
     {
       table[pte].present = 1;
       table[pte].rw = rw;

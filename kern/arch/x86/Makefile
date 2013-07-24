@@ -40,13 +40,13 @@ clean:
 
 setup.o: ../../../include/define.h ../../../include/arch/x86/types.h
 setup.o: ../../boot.h x86_const.h x86_lib.h serial.h e820.h setup.h
-setup.o: vm_segment.h pic.h pit.h vm_paging.h interrupt.h
+setup.o: vm_segment.h pic.h pit.h vm_paging.h context.h interrupt.h
 e820.o: ../../../include/define.h ../../../include/arch/x86/types.h
 e820.o: x86_const.h setup.h e820.h
 vm_segment.o: ../../../include/define.h ../../../include/arch/x86/types.h
 vm_segment.o: x86_const.h vm_segment.h
 vm_paging.o: ../../../include/define.h ../../../include/arch/x86/types.h
-vm_paging.o: serial.h x86_lib.h x86_const.h context.h vm_paging.h
+vm_paging.o: x86_lib.h x86_const.h context.h vm_paging.h
 serial.o: ../../../include/define.h ../../../include/arch/x86/types.h
 serial.o: x86_lib.h x86_const.h serial.h
 context.o: ../../../include/define.h ../../../include/arch/x86/types.h

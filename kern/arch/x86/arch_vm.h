@@ -51,6 +51,19 @@
 typedef virtaddr_t addrspace_t;
 
 
+/**
+
+   Constants: page fault types
+   ---------------------------
+
+**/
+
+
+#define ARCH_PF_UNRESOLVABLE     VM_PF_UNRESOLVABLE   
+#define ARCH_PF_INTERNAL         VM_PF_INTERNAL      
+#define ARCH_PF_EXTERNAL         VM_PF_EXTERNAL         
+
+
 
 /** 
 
@@ -67,7 +80,7 @@ PRIVATE u8_t (*arch_vm_unmap)(virtaddr_t vaddr)__attribute__((unused)) = &vm_pag
 PRIVATE u8_t (*arch_vm_switch_to)(addrspace_t sp)__attribute__((unused)) = &vm_switch_to;
 PRIVATE virtaddr_t (*arch_pf_addr)(void)__attribute__((unused)) = &x86_get_pf_addr;
 PRIVATE u8_t (*arch_pf_resolvable)(arch_ctx_t* ctx)__attribute__((unused)) = &vm_pf_resolvable;
-PRIVATE u8_t (*arch_pf_fix)(virtaddr_t vaddr, physaddr_t paddr, u8_t rw, u8_t super)__attribute__((unused)) = &vm_pf_fix;
+PRIVATE u8_t (*arch_pf_fix)(virtaddr_t vaddr, physaddr_t paddr, u8_t flag, u8_t rw, u8_t super)__attribute__((unused)) = &vm_pf_fix;
 
 
 #endif

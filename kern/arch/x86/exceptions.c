@@ -47,7 +47,8 @@ PUBLIC void excep_handle(u32_t num, struct x86_context* ctx)
 {
   if (num == 14)
     {
-      serial_printf("Page fault is %s resolvable:\n",vm_pf_resolvable(ctx)==TRUE?"":"not");
+      u8_t type = vm_pf_resolvable(ctx);
+      serial_printf("Page fault is %s\n",(type!=VM_PF_UNRESOLVABLE?(type==VM_PF_INTERNAL?"caused by PT":"caused by Frame"):"unresolvable"));
 
       switch(ctx->error_code)
 	{
@@ -80,7 +81,7 @@ PUBLIC void excep_handle(u32_t num, struct x86_context* ctx)
 	  break;
 	}
       
-      vm_pf_fix(x86_get_pf_addr(), 0x1000, 1, 1);
+      vm_pf_fix(x86_get_pf_addr(), 0x1000, type, 1, 1);
 
     }
   else
