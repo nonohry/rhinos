@@ -19,7 +19,6 @@
    - llist.h
    - arch_io.h
    - arch_ctx.h : CPU context
-   - mem.h      : memory allocation
    - sched.h    : scheduler
    - thread.h   : self header
 
@@ -31,7 +30,6 @@
 #include <llist.h>
 #include <arch_io.h>
 #include <arch_ctx.h>
-#include "mem.h"
 #include "sched.h"
 #include "thread.h"
 
@@ -49,7 +47,7 @@
 PUBLIC struct thread* thread_create(const char* name, virtaddr_t base, virtaddr_t stack_base, size_t stack_size)
 {
   u8_t i;
-  struct thread* th;
+  struct thread* th=NULL;
 
   /* Sanity checks */
   if (!((base)&&(stack_base)&&(stack_size)))
@@ -58,7 +56,7 @@ PUBLIC struct thread* thread_create(const char* name, virtaddr_t base, virtaddr_
     }
 
   /* Allocate a thread structure */
-  th = (struct thread*)mem_alloc(sizeof(struct thread));
+  //th = (struct thread*)mem_alloc(sizeof(struct thread));
   if (th == NULL)
     {
       return NULL;
@@ -97,7 +95,7 @@ PUBLIC struct thread* thread_create(const char* name, virtaddr_t base, virtaddr_
 
  err:
   
-  mem_free(th);
+  //mem_free(th);
   return NULL;
   
 }

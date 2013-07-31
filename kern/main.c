@@ -27,7 +27,6 @@
 #include <types.h>
 #include <arch_io.h>
 #include <arch_hw.h>
-#include "mem.h"
 #include "thread.h"
 #include "irq.h"
 #include "boot.h"
@@ -54,13 +53,6 @@ PUBLIC int main(void)
   u16_t i;
 
   arch_printf("Hello World (from main) !\n");
-
-  if (mem_setup() != EXIT_SUCCESS)
-    {
-      arch_printf("Unable to intialize kernel memory manager\n");
-      goto err;
-    }
-
   
   if (irq_setup() != EXIT_SUCCESS)
     {
@@ -75,26 +67,26 @@ PUBLIC int main(void)
     }
 
 
-  struct thread* kern_th = (struct thread*)mem_alloc(sizeof(struct thread));
-  kern_th->ctx.ss = 16;
-  kern_th->name[0] = '[';
-  kern_th->name[1] = 'K';
-  kern_th->name[2] = 'e';
-  kern_th->name[3] = 'r';
-  kern_th->name[4] = 'n';
-  kern_th->name[5] = ']';
-  kern_th->name[6] = 0;
+ /*  struct thread* kern_th = (struct thread*)mem_alloc(sizeof(struct thread)); */
+ /*  kern_th->ctx.ss = 16; */
+ /*  kern_th->name[0] = '['; */
+ /*  kern_th->name[1] = 'K'; */
+ /*  kern_th->name[2] = 'e'; */
+ /*  kern_th->name[3] = 'r'; */
+ /*  kern_th->name[4] = 'n'; */
+ /*  kern_th->name[5] = ']'; */
+ /*  kern_th->name[6] = 0; */
 
-  kern_th->state = THREAD_READY;
-  sched_enqueue(SCHED_READY_QUEUE,kern_th);
-  cur_th = kern_th;
+ /*  kern_th->state = THREAD_READY; */
+ /*  sched_enqueue(SCHED_READY_QUEUE,kern_th); */
+ /*  cur_th = kern_th; */
 
-  arch_sti();
+ /*  arch_sti(); */
  
- int* p = 0x80000000;
+ /* int* p = 0x80000000; */
  
- //int pp = *p;
- *p = 9;
+ /* //int pp = *p; */
+ /* *p = 9; */
 
  err:
   

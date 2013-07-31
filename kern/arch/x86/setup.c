@@ -127,7 +127,7 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
 	  mods_list[i].start = limit;
 
 	  limit += X86_ALIGN_SUP((mods_list[i].end - mods_list[i].start + 1));
-
+	  
 	}
       else
 	{

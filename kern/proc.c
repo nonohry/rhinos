@@ -17,7 +17,6 @@
    - define.h
    - types.h
    - llist.h
-   - mem.h
    - thread.h        : struct thread needed
    - proc.h          : self header
 
@@ -27,7 +26,6 @@
 #include <define.h>
 #include <types.h>
 #include <llist.h>
-#include "mem.h"
 #include "thread.h"
 #include "proc.h"
 
@@ -47,11 +45,11 @@
 
 PUBLIC struct proc* proc_create(char* name)
 {
-  struct proc* proc;
+  struct proc* proc=NULL;
   u16_t i;
 
   /* Allocate a process */
-  proc = (struct proc*)mem_alloc(sizeof(struct proc));
+  //proc = (struct proc*)mem_alloc(sizeof(struct proc));
   if (proc == NULL)
     {
       return NULL;
