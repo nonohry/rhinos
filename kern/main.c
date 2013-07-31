@@ -30,6 +30,7 @@
 #include "thread.h"
 #include "irq.h"
 #include "boot.h"
+#include "pager0.h"
 #include "thread.h"
 #include "sched.h"
 #include "clock.h"
@@ -53,6 +54,12 @@ PUBLIC int main(void)
   u16_t i;
 
   arch_printf("Hello World (from main) !\n");
+
+  if (pager0_setup() != EXIT_SUCCESS)
+    {
+      arch_printf("Unable to setup Pager0\n");
+      goto err;
+    }
   
   if (irq_setup() != EXIT_SUCCESS)
     {
@@ -65,6 +72,7 @@ PUBLIC int main(void)
       arch_printf("Unable to intialize clock\n");
       goto err;
     }
+
 
 
  /*  struct thread* kern_th = (struct thread*)mem_alloc(sizeof(struct thread)); */
@@ -92,7 +100,7 @@ PUBLIC int main(void)
   
   while(1)
     {
-      arch_printf("_");
+      //arch_printf("_");
       for(i=0;i<4321;i++)
 	{}
 
