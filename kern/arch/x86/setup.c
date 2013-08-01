@@ -75,7 +75,8 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
 {
   struct multiboot_mod_entry* mod_entry;
   u8_t i;
-  u32_t bitmap_size,mem=0;
+  size_t bitmap_size;
+  u32_t mem=0;
   struct boot_mmap_entry* mmap;
   physaddr_t bitmap,limit;
 
@@ -150,8 +151,8 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
       mem += mmap[i].len;
       
     }
-  /* Compute number of physical pages */
-  bitmap_size = mem / X86_CONST_PAGE_SIZE;
+  /* Compute bitmap size */
+  bitmap_size = (mem / X86_CONST_PAGE_SIZE)/8;
   /* Reserve the bitmap  */
   bitmap = limit;
   /* Update first available byte */
@@ -200,6 +201,7 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
   boot.mmap_length = mbi.mmap_length;
   boot.mmap_addr = mbi.mmap_addr;
   boot.bitmap = bitmap;
+  boot.bitmap_size = bitmap_size;
   boot.start = limit;
 
   return;

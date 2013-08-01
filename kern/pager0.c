@@ -40,9 +40,9 @@
 **/
 
 
-#define FREE 0
-#define USED 1
-
+#define FREE   0
+#define USED   1
+#define ERROR -1
 
 
 /**
@@ -67,9 +67,10 @@ u8_t* bitmap;
 
 **/
 
-PRIVATE u8_t pager0_getState(u32_t i);
-PRIVATE void pager0_setState(u32_t i, u8_t state);
-
+PRIVATE s8_t pager0_getState(u32_t i);
+PRIVATE u8_t pager0_setState(u32_t i, u8_t state);
+PRIVATE physaddr_t pager0_alloc(void);
+PRIVATE u8_t pager0_free(physaddr_t paddr); 
 
 /**
 
@@ -99,18 +100,26 @@ u8_t pager0_setup(void)
       
       for(j=(u32_t)mmap[i].addr;j<(u32_t)(mmap[i].addr+mmap[i].len);j+=ARCH_CONST_PAGE_SIZE)
 	{
+
 	  /* In use kernel memory and page 0 */
-	  if ( ((j >= ARCH_CONST_KERN_START)&&(j < boot.start))||(j==0) )
+	  if ( ((j >= ARCH_CONST_KERN_START)&&(j < boot.start))||(j == 0) )
       	    {
-	      pager0_setState(j/ARCH_CONST_PAGE_SIZE,USED);
+	      if ( pager0_setState(j/ARCH_CONST_PAGE_SIZE,USED) != EXIT_SUCCESS )
+		{
+		  return EXIT_FAILURE;
+		}
 	    }
 	  else
 	    {
 	      /* Other memory depend on memory map type */
-	      pager0_setState(j/ARCH_CONST_PAGE_SIZE,(mmap[i].type == BOOT_AVAILABLE?FREE:USED));
+	      if ( pager0_setState(j/ARCH_CONST_PAGE_SIZE,(mmap[i].type == BOOT_AVAILABLE?FREE:USED)) != EXIT_SUCCESS )
+		{
+		  return EXIT_FAILURE;
+		}
 	    }
 	}
     }
+
 
   return EXIT_SUCCESS;
 }
@@ -127,9 +136,14 @@ u8_t pager0_setup(void)
 **/
 
 
-PRIVATE u8_t pager0_getState(u32_t i)
+PRIVATE s8_t pager0_getState(u32_t i)
 {
-  return ((bitmap[i>>3] & (1 << (i%8)))?USED:FREE);
+  if ( (i>>3) <= boot.bitmap_size )
+    {
+      return ((bitmap[i>>3] & (1 << (i%8)))?USED:FREE);
+    }
+
+  return ERROR;
 }
 
 
@@ -143,16 +157,58 @@ PRIVATE u8_t pager0_getState(u32_t i)
 **/
 
 
-PRIVATE void pager0_setState(u32_t i, u8_t state)
+PRIVATE u8_t pager0_setState(u32_t i, u8_t state)
 {
-        if (state == FREE)
+  if ( (i>>3) <= boot.bitmap_size )
+    {
+      if (state == FREE)
         {
-                bitmap[i>>3] &= ~(1<<(i%8));
+	  bitmap[i>>3] &= ~(1<<(i%8));
         }
-        else
+      else
         {
-                bitmap[i>>3] |= (1<<(i%8));
+	  bitmap[i>>3] |= (1<<(i%8));
         }
 
-        return;
+        return EXIT_SUCCESS;
+    }
+
+  return EXIT_FAILURE;
+
+}
+
+
+/**
+
+   Function: physaddr_t pager0_alloc(void)
+   ---------------------------------------
+
+   Allocate a physical page from bitmap
+   
+   Simply run through bitmap and return first page available
+
+**/
+
+
+PRIVATE physaddr_t pager0_alloc(void)
+{
+  return EXIT_FAILURE;
+}
+
+
+/**
+
+   Function: u8_t pager0_free(physaddr_t paddr)
+   --------------------------------------------
+
+   Release a physical page into bitmap
+   
+   Just set page state in bitmap accordingly
+
+**/
+
+
+PRIVATE u8_t pager0_free(physaddr_t paddr)
+{
+  return EXIT_SUCCESS;
 }

@@ -53,6 +53,8 @@
    - mods_addr    : Boot modules list address
    - mmap_length  : Number of memory map entries
    - mmap_addr    : Memory map address
+   - bitmap       : Physical pages  bitmap
+   - bitmap_size  : bitmap size
    - start        : First available byte after kernel
 
 **/
@@ -65,6 +67,7 @@ PUBLIC struct boot_info
   u32_t  mmap_length;
   addr_t mmap_addr;
   addr_t bitmap;
+  size_t bitmap_size;
   addr_t start; 
 }__attribute__((packed));
 
