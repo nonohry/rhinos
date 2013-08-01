@@ -95,7 +95,7 @@ PUBLIC int main(void)
  
  /* //int pp = *p; */
  /* *p = 9; */
-
+  arch_printf("loop\n");
  err:
   
   while(1)

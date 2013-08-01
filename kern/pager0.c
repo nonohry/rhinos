@@ -106,6 +106,7 @@ u8_t pager0_setup(void)
       	    {
 	      if ( pager0_setState(j/ARCH_CONST_PAGE_SIZE,USED) != EXIT_SUCCESS )
 		{
+		  arch_printf("Error on %d (%d)\n",j,j/ARCH_CONST_PAGE_SIZE);
 		  return EXIT_FAILURE;
 		}
 	    }
@@ -114,12 +115,22 @@ u8_t pager0_setup(void)
 	      /* Other memory depend on memory map type */
 	      if ( pager0_setState(j/ARCH_CONST_PAGE_SIZE,(mmap[i].type == BOOT_AVAILABLE?FREE:USED)) != EXIT_SUCCESS )
 		{
+		  arch_printf("Error on %d (%d)\n",j,j/ARCH_CONST_PAGE_SIZE);
 		  return EXIT_FAILURE;
 		}
 	    }
 	}
     }
 
+
+  /* Test 
+  j=0;
+  while(pager0_alloc() != EXIT_FAILURE)
+    {
+      j+=ARCH_CONST_PAGE_SIZE;
+    }
+  arch_printf("Could allocate %u bytes on %u bytes\n",j,boot.bitmap_size*8*ARCH_CONST_PAGE_SIZE);
+  */
 
   return EXIT_SUCCESS;
 }
@@ -142,6 +153,8 @@ PRIVATE s8_t pager0_getState(u32_t i)
     {
       return ((bitmap[i>>3] & (1 << (i%8)))?USED:FREE);
     }
+
+  arch_printf("Error %d (%d <= %d)\n",i,i>>3,boot.bitmap_size);
 
   return ERROR;
 }
@@ -192,6 +205,27 @@ PRIVATE u8_t pager0_setState(u32_t i, u8_t state)
 
 PRIVATE physaddr_t pager0_alloc(void)
 {
+  physaddr_t p;
+
+  for(p=0;p<=boot.bitmap_size*8;p++)
+    {
+      /* Free page found */
+      if ( pager0_getState(p) == FREE )
+	{
+	  /* Try to mark it as USED */
+	  if ( pager0_setState(p,USED) == EXIT_SUCCESS )
+	    {
+	      return p;
+	    }
+	  else
+	    {
+	      /* Error on that page, find another one */
+	      continue;
+	    } 
+	}
+    }
+
+  /* Not able to find a free page */
   return EXIT_FAILURE;
 }
 
@@ -210,5 +244,10 @@ PRIVATE physaddr_t pager0_alloc(void)
 
 PRIVATE u8_t pager0_free(physaddr_t paddr)
 {
-  return EXIT_SUCCESS;
+  if ( pager0_getState(paddr) == USED )
+    {
+      return pager0_setState(paddr,FREE);
+    }
+
+  return EXIT_FAILURE;
 }
