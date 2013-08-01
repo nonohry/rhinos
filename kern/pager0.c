@@ -87,39 +87,14 @@ PRIVATE void pager0_setState(u32_t i, u8_t state);
 u8_t pager0_setup(void)
 {
   u8_t i;
-  virtaddr_t vaddr;
-  u32_t j,bitmap_size,mem=0;
+  u32_t j;
   struct boot_mmap_entry* mmap;
-  
-  /* Run through memory map to get memory amount */
-  mmap = (struct boot_mmap_entry*)boot.mmap_addr;
-  for(i=0;i<boot.mmap_length;i++)
-    {
-      /* Update mem */
-      mem += mmap[i].len;
-      
-    }
-  
-  /* Compute number of page */
-  bitmap_size = mem / ARCH_CONST_PAGE_SIZE;
-  
-  /* Reserve a bitmap of npages bits */
-  bitmap = (u8_t*)(boot.start);
-  boot.start +=  (((bitmap_size >> X86_CONST_PAGE_SHIFT)+1) << X86_CONST_PAGE_SHIFT);
-
-  /* Identity map */
-  for(vaddr = (virtaddr_t)bitmap;
-      vaddr < boot.start;
-      vaddr += ARCH_CONST_PAGE_SIZE)
-    {
-      if (arch_vm_map(vaddr,(physaddr_t)vaddr) != EXIT_SUCCESS)
-	{
-	  return EXIT_FAILURE;
-	}
-    }
-
+    
+  /* Set bitmap */
+  bitmap = (u8_t*)(boot.bitmap);
   
   /* Run through memory map to fill bitmap */
+  mmap = (struct boot_mmap_entry*)boot.mmap_addr;
   for(i=0;i<boot.mmap_length;i++)
     {
       
@@ -137,7 +112,6 @@ u8_t pager0_setup(void)
 	    }
 	}
     }
-
 
   return EXIT_SUCCESS;
 }

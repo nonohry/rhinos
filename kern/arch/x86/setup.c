@@ -75,7 +75,9 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
 {
   struct multiboot_mod_entry* mod_entry;
   u8_t i;
-  u32_t limit;
+  u32_t bitmap_size,mem=0;
+  struct boot_mmap_entry* mmap;
+  physaddr_t bitmap,limit;
 
   /* Initialize serial port */
   serial_init();
@@ -140,6 +142,22 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
   mbi.mods_addr = (u32_t)mods_list;
 
 
+  /* Run through memory map to get memory amount */
+  mmap = (struct boot_mmap_entry*)mbi.mmap_addr;
+  for(i=0;i<mbi.mmap_length;i++)
+    {
+      /* Update mem */
+      mem += mmap[i].len;
+      
+    }
+  /* Compute number of physical pages */
+  bitmap_size = mem / X86_CONST_PAGE_SIZE;
+  /* Reserve the bitmap  */
+  bitmap = limit;
+  /* Update first available byte */
+  limit +=  (((bitmap_size >> X86_CONST_PAGE_SHIFT)+1) << X86_CONST_PAGE_SHIFT);
+
+  
   /* Setup PIC */
   if (pic_setup() != EXIT_SUCCESS)
     {
@@ -168,7 +186,7 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
       goto err;
     }
 
-  if (vm_paging_setup(&limit) != EXIT_SUCCESS)
+  if (vm_paging_setup(bitmap,&limit) != EXIT_SUCCESS)
     {
       serial_printf("Paging setup error\n");
       goto err;
@@ -181,6 +199,7 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
   boot.mods_addr = mbi.mods_addr;
   boot.mmap_length = mbi.mmap_length;
   boot.mmap_addr = mbi.mmap_addr;
+  boot.bitmap = bitmap;
   boot.start = limit;
 
   return;

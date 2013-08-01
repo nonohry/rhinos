@@ -64,6 +64,7 @@ PUBLIC struct boot_info
   addr_t mods_addr;
   u32_t  mmap_length;
   addr_t mmap_addr;
+  addr_t bitmap;
   addr_t start; 
 }__attribute__((packed));
 

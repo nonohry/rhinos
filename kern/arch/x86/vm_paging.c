@@ -215,10 +215,10 @@ PRIVATE physaddr_t vm_tophys(virtaddr_t vaddr);
 
 /**
 
-   Function: u8_t paging_setup(physaddr_t* base)
-   ---------------------------------------------
+   Function: u8_t paging_setup(physaddr_t base, physaddr_t limit)
+   --------------------------------------------------------------
 
-   Setup paging, using `base` as the start of a memory pool to create objects required for initilization.
+   Setup paging, using `limit` as the start of a memory pool to create objects required for initilization.
 
    Create the kernel page directory and physically allocate all the page tables corresponding to the kernel space.
    This trick makes the synchronization between an user space and the kernel space a lot easier.
@@ -227,21 +227,18 @@ PRIVATE physaddr_t vm_tophys(virtaddr_t vaddr);
 **/
 
 
-PUBLIC u8_t vm_paging_setup(physaddr_t* base)
+PUBLIC u8_t vm_paging_setup(physaddr_t base, physaddr_t* limit)
 {
   u16_t i;
-  physaddr_t b,p;
+  physaddr_t p;
   struct pte* table;
 
 
-  /* Save `*base` */
-  b = *base;
-
   /* Allocate kernel page directory */
-  kern_pd = (struct pde*)*base;
+  kern_pd = (struct pde*)*limit;
 
-  /* Update `base` */
-  *base += VM_PAGING_ENTRIES*sizeof(struct pde);
+  /* Update `limit` */
+  *limit += VM_PAGING_ENTRIES*sizeof(struct pde);
 
   /* Clean page directory */
   x86_mem_set(0,(addr_t)kern_pd,VM_PAGING_ENTRIES*sizeof(struct pde));
@@ -262,9 +259,9 @@ PUBLIC u8_t vm_paging_setup(physaddr_t* base)
 	}
          
       /* Allocate a page table */
-      table = (struct pte*)*base;
-      /* Update `base` */
-      *base += VM_PAGING_ENTRIES*sizeof(struct pte);
+      table = (struct pte*)*limit;
+      /* Update `limit` */
+      *limit += VM_PAGING_ENTRIES*sizeof(struct pte);
   
       /* Point page directory entry `i` to that new physical page */
       kern_pd[i].present = 1;
@@ -291,8 +288,8 @@ PUBLIC u8_t vm_paging_setup(physaddr_t* base)
 
   
   /* Identity-map paging structures */
-  for(p=X86_ALIGN_INF(b);
-      p<X86_ALIGN_SUP(*base);
+  for(p=X86_ALIGN_INF(base);
+      p<X86_ALIGN_SUP(*limit);
       p+=X86_CONST_PAGE_SIZE)
     {
       if (vm_paging_map((virtaddr_t)p, p) == EXIT_FAILURE)
