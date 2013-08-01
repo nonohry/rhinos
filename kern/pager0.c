@@ -100,8 +100,8 @@ u8_t pager0_setup(void)
       
       for(j=(u32_t)mmap[i].addr;j<(u32_t)(mmap[i].addr+mmap[i].len);j+=ARCH_CONST_PAGE_SIZE)
 	{
-	  /* In use kernel memory */
-	  if ( (j >= ARCH_CONST_KERN_START)&&(j < boot.start) )
+	  /* In use kernel memory and page 0 */
+	  if ( ((j >= ARCH_CONST_KERN_START)&&(j < boot.start))||(j==0) )
       	    {
 	      pager0_setState(j/ARCH_CONST_PAGE_SIZE,USED);
 	    }
