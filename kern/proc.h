@@ -26,7 +26,6 @@
 
 #include <define.h>
 #include <types.h>
-#include <arch_vm.h>
 #include "thread.h"
 
 

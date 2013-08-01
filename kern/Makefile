@@ -52,10 +52,8 @@ thread.o: thread.h
 sched.o: ../include/define.h ../include/arch/x86/types.h ../include/llist.h
 sched.o: thread.h arch/x86/arch_ctx.h arch/x86/context.h sched.h
 pager0.o: ../include/define.h ../include/arch/x86/types.h
-pager0.o: arch/x86/arch_const.h arch/x86/x86_const.h arch/x86/arch_vm.h
-pager0.o: arch/x86/arch_ctx.h arch/x86/context.h arch/x86/x86_lib.h
-pager0.o: arch/x86/vm_paging.h boot.h pager0.h arch/x86/arch_io.h
-pager0.o: arch/x86/serial.h
+pager0.o: arch/x86/arch_const.h arch/x86/x86_const.h boot.h pager0.h
+pager0.o: arch/x86/arch_io.h arch/x86/serial.h arch/x86/x86_lib.h
 irq.o: ../include/define.h ../include/arch/x86/types.h ../include/llist.h
 irq.o: arch/x86/arch_hw.h arch/x86/pic.h arch/x86/x86_lib.h
 irq.o: arch/x86/x86_const.h irq.h arch/x86/interrupt.h

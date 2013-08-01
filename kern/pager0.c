@@ -24,7 +24,6 @@
 #include <define.h>
 #include <types.h>
 #include <arch_const.h>
-#include <arch_vm.h>
 #include "boot.h"
 #include "pager0.h"
 
