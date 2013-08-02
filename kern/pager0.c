@@ -114,16 +114,6 @@ u8_t pager0_setup(void)
 	}
     }
 
-
-  /* Test */
-  j=0;
-  while(pager0_alloc() != EXIT_FAILURE)
-    {
-      j+=ARCH_CONST_PAGE_SIZE;
-    }
-  arch_printf("Could allocate %u bytes on %u bytes\n",j,boot.bitmap_size*8*ARCH_CONST_PAGE_SIZE);
-  
-
   return EXIT_SUCCESS;
 }
 
@@ -145,8 +135,6 @@ PRIVATE s8_t pager0_getState(u32_t i)
     {
       return ((bitmap[i>>3] & (1 << (i%8)))?USED:FREE);
     }
-
-  arch_printf("Error %d (%d <= %d)\n",i,i>>3,boot.bitmap_size);
 
   return ERROR;
 }
@@ -207,7 +195,6 @@ PRIVATE physaddr_t pager0_alloc(void)
 	  /* Try to mark it as USED */
 	  if ( pager0_setState(p,USED) == EXIT_SUCCESS )
 	    {
-	      arch_printf("%u ",p);
 	      return p;
 	    }
 	  else
