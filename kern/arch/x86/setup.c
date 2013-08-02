@@ -158,7 +158,6 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
   /* Update first available byte */
   limit +=  (((bitmap_size >> X86_CONST_PAGE_SHIFT)+1) << X86_CONST_PAGE_SHIFT);
 
-  
   /* Setup PIC */
   if (pic_setup() != EXIT_SUCCESS)
     {

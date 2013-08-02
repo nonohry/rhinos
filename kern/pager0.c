@@ -104,33 +104,25 @@ u8_t pager0_setup(void)
 	  /* In use kernel memory and page 0 */
 	  if ( ((j >= ARCH_CONST_KERN_START)&&(j < boot.start))||(j == 0) )
       	    {
-	      if ( pager0_setState(j/ARCH_CONST_PAGE_SIZE,USED) != EXIT_SUCCESS )
-		{
-		  arch_printf("Error on %d (%d)\n",j,j/ARCH_CONST_PAGE_SIZE);
-		  return EXIT_FAILURE;
-		}
+	      pager0_setState(j/ARCH_CONST_PAGE_SIZE,USED);
 	    }
 	  else
 	    {
 	      /* Other memory depend on memory map type */
-	      if ( pager0_setState(j/ARCH_CONST_PAGE_SIZE,(mmap[i].type == BOOT_AVAILABLE?FREE:USED)) != EXIT_SUCCESS )
-		{
-		  arch_printf("Error on %d (%d)\n",j,j/ARCH_CONST_PAGE_SIZE);
-		  return EXIT_FAILURE;
-		}
+	      pager0_setState(j/ARCH_CONST_PAGE_SIZE,(mmap[i].type == BOOT_AVAILABLE?FREE:USED));	    
 	    }
 	}
     }
 
 
-  /* Test 
+  /* Test */
   j=0;
   while(pager0_alloc() != EXIT_FAILURE)
     {
       j+=ARCH_CONST_PAGE_SIZE;
     }
   arch_printf("Could allocate %u bytes on %u bytes\n",j,boot.bitmap_size*8*ARCH_CONST_PAGE_SIZE);
-  */
+  
 
   return EXIT_SUCCESS;
 }
@@ -215,6 +207,7 @@ PRIVATE physaddr_t pager0_alloc(void)
 	  /* Try to mark it as USED */
 	  if ( pager0_setState(p,USED) == EXIT_SUCCESS )
 	    {
+	      arch_printf("%u ",p);
 	      return p;
 	    }
 	  else
