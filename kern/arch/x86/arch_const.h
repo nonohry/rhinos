@@ -49,4 +49,15 @@
 #define ARCH_CONST_PAGE_SHIFT             X86_CONST_PAGE_SHIFT
 
 
+/**
+
+   Constant: ARCH_CONST_KERN_HIGHMEM
+   ----------------------------------
+
+   Last byte of kernel virtual memory
+
+**/
+
+#define ARCH_CONST_KERN_HIGHMEM            X86_CONST_KERN_HIGHMEM
+
 #endif

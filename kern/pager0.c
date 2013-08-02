@@ -16,7 +16,9 @@
 
    - define.h
    - types.h
-   - pager0.h   : self header
+   - arch_const.h : Page size needed
+   - boot.h       : memory map needed
+   - pager0.h     : self header
    
 **/
 
@@ -27,7 +29,6 @@
 #include "boot.h"
 #include "pager0.h"
 
-#include <arch_io.h>
 
 
 /**
@@ -69,8 +70,9 @@ u8_t* bitmap;
 
 PRIVATE s8_t pager0_getState(u32_t i);
 PRIVATE u8_t pager0_setState(u32_t i, u8_t state);
-PRIVATE physaddr_t pager0_alloc(void);
-PRIVATE u8_t pager0_free(physaddr_t paddr); 
+PRIVATE physaddr_t pager0_alloc(void)__attribute__((unused));
+PRIVATE u8_t pager0_free(physaddr_t paddr)__attribute__((unused)); 
+
 
 /**
 
