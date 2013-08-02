@@ -27,4 +27,16 @@
 #include <types.h>
 
 
+/**
+
+   Prototypes
+   ----------
+
+   Give access to pool setup
+
+**/
+
+PUBLIC u8_t vm_pool_setup(void);
+
+
 #endif

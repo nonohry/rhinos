@@ -29,3 +29,20 @@
 #include <arch_const.h>
 #include "boot.h"
 #include "vm_pool.h"
+
+
+
+/**
+
+   Function: u8_t vm_pool_setup(void)
+   ----------------------------------
+
+   Initialize virtual page stack, filling it with free pages
+
+**/
+
+
+PUBLIC u8_t vm_pool_setup(void)
+{
+  return EXIT_SUCCESS;
+}

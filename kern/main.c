@@ -31,6 +31,7 @@
 #include "irq.h"
 #include "boot.h"
 #include "pager0.h"
+#include "vm_pool.h"
 #include "thread.h"
 #include "sched.h"
 #include "clock.h"
@@ -61,6 +62,12 @@ PUBLIC int main(void)
       goto err;
     }
   
+  if (vm_pool_setup() != EXIT_SUCCESS)
+    {
+      arch_printf("Unable to setup virtual pages pool\n");
+      goto err;
+    }
+
   if (irq_setup() != EXIT_SUCCESS)
     {
       arch_printf("Unable to intialize IRQ subsystem\n");
