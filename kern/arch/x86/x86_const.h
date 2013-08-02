@@ -66,7 +66,7 @@ extern u8_t __CONST_KERN_END[];
 #define X86_CONST_ROM_AREA_SIZE         0x60FFF
 #define X86_CONST_ACPI_AREA_START       0xFEC00000
 #define X86_CONST_ACPI_AREA_SIZE        0x13FFFFF
-#define X86_CONST_KERN_HIGHMEM          (1<<8)
+#define X86_CONST_KERN_HIGHMEM          (1<<28)
 
 /**
 
