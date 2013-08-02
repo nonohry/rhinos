@@ -75,10 +75,10 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
 {
   struct multiboot_mod_entry* mod_entry;
   u8_t i;
-  size_t bitmap_size;
+  size_t bitmap_size,vm_stack_size;
   u32_t mem=0;
   struct boot_mmap_entry* mmap;
-  physaddr_t bitmap,limit;
+  physaddr_t bitmap,limit,vm_stack;
 
   /* Initialize serial port */
   serial_init();
@@ -152,12 +152,20 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
       
     }
   /* Compute bitmap size */
-  bitmap_size = (mem / X86_CONST_PAGE_SIZE)/8;
+  bitmap_size = (mem >> X86_CONST_PAGE_SHIFT)>>3;
   /* Reserve the bitmap  */
   bitmap = limit;
   /* Update first available byte */
   limit +=  (((bitmap_size >> X86_CONST_PAGE_SHIFT)+1) << X86_CONST_PAGE_SHIFT);
 
+
+  /* Compute virtual page stack size */
+  vm_stack_size = (X86_CONST_KERN_HIGHMEM >> X86_CONST_PAGE_SHIFT);
+  /* Reserve pages stack */
+  vm_stack = limit;
+ /* Update first available byte */
+  limit +=  (((vm_stack_size >> X86_CONST_PAGE_SHIFT)+1) << X86_CONST_PAGE_SHIFT);
+  
   /* Setup PIC */
   if (pic_setup() != EXIT_SUCCESS)
     {
@@ -201,6 +209,8 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
   boot.mmap_addr = mbi.mmap_addr;
   boot.bitmap = bitmap;
   boot.bitmap_size = bitmap_size;
+  boot.vm_stack = vm_stack;
+  boot.vm_stack_size = vm_stack_size;
   boot.start = limit;
 
   return;

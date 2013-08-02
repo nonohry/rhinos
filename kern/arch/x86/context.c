@@ -90,8 +90,8 @@ PUBLIC u8_t ctx_setup(struct x86_context* ctx, virtaddr_t base, virtaddr_t stack
 
 /**
 
-   Function: void thread_cpu_postsave(struct x86_context* ctx, reg32_t* esp)
-   -------------------------------------------------------------------------
+   Function: void ctx_postsave(struct x86_context* ctx, reg32_t* esp)
+   ------------------------------------------------------------------
 
    Finalize cpou context save in case of a kernel space switch.
    

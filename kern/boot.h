@@ -49,13 +49,15 @@
    and architecture dependant setup
    Members are:
 
-   - mods_count   : Number of boot modules
-   - mods_addr    : Boot modules list address
-   - mmap_length  : Number of memory map entries
-   - mmap_addr    : Memory map address
-   - bitmap       : Physical pages  bitmap
-   - bitmap_size  : bitmap size
-   - start        : First available byte after kernel
+   - mods_count    : Number of boot modules
+   - mods_addr     : Boot modules list address
+   - mmap_length   : Number of memory map entries
+   - mmap_addr     : Memory map address
+   - bitmap        : Physical pages  bitmap
+   - bitmap_size   : Bitmap size
+   - vm_stack      : Kernel virtual pages stack
+   - vm_stack_size : Stack size
+   - start         : First available byte after kernel
 
 **/
 
@@ -68,6 +70,8 @@ PUBLIC struct boot_info
   addr_t mmap_addr;
   addr_t bitmap;
   size_t bitmap_size;
+  addr_t vm_stack;
+  size_t vm_stack_size;
   addr_t start; 
 }__attribute__((packed));
 
