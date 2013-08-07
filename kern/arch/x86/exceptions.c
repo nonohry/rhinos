@@ -81,6 +81,7 @@ PUBLIC void excep_handle(u32_t num, struct x86_context* ctx)
 	  break;
 	}
       
+      
       vm_pf_fix(x86_get_pf_addr(), 0x1000, type, 1, 1);
 
     }
