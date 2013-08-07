@@ -29,6 +29,7 @@
 #include "boot.h"
 #include "pager0.h"
 
+#include <arch_io.h>
 
 
 /**
@@ -106,12 +107,12 @@ u8_t pager0_setup(void)
 	  /* In use kernel memory and page 0 */
 	  if ( ((j >= ARCH_CONST_KERN_START)&&(j < boot.start))||(j == 0) )
       	    {
-	      pager0_setState(j/ARCH_CONST_PAGE_SIZE,USED);
+	      pager0_setState(j >> ARCH_CONST_PAGE_SHIFT,USED);
 	    }
 	  else
 	    {
 	      /* Other memory depend on memory map type */
-	      pager0_setState(j/ARCH_CONST_PAGE_SIZE,(mmap[i].type == BOOT_AVAILABLE?FREE:USED));	    
+	      pager0_setState(j >> ARCH_CONST_PAGE_SHIFT,(mmap[i].type == BOOT_AVAILABLE?FREE:USED));	    
 	    }
 	}
     }
@@ -187,7 +188,7 @@ PRIVATE u8_t pager0_setState(u32_t i, u8_t state)
 
 PRIVATE physaddr_t pager0_alloc(void)
 {
-  physaddr_t p;
+  u32_t p;
 
   for(p=0;p<=boot.bitmap_size*8;p++)
     {
@@ -197,7 +198,7 @@ PRIVATE physaddr_t pager0_alloc(void)
 	  /* Try to mark it as USED */
 	  if ( pager0_setState(p,USED) == EXIT_SUCCESS )
 	    {
-	      return p;
+	      return p << ARCH_CONST_PAGE_SHIFT;
 	    }
 	  else
 	    {
@@ -226,9 +227,9 @@ PRIVATE physaddr_t pager0_alloc(void)
 
 PRIVATE u8_t pager0_free(physaddr_t paddr)
 {
-  if ( pager0_getState(paddr) == USED )
+  if ( pager0_getState(paddr >> ARCH_CONST_PAGE_SHIFT) == USED )
     {
-      return pager0_setState(paddr,FREE);
+      return pager0_setState(paddr >> ARCH_CONST_PAGE_SHIFT,FREE);
     }
 
   return EXIT_FAILURE;
