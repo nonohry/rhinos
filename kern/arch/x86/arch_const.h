@@ -54,8 +54,8 @@
 
 /**
 
-   Constants: Page Fault relatives
-   -------------------------------
+   Constants: Page Fault flags
+   ---------------------------
 
 **/
 
@@ -63,7 +63,9 @@
 #define ARCH_PF_UNRESOLVABLE              VM_PF_UNRESOLVABLE
 #define ARCH_PF_INTERNAL                  VM_PF_INTERNAL
 #define ARCH_PF_EXTERNAL                  VM_PF_EXTERNAL
-
+#define ARCH_PF_RW                        VM_PF_RW
+#define ARCH_PF_SUPER                     VM_PF_SUPER
+#define ARCH_PF_ELF                       VM_PF_ELF
 
 
 /**

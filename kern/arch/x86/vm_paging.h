@@ -48,8 +48,8 @@
 
 /**
 
-   Constants: Page fault types
-   ----------------------------
+   Constants: Page fault flags
+   ---------------------------
    
 **/
 
@@ -57,6 +57,9 @@
 #define VM_PF_UNRESOLVABLE                0
 #define VM_PF_INTERNAL                    1
 #define VM_PF_EXTERNAL                    2
+#define VM_PF_RW                          4
+#define VM_PF_SUPER                       8
+#define VM_PF_ELF                        16
 
 
 
@@ -74,6 +77,6 @@ PUBLIC u8_t vm_paging_map(virtaddr_t vaddr, physaddr_t paddr);
 PUBLIC u8_t vm_paging_unmap(virtaddr_t vaddr);
 PUBLIC u8_t vm_switch_to(virtaddr_t pd_addr);
 PUBLIC u8_t vm_pf_resolvable(struct x86_context* ctx);
-PUBLIC u8_t vm_pf_fix(virtaddr_t vaddr, physaddr_t paddr, u8_t flag, u8_t rw, u8_t super);
+PUBLIC u8_t vm_pf_fix(virtaddr_t vaddr, physaddr_t paddr, u8_t flag);
 
 #endif

@@ -510,8 +510,8 @@ PUBLIC u8_t vm_pf_resolvable(struct x86_context* ctx)
 
 /** 
     
-    Function: u8_t vm_pf_fix(virtaddr_t vaddr, physaddr_t paddr, u8_t flag, u8_t rw, u8_t super)
-    --------------------------------------------------------------------------------------------
+    Function: u8_t vm_pf_fix(virtaddr_t vaddr, physaddr_t paddr, u8_t flag)
+    -----------------------------------------------------------------------
 
     Resolve page fault by mapping `paddr` with `vaddr` 
     or by creating page table corresponding to `vaddr` in `paddr`
@@ -520,7 +520,7 @@ PUBLIC u8_t vm_pf_resolvable(struct x86_context* ctx)
 **/
 
 
-PUBLIC u8_t vm_pf_fix(virtaddr_t vaddr, physaddr_t paddr, u8_t flag, u8_t rw, u8_t super)
+PUBLIC u8_t vm_pf_fix(virtaddr_t vaddr, physaddr_t paddr, u8_t flag)
 {
   struct pde* pd;
   struct pte* table;
@@ -538,12 +538,12 @@ PUBLIC u8_t vm_pf_fix(virtaddr_t vaddr, physaddr_t paddr, u8_t flag, u8_t rw, u8
     }
 
   /* No Page Table */
-  if ( (!(pd[pde].present))&&(flag == VM_PF_INTERNAL) )
+  if ( (!(pd[pde].present))&&(flag & VM_PF_INTERNAL) )
     {
       table = (struct pte*)paddr;
       pd[pde].present = 1;
-      pd[pde].rw = rw;
-      pd[pde].user = super?0:1;
+      pd[pde].rw = (flag & VM_PF_RW);
+      pd[pde].user = !(flag & VM_PF_SUPER);
       pd[pde].baseaddr = paddr >> VM_PAGING_BASESHIFT;
 
       /* Clear table */
@@ -556,11 +556,11 @@ PUBLIC u8_t vm_pf_fix(virtaddr_t vaddr, physaddr_t paddr, u8_t flag, u8_t rw, u8
 
   /* No physical page */
   table = (struct pte*)VM_PAGING_GET_PT(pde);
-  if ( (!(table[pte].present))&&(flag == VM_PF_EXTERNAL) )
+  if ( (!(table[pte].present))&&(flag & VM_PF_EXTERNAL) )
     {
       table[pte].present = 1;
-      table[pte].rw = rw;
-      table[pte].user = super?0:1;
+      table[pte].rw = (flag & VM_PF_RW);
+      table[pte].user = !(flag & VM_PF_SUPER);
       table[pte].baseaddr = paddr >> VM_PAGING_BASESHIFT;
 
       return EXIT_SUCCESS;
