@@ -18,11 +18,13 @@
    --------
 
    - x86_const.h
+   - vm_paging.h
 
 **/
 
 
 #include "x86_const.h"
+#include "vm_paging.h"
 
 
 /**
@@ -47,6 +49,21 @@
 
 #define ARCH_CONST_PAGE_SIZE              X86_CONST_PAGE_SIZE
 #define ARCH_CONST_PAGE_SHIFT             X86_CONST_PAGE_SHIFT
+
+
+
+/**
+
+   Constants: Page Fault relatives
+   -------------------------------
+
+**/
+
+
+#define ARCH_PF_UNRESOLVABLE              VM_PF_UNRESOLVABLE
+#define ARCH_PF_INTERNAL                  VM_PF_INTERNAL
+#define ARCH_PF_EXTERNAL                  VM_PF_EXTERNAL
+
 
 
 /**
