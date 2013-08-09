@@ -16,6 +16,8 @@
 
    - define.h
    - types.h
+   - llist.h
+   - arch_const.h
    - vmem_slab.h      : self header
 
 **/
@@ -23,6 +25,7 @@
 #include <define.h>
 #include <types.h>
 #include <llist.h>
+#include <arch_const.h>
 #include "vmem_slab.h"
 
 
@@ -48,7 +51,6 @@
 PUBLIC struct bufctl
 {
   virtaddr_t base;
-  struct slab* slab;
   struct bufctl* next;
   struct bufctl* prev;
 } __attribute__ ((packed));
@@ -66,7 +68,6 @@ PUBLIC struct bufctl
    Membres are:
 
    - free_objects : Number of free bufctl available
-   - max_objects  : Maximum free objects a slab can contain
    - free_bufctls : List of free bufctl
    - cache        : Parent cache back pointer
    - next         : Next slab in linked list
@@ -77,7 +78,6 @@ PUBLIC struct bufctl
 PUBLIC struct slab
 {
   u16_t free_objects;
-  u16_t max_objects;
   struct bufctl* free_bufctls;
   struct vmem_cache* cache;
   struct slab* next;
@@ -96,28 +96,24 @@ PUBLIC struct slab
 
 **/
 
-PRIVATE u8_t virtmem_cache_grow(struct vmem_cache* cache);
+PRIVATE u8_t vmem_cache_grow(struct vmem_cache* cache);
 PRIVATE u8_t virtmem_slab_destroy(struct vmem_cache* cache,struct vmem_slab* slab);
 
 
 /**
 
-   Privates
-   --------
-
-   Caches for caches, slab and bufctl objects
+   Global: Caches list
+   -------------------
 
 **/
 
-PRIVATE struct vmem_cache* slab_cache;
-PRIVATE struct vmem_cache* bufctl_cache;
 PRIVATE struct vmem_cache* cache_list;
 
 
 /**
 
-   Static: cache_cache
-   -------------------
+   Global: cache_cache
+   --------------------
 
    Cache of cache objects
 
@@ -138,69 +134,21 @@ struct vmem_cache cache_cache =
 
 /**
 
-   Function: u8_t virtmem_cache_init(void)
-   ---------------------------------------
+   Function: u8_t vmem_cache_setup(void)
+   ----------------------------------------
 
    Slab allocator initialization.
-
-   Add arbitrary virtual pages to the cache objects cache to avoid initial recursivity with virtual buddy.
-   Then create slab and bufctl caches.
+   
+   Just set `cache_cache` as head list
 
 **/
 
 
-PUBLIC u8_t virtmem_cache_init(void)
+PUBLIC u8_t vmem_cache_setup(void)
 {
-  virtaddr_t vaddr_init;
-  physaddr_t paddr_init;
-  u32_t i;
-
-
-  /* Caches list intialization */
+  /* Caches list initialization */
   LLIST_NULLIFY(cache_list);
   LLIST_SETHEAD(&cache_cache);
-      
-  /* `cache_cache` "manual" growth */
-  for(i=0;i<VIRT_CACHE_STARTSLABS;i++)
-    {
-      /* Arbitrary virtual page */
-      vaddr_init = i*CONST_PAGE_SIZE + VIRT_BUDDY_POOLLIMIT;
-
-      /* Pick up a physical page */
-      paddr_init = (physaddr_t)phys_alloc(CONST_PAGE_SIZE);
-      
-      if (!paddr_init)
-	{
-	  return EXIT_FAILURE;
-	}
-
-      /* Mapping */
-      if (paging_map(vaddr_init, paddr_init, PAGING_SUPER) != EXIT_SUCCESS)
-	{
-	  return EXIT_FAILURE;
-	}
-      
-      /* Make `cache_cache` grow into that virtual page */
-      if ( virtmem_cache_grow(&cache_cache,vaddr_init) != EXIT_SUCCESS )
-	{
-	  return EXIT_FAILURE;
-	}
-           
-    }
-
-  /* Slab objects cache */
-  slab_cache = virtmem_cache_create("slab_cache",sizeof(struct vmem_slab),0,0,VIRT_CACHE_NOREAP,NULL,NULL);
-  if ( slab_cache == NULL )
-    {
-      return EXIT_FAILURE;
-    }
-
-  /* Bufctl objects cache */
-  bufctl_cache = virtmem_cache_create("bufctl_cache",sizeof(struct vmem_bufctl),0,0,VIRT_CACHE_NOREAP,NULL,NULL);
-  if ( bufctl_cache == NULL )
-    {
-      return EXIT_FAILURE;
-    }
 
   return EXIT_SUCCESS;
 }
@@ -208,8 +156,8 @@ PUBLIC u8_t virtmem_cache_init(void)
 
 /**
 
-   Function: struct vmem_cache* virtmem_cache_create(const char* name, u16_t size )
-   --------------------------------------------------------------------------------
+   Function: struct vmem_cache* vmem_cache_create(const char* name, u16_t size )
+   -----------------------------------------------------------------------------
 
    Cache creation.
 
@@ -219,13 +167,13 @@ PUBLIC u8_t virtmem_cache_init(void)
 **/
 
 
-PUBLIC struct vmem_cache* virtmem_cache_create(const char* name, u16_t size)
+PUBLIC struct vmem_cache* vmem_cache_create(const char* name, u16_t size)
 {
   u8_t i;
   struct vmem_cache* cache;
 
   /* Cache allocation */
-  cache = (struct vmem_cache*)virtmem_cache_alloc(&cache_cache, VIRT_CACHE_DEFAULT);
+  cache = (struct vmem_cache*)vmem_cache_alloc(&cache_cache, VIRT_CACHE_DEFAULT);
   if ( cache == NULL )
     {
       return NULL;
@@ -233,7 +181,7 @@ PUBLIC struct vmem_cache* virtmem_cache_create(const char* name, u16_t size)
 
   /* Name copy */
   i=0;
-  while( (name[i]!=0)&&(i<VIRT_CACHE_NAMELEN-1) )
+  while( (name[i]!=0)&&(i<VMEM_CACHE_NAMELEN-1) )
     {
       cache->name[i] = name[i];
       i++;
@@ -242,12 +190,6 @@ PUBLIC struct vmem_cache* virtmem_cache_create(const char* name, u16_t size)
 
   /* Fill fields */
   cache->size = size;
-  cache->align = align;
-  cache->align_offset = 0;
-  cache->min_slab_free = min_slab_free;
-  cache->flags = flags;
-  cache->constructor = ctor;
-  cache->destructor = dtor;
   cache->slabs_free = NULL;
   cache->slabs_partial = NULL;
   cache->slabs_full = NULL;
@@ -260,124 +202,30 @@ PUBLIC struct vmem_cache* virtmem_cache_create(const char* name, u16_t size)
 }
 
 
-/**
-
-   Function: u8_t virtmem_cache_free(struct vmem_cache* cache, void* buf)
-   ----------------------------------------------------------------------
-
-   Release a object pointed by `buf` and return it to `cache`.
-
-   Objects in slab allocator are necessarily physically mapped, so we retrieve the physical descriptor and run through
-   its bufctl list to find the one matching `buf`.
-   Then, we deduct the parent slab object et update its object counter.
-   At last, the slab is moved between cache slabs lists if needed
-
-**/
-
-
-PUBLIC u8_t virtmem_cache_free(struct vmem_cache* cache, void* buf)
-{
-  struct ppage_desc* pdesc;
-  struct vmem_bufctl* bc;
-  struct vmem_slab* slab;
-
-  /* Get physical descriptor */
-  pdesc = PHYS_GET_DESC( paging_virt2phys((virtaddr_t)buf) );
-  if ( PHYS_PDESC_ISNULL(pdesc) )
-    {
-      return EXIT_FAILURE;
-    }
- 
-  /* Run through bufctl list */
-  if ( LLIST_ISNULL(pdesc->bufctl) )
-    {
-      return EXIT_FAILURE;
-    }
-
-  bc = LLIST_GETHEAD(pdesc->bufctl);
-  while( bc->base != (virtaddr_t)buf )
-    {
-      bc = LLIST_NEXT(pdesc->bufctl,bc);
-      /* Error if not found */
-      if ( LLIST_ISHEAD(pdesc->bufctl,bc) )
-	{
-	  return EXIT_FAILURE;
-	}
-    }
-
-
-  /* Get parent slab */
-  slab = bc->slab;
-
-  /* Righ cache ? */
-  if (slab->cache != cache)
-    {
-      return EXIT_FAILURE;
-    }
-
-  /* Remove bufctl from physical descriptor */
-  LLIST_REMOVE(pdesc->bufctl,bc);
-
-
-  /* Update slab counter and free list */
-  slab->count--;
-  LLIST_ADD(slab->free_buf,bc);
-
-  /* Update cache slabs lists if needed  */
-  if (slab->count+1 == slab->max_objects)
-    {
-      /* Move from full to partial or free */
-      LLIST_REMOVE(cache->slabs_full,slab);
-      if (slab->count)
-	{
-	  LLIST_ADD(cache->slabs_partial,slab);
-	}
-      else
-	{
-	  LLIST_ADD(cache->slabs_free,slab);
-	}
-    }
-  else
-    {
-      /* Move from partial to free */
-      if (!slab->count)
-	{
-	  LLIST_REMOVE(cache->slabs_partial,slab);
-	  LLIST_ADD(cache->slabs_free,slab);
-	}
-    }
-
-  return EXIT_SUCCESS;
-}
-
 
 /**
 
-   Function: void* virtmem_cache_alloc(struct vmem_cache* cache, u8_t flags)
-   -------------------------------------------------------------------------
+   Function: void* vmem_cache_alloc(struct vmem_cache* cache)
+   ----------------------------------------------------------
 
    Allocation from a cache.
 
    First, if cache is full, it is extended.
    Next, we get a slab then a bufctl  and update slab objects list and cache slabs lists.
-   Last, we check the minimum free slabs required in `cache` and act accordingly
-   
-
+  
 **/
 
 
-PUBLIC void* virtmem_cache_alloc(struct vmem_cache* cache, u8_t flags)
+PUBLIC void* vmem_cache_alloc(struct vmem_cache* cache)
 {
-  struct vmem_slab* slabs_list;
+  struct vmem_slab* list;
   struct vmem_slab* slab;
   struct vmem_bufctl* bufctl;
-  struct ppage_desc* pdesc;
-  u32_t count;
-
+  
   /* Extend cache if needed */
   if ( (LLIST_ISNULL(cache->slabs_free)) && (LLIST_ISNULL(cache->slabs_partial)) )
     {
-      if ( virtmem_cache_grow(cache, VIRT_CACHE_NOADDR) != EXIT_SUCCESS )
+      if ( vmem_cache_grow(cache) != EXIT_SUCCESS )
 	{
 	  return NULL;
 	}
@@ -385,78 +233,29 @@ PUBLIC void* virtmem_cache_alloc(struct vmem_cache* cache, u8_t flags)
     }
 
   /* Get the working slab list */ 
-  slabs_list = (LLIST_ISNULL(cache->slabs_partial)?cache->slabs_free:cache->slabs_partial);
+  list = (LLIST_ISNULL(cache->slabs_partial)?cache->slabs_free:cache->slabs_partial);
 
   /* Pick up head item */
-  slab = LLIST_GETHEAD(slabs_list);
+  slab = LLIST_GETHEAD(list);
 
   /* Pick up a bufctl */
-  bufctl = LLIST_GETHEAD(slab->free_buf);
-  LLIST_REMOVE(slab->free_buf,bufctl);
+  bufctl = LLIST_GETHEAD(slab->free_bufctls);
+  LLIST_REMOVE(slab->free_bufctls,bufctl);
 
-  /* Link bufctl to its physical descriptor */
-  pdesc = PHYS_GET_DESC( paging_virt2phys(bufctl->base)  );
-  if ( PHYS_PDESC_ISNULL(pdesc) )
-    {
-      return NULL;
-    }
-  LLIST_ADD(pdesc->bufctl,bufctl);
-  
-  /* Physical descriptor back pointer to cache */
-  pdesc->cache = cache;
-  
-  /* Update slab allocated objects counter */
-  slab->count++;
+  /* Update slab's free objects counter */
+  slab->free_objects--;
 
-  /* Move slab between cache lists if needed */
-  if (slabs_list == cache->slabs_free)
+  /* Move slab among cache lists if needed */
+  if (list == cache->slabs_free)
     {
       LLIST_REMOVE(cache->slabs_free,slab);
-      if (slab->count == slab->max_objects)
-	{
-	  LLIST_ADD(cache->slabs_full,slab);
-	}
-      else
-	{
-	  LLIST_ADD(cache->slabs_partial,slab);
-	}
+      LLIST_ADD((slab->free_objects?:cache->slabs_partial,cache->slabs_full), slab);
     }
-  else
+  else if ( !(slab->free_objects) )
     {
-      if (slab->count == slab->max_objects)
-	{
-	  LLIST_REMOVE(cache->slabs_partial,slab);
-	  LLIST_ADD(cache->slabs_full,slab);
-	}
+      LLIST_REMOVE(cache->slabs_partial,slab);
+      LLIST_ADD(cache->slabs_full,slab);
     }
-
-
-  /* Check `min_slab_free` */
-  if ( (cache->min_slab_free) && !(flags & VIRT_CACHE_NOMINCHECK) )
-    {
-      /* Count free slabs */
-      count = 0;
-      if (!LLIST_ISNULL(cache->slabs_free))
-	{
-	  slab = LLIST_GETHEAD(cache->slabs_free);
-	  do
-	    {
-	      count++;
-	      slab = LLIST_NEXT(cache->slabs_free,slab);
-	    }while(!LLIST_ISHEAD(cache->slabs_free,slab));
-	}
-      
-      /* Extend cache according to `min_slab_free`  */
-      while (count < cache->min_slab_free )
-	{
-	  if (virtmem_cache_grow(cache, VIRT_CACHE_NOADDR) != EXIT_SUCCESS)
-	    {
-	      break;
-	    }
-	  count++;
-	}
-    }
-  
 
   /* Return bufctl base address */
   return (void*)(bufctl->base);
@@ -464,9 +263,77 @@ PUBLIC void* virtmem_cache_alloc(struct vmem_cache* cache, u8_t flags)
 }
 
 
+
 /**
 
-   Function: u8_t virtmem_cache_destroy(struct vmem_cache* cache)
+   Function: u8_t vmem_cache_free(struct vmem_cache* cache, void* buf)
+   -------------------------------------------------------------------
+
+   Release a object pointed by `buf` and return it to `cache`.
+
+   Only on page slab are manipulated so bufctl and buf are contiguous, and we retrieve bufctl using
+   bufctl = buf - sizeof(bufctl)
+
+   Then we retrieve slab just by aligning buf or bufctl on page: slab = bufctl >> ARCH_CONST_PAGE_SHIFT
+   Now we can update slab's counter and cache slabs lists.
+
+**/
+
+
+PUBLIC u8_t vmem_cache_free(struct vmem_cache* cache, void* buf)
+{
+  struct bufctl* bc;
+  struct slab* slab;
+
+  /* Get bufctl */
+  bc = (struct bufctl*)((virtaddr_t)buf - sizeof(struct bufctl));
+ 
+  /* Get slab */
+  slab = ( struct slab*)(bc >> ARCH_CONST_PAGE_SHIFT);
+
+  /* Right cache ? */
+  if (slab->cache != cache)
+    {
+      return EXIT_FAILURE;
+    }
+
+  /* Update slab counter and free list */
+  slab->free_ojects++;
+  LLIST_ADD(slab->free_buf,bc);
+
+  /* Update cache slabs lists if needed  */
+  if ( slab->free_objects-1 )
+    {
+      /* Move from partial to free if needed */
+      if (!slab->free_objects)
+	{
+	  LLIST_REMOVE(cache->slabs_partial,slab);
+	  LLIST_ADD(cache->slabs_free,slab);
+	}
+    }
+  else
+    {
+      /* Move from full to partial or free */
+      LLIST_REMOVE(cache->slabs_full,slab);
+      if  (slab->free_objects == (ARCH_CONST_PAGE_SIZE - sizeof(struct slab))/(cache->size+sizeof(struct bufctl)) )
+     	{
+	  LLIST_ADD(cache->slabs_free,slab);
+	}
+      else
+	{
+	  LLIST_ADD(cache->slabs_partial,slab);
+	}
+    }
+ 
+
+  return EXIT_SUCCESS;
+}
+
+
+
+/**
+
+   Function: u8_t vmem_cache_destroy(struct vmem_cache* cache)
    --------------------------------------------------------------
 
    Destoy a cache
@@ -476,7 +343,7 @@ PUBLIC void* virtmem_cache_alloc(struct vmem_cache* cache, u8_t flags)
 **/
 
 
-PUBLIC u8_t virtmem_cache_destroy(struct vmem_cache* cache)
+PUBLIC u8_t vmem_cache_destroy(struct vmem_cache* cache)
 {
   u8_t i;
   struct vmem_slab* slab;
@@ -499,7 +366,7 @@ PUBLIC u8_t virtmem_cache_destroy(struct vmem_cache* cache)
       /* Return slab to ̀slab_cache` if it is not an in-page slab */
        if (cache->size > (CONST_PAGE_SIZE >> VIRT_CACHE_GROWSHIFT))
 	{
-	  if ( virtmem_cache_free(slab_cache,slab) != EXIT_SUCCESS )
+	  if ( vmem_cache_free(slab_cache,slab) != EXIT_SUCCESS )
 	    {
 	      return EXIT_FAILURE;
 	    }
@@ -518,7 +385,7 @@ PUBLIC u8_t virtmem_cache_destroy(struct vmem_cache* cache)
   LLIST_REMOVE(cache_list,cache);
 
   /* Return to `cache_cache` */
-  if ( virtmem_cache_free(&cache_cache,cache) != EXIT_SUCCESS )
+  if ( vmem_cache_free(&cache_cache,cache) != EXIT_SUCCESS )
     {
       return EXIT_FAILURE;
     }
@@ -569,7 +436,7 @@ PRIVATE u8_t virtmem_slab_destroy(struct vmem_cache* cache,struct vmem_slab* sla
       /* Return bufctl to `bufctl_cache` in case of off-page slab */
       if (cache->size > (CONST_PAGE_SIZE >> VIRT_CACHE_GROWSHIFT))
 	{
-	  if ( virtmem_cache_free(bufctl_cache,bc) != EXIT_SUCCESS )
+	  if ( vmem_cache_free(bufctl_cache,bc) != EXIT_SUCCESS )
 	    {
 	      return EXIT_FAILURE;
 	    }
@@ -597,7 +464,7 @@ PRIVATE u8_t virtmem_slab_destroy(struct vmem_cache* cache,struct vmem_slab* sla
 
 /**
 
-   Function: u8_t virtmem_cache_grow(struct vmem_cache* cache)
+   Function: u8_t vmem_cache_grow(struct vmem_cache* cache)
    -----------------------------------------------------------
 
    Helper to extend cache providing on-page slabs.
@@ -608,7 +475,7 @@ PRIVATE u8_t virtmem_slab_destroy(struct vmem_cache* cache,struct vmem_slab* sla
 **/
 
 
-PRIVATE u8_t virtmem_cache_grow(struct vmem_cache* cache)
+PRIVATE u8_t vmem_cache_grow(struct vmem_cache* cache)
 { 
   struct vmem_slab* slab;
   virtaddr_t buf;

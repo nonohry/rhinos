@@ -8,7 +8,7 @@
 **/
 
 #ifndef VMEM_SLAB_H
-#define VEM_SLAB_H
+#define VMEM_SLAB_H
 
 
 /**
@@ -29,57 +29,15 @@
 
 /**
    
-   Constants
-   ---------
+   Constant: VMEM_CACHE_NAMELEN
+   ----------------------------
 
-   Lenghts
+   Cache name length
 
 **/
  
 
-#define VIRT_CACHE_NAMELEN     32
-#define VIRT_CACHE_REAPLEN     32
-
-
-/**
-
-   Constant: VIRT_CACHE_STARTSLABS
-   -------------------------------
-
-   Number of arbitrary virtual pages needed for intialization
-
-**/
-
-#define VIRT_CACHE_STARTSLABS  1
-
-
-/**
-
-   Constants
-   ---------
-
-   Reaping flags
-
-**/
-
-#define VIRT_CACHE_DEFAULT     0
-#define VIRT_CACHE_NOREAP      1
-#define VIRT_CACHE_BRUTALREAP  2
-#define VIRT_CACHE_FORCEREAP   4
-#define VIRT_CACHE_JUSTGROWN   8
-
-
-/**
-
-   Constants
-   ---------
-
-   Flags
-
-**/
-
-#define VIRT_CACHE_NOMINCHECK  3
-#define VIRT_CACHE_NOADDR      0
+#define VMEM_CACHE_NAMELEN     32
 
 
 /**
@@ -104,7 +62,7 @@
 
 PUBLIC struct vmem_cache
 {
-  char name[VIRT_CACHE_NAMELEN];
+  char name[VMEM_CACHE_NAMELEN];
   u16_t size;
   struct slab* slabs_free;
   struct slab* slabs_partial;
@@ -124,12 +82,11 @@ PUBLIC struct vmem_cache
 
 **/
 
-PUBLIC u8_t virtmem_cache_init(void);
-PUBLIC void* virtmem_cache_alloc(struct vmem_cache* cache, u8_t flags);
-PUBLIC u8_t virtmem_cache_free(struct vmem_cache* cache, void* buf);
-PUBLIC struct vmem_cache* virtmem_cache_create(const char* name, u16_t size);
-PUBLIC u8_t virtmem_cache_destroy(struct vmem_cache* cache);
-PUBLIC u32_t virtmem_cache_reap(u8_t flags);
+PUBLIC u8_t vmem_cache_setup(void);
+PUBLIC void* vmem_cache_alloc(struct vmem_cache* cache);
+PUBLIC u8_t vmem_cache_free(struct vmem_cache* cache, void* buf);
+PUBLIC struct vmem_cache* vmem_cache_create(const char* name, u16_t size);
+PUBLIC u8_t vmem_cache_destroy(struct vmem_cache* cache);
 
 
 #endif
