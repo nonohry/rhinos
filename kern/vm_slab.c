@@ -39,6 +39,72 @@
 #include "virtmem_slab.h"
 
 
+
+
+
+
+/**
+
+   Structure: struct bufctl
+   -----------------------------
+
+   Describe a bufctl.
+
+   A bufctl is just an helper structure to point to a virtual memory area. 
+   Members are:
+
+   - base  : Virtual memory area base address
+   - slab  : Parent slab back pointer
+   - next  : Next bufctl in linked list
+   - prev  : Previous bufctl in linked list
+
+**/
+
+
+PUBLIC struct bufctl
+{
+  virtaddr_t base;
+  struct vmem_slab* slab;
+  struct vmem_bufctl* next;
+  struct vmem_bufctl* prev;
+} __attribute__ ((packed));
+
+
+
+/**
+
+   Structure: struct slab
+   ----------------------
+
+   Describe a slab.
+
+   A slab is basically  a free bufctl container.
+   Membres are:
+
+   - count       : Number of free bufctl available
+   - max_objects : Maximum free objects a slab can contain
+   - start       : First bufctl virtual address
+   - free_buf    : List of free bufctl
+   - cache       : Parent cache back pointer
+   - next        : Next slab in linked list
+   - prev        : Previous slab in linked list
+
+**/
+
+PUBLIC struct slab
+{
+  u16_t count;
+  u16_t max_objects;
+  virtaddr_t start;
+  struct bufctl* free_buf;
+  struct vmem_cache* cache;
+  struct slab* next;
+  struct slab* prev;
+} __attribute__ ((packed));
+
+
+
+
 /**
 
    Privates
