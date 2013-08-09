@@ -81,22 +81,20 @@ PUBLIC struct bufctl
    A slab is basically  a free bufctl container.
    Membres are:
 
-   - count       : Number of free bufctl available
-   - max_objects : Maximum free objects a slab can contain
-   - start       : First bufctl virtual address
-   - free_buf    : List of free bufctl
-   - cache       : Parent cache back pointer
-   - next        : Next slab in linked list
-   - prev        : Previous slab in linked list
+   - free_objects : Number of free bufctl available
+   - max_objects  : Maximum free objects a slab can contain
+   - free_bufctls : List of free bufctl
+   - cache        : Parent cache back pointer
+   - next         : Next slab in linked list
+   - prev         : Previous slab in linked list
 
 **/
 
 PUBLIC struct slab
 {
-  u16_t count;
+  u16_t free_objects;
   u16_t max_objects;
-  virtaddr_t start;
-  struct bufctl* free_buf;
+  struct bufctl* free_bufctls;
   struct vmem_cache* cache;
   struct slab* next;
   struct slab* prev;
