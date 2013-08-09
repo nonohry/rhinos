@@ -43,48 +43,21 @@
 
 **/
 
+
+physaddr_t p=4096;
+
 PUBLIC void excep_handle(u32_t num, struct x86_context* ctx)
 {
+
+  u8_t type;
+  
   if (num == 14)
     {
-      u8_t type = vm_pf_resolvable(ctx);
-      serial_printf("Page fault is %s\n",(type!=VM_PF_UNRESOLVABLE?(type==VM_PF_INTERNAL?"caused by PT":"caused by Frame"):"unresolvable"));
-
-      switch(ctx->error_code)
-	{
-	case VM_PF_SUPER_READ_NONPRESENT:
-	  serial_printf("Super tried to read non present page\n");
-	  break;
-	case VM_PF_SUPER_READ_PROTECTION:
-	  serial_printf("Super tried to read and caused protection fault\n");
-	  break;
-	case VM_PF_SUPER_WRITE_NONPRESENT:
-	  serial_printf("Super tried to write to non present page\n");
-	  break;
-	case VM_PF_SUPER_WRITE_PROTECTION:
-	  serial_printf("Super tried to write and caused protection fault\n");
-	  break;
-	case VM_PF_USER_READ_NONPRESENT:
-	  serial_printf("User tried to read non present page\n");
-	  break;
-	case VM_PF_USER_READ_PROTECTION:
-	  serial_printf("User tried to read and caused protection fault\n");
-	  break;
-	case VM_PF_USER_WRITE_NONPRESENT:
-	  serial_printf("User tried to write to non present page\n");
-	  break;
-	case VM_PF_USER_WRITE_PROTECTION:
-	  serial_printf("User tried to write and caused protection fault\n");
-	  break;
-	default:
-	  serial_printf("Page fault with strange error code 0x%x !\n", ctx->error_code);
-	  break;
-	}
-      
-      
+      type = vm_pf_resolvable(ctx);      
       type |= VM_PF_RW;
       type |= VM_PF_SUPER;
-      vm_pf_fix(x86_get_pf_addr(), 0x1000, type);
+      vm_pf_fix(x86_get_pf_addr(), p, type);
+      p += 4096;
 
     }
   else

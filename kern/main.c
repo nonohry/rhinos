@@ -97,11 +97,6 @@ PUBLIC int main(void)
   cur_th = &kern_th;
   
   arch_sti();
- 
-  int* p = 0x80000000;
- 
-  //int pp = *p;
-  *p = 9;
   
  err:
   
