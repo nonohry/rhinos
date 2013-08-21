@@ -37,7 +37,7 @@
 **/
  
 
-#define VMEM_CACHE_NAMELEN     32
+#define VM_CACHE_NAMELEN     32
 
 
 /**
@@ -60,15 +60,15 @@
 **/
 
 
-PUBLIC struct vmem_cache
+PUBLIC struct vm_cache
 {
-  char name[VMEM_CACHE_NAMELEN];
+  char name[VM_CACHE_NAMELEN];
   u16_t size;
   struct slab* slabs_free;
   struct slab* slabs_partial;
   struct slab* slabs_full;
-  struct vmem_cache* next;
-  struct vmem_cache* prev;
+  struct vm_cache* next;
+  struct vm_cache* prev;
 } __attribute__ ((packed));
 
 
@@ -82,11 +82,11 @@ PUBLIC struct vmem_cache
 
 **/
 
-PUBLIC u8_t vmem_cache_setup(void);
-PUBLIC void* vmem_cache_alloc(struct vmem_cache* cache);
-PUBLIC u8_t vmem_cache_free(struct vmem_cache* cache, void* buf);
-PUBLIC struct vmem_cache* vmem_cache_create(const char* name, u16_t size);
-PUBLIC u8_t vmem_cache_destroy(struct vmem_cache* cache);
+PUBLIC u8_t vm_cache_setup(void);
+PUBLIC void* vm_cache_alloc(struct vm_cache* cache);
+PUBLIC u8_t vm_cache_free(struct vm_cache* cache, void* buf);
+PUBLIC struct vmem_cache* vm_cache_create(const char* name, u16_t size);
+PUBLIC u8_t vm_cache_destroy(struct vm_cache* cache);
 
 
 #endif
