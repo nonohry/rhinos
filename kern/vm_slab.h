@@ -1,14 +1,14 @@
 /**
 
-   vmem_slab.h
-   ===========
+   vm_slab.h
+   =========
 
    Virtual memory slab allocator header
 
 **/
 
-#ifndef VMEM_SLAB_H
-#define VMEM_SLAB_H
+#ifndef VM_SLAB_H
+#define VM_SLAB_H
 
 
 /**
@@ -18,13 +18,11 @@
 
    - define.h
    - types.h
-   - const.h
-
+ 
 **/
 
 #include <define.h>
 #include <types.h>
-#include "const.h"
 
 
 /**
@@ -85,7 +83,7 @@ PUBLIC struct vm_cache
 PUBLIC u8_t vm_cache_setup(void);
 PUBLIC void* vm_cache_alloc(struct vm_cache* cache);
 PUBLIC u8_t vm_cache_free(struct vm_cache* cache, void* buf);
-PUBLIC struct vmem_cache* vm_cache_create(const char* name, u16_t size);
+PUBLIC struct vm_cache* vm_cache_create(const char* name, u16_t size);
 PUBLIC u8_t vm_cache_destroy(struct vm_cache* cache);
 
 

@@ -18,7 +18,7 @@
    - types.h
    - llist.h
    - arch_const.h
-   - vm_pool.h        : virtaul page allocation & release
+   - vm_pool.h      : virtual page allocation & release
    - vm_slab.h      : self header
 
 **/
@@ -43,7 +43,6 @@
    Members are:
 
    - base  : Virtual memory area base address
-   - slab  : Parent slab back pointer
    - next  : Next bufctl in linked list
    - prev  : Previous bufctl in linked list
 
@@ -134,6 +133,24 @@ struct vm_cache cache_cache =
 
 
 
+#include <arch_io.h>
+void print_caches()
+{
+  struct vm_cache* c;
+  c=LLIST_GETHEAD(&cache_cache);
+  do
+    {
+      arch_printf("%s ",c->name);
+      c=LLIST_NEXT(&cache_cache,c);
+    }while(!LLIST_ISHEAD(&cache_cache,c));
+	   
+  arch_printf("\n");
+
+  return;
+
+}
+
+
 /**
 
    Function: u8_t vm_cache_setup(void)
@@ -152,6 +169,15 @@ PUBLIC u8_t vm_cache_setup(void)
   LLIST_NULLIFY(cache_list);
   LLIST_SETHEAD(&cache_cache);
 
+
+  print_caches();
+
+  vm_cache_create("foo_cache",16);
+
+  print_caches();
+
+  while(1){}
+
   return EXIT_SUCCESS;
 }
 
@@ -159,7 +185,7 @@ PUBLIC u8_t vm_cache_setup(void)
 /**
 
    Function: struct vm_cache* vm_cache_create(const char* name, u16_t size )
-   -----------------------------------------------------------------------------
+   -------------------------------------------------------------------------
 
    Cache creation.
 
@@ -253,7 +279,14 @@ PUBLIC void* vm_cache_alloc(struct vm_cache* cache)
   if (list == cache->slabs_free)
     {
       LLIST_REMOVE(cache->slabs_free,slab);
-      LLIST_ADD((slab->free_objects?:cache->slabs_partial,cache->slabs_full), slab);
+      if (slab->free_objects)
+	{
+	  LLIST_ADD(cache->slabs_partial,slab);
+	}
+      else
+	{
+	  LLIST_ADD(cache->slabs_full,slab);
+	}
     }
   else if ( !(slab->free_objects) )
     {
@@ -271,7 +304,7 @@ PUBLIC void* vm_cache_alloc(struct vm_cache* cache)
 /**
 
    Function: u8_t vm_cache_free(struct vm_cache* cache, void* buf)
-   -----------------------------------------------------------------
+   ---------------------------------------------------------------
 
    Release a object pointed by `buf` and return it to `cache`.
 
@@ -293,7 +326,7 @@ PUBLIC u8_t vm_cache_free(struct vm_cache* cache, void* buf)
   bc = (struct bufctl*)((virtaddr_t)buf - sizeof(struct bufctl));
  
   /* Get slab */
-  slab = (struct slab*)(bc >> ARCH_CONST_PAGE_SHIFT);
+  slab = (struct slab*)((virtaddr_t)bc >> ARCH_CONST_PAGE_SHIFT);
 
   /* Right cache ? */
   if (slab->cache != cache)
@@ -302,8 +335,8 @@ PUBLIC u8_t vm_cache_free(struct vm_cache* cache, void* buf)
     }
 
   /* Update slab counter and free list */
-  slab->free_ojects++;
-  LLIST_ADD(slab->free_buf,bc);
+  slab->free_objects++;
+  LLIST_ADD(slab->free_bufctls,bc);
 
   /* Update cache slabs lists if needed  */
   if ( slab->free_objects-1 )
@@ -375,7 +408,7 @@ PUBLIC u8_t vm_cache_destroy(struct vm_cache* cache)
     }
   
   /* Zeroing structure */
-  for(i=0;i<VIRT_CACHE_NAMELEN;i++)
+  for(i=0;i<VM_CACHE_NAMELEN;i++)
     {
       cache->name[i] = 0;
     }
@@ -447,7 +480,7 @@ PRIVATE u8_t vm_cache_grow(struct vm_cache* cache)
       bc->base = buf+sizeof(struct bufctl);
     
       /* Add bufctl to slab free list */
-      LLIST_ADD(slab->free_buf,bc);
+      LLIST_ADD(slab->free_bufctls,bc);
     }
 
   return EXIT_SUCCESS;
