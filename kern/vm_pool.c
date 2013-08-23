@@ -93,12 +93,13 @@ PUBLIC u8_t vm_pool_setup(void)
 {
   virtaddr_t vaddr;
 
+
   /* Set stack */
   stack = (virtaddr_t*)(boot.vm_stack);
 
   /* Set top */
-  top = 0;
-
+  top = boot.vm_stack_size;
+ 
   /* Fill stack */
   for(vaddr = 0;
       vaddr < ARCH_CONST_KERN_HIGHMEM;
@@ -133,7 +134,7 @@ PUBLIC u8_t vm_pool_setup(void)
 
    Allocate a page.
 
-   Simply return top of stack
+   Simply return top of stack then increment it, simulating a pop.
 
 **/
 

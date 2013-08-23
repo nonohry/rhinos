@@ -53,6 +53,7 @@ PUBLIC void excep_handle(u32_t num, struct x86_context* ctx)
   
   if (num == 14)
     {
+      serial_printf("PF !\n");
       type = vm_pf_resolvable(ctx);      
       type |= VM_PF_RW;
       type |= VM_PF_SUPER;

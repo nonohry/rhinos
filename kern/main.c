@@ -68,6 +68,7 @@ PUBLIC int main(void)
       arch_printf("Unable to setup virtual pages pool\n");
       goto err;
     }
+  
 
   if (vm_cache_setup() != EXIT_SUCCESS)
     {
@@ -104,7 +105,8 @@ PUBLIC int main(void)
   cur_th = &kern_th;
   
   arch_sti();
-  
+
+
  err:
   
   while(1)

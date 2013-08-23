@@ -159,12 +159,12 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
   limit +=  (((bitmap_size >> X86_CONST_PAGE_SHIFT)+1) << X86_CONST_PAGE_SHIFT);
 
 
-  /* Compute virtual page stack size */
+  /* Compute virtual pages stack size */
   vm_stack_size = (X86_CONST_KERN_HIGHMEM >> X86_CONST_PAGE_SHIFT);
   /* Reserve pages stack */
   vm_stack = limit;
  /* Update first available byte */
-  limit +=  (((vm_stack_size >> X86_CONST_PAGE_SHIFT)+1) << X86_CONST_PAGE_SHIFT);
+  limit +=  ((( (vm_stack_size*sizeof(virtaddr_t)) >> X86_CONST_PAGE_SHIFT)+1) << X86_CONST_PAGE_SHIFT);
   
   /* Setup PIC */
   if (pic_setup() != EXIT_SUCCESS)
@@ -202,6 +202,7 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
 
   /* Note: `limit` is now the first available byte address in upper mem */
 
+  
   /* Fill kernel boot info structure */
   boot.mods_count = mbi.mods_count;
   boot.mods_addr = mbi.mods_addr;
@@ -212,6 +213,7 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
   boot.vm_stack = vm_stack;
   boot.vm_stack_size = vm_stack_size;
   boot.start = limit;
+
 
   return;
 

@@ -108,7 +108,7 @@ PRIVATE u8_t vm_cache_grow(struct vm_cache* cache);
 
 **/
 
-PRIVATE struct vm_cache* cache_list;
+struct vm_cache* cache_list;
 
 
 /**
@@ -133,24 +133,6 @@ struct vm_cache cache_cache =
 
 
 
-#include <arch_io.h>
-void print_caches()
-{
-  struct vm_cache* c;
-  c=LLIST_GETHEAD(&cache_cache);
-  do
-    {
-      arch_printf("%s ",c->name);
-      c=LLIST_NEXT(&cache_cache,c);
-    }while(!LLIST_ISHEAD(&cache_cache,c));
-	   
-  arch_printf("\n");
-
-  return;
-
-}
-
-
 /**
 
    Function: u8_t vm_cache_setup(void)
@@ -166,17 +148,8 @@ void print_caches()
 PUBLIC u8_t vm_cache_setup(void)
 {
   /* Caches list initialization */
-  LLIST_NULLIFY(cache_list);
-  LLIST_SETHEAD(&cache_cache);
-
-
-  print_caches();
-
-  vm_cache_create("foo_cache",16);
-
-  print_caches();
-
-  while(1){}
+  cache_list = &cache_cache;
+  LLIST_SETHEAD(cache_list);
 
   return EXIT_SUCCESS;
 }
@@ -259,7 +232,6 @@ PUBLIC void* vm_cache_alloc(struct vm_cache* cache)
 	{
 	  return NULL;
 	}
-
     }
 
   /* Get the working slab list */ 
@@ -326,7 +298,8 @@ PUBLIC u8_t vm_cache_free(struct vm_cache* cache, void* buf)
   bc = (struct bufctl*)((virtaddr_t)buf - sizeof(struct bufctl));
  
   /* Get slab */
-  slab = (struct slab*)((virtaddr_t)bc >> ARCH_CONST_PAGE_SHIFT);
+  slab = (struct slab*)( ((virtaddr_t)bc >> ARCH_CONST_PAGE_SHIFT) << ARCH_CONST_PAGE_SHIFT );
+  
 
   /* Right cache ? */
   if (slab->cache != cache)
@@ -342,7 +315,7 @@ PUBLIC u8_t vm_cache_free(struct vm_cache* cache, void* buf)
   if ( slab->free_objects-1 )
     {
       /* Move from partial to free if needed */
-      if (!slab->free_objects)
+      if (slab->free_objects == (ARCH_CONST_PAGE_SIZE - sizeof(struct slab))/(cache->size+sizeof(struct bufctl)) )
 	{
 	  LLIST_REMOVE(cache->slabs_partial,slab);
 	  LLIST_ADD(cache->slabs_free,slab);
@@ -454,12 +427,13 @@ PRIVATE u8_t vm_cache_grow(struct vm_cache* cache)
     {
       return EXIT_FAILURE;
     }
-  
+   
   /* Place slab in front of page */
   slab = (struct slab*)page;
   
   /* Initialize it */
   slab->free_objects = (ARCH_CONST_PAGE_SIZE - sizeof(struct slab))/(cache->size+sizeof(struct bufctl));
+  
   slab->cache = cache;
   LLIST_NULLIFY(slab->free_bufctls);
 
