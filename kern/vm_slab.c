@@ -31,6 +31,7 @@
 #include "vm_slab.h"
 
 
+#include <arch_io.h>
 
 /**
 
@@ -224,7 +225,7 @@ PUBLIC void* vm_cache_alloc(struct vm_cache* cache)
   struct slab* list;
   struct slab* slab;
   struct bufctl* bufctl;
-  
+
   /* Extend cache if needed */
   if ( (LLIST_ISNULL(cache->slabs_free)) && (LLIST_ISNULL(cache->slabs_partial)) )
     {
@@ -234,6 +235,7 @@ PUBLIC void* vm_cache_alloc(struct vm_cache* cache)
 	}
     }
 
+  
   /* Get the working slab list */ 
   list = (LLIST_ISNULL(cache->slabs_partial)?cache->slabs_free:cache->slabs_partial);
 
@@ -427,7 +429,7 @@ PRIVATE u8_t vm_cache_grow(struct vm_cache* cache)
     {
       return EXIT_FAILURE;
     }
-   
+
   /* Place slab in front of page */
   slab = (struct slab*)page;
   

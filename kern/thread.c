@@ -18,7 +18,9 @@
    - types.h
    - llist.h
    - arch_io.h
+   - arch_const : architecture dependent constants
    - arch_ctx.h : CPU context
+   - vm_slab.h  : Slab allocator
    - sched.h    : scheduler
    - thread.h   : self header
 
@@ -29,9 +31,87 @@
 #include <types.h>
 #include <llist.h>
 #include <arch_io.h>
+#include <arch_const.h>
 #include <arch_ctx.h>
+#include "vm_slab.h"
 #include "sched.h"
 #include "thread.h"
+
+
+/**
+
+   Global: thread_cache
+   --------------------
+
+   Cache for `struct thread` allocation
+
+**/
+
+
+struct vm_cache* thread_cache;
+
+
+/**
+
+   Global: ksetup_th
+   -----------------
+
+   Kernel setup execution flow, must be created before cache 
+   as cache will generate page fault and page fault handler need a current thread
+
+**/
+
+struct thread ksetup_th;
+
+
+/**
+
+   Function: u8_t thread_setup(void)
+   ---------------------------------
+
+   Initialize threads subsystem.
+
+   Create "manually" a thread for current execution flow as cache_create will generate a pgae fault.
+   Create a cache for `struct thread` allocation.
+   Create a thread for current execution flow.
+
+**/
+
+
+PUBLIC u8_t thread_setup(void)
+{
+ 
+  /* Needed fields for current execution thread */
+  ksetup_th.ctx.ss = ARCH_STACK_SELECTOR;
+  ksetup_th.name[0] = '[';
+  ksetup_th.name[1] = 'K';
+  ksetup_th.name[2] = 's';
+  ksetup_th.name[3] = 'e';
+  ksetup_th.name[4] = 't';
+  ksetup_th.name[5] = 'u';
+  ksetup_th.name[6] = 'p';
+  ksetup_th.name[7] = 0;
+
+  
+  /* Define it as current thread */
+  ksetup_th.state = THREAD_READY;
+  sched_enqueue(SCHED_READY_QUEUE,&ksetup_th);
+  cur_th = &ksetup_th;
+
+  /* Create cache for allocation */
+  thread_cache = vm_cache_create("Thread_Cache",sizeof(struct thread));
+  if (thread_cache == NULL)
+    {
+      return EXIT_FAILURE;
+    }
+
+  return EXIT_SUCCESS;
+
+}
+
+
+
+
 
 
 

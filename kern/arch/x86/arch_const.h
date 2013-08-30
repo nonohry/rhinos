@@ -79,4 +79,17 @@
 
 #define ARCH_CONST_KERN_HIGHMEM            X86_CONST_KERN_HIGHMEM
 
+
+/** 
+
+    Constant: ARCH_STACK_SELECTOR
+    -----------------------------
+
+    Segment selector for kernel stack
+
+**/
+
+#define ARCH_STACK_SELECTOR                X86_CONST_KERN_SS_SELECTOR
+
+
 #endif

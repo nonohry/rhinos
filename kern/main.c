@@ -55,8 +55,6 @@ PUBLIC int main(void)
 
   u16_t i;
 
-  arch_printf("Hello World (from main) !\n");
-
   if (pager0_setup() != EXIT_SUCCESS)
     {
       arch_printf("Unable to setup Pager0\n");
@@ -67,12 +65,21 @@ PUBLIC int main(void)
     {
       arch_printf("Unable to setup virtual pages pool\n");
       goto err;
-    }
-  
+    } 
+
 
   if (vm_cache_setup() != EXIT_SUCCESS)
     {
       arch_printf("Unable to setup slab allocator\n");
+      goto err;
+    }
+
+  /* Restore interrupts to handle page faults (needed for thread cache) */
+  arch_sti();
+  
+  if (thread_setup() != EXIT_SUCCESS)
+    {
+      arch_printf("Unable to setup threads subsystem\n");
       goto err;
     }
 
@@ -87,25 +94,6 @@ PUBLIC int main(void)
       arch_printf("Unable to intialize clock\n");
       goto err;
     }
-
-
-
-  struct thread kern_th;
-  kern_th.ctx.ss = 16;
-  kern_th.name[0] = '[';
-  kern_th.name[1] = 'K';
-  kern_th.name[2] = 'e';
-  kern_th.name[3] = 'r';
-  kern_th.name[4] = 'n';
-  kern_th.name[5] = ']';
-  kern_th.name[6] = 0;
-  
-  kern_th.state = THREAD_READY;
-  sched_enqueue(SCHED_READY_QUEUE,&kern_th);
-  cur_th = &kern_th;
-  
-  arch_sti();
-
 
  err:
   
