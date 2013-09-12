@@ -50,6 +50,8 @@
    Set up a cpu context.
 
    Simply provide segment registers, stack registers , EFLAGS and EIP.
+   These registers will be popped from stack when the context switch will occur,
+   just like a normal return from interrupt.
 
 **/   
 
@@ -93,9 +95,10 @@ PUBLIC u8_t ctx_setup(struct x86_context* ctx, virtaddr_t base, virtaddr_t stack
    Function: void ctx_postsave(struct x86_context* ctx, reg32_t* esp)
    ------------------------------------------------------------------
 
-   Finalize cpou context save in case of a kernel space switch.
+   Finalize cpu context save in case of a in-kernel-space switch.
    
-   Simply retrieve register saved on stack by processor.
+   Simply retrieve registers saved on stack by processor 
+   and store them in the context structure.
 
 **/
 
