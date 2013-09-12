@@ -84,13 +84,14 @@ PUBLIC u8_t thread_setup(void)
   /* Needed fields for current execution thread */
   ksetup_th.ctx.ss = ARCH_STACK_SELECTOR;
   ksetup_th.name[0] = '[';
-  ksetup_th.name[1] = 'K';
+  ksetup_th.name[1] = 'k';
   ksetup_th.name[2] = 's';
   ksetup_th.name[3] = 'e';
   ksetup_th.name[4] = 't';
   ksetup_th.name[5] = 'u';
   ksetup_th.name[6] = 'p';
-  ksetup_th.name[7] = 0;
+  ksetup_th.name[7] = ']';
+  ksetup_th.name[8] = 0;
 
   
   /* Define it as current thread */
@@ -108,10 +109,6 @@ PUBLIC u8_t thread_setup(void)
   return EXIT_SUCCESS;
 
 }
-
-
-
-
 
 
 
@@ -136,7 +133,7 @@ PUBLIC struct thread* thread_create(const char* name, virtaddr_t base, virtaddr_
     }
 
   /* Allocate a thread structure */
-  //th = (struct thread*)mem_alloc(sizeof(struct thread));
+  th = (struct thread*)vm_cache_alloc(thread_cache);
   if (th == NULL)
     {
       return NULL;
@@ -175,7 +172,7 @@ PUBLIC struct thread* thread_create(const char* name, virtaddr_t base, virtaddr_
 
  err:
   
-  //mem_free(th);
+  vm_cache_free(thread_cache,th);
   return NULL;
   
 }
