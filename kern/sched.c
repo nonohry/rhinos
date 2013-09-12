@@ -75,7 +75,7 @@ PUBLIC u8_t sched_setup(void)
    Add a thread to a scheduler queue. There are 4 queues:
 
    - SCHED_RUNNING_QUEUE : Thread is currently being executed by processor
-   - SCHED_READY_QUEUE   : Thread is ready to be executed. The queue is in fact a queues array
+   - SCHED_READY_QUEUE   : Thread is ready to be executed.
    - SCHED_BLOCKED_QUEUE : Thread is blocked in an IPC operation
    - SCHED_DEAD_QUEUE    : Thread is dead, waiting to be deleted
 
@@ -192,4 +192,3 @@ PUBLIC struct thread* sched_elect()
 
   return th;
 }
-
