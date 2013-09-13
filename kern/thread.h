@@ -160,6 +160,7 @@ PUBLIC struct thread* cur_th;
 
 PUBLIC u8_t thread_setup(void);
 PUBLIC struct thread* thread_create(const char* name, virtaddr_t base, virtaddr_t stack_base, size_t stack_size);
+PUBLIC u8_t thread_destroy(struct thread* th);
 PUBLIC u8_t thread_switch_to(struct thread* th);
 
 #endif

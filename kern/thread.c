@@ -20,7 +20,7 @@
    - arch_io.h
    - arch_const : architecture dependent constants
    - arch_ctx.h : CPU context
-   - vm_slab.h  : Slab allocator
+   - vm_slab.h  : slab allocator
    - sched.h    : scheduler
    - thread.h   : self header
 
@@ -71,7 +71,7 @@ struct thread ksetup_th;
 
    Initialize threads subsystem.
 
-   Create "manually" a thread for current execution flow as cache_create will generate a pgae fault.
+   Create "manually" a thread for current execution flow as cache_create will generate a page fault.
    Create a cache for `struct thread` allocation.
    Create a thread for current execution flow.
 
@@ -142,6 +142,12 @@ PUBLIC struct thread* thread_create(const char* name, virtaddr_t base, virtaddr_
   /* Clean it */
   arch_memset(0,(addr_t)th,sizeof(struct thread));
 
+  /* Set a name if it does not exist */
+  if (name == NULL)
+    {
+      name = "NONAME";
+    }
+
   /* Name copy */
   i=0;
   while( (name[i]!=0)&&(i<THREAD_NAMELEN-1) )
@@ -178,10 +184,87 @@ PUBLIC struct thread* thread_create(const char* name, virtaddr_t base, virtaddr_
 }
 
 
+
 /**
 
-   Function: u8_t thread_switch_to(thread* th)
-   -------------------------------------------
+   Function: u8_t thread_destroy(struct thread* th)
+   ------------------------------------------------
+
+   Destroy a thread
+   
+   Unlink from scheduler then return thread structure to cache
+
+**/
+
+
+
+PUBLIC  u8_t thread_destroy(struct thread* th)
+{
+
+  u8_t res;
+
+  /* Sanity check */
+  if (th == NULL)
+    {
+      return EXIT_FAILURE;
+    }
+
+  /* Remove from scheduler, according to `state` */
+  switch(th->state)
+    {
+
+    case THREAD_READY:
+      {
+	res = sched_dequeue(SCHED_READY_QUEUE,th);
+	break;
+      }
+
+    case THREAD_RUNNING:
+      {
+	/* Cannot remove current running thread */
+	return EXIT_FAILURE;
+	break;
+      }
+
+    case THREAD_BLOCKED:
+    case THREAD_BLOCKED_SENDING:
+      {
+	res = sched_dequeue(SCHED_BLOCKED_QUEUE,th);
+	break;
+      }
+
+    case THREAD_DEAD:
+      {
+	res = sched_dequeue(SCHED_DEAD_QUEUE,th);
+	break;
+      }
+
+    default:
+      {
+	return EXIT_FAILURE;
+	break;
+      }
+
+    }
+
+  /* Return if dequeue has failed */
+  if (res != EXIT_SUCCESS)
+    {
+      return EXIT_FAILURE;
+    }
+
+  /* Return to cache */
+  res = vm_cache_free(thread_cache,th);
+  
+  return res;
+}
+
+
+
+/**
+
+   Function: u8_t thread_switch_to(struct thread* th)
+   --------------------------------------------------
 
    Switch current thread to `th`
 
