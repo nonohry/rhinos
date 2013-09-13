@@ -101,6 +101,23 @@ PUBLIC int main(void)
 		  mods[i].cmdline);
     }
 
+  struct proc* ptest;
+  ptest = proc_create("ptest");
+  if (ptest == NULL)
+    {
+      arch_printf("Unable to create ptest\n");
+      goto err;
+    }
+
+  if (proc_memcopy(ptest,mods[0].start,0x80000000,mods[0].end-mods[0].start) != EXIT_SUCCESS)
+    {
+      arch_printf("Unable to copy in ptest\n");
+      goto err;
+    }
+
+
+
+
 
 
 

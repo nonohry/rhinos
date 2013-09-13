@@ -31,18 +31,6 @@
 #include "vm_paging.h"
 
 
-/**
-
-   Typedef: arch_addrspace_t
-   -------------------------
-
-   Glue for address space type
-
-**/
-
-typedef virtaddr_t arch_addrspace_t;
-
-
 /** 
 
     Function Pointers
@@ -55,5 +43,6 @@ typedef virtaddr_t arch_addrspace_t;
 
 PRIVATE u8_t (*arch_sync_addrspace)(virtaddr_t addrspace)__attribute__((unused)) = &vm_sync;
 PRIVATE u8_t (*arch_switch_addrspace)(virtaddr_t addrspace)__attribute__((unused)) = &vm_switch_to;
+PRIVATE virtaddr_t (*arch_get_addrspace)(void)__attribute__((unused)) = &vm_get_pd;
 
 #endif

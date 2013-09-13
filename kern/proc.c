@@ -64,6 +64,18 @@ struct vm_cache* proc_cache;
 struct vm_cache* thread_wrapper_cache;
 
 
+/**
+
+   Global: ksetup_proc
+   -------------------
+
+   Kernel setup execution proc
+
+**/
+
+struct thread ksetup_proc;
+
+
 
 /**
    
@@ -73,6 +85,7 @@ struct vm_cache* thread_wrapper_cache;
    Setup proc subsystem.
 
    Create a cache for structures allocations
+   Create a proc for kernel setup flow
 
 **/
 
@@ -92,6 +105,7 @@ PUBLIC u8_t proc_setup(void)
     {
       goto err0;
     }
+
 
   return EXIT_SUCCESS;
 
@@ -276,9 +290,9 @@ PUBLIC u8_t proc_memcopy(struct proc* proc, virtaddr_t src, virtaddr_t dest, siz
     {
       return EXIT_FAILURE;
     }
-  
+
   /* Save current address space */
-  cur_addrspace = cur_th->proc->addrspace;
+  cur_addrspace = arch_get_addrspace();
 
   /* Change address space if needed */
   if (proc->addrspace != cur_addrspace)
@@ -287,9 +301,9 @@ PUBLIC u8_t proc_memcopy(struct proc* proc, virtaddr_t src, virtaddr_t dest, siz
 	{
 	  return EXIT_FAILURE;
 	}
-    }
+    }  
 
-  /* Copy (will generate page fault !) */
+  /* Copy (will generate page faults !) */
   arch_memcopy(src,dest,len);
 
   /* Switch back to current address space if needed */

@@ -397,6 +397,25 @@ PUBLIC u8_t vm_paging_unmap(virtaddr_t vaddr)
 }
   
 
+
+/**
+
+   Function: virtaddr_t vm_get_pd(void)
+   ------------------------------------
+
+   return current page directory virtual address
+
+**/
+
+
+PUBLIC virtaddr_t vm_get_pd(void)
+{
+  return VM_PAGING_GET_PD();
+}
+
+
+
+
 /**
 
    Function: u8_t vm_switch_to(virtaddr_t pd_addr)

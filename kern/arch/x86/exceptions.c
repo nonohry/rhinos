@@ -53,8 +53,8 @@ PUBLIC void excep_handle(u32_t num, struct x86_context* ctx)
   
   if (num == 14)
     {
-      serial_printf("PF !\n");
-      type = vm_pf_resolvable(ctx);      
+      type = vm_pf_resolvable(ctx);
+      serial_printf("PF - type %u -(0x%x will be mapped to 0x%x)\n",type,x86_get_pf_addr(),p);  
       type |= VM_PF_RW;
       //type |= VM_PF_SUPER;
       vm_pf_fix(x86_get_pf_addr(), p, type);
