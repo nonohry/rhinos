@@ -28,7 +28,7 @@ struct calc_msg
 int main()
 {
   int j;
-  struct ipc_message m;
+  //struct ipc_message m;
   struct calc_msg cm;
 
   cm.op_code = 2;
@@ -38,11 +38,11 @@ int main()
     {
       cm.op_1 = j%10;
       cm.op_2 = j%100;
-      mem_copy((addr_t)&cm,(addr_t)m.data,sizeof(struct calc_msg));
-      if (ipc_sendrec(3,&m)!=IPC_SUCCESS)
-      	{
-      	  break;
-      	}
+      /* mem_copy((addr_t)&cm,(addr_t)m.data,sizeof(struct calc_msg)); */
+      /* if (ipc_sendrec(3,&m)!=IPC_SUCCESS) */
+      /* 	{ */
+      /* 	  break; */
+      /* 	} */
       //mem_copy((addr_t)m.data,(addr_t)&cm,sizeof(struct calc_msg));
       j++;
     }
