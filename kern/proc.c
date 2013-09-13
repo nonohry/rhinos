@@ -17,7 +17,8 @@
    - define.h
    - types.h
    - llist.h
-   - arch_vm.h        :architecture dependant virtual memory
+   - arch_io.h       : memcopy
+   - arch_vm.h       : architecture dependant virtual memory
    - vm_slab.h       : slab allocator needed
    - thread.h        : struct thread needed
    - proc.h          : self header
@@ -28,6 +29,7 @@
 #include <define.h>
 #include <types.h>
 #include <llist.h>
+#include <arch_io.h>
 #include <arch_vm.h>
 #include "vm_pool.h"
 #include "vm_slab.h"
@@ -250,4 +252,53 @@ PUBLIC u8_t proc_remove_thread(struct proc* proc, struct thread* th)
     
 
   return EXIT_FAILURE;
+}
+
+
+
+/**
+
+   Function: u8_t proc_memcopy(struct proc* proc, virtaddr_t src, virtaddr_t dest, size_t len)
+   -------------------------------------------------------------------------------------------
+
+   Copy in-memory data at address `src` to `proc` adress space at address `dest`.
+
+**/
+
+
+PUBLIC u8_t proc_memcopy(struct proc* proc, virtaddr_t src, virtaddr_t dest, size_t len)
+{
+  virtaddr_t cur_addrspace;
+
+  /* Sanity check */
+  if (proc == NULL)
+    {
+      return EXIT_FAILURE;
+    }
+  
+  /* Save current address space */
+  cur_addrspace = cur_th->proc->addrspace;
+
+  /* Change address space if needed */
+  if (proc->addrspace != cur_addrspace)
+    {
+      if (arch_switch_addrspace(proc->addrspace) != EXIT_SUCCESS)
+	{
+	  return EXIT_FAILURE;
+	}
+    }
+
+  /* Copy (will generate page fault !) */
+  arch_memcopy(src,dest,len);
+
+  /* Switch back to current address space if needed */
+  if (proc->addrspace != cur_addrspace)
+    {
+      if (arch_switch_addrspace(cur_addrspace) != EXIT_SUCCESS)
+	{
+	  return EXIT_FAILURE;
+	}
+    }
+  
+  return EXIT_SUCCESS;
 }

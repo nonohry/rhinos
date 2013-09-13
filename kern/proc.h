@@ -100,6 +100,6 @@ PUBLIC u8_t proc_setup(void);
 PUBLIC struct proc* proc_create(char* name);
 PUBLIC u8_t proc_add_thread(struct proc* proc, struct thread* th);
 PUBLIC u8_t proc_remove_thread(struct proc* proc, struct thread* th);
-
+PUBLIC u8_t proc_memcopy(struct proc* proc, virtaddr_t src, virtaddr_t dest, size_t len);
 
 #endif

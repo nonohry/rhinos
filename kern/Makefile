@@ -52,9 +52,10 @@ thread.o: arch/x86/x86_const.h arch/x86/arch_const.h arch/x86/vm_paging.h
 thread.o: arch/x86/context.h arch/x86/arch_ctx.h vm_slab.h sched.h thread.h
 thread.o: proc.h arch/x86/arch_vm.h
 proc.o: ../include/define.h ../include/arch/x86/types.h ../include/llist.h
-proc.o: arch/x86/arch_const.h arch/x86/x86_const.h arch/x86/vm_paging.h
-proc.o: arch/x86/context.h arch/x86/arch_vm.h vm_pool.h vm_slab.h thread.h
-proc.o: arch/x86/arch_ctx.h proc.h
+proc.o: arch/x86/arch_io.h arch/x86/serial.h arch/x86/x86_lib.h
+proc.o: arch/x86/x86_const.h arch/x86/arch_vm.h arch/x86/vm_paging.h
+proc.o: arch/x86/context.h vm_pool.h vm_slab.h thread.h arch/x86/arch_ctx.h
+proc.o: proc.h
 sched.o: ../include/define.h ../include/arch/x86/types.h ../include/llist.h
 sched.o: thread.h arch/x86/arch_ctx.h arch/x86/context.h proc.h
 sched.o: arch/x86/arch_vm.h arch/x86/vm_paging.h sched.h

@@ -48,11 +48,12 @@ typedef virtaddr_t arch_addrspace_t;
     Function Pointers
     -----------------
 
-    Glue for vm_sync
+    Glue for address space sync and switch.
 
 **/
 
 
 PRIVATE u8_t (*arch_sync_addrspace)(virtaddr_t addrspace)__attribute__((unused)) = &vm_sync;
+PRIVATE u8_t (*arch_switch_addrspace)(virtaddr_t addrspace)__attribute__((unused)) = &vm_switch_to;
 
 #endif
