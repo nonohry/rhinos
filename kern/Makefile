@@ -43,14 +43,17 @@ clean:
 main.o: ../include/define.h ../include/arch/x86/types.h arch/x86/arch_io.h
 main.o: arch/x86/serial.h arch/x86/x86_lib.h arch/x86/x86_const.h
 main.o: arch/x86/arch_hw.h arch/x86/pic.h thread.h ../include/llist.h
-main.o: arch/x86/arch_ctx.h arch/x86/context.h irq.h arch/x86/interrupt.h
-main.o: boot.h pager0.h vm_pool.h vm_slab.h sched.h clock.h
+main.o: arch/x86/arch_ctx.h arch/x86/context.h proc.h arch/x86/arch_vm.h
+main.o: arch/x86/vm_paging.h irq.h arch/x86/interrupt.h boot.h pager0.h
+main.o: vm_pool.h vm_slab.h sched.h clock.h
 thread.o: ../include/define.h ../include/arch/x86/types.h ../include/llist.h
 thread.o: arch/x86/arch_io.h arch/x86/serial.h arch/x86/x86_lib.h
 thread.o: arch/x86/x86_const.h arch/x86/arch_const.h arch/x86/vm_paging.h
 thread.o: arch/x86/context.h arch/x86/arch_ctx.h vm_slab.h sched.h thread.h
+thread.o: proc.h arch/x86/arch_vm.h
 sched.o: ../include/define.h ../include/arch/x86/types.h ../include/llist.h
-sched.o: thread.h arch/x86/arch_ctx.h arch/x86/context.h sched.h
+sched.o: thread.h arch/x86/arch_ctx.h arch/x86/context.h proc.h
+sched.o: arch/x86/arch_vm.h arch/x86/vm_paging.h sched.h
 pager0.o: ../include/define.h ../include/arch/x86/types.h
 pager0.o: arch/x86/arch_const.h arch/x86/x86_const.h arch/x86/vm_paging.h
 pager0.o: arch/x86/context.h boot.h pager0.h arch/x86/arch_io.h
@@ -68,4 +71,5 @@ irq.o: arch/x86/x86_const.h irq.h arch/x86/interrupt.h
 clock.o: ../include/define.h ../include/arch/x86/types.h arch/x86/arch_io.h
 clock.o: arch/x86/serial.h arch/x86/x86_lib.h arch/x86/x86_const.h irq.h
 clock.o: arch/x86/interrupt.h thread.h ../include/llist.h arch/x86/arch_ctx.h
-clock.o: arch/x86/context.h sched.h clock.h
+clock.o: arch/x86/context.h proc.h arch/x86/arch_vm.h arch/x86/vm_paging.h
+clock.o: sched.h clock.h

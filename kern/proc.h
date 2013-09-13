@@ -18,6 +18,7 @@
 
    - define.h
    - types.h
+   - arch_vm.h : arch dependant virtual memory 
    - thread.h  : struct thread needed
 
 **/
@@ -25,6 +26,7 @@
 
 #include <define.h>
 #include <types.h>
+#include <arch_vm.h>
 #include "thread.h"
 
 
@@ -58,7 +60,7 @@ struct thread_wrapper
   struct thread* th;
   struct thread_wrapper* prev;
   struct thread_wrapper* next;
-}
+};
 
 
 
@@ -79,7 +81,7 @@ struct thread_wrapper
 
 PUBLIC struct proc
 {
-  addrspace_t addr_space; 
+  arch_addrspace_t addr_space; 
   char name[PROC_NAMELEN];
   struct thread_wrapper* thread_list;
 }__attribute__ ((packed));

@@ -174,6 +174,9 @@ PUBLIC struct thread* thread_create(const char* name, virtaddr_t base, virtaddr_
   th->state = THREAD_READY;
   sched_enqueue(SCHED_READY_QUEUE,th);
 
+  /* Nullify `proc` back pointer */
+  th->proc = NULL;
+
   return th;
 
  err:

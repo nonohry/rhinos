@@ -21,7 +21,7 @@
 
    - define.h
    - types.h
-   - constext.h    : x86 pit functions
+   - context.h    : x86 cpu context
  
 **/
 

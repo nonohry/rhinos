@@ -19,7 +19,7 @@
    - types.h
    - llist.h
    - arch_ctx.h : CPU context 
-   - thread.h   : self header
+   - proc.h     : struct proc needed
 
 **/
 
@@ -28,6 +28,7 @@
 #include <types.h>
 #include <llist.h>
 #include <arch_ctx.h>
+#include "proc.h"
 
 
 /**
@@ -123,7 +124,7 @@ PUBLIC struct thread
   //  struct id_info* id;
   virtaddr_t stack_base;
   size_t stack_size;
-  //struct proc* proc;
+  struct proc* proc;
   enum state state;
   //enum state next_state;
   //s8_t nice;

@@ -17,6 +17,7 @@
    - define.h
    - types.h
    - llist.h
+   - vm_slab.h       : slab allocator needed
    - thread.h        : struct thread needed
    - proc.h          : self header
 
@@ -26,8 +27,69 @@
 #include <define.h>
 #include <types.h>
 #include <llist.h>
+#include "vm_slab.h"
 #include "thread.h"
 #include "proc.h"
+
+
+
+/**
+
+   Global: proc_cache
+   ------------------
+
+   Cache for `struct proc` allocation
+
+**/
+
+
+struct vm_cache* proc_cache;
+
+
+/**
+
+   Global: thread_wrapper_cache
+   -----------------------------
+
+   Cache for `struct thread_wrapper` allocation
+
+**/
+
+
+struct vm_cache* thread_wrapper_cache;
+
+
+
+/**
+   
+   Function:  u8_t proc_setup(void)
+   --------------------------------
+
+   Setup proc subsystem.
+
+   Create a cache for structures allocations
+
+**/
+
+
+PUBLIC u8_t proc_setup(void)
+{
+  /* Create cache for `struct proc` allocation */
+  proc_cache = vm_cache_create("Proc_Cache",sizeof(struct proc));
+  if (proc_cache == NULL)
+    {
+      return EXIT_FAILURE;
+    }
+  
+  /* Create cache for `struct thread_wrapper` allocation */
+  thread_wrapper_cache = vm_cache_create("ThreadWrapper_Cache",sizeof(struct thread_wrapper));
+  if (thread_wrapper_cache == NULL)
+    {
+      return EXIT_FAILURE;
+    }
+  
+  return EXIT_SUCCESS;
+}
 
 
 
