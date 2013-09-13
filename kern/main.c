@@ -34,6 +34,7 @@
 #include "vm_pool.h"
 #include "vm_slab.h"
 #include "thread.h"
+#include "proc.h"
 #include "sched.h"
 #include "clock.h"
 
@@ -82,6 +83,26 @@ PUBLIC int main(void)
       arch_printf("Unable to setup threads subsystem\n");
       goto err;
     }
+
+  if (proc_setup() != EXIT_SUCCESS)
+    {
+      arch_printf("Unable to setup process subsystem\n");
+      goto err;
+    }
+
+
+  /* Boot modules */
+  struct boot_mod_entry* mods = (struct boot_mod_entry*)(boot.mods_addr);
+  for(i=0;i<boot.mods_count;i++)
+    {
+      arch_printf("0x%x - 0x%x (%s)\n",
+		  mods[i].start,
+		  mods[i].end,
+		  mods[i].cmdline);
+    }
+
+
+
 
   if (irq_setup() != EXIT_SUCCESS)
     {

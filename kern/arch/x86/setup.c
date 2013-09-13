@@ -123,13 +123,13 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
       if (mods_list[i].start >= limit)
 	{
 	  /* Copy boot module */
-	  x86_mem_copy(mods_list[i].start,limit,mods_list[i].end - mods_list[i].start + 1);
+	  x86_mem_copy(mods_list[i].start,limit,mods_list[i].end - mods_list[i].start);
 
 	  /* Update module list */
-	  mods_list[i].end = limit + mods_list[i].end - mods_list[i].start + 1;
+	  mods_list[i].end = limit + mods_list[i].end - mods_list[i].start;
 	  mods_list[i].start = limit;
 
-	  limit += X86_ALIGN_SUP((mods_list[i].end - mods_list[i].start + 1));
+	  limit += X86_ALIGN_SUP((mods_list[i].end - mods_list[i].start));
 	  
 	}
       else
