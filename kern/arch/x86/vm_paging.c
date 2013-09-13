@@ -227,7 +227,7 @@ PRIVATE physaddr_t vm_tophys(virtaddr_t vaddr);
 **/
 
 
-PUBLIC u8_t vm_paging_setup(physaddr_t base, physaddr_t* limit)
+PUBLIC u8_t vm_paging_setup(physaddr_t* limit)
 {
   u16_t i;
   physaddr_t p;
@@ -277,18 +277,6 @@ PUBLIC u8_t vm_paging_setup(physaddr_t base, physaddr_t* limit)
 
   /* Identity-map kernel space */
   for(p=X86_ALIGN_INF(X86_CONST_KERN_START);
-      p<X86_ALIGN_SUP(X86_CONST_KERN_END);
-      p+=X86_CONST_PAGE_SIZE)
-    {
-      if (vm_paging_map((virtaddr_t)p, p) == EXIT_FAILURE)
-	{
-	  return EXIT_FAILURE;
-	}
-    }
-
-  
-  /* Identity-map paging structures */
-  for(p=X86_ALIGN_INF(base);
       p<X86_ALIGN_SUP(*limit);
       p+=X86_CONST_PAGE_SIZE)
     {

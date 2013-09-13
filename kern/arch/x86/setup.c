@@ -194,7 +194,7 @@ PUBLIC void setup_x86(u32_t magic, physaddr_t mbi_addr)
       goto err;
     }
 
-  if (vm_paging_setup(bitmap,&limit) != EXIT_SUCCESS)
+  if (vm_paging_setup(&limit) != EXIT_SUCCESS)
     {
       serial_printf("Paging setup error\n");
       goto err;
