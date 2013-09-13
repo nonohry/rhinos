@@ -18,7 +18,6 @@
 
    - define.h
    - types.h
-   - arch_vm.h : architecture dependant virtual memory
    - thread.h  : struct thread needed
 
 **/
@@ -42,6 +41,27 @@
 
 
 
+
+/**
+   
+   Structure: struct thread_wrapper
+   --------------------------------
+
+   Wrap a thread into a linked list
+   Members are self explanatory
+
+**/
+
+
+struct thread_wrapper
+{
+  struct thread* th;
+  struct thread_wrapper* prev;
+  struct thread_wrapper* next;
+}
+
+
+
 /**
  
    Structure: struct proc 
@@ -61,7 +81,7 @@ PUBLIC struct proc
 {
   addrspace_t addr_space; 
   char name[PROC_NAMELEN];
-  struct thread_info* thread_list;
+  struct thread_wrapper* thread_list;
 }__attribute__ ((packed));
 
 
@@ -75,7 +95,7 @@ PUBLIC struct proc
 
 **/
 
-PUBLIC u8_t proc_init(void);
+PUBLIC u8_t proc_setup(void);
 PUBLIC struct proc* proc_create(char* name);
 PUBLIC u8_t proc_add_thread(struct proc* proc, struct thread* th);
 PUBLIC u8_t proc_remove_thread(struct proc* proc, struct thread* th);
