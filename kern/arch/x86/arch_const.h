@@ -51,20 +51,6 @@
 #define ARCH_CONST_PAGE_SHIFT             X86_CONST_PAGE_SHIFT
 
 
-
-/**
-
-   Constant: ARCH_CONST_ADDRSPACE_SIZE
-   -----------------------------------
-
-   Address space size
-
-**/
-
-
-#define ARCH_CONST_ADDRSPACE_SIZE         (X86_CONST_PAGE_SIZE*1024)
-
-
 /**
 
    Constants: Page Fault flags

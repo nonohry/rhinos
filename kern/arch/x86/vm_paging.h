@@ -76,6 +76,7 @@ PUBLIC u8_t vm_paging_setup(physaddr_t base, physaddr_t* limit);
 PUBLIC u8_t vm_paging_map(virtaddr_t vaddr, physaddr_t paddr);
 PUBLIC u8_t vm_paging_unmap(virtaddr_t vaddr);
 PUBLIC u8_t vm_switch_to(virtaddr_t pd_addr);
+PUBLIC u8_t vm_sync(virtaddr_t pd_addr);
 PUBLIC u8_t vm_pf_resolvable(struct x86_context* ctx);
 PUBLIC u8_t vm_pf_fix(virtaddr_t vaddr, physaddr_t paddr, u8_t flag);
 

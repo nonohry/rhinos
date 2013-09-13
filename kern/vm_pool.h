@@ -51,6 +51,6 @@
 
 PUBLIC u8_t vm_pool_setup(void);
 PUBLIC virtaddr_t vm_pool_alloc(void);
-PUBLIC u8_t vm_pool_free(u32_t addr);
+PUBLIC u8_t vm_pool_free(virtaddr_t addr);
 
 #endif

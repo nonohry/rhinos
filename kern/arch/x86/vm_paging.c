@@ -440,6 +440,52 @@ PUBLIC u8_t vm_switch_to(virtaddr_t pd_addr)
 }
 
 
+
+/**
+
+   Function: u8_t vm_sync(virtaddr_t pd_addr)
+   ------------------------------------------
+
+   Synchronize page directory `pd_addr` with kernel page directory
+
+   Simply copy entry corresponding to kernel part. Because this part is pre-allocated,
+   it suffices to synchronize kernel page direrctory and `pd_addr`
+
+**/
+
+
+PUBLIC u8_t vm_sync(virtaddr_t pd_addr)
+{
+  struct pde* pd;
+  u16_t i;
+
+  /* Retrieve page directory */
+  pd = (struct pde*)pd_addr;
+  if (pd == NULL)
+    {
+      return EXIT_FAILURE;
+    }
+
+  /* Poison page directory */
+  x86_mem_set(0, pd_addr, VM_PAGING_ENTRIES*sizeof(struct pde));
+
+  /* Sync */
+  for(i=0;i<X86_CONST_KERN_HIGHMEM/X86_CONST_PAGE_SIZE/VM_PAGING_ENTRIES;i++)
+    {
+      pd[i] = kern_pd[i];
+    }
+  
+  /* Self map */
+  pd[VM_PAGING_SELFMAP].present = 1;
+  pd[VM_PAGING_SELFMAP].rw = 1;
+  pd[VM_PAGING_SELFMAP].user = 0;
+  pd[VM_PAGING_SELFMAP].baseaddr = (vm_tophys(pd_addr)) >> VM_PAGING_BASESHIFT;
+  
+  return EXIT_SUCCESS;
+  
+}
+
+
 /**
 
    Function: u8_t vm_pf_resolvable(struct context* ctx)

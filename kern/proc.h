@@ -56,7 +56,7 @@
 
 struct thread_wrapper
 {
-  struct thread* th;
+  struct thread* thread;
   struct thread_wrapper* prev;
   struct thread_wrapper* next;
 };
@@ -80,7 +80,7 @@ struct thread_wrapper
 
 PUBLIC struct proc
 {
-  virtaddr_t addr_space; 
+  virtaddr_t addrspace; 
   char name[PROC_NAMELEN];
   struct thread_wrapper* thread_list;
 }__attribute__ ((packed));
