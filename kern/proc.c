@@ -262,6 +262,7 @@ PUBLIC u8_t proc_remove_thread(struct proc* proc, struct thread* th)
    -------------------------------------------------------------------------------------------
 
    Copy in-memory data at address `src` to `proc` adress space at address `dest`.
+   `src` must reside in kernel space.
 
 **/
 
@@ -271,7 +272,7 @@ PUBLIC u8_t proc_memcopy(struct proc* proc, virtaddr_t src, virtaddr_t dest, siz
   virtaddr_t cur_addrspace;
 
   /* Sanity check */
-  if (proc == NULL)
+  if ( (proc == NULL) || (src > X86_CONST_KERN_HIGHMEM) )
     {
       return EXIT_FAILURE;
     }
