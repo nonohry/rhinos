@@ -17,6 +17,8 @@
    - define.h
    - types.h
    - llist.h
+   - arch_const.h    : architecture dependant constant
+   - arch_vm.h        :architecture dependant virtual memory
    - vm_slab.h       : slab allocator needed
    - thread.h        : struct thread needed
    - proc.h          : self header
@@ -27,6 +29,8 @@
 #include <define.h>
 #include <types.h>
 #include <llist.h>
+#include <arch_const.h>
+#include <arch_vm.h>
 #include "vm_slab.h"
 #include "thread.h"
 #include "proc.h"
@@ -59,6 +63,19 @@ struct vm_cache* proc_cache;
 struct vm_cache* thread_wrapper_cache;
 
 
+/**
+
+   Global: addrspace_cache
+   -----------------------------
+
+   Cache for address space allocation
+
+**/
+
+
+struct vm_cache* addrspace_cache;
+
+
 
 /**
    
@@ -85,10 +102,25 @@ PUBLIC u8_t proc_setup(void)
   thread_wrapper_cache = vm_cache_create("ThreadWrapper_Cache",sizeof(struct thread_wrapper));
   if (thread_wrapper_cache == NULL)
     {
-      return EXIT_FAILURE;
+      goto err0;
+    }
+
+  /* Create cache for address space allocation */
+  addrspace_cache = vm_cache_create("AddrSpace_Cache",ARCH_CONST_ADDRSPACE_SIZE);
+  if (addrspace_cache == NULL)
+    {
+      goto err1;
     }
   
   return EXIT_SUCCESS;
+
+ err1:
+  vm_cache_destroy(thread_wrapper_cache);
+
+ err0:
+  vm_cache_destroy(proc_cache);
+
+  return EXIT_FAILURE;
 }
 
 

@@ -43,7 +43,6 @@
 
 
 
-
 /**
    
    Structure: struct thread_wrapper
@@ -81,7 +80,7 @@ struct thread_wrapper
 
 PUBLIC struct proc
 {
-  arch_addrspace_t addr_space; 
+  virtaddr_t addr_space; 
   char name[PROC_NAMELEN];
   struct thread_wrapper* thread_list;
 }__attribute__ ((packed));
