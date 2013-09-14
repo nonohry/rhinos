@@ -102,6 +102,8 @@ PUBLIC int main(void)
     }
 
   struct proc* ptest;
+  struct thread* thtest;
+
   ptest = proc_create("ptest");
   if (ptest == NULL)
     {
@@ -116,8 +118,18 @@ PUBLIC int main(void)
     }
 
 
+  thtest = thread_create("thtest",0x80000000,0x90000000,0x1000);
+  if (thtest == NULL)
+    {
+      arch_printf("Unable to create in thtest\n");
+      goto err;
+    }
 
-
+  if (proc_add_thread(ptest,thtest) != EXIT_SUCCESS)
+    {
+      arch_printf("Unable to add thtest to ptest\n");
+      goto err;
+    }
 
 
 

@@ -28,6 +28,7 @@
 #include <define.h>
 #include <types.h>
 #include <arch_io.h>
+#include <arch_vm.h>
 #include "irq.h"
 #include "thread.h"
 #include "sched.h"
@@ -103,6 +104,14 @@ PRIVATE void clock_handler()
     {
       arch_printf(" Elected: %s ", th->name);
     }
+  
+  if (th->proc)
+    {
+      arch_printf("Switching addrspace\n");
+      arch_switch_addrspace(th->proc->addrspace);
+    }
+  
+
   thread_switch_to(th);
 
   return;
