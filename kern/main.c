@@ -149,7 +149,6 @@ PUBLIC int main(void)
   
   while(1)
     {
-      //arch_printf("_");
       for(i=0;i<4321;i++)
 	{}
 

@@ -105,12 +105,11 @@ PRIVATE void clock_handler()
       arch_printf(" Elected: %s ", th->name);
     }
   
+  /* Change address space */
   if (th->proc)
     {
-      arch_printf("Switching addrspace\n");
       arch_switch_addrspace(th->proc->addrspace);
-    }
-  
+    }  
 
   thread_switch_to(th);
 
