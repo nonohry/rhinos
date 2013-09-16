@@ -101,36 +101,97 @@ PUBLIC int main(void)
 		  mods[i].cmdline);
     }
 
-  struct proc* ptest;
-  struct thread* thtest;
+  struct proc* ptest1;
+  struct thread* thtest1;
 
-  ptest = proc_create("ptest");
-  if (ptest == NULL)
+  ptest1 = proc_create("ptest1");
+  if (ptest1 == NULL)
     {
-      arch_printf("Unable to create ptest\n");
+      arch_printf("Unable to create ptest1\n");
       goto err;
     }
 
-  if (proc_memcopy(ptest,mods[0].start,0x80000000,mods[0].end-mods[0].start) != EXIT_SUCCESS)
+  if (proc_memcopy(ptest1,mods[0].start,0x80000000,mods[0].end-mods[0].start) != EXIT_SUCCESS)
     {
-      arch_printf("Unable to copy in ptest\n");
+      arch_printf("Unable to copy in ptest1\n");
       goto err;
     }
 
 
-  thtest = thread_create("thtest",0x80000000,0x90000000,0x100);
-  if (thtest == NULL)
+  thtest1 = thread_create("thtest1",0x80000000,0x90000000,0x100);
+  if (thtest1 == NULL)
     {
-      arch_printf("Unable to create in thtest\n");
+      arch_printf("Unable to create in thtest1\n");
       goto err;
     }
 
-  if (proc_add_thread(ptest,thtest) != EXIT_SUCCESS)
+  if (proc_add_thread(ptest1,thtest1) != EXIT_SUCCESS)
     {
-      arch_printf("Unable to add thtest to ptest\n");
+      arch_printf("Unable to add thtest1 to ptest1\n");
       goto err;
     }
 
+ 
+  struct proc* ptest2;
+  struct thread* thtest2;
+
+  ptest2 = proc_create("ptest2");
+  if (ptest2 == NULL)
+    {
+      arch_printf("Unable to create ptest2\n");
+      goto err;
+    }
+
+  if (proc_memcopy(ptest2,mods[1].start,0x80000000,mods[1].end-mods[1].start) != EXIT_SUCCESS)
+    {
+      arch_printf("Unable to copy in ptest2\n");
+      goto err;
+    }
+
+
+  thtest2 = thread_create("thtest2",0x80000000,0x90000000,0x100);
+  if (thtest2 == NULL)
+    {
+      arch_printf("Unable to create in thtest2\n");
+      goto err;
+    }
+
+  if (proc_add_thread(ptest2,thtest2) != EXIT_SUCCESS)
+    {
+      arch_printf("Unable to add thtest2 to ptest2\n");
+      goto err;
+    }
+
+
+  struct proc* ptest3;
+  struct thread* thtest3;
+
+  ptest3 = proc_create("ptest3");
+  if (ptest3 == NULL)
+    {
+      arch_printf("Unable to create ptest3\n");
+      goto err;
+    }
+
+  if (proc_memcopy(ptest3,mods[1].start,0x80000000,mods[1].end-mods[1].start) != EXIT_SUCCESS)
+    {
+      arch_printf("Unable to copy in ptest3\n");
+      goto err;
+    }
+
+
+  thtest3 = thread_create("thtest3",0x80000000,0x90000000,0x100);
+  if (thtest3 == NULL)
+    {
+      arch_printf("Unable to create in thtest3\n");
+      goto err;
+    }
+
+  if (proc_add_thread(ptest3,thtest3) != EXIT_SUCCESS)
+    {
+      arch_printf("Unable to add thtest3 to ptest3\n");
+      goto err;
+    }
 
 
   if (irq_setup() != EXIT_SUCCESS)
