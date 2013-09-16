@@ -595,8 +595,8 @@ PUBLIC u8_t vm_pf_fix(virtaddr_t vaddr, physaddr_t paddr, u8_t flag)
     {
       table = (struct pte*)paddr;
       pd[pde].present = 1;
-      pd[pde].rw = (flag & VM_PF_RW);
-      pd[pde].user = !(flag & VM_PF_SUPER);
+      pd[pde].rw = ((flag & VM_PF_RW)?1:0);
+      pd[pde].user = (!(flag & VM_PF_SUPER)?1:0);
       pd[pde].baseaddr = paddr >> VM_PAGING_BASESHIFT;
 
       /* Clear table */
@@ -612,8 +612,8 @@ PUBLIC u8_t vm_pf_fix(virtaddr_t vaddr, physaddr_t paddr, u8_t flag)
   if ( (!(table[pte].present))&&(flag & VM_PF_EXTERNAL) )
     {
       table[pte].present = 1;
-      table[pte].rw = (flag & VM_PF_RW);
-      table[pte].user = !(flag & VM_PF_SUPER);
+      table[pte].rw = ((flag & VM_PF_RW)?1:0);
+      table[pte].user = (!(flag & VM_PF_SUPER)?1:0);
       table[pte].baseaddr = paddr >> VM_PAGING_BASESHIFT;
 
       return EXIT_SUCCESS;

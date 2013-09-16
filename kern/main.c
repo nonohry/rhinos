@@ -118,7 +118,7 @@ PUBLIC int main(void)
     }
 
 
-  thtest = thread_create("thtest",0x80000000,0x90000000,0x1000);
+  thtest = thread_create("thtest",0x80000000,0x90000000,0x100);
   if (thtest == NULL)
     {
       arch_printf("Unable to create in thtest\n");
