@@ -50,7 +50,7 @@ vm_paging.o: x86_lib.h x86_const.h context.h vm_paging.h
 serial.o: ../../../include/define.h ../../../include/arch/x86/types.h
 serial.o: x86_lib.h x86_const.h serial.h
 context.o: ../../../include/define.h ../../../include/arch/x86/types.h
-context.o: x86_const.h x86_lib.h context.h
+context.o: x86_const.h x86_lib.h vm_segment.h context.h
 pic.o: ../../../include/define.h ../../../include/arch/x86/types.h x86_lib.h
 pic.o: x86_const.h pic.h
 exceptions.o: ../../../include/define.h ../../../include/arch/x86/types.h

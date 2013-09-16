@@ -188,58 +188,6 @@ PUBLIC struct gdt_desc
 } __attribute__ ((packed));
 
 
-/**
-
-   Structure: struct tss
-   ---------------------
-
-   Describe a TSS.
-   Stick to Intel TSS description
-
-**/
-
-PUBLIC struct tss
-{
-  u16_t previous;
-  u16_t zero_0;
-  u32_t esp0;
-  u16_t ss0;
-  u16_t zero_1;
-  u32_t esp1;
-  u16_t ss1;
-  u16_t zero_2;
-  u32_t esp2;
-  u16_t ss2;
-  u16_t zero_3;
-  u32_t cr3;
-  u32_t eip;
-  u32_t eflags;
-  u32_t eax;
-  u32_t ecx;
-  u32_t edx;
-  u32_t ebx;
-  u32_t esp;
-  u32_t ebp;
-  u32_t esi;
-  u32_t edi;
-  u16_t es;
-  u16_t zero_4;
-  u16_t cs;
-  u16_t zero_5;
-  u16_t ss;
-  u16_t zero_6;
-  u16_t ds;
-  u16_t zero_7;
-  u16_t fs;
-  u16_t zero_8;
-  u16_t gs;
-  u16_t zero_9;
-  u16_t ldt;
-  u16_t zero_10;
-  u16_t debug;
-  u16_t iomap;
-} __attribute__ ((packed));
-
 
 /**
 
@@ -256,12 +204,11 @@ PRIVATE void create_seg_desc(struct seg_desc *desc, lineaddr_t base, u32_t size)
 
 /**
 
-   Globals: IDT descriptors & TSS
-   ------------------------------
+   Globals: GDT descriptor
+   -----------------------
 
 **/
 
-PUBLIC struct tss tss;                        /* TSS */
 PUBLIC struct gdt_desc gdt_desc;            /* GDT descriptor */
 
 
@@ -314,6 +261,7 @@ PUBLIC u8_t vm_segment_setup(void)
 
   /* Global TSS */
   create_tss_seg(&gdt[VM_GDT_TSS_INDEX], (lineaddr_t)&tss, sizeof(tss), X86_CONST_RING0);
+  tss.ss0 = X86_CONST_KERN_SS_SELECTOR;
 
   return EXIT_SUCCESS;
 }

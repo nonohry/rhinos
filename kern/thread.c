@@ -276,11 +276,17 @@ PUBLIC  u8_t thread_destroy(struct thread* th)
 
 PUBLIC u8_t thread_switch_to(struct thread* th)
 {
+
+  /* Switch `cur_th` to `th` */
   if (th)
     {
       cur_th = th;
+
+      /* Prepare context for futur switch */
+      arch_ctx_prepare_switch((arch_ctx_t*)th);
+
       return EXIT_SUCCESS;
     }
-
+  
   return EXIT_FAILURE;
 }

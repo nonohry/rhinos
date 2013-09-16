@@ -44,7 +44,7 @@ int main()
       /* 	  break; */
       /* 	} */
       //mem_copy((addr_t)m.data,(addr_t)&cm,sizeof(struct calc_msg));
-      j++;
+      //j++;
     }
   while(1){}
   return 0;

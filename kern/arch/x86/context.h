@@ -65,11 +65,12 @@ PUBLIC struct x86_context
    Prototypes
    ----------
 
-   Define symble for context setup and context post save
+   Define symble for context setup, context post save and switch.
 
 **/
 
 PUBLIC u8_t ctx_setup(struct x86_context* ctx, virtaddr_t base, virtaddr_t stack_base, size_t stack_size);
 PUBLIC void ctx_postsave(struct x86_context* ctx, reg32_t* esp);
+PUBLIC void ctx_prepare_switch(struct x86_context* ctx);
 
 #endif

@@ -55,5 +55,6 @@ typedef struct x86_context arch_ctx_t;
 
 
 PRIVATE u8_t (*arch_ctx_setup)(arch_ctx_t* ctx, virtaddr_t base, virtaddr_t stack_base, size_t stack_size)__attribute__((unused)) = &ctx_setup;
+PRIVATE void (*arch_ctx_prepare_switch)(arch_ctx_t* ctx)__attribute__((unused)) = &ctx_prepare_switch;
 
 #endif

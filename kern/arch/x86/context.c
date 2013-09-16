@@ -18,6 +18,8 @@
    - context.h
    - x86_const.h
    - x86_lib.h
+   - vm_segment.h   : TSS needed
+   - context.h      : self header
 
 **/
 
@@ -26,8 +28,8 @@
 #include <types.h>
 #include "x86_const.h"
 #include "x86_lib.h"
+#include "vm_segment.h"
 #include "context.h"
-
 
 
 /** 
@@ -120,5 +122,27 @@ PUBLIC void ctx_postsave(struct x86_context* ctx, reg32_t* esp)
       ctx->ss = X86_CONST_KERN_SS_SELECTOR;
     }
    
+  return;
+}
+
+
+
+/**
+
+   Function: void ctx_prepare_switch(struct x86_context* ctx)
+   ----------------------------------------------------------
+
+   Prepare future switch for thread with context `ctx` by setting 
+   `tss.esp0` to end of `ctx`.
+
+**/
+
+
+PUBLIC void ctx_prepare_switch(struct x86_context* ctx)
+{
+
+  /* Set TSS */
+  tss.esp0 = (virtaddr_t)ctx+sizeof(struct x86_context);
+  
   return;
 }
