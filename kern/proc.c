@@ -231,6 +231,9 @@ PUBLIC u8_t proc_destroy(struct proc* proc)
       vm_cache_free(thread_wrapper_cache,wrapper);
 	  	  
     }
+
+  /* Free address space */
+  vm_pool_free(proc->addrspace);
   
   /* Free proc */
   vm_cache_free(proc_cache,proc);
