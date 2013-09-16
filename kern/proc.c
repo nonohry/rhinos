@@ -190,6 +190,56 @@ PUBLIC struct proc* proc_create(char* name)
 }
 
 
+
+/**
+
+   Function: u8_t proc_destroy(struct proc* proc)
+   ----------------------------------------------
+
+   Destroy `proc`
+
+   Destroy all of its threads, the address space and the return `proc` to cache
+
+**/
+
+
+PUBLIC u8_t proc_destroy(struct proc* proc)
+{
+  struct thread_wrapper* wrapper;
+
+  /* Sanity check */
+  if (proc == NULL)
+    {
+      return EXIT_FAILURE;
+    }
+
+  while(!LLIST_ISNULL(proc->thread_list))
+    {
+      /* Run through thread list */
+      wrapper = LLIST_GETHEAD(proc->thread_list);
+      
+      /* Destroy thread */
+      if (thread_destroy(wrapper->thread) != EXIT_SUCCESS)
+	{
+	  return EXIT_FAILURE;
+	}
+      
+      /* Remove wrapper from the list */
+      LLIST_REMOVE(proc->thread_list, wrapper);
+	  
+      /* Free wrapper */
+      vm_cache_free(thread_wrapper_cache,wrapper);
+	  	  
+    }
+  
+  /* Free proc */
+  vm_cache_free(proc_cache,proc);
+  
+  return EXIT_SUCCESS;
+}
+
+
+
 /**
 
    Function: u8_t proc_add_thread(struct proc* proc, struct thread* th)
