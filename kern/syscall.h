@@ -18,13 +18,11 @@
 
    - define.h
    - types.h
-   - const.h
 
 **/
 
 #include <define.h>
 #include <types.h>
-#include "const.h"
 
 
 /**

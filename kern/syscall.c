@@ -32,8 +32,6 @@
 #include <types.h>
 #include <llist.h>
 #include <ipc.h>
-#include "const.h"
-#include "klib.h"
 #include "thread.h"
 #include "sched.h"
 #include "syscall.h"
@@ -44,7 +42,7 @@
    Privates
    --------
 
-   Effective IPC primitives
+   Real IPC primitives
 
 **/
 
@@ -76,7 +74,6 @@ PUBLIC void syscall_handle(void)
   u8_t res;
 
   /* Get current thread */
-  cur_th = sched_get_running_thread();
   if (cur_th == NULL)
     {
       res = IPC_FAILURE;
