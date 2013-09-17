@@ -146,12 +146,12 @@ PUBLIC void syscall_handle(void)
 
 /**
 
-   Function: u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver)
+   Function: u8_t syscall_send(struct thread* th_sender, struct proc* proc_receiver)
    ---------------------------------------------------------------------------------
 
 
-   Pass ̀message` from `th_sender` to `th_receiver`.
-   First it checks for a deadlock situation (`th_receiver` sending to `th_sender`)
+   Pass ̀message` from `th_sender` to `proc_receiver`.
+   First it checks for deadlock situation (`proc_receiver` sending to `th_sender` proc)
 
    Then, if `th_receiver` is waiting for the message, ̀message` is copied from `th_sender` to `th_receiver`,
    `th_receiver` is set as ready for scheduling and `th_sender` is set as blocked (waiting for a notify call).
@@ -165,16 +165,17 @@ PUBLIC void syscall_handle(void)
 
 PRIVATE u8_t syscall_send(struct thread* th_sender, struct proc* proc_receiver)
 {
+  struct thread* th_receiver;
   struct thread* th_tmp;
-
+  
   /* There must be a receiver */
-  if ( th_receiver == NULL )
+  if ( proc_receiver == NULL )
     {
       return IPC_FAILURE;
     }
 
   /* Set receiver in sender structure */
-  th_sender->ipc.send_to = th_receiver;
+  th_sender->ipc.send_to = proc_receiver;
 
   /* Set state */
   th_sender->ipc.state |= SYSCALL_IPC_SENDING;
