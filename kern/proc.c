@@ -82,6 +82,20 @@
 struct proc* proc_table[PROC_TABLELEN];
 
 
+/**
+
+   Global: pid_seed
+   ----------------
+
+   Global counter for pids
+
+**/
+
+
+pid_t pid_seed;
+
+
+   
 
 /**
 
@@ -144,6 +158,10 @@ PUBLIC u8_t proc_setup(void)
     {
       LLIST_NULLIFY(proc_table[i]);
     }
+
+  /* Initialize `pid_seed` */
+  pid_seed = 1;
+
 
   /* Create cache for `struct proc` allocation */
   proc_cache = vm_cache_create("Proc_Cache",sizeof(struct proc));
@@ -229,6 +247,13 @@ PUBLIC struct proc* proc_create(char* name)
       goto err1;
     }
 
+  /* Set pid */
+  proc->pid = pid_seed++;
+
+  /* Store `proc` in proc table */
+  LLIST_ADD(proc_table[PROC_HASHID(proc->pid)],proc);
+
+  
   return proc;
 
  err1:
@@ -287,6 +312,9 @@ PUBLIC u8_t proc_destroy(struct proc* proc)
 
   /* Free address space */
   vm_pool_free(proc->addrspace);
+
+  /* Remove from proc table */
+  LLIST_REMOVE(proc_table[PROC_HASHID(proc->pid)],proc);
   
   /* Free proc */
   vm_cache_free(proc_cache,proc);

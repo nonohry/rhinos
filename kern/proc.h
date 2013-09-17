@@ -94,6 +94,7 @@ struct thread_wrapper
 
 PUBLIC struct proc
 {
+  pid_t pid;
   virtaddr_t addrspace; 
   char name[PROC_NAMELEN];
   struct thread_wrapper* thread_list;
