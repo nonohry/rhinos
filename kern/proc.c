@@ -39,6 +39,51 @@
 
 
 /**
+ 
+   Constant: PROC_TABLELEN
+   -----------------------
+
+   Max size of a process table
+
+**/
+
+#define PROC_TABLELEN               64
+
+
+
+/**
+
+   Macro: PROC_HASHID
+   ------------------
+
+   Hash function for proc id table
+
+**/
+
+
+#define PROC_HASHID(__id)			\
+  ( (__id)%(PROC_TABLELEN) )
+
+
+
+/**
+
+   Global: proc_table
+   ------------------
+
+   Proc table, which is in fact a hash table
+   indexed by process id
+
+   Collisions are solved with linked lists.
+
+**/
+
+
+struct proc* proc_table[PROC_TABLELEN];
+
+
+
+/**
 
    Global: proc_cache
    ------------------
@@ -92,6 +137,14 @@ struct thread ksetup_proc;
 
 PUBLIC u8_t proc_setup(void)
 {
+  u8_t i;
+
+  /* Nullify `proc_table` */
+  for(i=0;i<PROC_TABLELEN;i++)
+    {
+      LLIST_NULLIFY(proc_table[i]);
+    }
+
   /* Create cache for `struct proc` allocation */
   proc_cache = vm_cache_create("Proc_Cache",sizeof(struct proc));
   if (proc_cache == NULL)

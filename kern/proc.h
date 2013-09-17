@@ -44,6 +44,20 @@
 
 
 /**
+
+   Typedef: pid_t
+   --------------
+
+   Process identifier
+
+**/
+
+
+typedef unsigned int pid_t;
+
+
+
+/**
    
    Structure: struct thread_wrapper
    --------------------------------
@@ -74,7 +88,7 @@ struct thread_wrapper
    - addr_space   : address space
    - name         : process name
    - thread_list  : threads in process
-
+   - prev,next    : linkage in proc table
 
 **/
 
@@ -83,6 +97,8 @@ PUBLIC struct proc
   virtaddr_t addrspace; 
   char name[PROC_NAMELEN];
   struct thread_wrapper* thread_list;
+  struct proc* prev;
+  struct proc* next;
 }__attribute__ ((packed));
 
 
