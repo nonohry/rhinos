@@ -19,8 +19,9 @@
    - types.h
    - llist.h
    - ipc.h           : IPC constants needed
-   - const.h
-   - klib.h
+   - arch_const.h    : architecture dependant constants
+   - arch_ctx.h      : cpu context
+   - proc.h          : proc needed
    - thread.h        : struct thread needed
    - sched.h         : scheduler queue manipulation
    - syscall.h       : self header
@@ -32,6 +33,9 @@
 #include <types.h>
 #include <llist.h>
 #include <ipc.h>
+#include <arch_const.h>
+#include <arch_ctx.h>
+#include "proc.h"
 #include "thread.h"
 #include "sched.h"
 #include "syscall.h"
@@ -47,9 +51,9 @@
 **/
 
 
-PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver);
-PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sender);
-PRIVATE u8_t syscall_notify(struct thread* th_from, struct thread* th_to);
+PRIVATE u8_t syscall_send(struct thread* th_sender, struct proc* proc_receiver);
+PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct proc* proc_sender);
+PRIVATE u8_t syscall_notify(struct thread* th_from, struct proc* proc_to);
 
 
 /**
@@ -69,7 +73,8 @@ PRIVATE u8_t syscall_notify(struct thread* th_from, struct thread* th_to);
 PUBLIC void syscall_handle(void)
 {
   struct thread* cur_th;
-  struct thread* target_th;
+  struct proc* target_proc;
+  pid_t pid;
   u32_t syscall_num;
   u8_t res;
 
@@ -80,22 +85,23 @@ PUBLIC void syscall_handle(void)
       goto end;
     }
 
-  /* Get syscall number in ESI */
-  syscall_num = (u32_t)(cur_th->cpu.esi);
+  /* Get syscall number from source register */
+  syscall_num = arch_ctx_get((arch_ctx_t*)cur_th, X86_CONST_SOURCE);
 
-  /* Put originator into ESI instead */
-  cur_th->cpu.esi = cur_th->id->id;
+  /* Put originator proc into source register instead */
+  arch_ctx_set((arch_ctx_t*)cur_th, X86_CONST_SOURCE,cur_th->proc->pid);
 
-  /* Destination thread, stored in EDI */
-  if ((s32_t)(cur_th->cpu.edi) == IPC_ANY)
+  /* Destination proc, stored in EDI */
+  pid = (pid_t)arch_ctx_get((arch_ctx_t*)cur_th, X86_CONST_DEST);
+  if ( pid == IPC_ANY)
     {
-      target_th = NULL;
+      target_proc = NULL;
     }
   else
     {
-      /* Get thread structure from given id */
-      target_th = thread_id2thread((s32_t)(cur_th->cpu.edi));
-      if ( target_th == NULL )
+      /* Get proc structure from given id */
+      target_proc = proc_pid(pid);
+      if ( target_proc == NULL )
 	{
 	  res = IPC_FAILURE;
 	  goto end;
@@ -107,19 +113,19 @@ PUBLIC void syscall_handle(void)
     {
     case SYSCALL_SEND:
       {
-	res = syscall_send(cur_th, target_th);
+	res = syscall_send(cur_th, target_proc);
 	break;
       }
 
     case SYSCALL_RECEIVE:
       {
-	res = syscall_receive(cur_th, target_th);
+	res = syscall_receive(cur_th, target_proc);
 	break;
       }
 
     case SYSCALL_NOTIFY:
       {
-	res = syscall_notify(cur_th, target_th);
+	res = syscall_notify(cur_th, target_proc);
 	break;
       }
     default:
@@ -130,8 +136,8 @@ PUBLIC void syscall_handle(void)
     }
 
  end:
-  /* Set result in caller's EAX register */
-  cur_th->cpu.eax=res;
+  /* Set result in caller's return register */
+  arch_ctx_set((arch_ctx_t*)cur_th, X86_CONST_RETURN,res);
 
   return;
 }
@@ -157,7 +163,7 @@ PUBLIC void syscall_handle(void)
 
 **/
 
-PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver)
+PRIVATE u8_t syscall_send(struct thread* th_sender, struct proc* proc_receiver)
 {
   struct thread* th_tmp;
 
@@ -254,7 +260,7 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct thread* th_receiver)
 
 **/
 
-PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sender)
+PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct proc* proc_sender)
 {
   struct thread* th_available = NULL;
 
@@ -343,7 +349,7 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct thread* th_sende
 
 **/
 
-PRIVATE u8_t syscall_notify(struct thread* th_from, struct thread* th_to)
+PRIVATE u8_t syscall_notify(struct thread* th_from, struct proc* proc_to)
 {
   if ( (th_to->state == THREAD_BLOCKED) && (th_to->ipc.state != SYSCALL_IPC_RECEIVING) )
 	{
