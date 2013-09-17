@@ -42,39 +42,39 @@ clean:
 
 main.o: ../include/define.h ../include/arch/x86/types.h arch/x86/arch_io.h
 main.o: arch/x86/serial.h arch/x86/x86_lib.h arch/x86/x86_const.h
-main.o: arch/x86/arch_hw.h arch/x86/pic.h thread.h ../include/llist.h
-main.o: arch/x86/arch_ctx.h arch/x86/context.h proc.h arch/x86/arch_vm.h
+main.o: arch/x86/context.h arch/x86/arch_hw.h arch/x86/pic.h thread.h
+main.o: ../include/llist.h arch/x86/arch_ctx.h proc.h arch/x86/arch_vm.h
 main.o: arch/x86/vm_paging.h irq.h arch/x86/interrupt.h boot.h pager0.h
 main.o: vm_pool.h vm_slab.h sched.h clock.h
 thread.o: ../include/define.h ../include/arch/x86/types.h ../include/llist.h
 thread.o: arch/x86/arch_io.h arch/x86/serial.h arch/x86/x86_lib.h
-thread.o: arch/x86/x86_const.h arch/x86/arch_const.h arch/x86/vm_paging.h
-thread.o: arch/x86/context.h arch/x86/arch_ctx.h vm_slab.h sched.h thread.h
+thread.o: arch/x86/x86_const.h arch/x86/context.h arch/x86/arch_const.h
+thread.o: arch/x86/vm_paging.h arch/x86/arch_ctx.h vm_slab.h sched.h thread.h
 thread.o: proc.h arch/x86/arch_vm.h
 proc.o: ../include/define.h ../include/arch/x86/types.h ../include/llist.h
 proc.o: arch/x86/arch_io.h arch/x86/serial.h arch/x86/x86_lib.h
-proc.o: arch/x86/x86_const.h arch/x86/arch_vm.h arch/x86/vm_paging.h
-proc.o: arch/x86/context.h vm_pool.h vm_slab.h thread.h arch/x86/arch_ctx.h
+proc.o: arch/x86/x86_const.h arch/x86/context.h arch/x86/arch_vm.h
+proc.o: arch/x86/vm_paging.h vm_pool.h vm_slab.h thread.h arch/x86/arch_ctx.h
 proc.o: proc.h
 sched.o: ../include/define.h ../include/arch/x86/types.h ../include/llist.h
 sched.o: thread.h arch/x86/arch_ctx.h arch/x86/context.h proc.h
 sched.o: arch/x86/arch_vm.h arch/x86/vm_paging.h sched.h
 pager0.o: ../include/define.h ../include/arch/x86/types.h
-pager0.o: arch/x86/arch_const.h arch/x86/x86_const.h arch/x86/vm_paging.h
-pager0.o: arch/x86/context.h boot.h pager0.h arch/x86/arch_io.h
+pager0.o: arch/x86/arch_const.h arch/x86/x86_const.h arch/x86/context.h
+pager0.o: arch/x86/vm_paging.h boot.h pager0.h arch/x86/arch_io.h
 pager0.o: arch/x86/serial.h arch/x86/x86_lib.h
 vm_pool.o: ../include/define.h ../include/arch/x86/types.h
-vm_pool.o: arch/x86/arch_const.h arch/x86/x86_const.h arch/x86/vm_paging.h
-vm_pool.o: arch/x86/context.h boot.h vm_pool.h
+vm_pool.o: arch/x86/arch_const.h arch/x86/x86_const.h arch/x86/context.h
+vm_pool.o: arch/x86/vm_paging.h boot.h vm_pool.h
 vm_slab.o: ../include/define.h ../include/arch/x86/types.h ../include/llist.h
-vm_slab.o: arch/x86/arch_const.h arch/x86/x86_const.h arch/x86/vm_paging.h
-vm_slab.o: arch/x86/context.h vm_pool.h vm_slab.h arch/x86/arch_io.h
+vm_slab.o: arch/x86/arch_const.h arch/x86/x86_const.h arch/x86/context.h
+vm_slab.o: arch/x86/vm_paging.h vm_pool.h vm_slab.h arch/x86/arch_io.h
 vm_slab.o: arch/x86/serial.h arch/x86/x86_lib.h
 irq.o: ../include/define.h ../include/arch/x86/types.h ../include/llist.h
 irq.o: arch/x86/arch_hw.h arch/x86/pic.h arch/x86/x86_lib.h
-irq.o: arch/x86/x86_const.h irq.h arch/x86/interrupt.h
+irq.o: arch/x86/x86_const.h arch/x86/context.h irq.h arch/x86/interrupt.h
 clock.o: ../include/define.h ../include/arch/x86/types.h arch/x86/arch_io.h
 clock.o: arch/x86/serial.h arch/x86/x86_lib.h arch/x86/x86_const.h
-clock.o: arch/x86/arch_vm.h arch/x86/vm_paging.h arch/x86/context.h irq.h
+clock.o: arch/x86/context.h arch/x86/arch_vm.h arch/x86/vm_paging.h irq.h
 clock.o: arch/x86/interrupt.h thread.h ../include/llist.h arch/x86/arch_ctx.h
 clock.o: proc.h sched.h clock.h

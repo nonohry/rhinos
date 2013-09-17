@@ -25,6 +25,7 @@
 
 #include <define.h>
 #include <types.h>
+#include "context.h"
 
 
 /**
@@ -111,6 +112,31 @@ extern u8_t __CONST_KERN_END[];
 #define X86_CONST_RING1                  1
 #define X86_CONST_RING2                  2
 #define X86_CONST_RING3                  3
+
+
+
+
+/**
+
+   Constants: Registers involved in message passing
+   -----------------------------------------------
+
+   ESI = Source (and message type)
+   EDI = Destination
+   EAX = Return code
+   EBX = Message 1/3
+   ECX = Message 2/3
+   EDX = Message 3/3
+
+**/
+
+
+#define X86_CONST_SOURCE                  CTX_ESI
+#define X86_CONST_DEST                    CTX_EDI
+#define X86_CONST_RETURN                  CTX_EAX
+#define X86_CONST_MSG1                    CTX_EBX
+#define X86_CONST_MSG2                    CTX_ECX
+#define X86_CONST_MSG3                    CTX_EDX
 
 
 #endif

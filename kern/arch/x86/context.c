@@ -146,3 +146,107 @@ PUBLIC void ctx_prepare_switch(struct x86_context* ctx)
   
   return;
 }
+
+
+
+/**
+
+   Function: void ctx_set_register(struct x86_context* ctx, u8_t r, u32_t value)
+   -----------------------------------------------------------------------------
+
+   Set register identified by `r` value to `value` into contxt `ctx`.
+   Register can only be a register involved in message passing.
+
+**/
+
+
+PUBLIC void ctx_set_register(struct x86_context* ctx, u8_t r, u32_t value)
+{
+  switch(r)
+    {
+    case CTX_ESI:
+      {
+	ctx->esi=value;
+	break;
+      }
+    case CTX_EDI:
+      {
+	ctx->edi=value;
+	break;
+      }
+    case CTX_EAX:
+      {
+	ctx->eax=value;
+	break;
+      }
+    case CTX_EBX:
+      {
+	ctx->ebx=value;
+	break;
+      }
+    case CTX_ECX:
+      {
+	ctx->ecx=value;
+	break;
+      }
+    case CTX_EDX:
+      {
+	ctx->edx=value;
+	break;
+      }
+    }
+
+  return;
+}
+
+
+/**
+
+   Function: u32_t ctx_get_register(struct x86_context* ctx, u8_t r)
+   -----------------------------------------------------------------
+
+   Get register, identified by `r`, value from context `ctx`.
+   Register can only be a register involved in message passing.
+
+**/
+
+
+PUBLIC u32_t ctx_get_register(struct x86_context* ctx, u8_t r)
+{
+  switch(r)
+    {
+    case CTX_ESI:
+      {
+	return ctx->esi;
+	break;
+      }
+    case CTX_EDI:
+      {
+	return ctx->edi;
+	break;
+      }
+    case CTX_EAX:
+      {
+	return ctx->eax;
+	break;
+      }
+    case CTX_EBX:
+      {
+	return ctx->ebx;
+	break;
+      }
+    case CTX_ECX:
+      {
+	return ctx->ecx;
+	break;
+      }
+    case CTX_EDX:
+      {
+	return ctx->edx;
+	break;
+      }
+    }
+
+  return 0;
+  
+}

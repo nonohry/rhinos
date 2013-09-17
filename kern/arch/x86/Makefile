@@ -39,24 +39,24 @@ clean:
 # DO NOT DELETE
 
 setup.o: ../../../include/define.h ../../../include/arch/x86/types.h
-setup.o: ../../boot.h x86_const.h x86_lib.h serial.h e820.h setup.h
-setup.o: vm_segment.h pic.h pit.h vm_paging.h context.h interrupt.h
+setup.o: ../../boot.h x86_const.h context.h x86_lib.h serial.h e820.h setup.h
+setup.o: vm_segment.h pic.h pit.h vm_paging.h interrupt.h
 e820.o: ../../../include/define.h ../../../include/arch/x86/types.h
-e820.o: x86_const.h setup.h e820.h
+e820.o: x86_const.h context.h setup.h e820.h
 vm_segment.o: ../../../include/define.h ../../../include/arch/x86/types.h
-vm_segment.o: x86_const.h vm_segment.h
+vm_segment.o: x86_const.h context.h vm_segment.h
 vm_paging.o: ../../../include/define.h ../../../include/arch/x86/types.h
 vm_paging.o: x86_lib.h x86_const.h context.h vm_paging.h
 serial.o: ../../../include/define.h ../../../include/arch/x86/types.h
-serial.o: x86_lib.h x86_const.h serial.h
+serial.o: x86_lib.h x86_const.h context.h serial.h
 context.o: ../../../include/define.h ../../../include/arch/x86/types.h
-context.o: x86_const.h x86_lib.h vm_segment.h context.h
+context.o: x86_const.h context.h x86_lib.h vm_segment.h
 pic.o: ../../../include/define.h ../../../include/arch/x86/types.h x86_lib.h
-pic.o: x86_const.h pic.h
+pic.o: x86_const.h context.h pic.h
 exceptions.o: ../../../include/define.h ../../../include/arch/x86/types.h
 exceptions.o: serial.h context.h vm_paging.h x86_lib.h x86_const.h
 exceptions.o: exceptions.h
 pit.o: ../../../include/define.h ../../../include/arch/x86/types.h x86_lib.h
-pit.o: x86_const.h pit.h
+pit.o: x86_const.h context.h pit.h
 interrupt.o: ../../../include/define.h ../../../include/arch/x86/types.h
-interrupt.o: x86_const.h interrupt.h
+interrupt.o: x86_const.h context.h interrupt.h
