@@ -109,7 +109,8 @@ PUBLIC struct proc
    Prototypes
    ----------
 
-   Give access to process initialization, creation and thread addition/removal
+   Give access to process initialization, creation, thread addition/removal, 
+   in-memory copy and pid to proc conversion
 
 **/
 
@@ -119,5 +120,6 @@ PUBLIC u8_t proc_destroy(struct proc* proc);
 PUBLIC u8_t proc_add_thread(struct proc* proc, struct thread* th);
 PUBLIC u8_t proc_remove_thread(struct proc* proc, struct thread* th);
 PUBLIC u8_t proc_memcopy(struct proc* proc, virtaddr_t src, virtaddr_t dest, size_t len);
+PUBLIC struct proc* proc_pid(pid_t pid);
 
 #endif

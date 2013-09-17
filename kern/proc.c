@@ -451,3 +451,49 @@ PUBLIC u8_t proc_memcopy(struct proc* proc, virtaddr_t src, virtaddr_t dest, siz
   
   return EXIT_SUCCESS;
 }
+
+
+
+/**
+
+   Function: struct proc* proc_pid(pid_t pid)
+   ------------------------------------------
+
+   Return proc structure corresponding to `pid`
+
+   Simply look into proc table to find matching proc pid
+   Return NULL if pid has no matching proc.
+
+**/
+
+
+PUBLIC struct proc* proc_pid(pid_t pid)
+{
+  struct proc* proc;
+  u8_t i;
+
+  /* Get index in proc table */
+  i = PROC_HASHID(pid);
+
+  /* Get corresponding linked list in proc table */
+  if (!LLIST_ISNULL(proc_table[i]))
+    {
+      proc = LLIST_GETHEAD(proc_table[i]);
+      /* Run through linked list */
+      do
+	{
+	  /* proc found, return */
+	  if (proc->pid == pid)
+	    {
+	      return proc;
+	    }
+      
+	 proc =  LLIST_NEXT(proc_table[i],proc);
+	  
+	}while(!LLIST_ISHEAD(proc_table[i],proc));
+    }
+  
+  /* Not found, return NULL */
+  return NULL;
+
+}
