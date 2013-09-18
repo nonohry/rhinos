@@ -94,6 +94,26 @@ PUBLIC struct sched
 };
 
 
+
+/**
+
+   Structure: struct ipc
+   ---------------------
+
+   Contains IPC relatives.
+
+**/
+
+
+PUBLIC struct ipc
+{
+  u8_t state;
+  struct proc* send_to;
+  struct proc* recv_from;
+};
+
+
+
 /**
 
    Structure: struct thread
@@ -129,7 +149,7 @@ PUBLIC struct thread
   //enum state next_state;
   //s8_t nice;
   //struct sched sched;
-  //struct ipc_info ipc;
+  struct ipc ipc;
   struct thread* prev;
   struct thread* next;
 }__attribute__ ((packed));

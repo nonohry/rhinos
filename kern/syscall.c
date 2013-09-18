@@ -41,6 +41,34 @@
 #include "syscall.h"
 
 
+
+/**
+  
+   Constants: Syscall numbers
+   --------------------------
+   
+**/
+
+
+#define SYSCALL_SEND        1
+#define SYSCALL_RECEIVE     2
+#define SYSCALL_NOTIFY      3
+
+
+/**
+  
+   Constants: Syscall IPC states
+   -----------------------------
+   
+**/
+
+
+#define SYSCALL_IPC_SENDING    1
+#define SYSCALL_IPC_RECEIVING  2
+#define SYSCALL_IPC_NOTIFYING  3
+
+
+
 /**
 
    Privates
@@ -54,6 +82,20 @@
 PRIVATE u8_t syscall_send(struct thread* th_sender, struct proc* proc_receiver);
 PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct proc* proc_sender);
 PRIVATE u8_t syscall_notify(struct thread* th_from, struct proc* proc_to);
+
+
+/**
+
+   Privates
+   --------
+
+   Helpers
+
+**/
+
+
+PRIVATE u8_t syscall_deadlock(struct proc* psender, struct proc* ptarget);
+
 
 
 /**
@@ -364,5 +406,57 @@ PRIVATE u8_t syscall_notify(struct thread* th_from, struct proc* proc_to)
 	  sched_enqueue(SCHED_READY_QUEUE,th_to);
 	}
 
+  return IPC_SUCCESS;
+}
+
+
+
+/**
+
+   Function: u8_t syscall_deadlock(struct proc* psender, struct proc* ptarget)
+   ---------------------------------------------------------------------------
+
+   Check for deadlock during send
+
+   Simply follow the "send chain" to check if a loop occurs.
+   This function is a DFS-like recursive function.
+
+**/
+
+PRIVATE u8_t syscall_deadlock(struct proc* psender, struct proc* ptarget)
+{
+
+  struct thread_wrapper* wrapper;
+
+  /* Check all threads in `ptarget`*/
+  if (!LLIST_ISNULL(ptarget->thread_list))
+    {
+      wrapper=LLIST_GETHEAD(ptarget->thread_list);
+      do
+	{
+	  /* A thread is sending */
+	  if (wrapper->thread->ipc.state == SYSCALL_IPC_SENDING)
+	    {
+	      /* Does it send to sender ? */
+	      if (wrapper->thread->ipc.send_to == psender)
+		{
+		  /* If yes, return Failure */
+		  return IPC_FAILURE;
+		}
+	      else
+		{
+		  /* Otherwise, check that new "send chain" */
+		  if (syscall_deadlock(psender,wrapper->thread->ipc.send_to) == IPC_FAILURE)
+		    {
+		      return IPC_FAILURE;
+		    }
+		}
+	    }
+	  
+	  wrapper = LLIST_NEXT(ptarget->thread_list,wrapper);
+	  
+	}while(!LLIST_ISHEAD(ptarget->thread_list,wrapper));
+    }
+  
   return IPC_SUCCESS;
 }

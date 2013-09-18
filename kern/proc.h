@@ -85,9 +85,11 @@ struct thread_wrapper
    Describe a process from the kernel point of view.
    Members are:
 
+   - pid          : proc identifier
    - addr_space   : address space
    - name         : process name
    - thread_list  : threads in process
+   - wait_list    : threads waiting for receive
    - prev,next    : linkage in proc table
 
 **/
@@ -98,6 +100,7 @@ PUBLIC struct proc
   virtaddr_t addrspace; 
   char name[PROC_NAMELEN];
   struct thread_wrapper* thread_list;
+  struct thread* wait_list;
   struct proc* prev;
   struct proc* next;
 }__attribute__ ((packed));
