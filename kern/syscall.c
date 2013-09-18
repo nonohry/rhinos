@@ -109,7 +109,7 @@ PRIVATE u8_t syscall_copymsg( struct thread* src, struct thread* dest);
    Redispatch calls to the correct IPC primitive according to syscall number 
    retrieved in the caller CPU context.
 
-   Result is returned to caller through its EAX register
+   Result is returned to caller through its return register
 
 **/
 
@@ -181,7 +181,7 @@ PUBLIC void syscall_handle(void)
 
  end:
   /* Set result in caller's return register */
-  arch_ctx_set((arch_ctx_t*)cur_th, X86_CONST_RETURN,res);
+  arch_ctx_set((arch_ctx_t*)cur_th, ARCH_CONST_RETURN,res);
 
   return;
 }
@@ -194,13 +194,13 @@ PUBLIC void syscall_handle(void)
    ---------------------------------------------------------------------------------
 
 
-   Pass ̀message` from `th_sender` to `proc_receiver`.
+   Pass message from `th_sender` to `proc_receiver`.
    First it checks for deadlock situation (`proc_receiver` sending to `th_sender` proc)
 
-   Then, if `th_receiver` is waiting for the message, ̀message` is copied from `th_sender` to `th_receiver`,
-   `th_receiver` is set as ready for scheduling and `th_sender` is set as blocked (waiting for a notify call).
+   Then, if a thread in `proc_receiver` is waiting for the message, it is copied from `th_sender` to that thread,
+   The receiving thread is set ready for scheduling and `th_sender` is set blocked (waiting for a notify call).
 
-   If `th_receiver` is not waiting for any message, `th_sender` is set as blocked in `th_receiver` waiting list.
+   If `proc_receiver` is not waiting for any message, `th_sender` is set as blocked in `proc_receiver` waiting list.
 
    At last, scheduler is call because sender will be blocked in any cases.
 
@@ -212,80 +212,57 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct proc* proc_receiver)
   struct thread* th_receiver;
   struct thread* th_tmp;
   
-  /* There must be a receiver */
+  /* There must be a receiver - No broadcast allow */
   if ( proc_receiver == NULL )
     {
       return IPC_FAILURE;
     }
 
-  /* Set receiver in sender structure */
-  th_sender->ipc.send_to = proc_receiver;
-
-  /* Set state */
-  th_sender->ipc.state |= SYSCALL_IPC_SENDING;
-
-  /* Check for a deadlock: run through sending chain from receiver */
-  if (th_receiver->ipc.state & SYSCALL_IPC_SENDING)
+  /* Check for deadlock */
+  if (syscall_deadlock(th_sender->proc,proc_receiver) == IPC_FAILURE)
     {
-
-      th_tmp = th_receiver->ipc.send_to;
-      while( th_tmp->ipc.state & SYSCALL_IPC_SENDING )
-	{
-	  /* One thread in the sending chain is the sender: deadlock */
-	  if (th_tmp == th_sender)
-	    {
-	      return IPC_DEADLOCK;
-	    }
-	  th_tmp = th_tmp->ipc.send_to;
-
-	}
+      return IPC_FAILURE;
     }
 
-  /* No deadlock here, check if receiver is only receiving, and is receiving from the sender or any thread */
-  if ( (th_receiver->ipc.state == SYSCALL_IPC_RECEIVING)
-       && ( (th_receiver->ipc.receive_from == th_sender)||(th_receiver->ipc.receive_from == NULL) ) )
+  /* No deadlock here, set state */
+  th_sender->ipc.state |= SYSCALL_IPC_SENDING;
+
+  /* Set destination */
+  th_sender->ipc.send_to = proc_receiver;
+
+  /* Get a thread willing to receive the message */
+  th_receiver = syscall_find_receiver(proc_receiver,th_sender->proc);
+
+  if (th_receiver != NULL)
     {
-      /* Receiver is willing to receive: copy message from sender to receiver */
-      th_receiver->cpu.ebx = th_sender->cpu.ebx;
-      th_receiver->cpu.ecx = th_sender->cpu.ecx;
-      th_receiver->cpu.edx = th_sender->cpu.edx;   
-      th_receiver->cpu.esi = th_sender->cpu.esi;
+      /* Found a thread ! copy message from sender to receiver */
+      syscall_copymsg(th_sender,th_receiver);
   
-      /* Set receiver ready for scheduling */ 
-      if (th_receiver->state == THREAD_BLOCKED)
-	{
+      /* Set end of reception */
+      th_receiver->ipc.state &= ~SYSCALL_IPC_RECEIVING;
 
-	  th_receiver->next_state = THREAD_READY;
-	  /* Set end of reception */
-	  th_receiver->ipc.state &= ~SYSCALL_IPC_RECEIVING;
+      /* Ready for scheduling */
+      th_receiver->state = THREAD_READY;
 
-	  /* Scheduler queues manipulations */
-	  if ( sched_dequeue(SCHED_BLOCKED_QUEUE, th_receiver) != EXIT_SUCCESS )
-	    {
-	      return IPC_FAILURE;
-	    }
-
-	  if ( sched_enqueue(SCHED_READY_QUEUE, th_receiver) != EXIT_SUCCESS )
-	    {
-	      return IPC_FAILURE;
-	    }
-
-	}
+      /* Scheduler queues manipulations */
+      sched_dequeue(SCHED_BLOCKED_QUEUE, th_receiver);
+      sched_enqueue(SCHED_READY_QUEUE, th_receiver);
 
       /* Message is delivered to receiver, set end of sending */
-      th_sender->ipc.state &= ~SYSCALL_IPC_SENDING;
-      /* Sender is blocked, waiting for message processing (must be unblocked via notify) */
-      th_sender->next_state = THREAD_BLOCKED;
-
+      th_sender->ipc.state &= ~SYSCALL_IPC_SENDING;    
     }
   else
     {
-      /* Receiver is not waiting for sender at the moment: block sender in receiver's waiting list */
-      th_sender->next_state = THREAD_BLOCKED_SENDING;
+      /* No receiving thread, enqueue in wait list */
+      sched_enqueue(SCHED_READY_QUEUE, th_sender);
+      LLIST_ADD(proc_receiver->wait_list,th_sender);
     }
+  
+  /* Sender is blocked, waiting for message processing (must be unblocked via notify) */
+  th_sender->next_state = THREAD_BLOCKED;
 
   /* In any cases, current thread (sender) is blocked, so scheduling is needing */
-  sched_schedule(SCHED_FROM_SEND);
+  sched_elect();
 
   return IPC_SUCCESS;
 }
@@ -309,63 +286,30 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct proc* proc_sende
 {
   struct thread* th_available = NULL;
 
-  /* Set thread to receive from */
-  th_receiver->ipc.receive_from = th_sender;
-
   /* Set receive state */
   th_receiver->ipc.state |= SYSCALL_IPC_RECEIVING;
 
-  /* Look for a matching thread in receive list */
-  if (!LLIST_ISNULL(th_receiver->ipc.receive_waitlist))
-    {
-      /* Receive from any thread, get the first available */
-      if (th_sender == NULL)
-	{
-	  th_available = LLIST_GETHEAD(th_receiver->ipc.receive_waitlist);
-	}
-      else
-	{
-	  /* Look for `th_sender` */
-	  struct thread* th_tmp = LLIST_GETHEAD(th_receiver->ipc.receive_waitlist);
-	  do
-	    {
-	      /* Found ! */
-	      if (th_tmp == th_sender)
-		{
-		  th_available = th_tmp;
-		  break;
-		}
-	      th_tmp = LLIST_NEXT(th_receiver->ipc.receive_waitlist, th_tmp);
-	    }while(!LLIST_ISHEAD(th_receiver->ipc.receive_waitlist, th_tmp));
-	}
-    }
+  /* Set thread to receive from (can be NULL) */
+  th_receiver->ipc.receive_from = proc_sender;
 
 
+  th_available = syscall_find_sender(th_receiver->proc, proc_sender)
+ 
   /* A matching sender found ? */
   if ( th_available != NULL )
     {
       /* Copy message from sender to receiver */ 
-      th_receiver->cpu.ebx = th_available->cpu.ebx;
-      th_receiver->cpu.ecx = th_available->cpu.ecx;
-      th_receiver->cpu.edx = th_available->cpu.edx;
-      th_receiver->cpu.esi = th_available->cpu.esi;
+      syscall_copymsg(th_available,th_receiver);
+ 
+      /* Unblock sender */
+      th_available->state = THREAD_READY;
 
-      /* Unblock sender if needed */
-      if (th_available->state == THREAD_BLOCKED_SENDING)
-	{
-           
-	  th_available->next_state = THREAD_READY;
-	  /* Set end of sending */
-	  th_available->ipc.state &= ~SYSCALL_IPC_SENDING;
+      /* Set end of sending */
+      th_available->ipc.state &= ~SYSCALL_IPC_SENDING;
 
-	  /* Remove sender from receiver waiting list et set it as ready for scheduling */
-	  LLIST_REMOVE(th_receiver->ipc.receive_waitlist, th_available);
-	  if ( sched_enqueue(SCHED_READY_QUEUE, th_available) != EXIT_SUCCESS )
-	    {
-	      return IPC_FAILURE;
-	    }
-
-	}
+      /* Remove sender from receiver waiting list et set it as ready for scheduling */
+      LLIST_REMOVE(th_receiver->ipc.receive_waitlist, th_available);
+      sched_enqueue(SCHED_READY_QUEUE, th_available);
 
       /* End of reception */
       th_receiver->ipc.state &= ~SYSCALL_IPC_RECEIVING;
@@ -376,7 +320,7 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct proc* proc_sende
       /* No matching sender found: blocked waiting for a sender */
       th_receiver->next_state = THREAD_BLOCKED;
       /* Current thread (receiver) is blocked, need scheduling */
-      sched_schedule(SCHED_FROM_RECEIVE);
+      sched_elect();
     }
 
   return IPC_SUCCESS;
