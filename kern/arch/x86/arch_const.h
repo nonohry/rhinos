@@ -79,7 +79,7 @@
 #define ARCH_CONST_KERN_HIGHMEM            X86_CONST_KERN_HIGHMEM
 
 
-/** 
+/**
 
     Constant: ARCH_STACK_SELECTOR
     -----------------------------
@@ -90,5 +90,22 @@
 
 #define ARCH_STACK_SELECTOR                X86_CONST_KERN_SS_SELECTOR
 
+
+
+/**
+
+   Constants: Message registers
+   -----------------------------
+
+**/
+
+
+
+#define ARCH_CONST_SOURCE                 X86_CONST_SOURCE                  
+#define ARCH_CONST_DEST                   X86_CONST_DEST                    
+#define ARCH_CONST_RETURN                 X86_CONST_RETURN                  
+#define ARCH_CONST_MSG1                   X86_CONST_MSG1                    
+#define ARCH_CONST_MSG2                   X86_CONST_MSG2                    
+#define ARCH_CONST_MSG3                   X86_CONST_MSG3                    
 
 #endif

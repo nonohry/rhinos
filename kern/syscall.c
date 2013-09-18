@@ -95,7 +95,9 @@ PRIVATE u8_t syscall_notify(struct thread* th_from, struct proc* proc_to);
 
 
 PRIVATE u8_t syscall_deadlock(struct proc* psender, struct proc* ptarget);
-
+PRIVATE struct thread* syscall_find_receiver(struct proc* ptarget, struct proc* pfrom);
+PRIVATE struct thread* syscall_find_sender(struct proc* ptarget, struct proc* pfrom);
+PRIVATE u8_t syscall_copymsg( struct thread* src, struct thread* dest);
 
 
 /**
@@ -128,13 +130,13 @@ PUBLIC void syscall_handle(void)
     }
 
   /* Get syscall number from source register */
-  syscall_num = arch_ctx_get((arch_ctx_t*)cur_th, X86_CONST_SOURCE);
+  syscall_num = arch_ctx_get((arch_ctx_t*)cur_th, ARCH_CONST_SOURCE);
 
   /* Put originator proc into source register instead */
-  arch_ctx_set((arch_ctx_t*)cur_th, X86_CONST_SOURCE,cur_th->proc->pid);
+  arch_ctx_set((arch_ctx_t*)cur_th, ARCH_CONST_SOURCE,cur_th->proc->pid);
 
   /* Destination proc, stored in EDI */
-  pid = (pid_t)arch_ctx_get((arch_ctx_t*)cur_th, X86_CONST_DEST);
+  pid = (pid_t)arch_ctx_get((arch_ctx_t*)cur_th, ARCH_CONST_DEST);
   if ( pid == IPC_ANY)
     {
       target_proc = NULL;
@@ -459,4 +461,112 @@ PRIVATE u8_t syscall_deadlock(struct proc* psender, struct proc* ptarget)
     }
   
   return IPC_SUCCESS;
+}
+
+
+/**
+
+   Function: struct thread* syscall_find_receiver(struct proc* ptarget, struct proc* pfrom)
+   --------------------------------------------------------------------------------------
+
+   Return a thread in `ptarget` which is receiving from `pfrom` or from ANY if `pfrom` is NULL
+   Return NULL if such a thread does not exist;
+
+**/
+   
+
+PRIVATE struct thread* syscall_find_receiver(struct proc* ptarget, struct proc* pfrom)
+{
+
+  struct thread_wrapper* wrapper;
+
+   /* Check all threads in `ptarget`*/
+  if (!LLIST_ISNULL(ptarget->thread_list))
+    {
+      wrapper=LLIST_GETHEAD(ptarget->thread_list);
+      do
+	{
+	  /* A thread is receiving from `pfrom` - works even if `pfrom` is NULL */
+	  if ( (wrapper->thread->ipc.state == SYSCALL_IPC_RECEIVING)
+	       && ((wrapper->thread->ipc.recv_from == pfrom) || (wrapper->thread->ipc.recv_from == NULL)) )
+	    {
+	      /* Return thread */
+	      return wrapper->thread;
+	    }
+	  
+	  wrapper = LLIST_NEXT(ptarget->thread_list,wrapper);
+	  
+	}while(!LLIST_ISHEAD(ptarget->thread_list,wrapper));
+    }
+
+  return NULL;
+}
+
+
+/**
+
+   Function: struct thread* syscall_find_sender(struct proc* ptarget, struct proc* pfrom)
+   --------------------------------------------------------------------------------------
+
+   Return a thread belonging to `pfrom` in `ptarget` wait list.
+   Return NULL if such a thread does not exist;
+
+**/
+   
+
+PRIVATE struct thread* syscall_find_sender(struct proc* ptarget, struct proc* pfrom)
+{
+
+  struct thread* th;
+
+   /* Check all threads in `ptarget` wait list*/
+  if (!LLIST_ISNULL(ptarget->wait_list))
+    {
+      th=LLIST_GETHEAD(ptarget->wait_list);
+
+      if (pfrom == NULL)
+	{
+	  /* Receive from ANY, return wait list head */
+	  return th;
+	}
+      else
+	{
+	  /* look from a thread belonging to `pfrom` */
+	  do
+	    {
+	      if (th->proc == pfrom)
+		{
+		  return th;
+		}
+	      
+	      th = LLIST_NEXT(ptarget->wait_list,th);
+	  
+	    }while(!LLIST_ISHEAD(ptarget->wait_list,th));
+	}
+    }
+
+  return NULL;
+}
+
+
+
+/**
+
+   Function: u8_t syscall_copymsg( struct thread* src, struct thread* dest)
+   ------------------------------------------------------------------------
+   
+   Copy message stored in registers from `src` to `dest`.
+   
+**/
+
+
+PRIVATE u8_t syscall_copymsg( struct thread* src, struct thread* dest)
+{
+
+  arch_ctx_set((arch_ctx_t*)dest,ARCH_CONST_SOURCE,arch_ctx_get((arch_ctx_t*)src,ARCH_CONST_SOURCE));
+  arch_ctx_set((arch_ctx_t*)dest,ARCH_CONST_MSG1,arch_ctx_get((arch_ctx_t*)src,ARCH_CONST_MSG1));
+  arch_ctx_set((arch_ctx_t*)dest,ARCH_CONST_MSG2,arch_ctx_get((arch_ctx_t*)src,ARCH_CONST_MSG2));
+  arch_ctx_set((arch_ctx_t*)dest,ARCH_CONST_MSG3,arch_ctx_get((arch_ctx_t*)src,ARCH_CONST_MSG3));
+
+  return EXIT_SUCCESS;
 }
