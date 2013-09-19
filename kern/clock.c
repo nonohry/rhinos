@@ -102,7 +102,7 @@ PRIVATE void clock_handler()
   th = sched_elect();
   if (th)
     {
-      arch_printf(" Elected: %s ", th->name);
+      arch_printf("Elected: %s\n", th->name);
     }
   
   /* Change address space */

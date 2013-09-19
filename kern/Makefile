@@ -73,7 +73,8 @@ vm_slab.o: arch/x86/serial.h arch/x86/x86_lib.h
 syscall.o: ../include/define.h ../include/arch/x86/types.h ../include/llist.h
 syscall.o: ../include/ipc.h arch/x86/arch_const.h arch/x86/x86_const.h
 syscall.o: arch/x86/context.h arch/x86/vm_paging.h arch/x86/arch_ctx.h proc.h
-syscall.o: arch/x86/arch_vm.h thread.h sched.h syscall.h
+syscall.o: arch/x86/arch_vm.h thread.h sched.h syscall.h arch/x86/arch_io.h
+syscall.o: arch/x86/serial.h arch/x86/x86_lib.h
 irq.o: ../include/define.h ../include/arch/x86/types.h ../include/llist.h
 irq.o: arch/x86/arch_hw.h arch/x86/pic.h arch/x86/x86_lib.h
 irq.o: arch/x86/x86_const.h arch/x86/context.h irq.h arch/x86/interrupt.h

@@ -41,6 +41,8 @@
 #include "syscall.h"
 
 
+#include <arch_io.h>
+
 
 /**
   
@@ -122,6 +124,7 @@ PUBLIC void syscall_handle(void)
   u32_t syscall_num;
   u8_t res;
 
+
   /* Get current thread */
   if (cur_th == NULL)
     {
@@ -174,12 +177,16 @@ PUBLIC void syscall_handle(void)
       }
     default:
       {
+	arch_printf("not a syscall number\n");
 	res = IPC_FAILURE;
 	break;
       }  
     }
 
  end:
+
+  arch_printf("end of syscall :%u\n",res);
+	
   /* Set result in caller's return register */
   arch_ctx_set((arch_ctx_t*)cur_th, ARCH_CONST_RETURN,res);
 
@@ -214,12 +221,14 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct proc* proc_receiver)
   /* There must be a receiver - No broadcast allow */
   if ( proc_receiver == NULL )
     {
+      arch_printf("send failed 1\n");
       return IPC_FAILURE;
     }
 
   /* Check for deadlock */
   if (syscall_deadlock(th_sender->proc,proc_receiver) == IPC_FAILURE)
     {
+      arch_printf("deadlock\n");
       return IPC_FAILURE;
     }
 
@@ -236,6 +245,8 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct proc* proc_receiver)
     {
       /* Found a thread ! copy message from sender to receiver */
       syscall_copymsg(th_sender,th_receiver);
+
+      arch_printf("%u sends a message to %u\n",th_sender->proc->pid,proc_receiver->pid);
   
       /* Set end of reception */
       th_receiver->ipc.state &= ~SYSCALL_IPC_RECEIVING;
@@ -246,6 +257,8 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct proc* proc_receiver)
       /* Scheduler queues manipulations */
       sched_dequeue(SCHED_BLOCKED_QUEUE, th_receiver);
       sched_enqueue(SCHED_READY_QUEUE, th_receiver);
+      arch_printf("%u unblock %u after send\n",th_sender->proc->pid,proc_receiver->pid);
+       
 
       /* Message is delivered to receiver, set end of sending */
       th_sender->ipc.state &= ~SYSCALL_IPC_SENDING;    
@@ -253,19 +266,33 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct proc* proc_receiver)
        /* Scheduler queues manipulations (blocks sender) */
       sched_dequeue(SCHED_READY_QUEUE, th_sender);
       sched_enqueue(SCHED_BLOCKED_QUEUE, th_sender);
+  
     }
   else
     {
       /* No receiving thread, enqueue in wait list */
       sched_dequeue(SCHED_READY_QUEUE, th_sender);
       LLIST_ADD(proc_receiver->wait_list,th_sender);
+  
+      arch_printf("%u in wait list of  %u\n",th_sender->proc->pid,proc_receiver->pid);
+      
     }
   
   /* Sender is blocked, waiting for message processing (must be unblocked via notify) */
+  arch_printf("%u block after send\n",th_sender->proc->pid);
   th_sender->state = THREAD_BLOCKED;
 
   /* In any cases, current thread (sender) is blocked, so scheduling is needing */
-  sched_elect();
+  struct thread* th;
+  th = sched_elect();
+
+ /* Change address space */
+  if (th->proc)
+    {
+      arch_switch_addrspace(th->proc->addrspace);
+    }  
+
+  thread_switch_to(th);
 
   return IPC_SUCCESS;
 }
@@ -304,6 +331,8 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct proc* proc_sende
       /* Copy message from sender to receiver */ 
       syscall_copymsg(th_available,th_receiver);
  
+      arch_printf("%u receives a message from %u\n",th_receiver->proc->pid,th_available->proc->pid);
+
       /* Unblock sender */
       th_available->state = THREAD_READY;
 
@@ -313,6 +342,8 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct proc* proc_sende
       /* Remove sender from receiver waiting list et set it as ready for scheduling */
       LLIST_REMOVE(th_receiver->proc->wait_list, th_available);
       sched_enqueue(SCHED_READY_QUEUE, th_available);
+
+      arch_printf("%u unblock  %u from its wait list\n",th_receiver->proc->pid,th_available->proc->pid);
 
       /* End of reception */
       th_receiver->ipc.state &= ~SYSCALL_IPC_RECEIVING;
@@ -327,8 +358,20 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct proc* proc_sende
       sched_dequeue(SCHED_READY_QUEUE, th_receiver);
       sched_enqueue(SCHED_BLOCKED_QUEUE, th_receiver);
 
+      arch_printf("%u blocked cause no message available\n",th_receiver->proc->pid);
+
       /* Current thread (receiver) is blocked, need scheduling */
-      sched_elect();
+      struct thread* th;
+      th = sched_elect();
+      
+      /* Change address space */
+      if (th->proc)
+	{
+	  arch_switch_addrspace(th->proc->addrspace);
+	}  
+      
+      thread_switch_to(th);
+      
     }
   
   return IPC_SUCCESS;
@@ -353,6 +396,8 @@ PRIVATE u8_t syscall_notify(struct thread* th_from, struct proc* proc_to)
   th = syscall_find_blocked_sender(th_from->proc,proc_to);
   if (th != NULL)
     {
+      arch_printf("%u unblocks %u via notify\n",th_from->proc->pid,proc_to->pid);
+      
       /* Set recipient ready for scheduling */
       th->state = THREAD_READY;
       /* End of sending */
@@ -364,6 +409,8 @@ PRIVATE u8_t syscall_notify(struct thread* th_from, struct proc* proc_to)
 
       return IPC_SUCCESS;
     }
+
+  arch_printf("Notify failed\n");
 
   return IPC_FAILURE;
 }

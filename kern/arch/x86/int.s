@@ -79,7 +79,7 @@ extern	excep_handle
 extern	ctx_postsave
 extern  cur_th
 	
-	;; 	extern	syscall_handle
+extern	syscall_handle
 
 
 	;;/**
@@ -297,7 +297,7 @@ hwint_15:
 swint_syscall:
         push    FAKE_ERROR
         call    save_ctx
-	;;        call    syscall_handle
+        call    syscall_handle
         call    restore_ctx
 	
 	

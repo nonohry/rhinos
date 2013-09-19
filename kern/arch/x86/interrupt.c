@@ -256,7 +256,7 @@ PUBLIC u8_t interrupt_setup(void)
   create_int_gate(&idt[47], X86_CONST_KERN_CS_SELECTOR, (lineaddr_t)hwint_15, INT_SEG_PRESENT | INT_SEG_DPL_0);
 
   /* Syscall handler */
-  //create_int_gate(&idt[50], X86_CONST_KERN_CS_SELECTOR, (lineaddr_t)swint_syscall, INT_SEG_PRESENT | INT_SEG_DPL_3);
+  create_int_gate(&idt[50], X86_CONST_KERN_CS_SELECTOR, (lineaddr_t)swint_syscall, INT_SEG_PRESENT | INT_SEG_DPL_3);
 
   return EXIT_SUCCESS;
 }
