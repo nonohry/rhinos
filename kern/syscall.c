@@ -582,7 +582,7 @@ PRIVATE struct thread* syscall_find_blocked_sender(struct proc* ptarget, struct 
       do
 	{
 	  if ( (wrapper->thread->ipc.send_to == ptarget)
-	       && (wrapper->thread->state = THREAD_BLOCKED)
+	       && (wrapper->thread->state == THREAD_BLOCKED)
 	       && (wrapper->thread->ipc.state != SYSCALL_IPC_RECEIVING) )
 	    {
 	      return wrapper->thread;
