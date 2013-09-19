@@ -21,7 +21,7 @@ CFLAGS	:=	-I../include -I../include/arch/${ARCH} -Iarch/${ARCH}
 ASM_SRC	=	#khead.s klib_s.s interrupt.s
 ASM_OUT	=	${ASM_SRC:.s=.o}
 #C_SRC	=	start.c seg.c tables.c pic.c pit.c irq.c exceptions.c physmem.c paging.c virtmem_buddy.c virtmem_slab.c virtmem.c thread.c sched.c syscall.c klib_c.c proc.c main.c 
-C_SRC 	=	main.c thread.c proc.c sched.c pager0.c vm_pool.c vm_slab.c irq.c clock.c
+C_SRC 	=	main.c thread.c proc.c sched.c pager0.c vm_pool.c vm_slab.c syscall.c irq.c clock.c
 C_OUT	=	${C_SRC:.c=.o}
 OBJ	=	$(ASM_OUT) $(C_OUT)
 
@@ -70,6 +70,10 @@ vm_slab.o: ../include/define.h ../include/arch/x86/types.h ../include/llist.h
 vm_slab.o: arch/x86/arch_const.h arch/x86/x86_const.h arch/x86/context.h
 vm_slab.o: arch/x86/vm_paging.h vm_pool.h vm_slab.h arch/x86/arch_io.h
 vm_slab.o: arch/x86/serial.h arch/x86/x86_lib.h
+syscall.o: ../include/define.h ../include/arch/x86/types.h ../include/llist.h
+syscall.o: ../include/ipc.h arch/x86/arch_const.h arch/x86/x86_const.h
+syscall.o: arch/x86/context.h arch/x86/vm_paging.h arch/x86/arch_ctx.h proc.h
+syscall.o: arch/x86/arch_vm.h thread.h sched.h syscall.h
 irq.o: ../include/define.h ../include/arch/x86/types.h ../include/llist.h
 irq.o: arch/x86/arch_hw.h arch/x86/pic.h arch/x86/x86_lib.h
 irq.o: arch/x86/x86_const.h arch/x86/context.h irq.h arch/x86/interrupt.h

@@ -117,7 +117,6 @@ PRIVATE u8_t syscall_copymsg( struct thread* src, struct thread* dest);
 
 PUBLIC void syscall_handle(void)
 {
-  struct thread* cur_th;
   struct proc* target_proc;
   pid_t pid;
   u32_t syscall_num;
@@ -211,7 +210,6 @@ PUBLIC void syscall_handle(void)
 PRIVATE u8_t syscall_send(struct thread* th_sender, struct proc* proc_receiver)
 {
   struct thread* th_receiver;
-  struct thread* th_tmp;
   
   /* There must be a receiver - No broadcast allow */
   if ( proc_receiver == NULL )
@@ -295,10 +293,10 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct proc* proc_sende
   th_receiver->ipc.state |= SYSCALL_IPC_RECEIVING;
 
   /* Set thread to receive from (can be NULL) */
-  th_receiver->ipc.receive_from = proc_sender;
+  th_receiver->ipc.recv_from = proc_sender;
 
   /* Find a thread sending to me */
-  th_available = syscall_find_waiting_sender(th_receiver->proc, proc_sender)
+  th_available = syscall_find_waiting_sender(th_receiver->proc, proc_sender);
  
   /* A matching sender found ? */
   if ( th_available != NULL )
@@ -313,7 +311,7 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct proc* proc_sende
       th_available->ipc.state &= ~SYSCALL_IPC_SENDING;
 
       /* Remove sender from receiver waiting list et set it as ready for scheduling */
-      LLIST_REMOVE(th_receiver->ipc.receive_waitlist, th_available);
+      LLIST_REMOVE(th_receiver->proc->wait_list, th_available);
       sched_enqueue(SCHED_READY_QUEUE, th_available);
 
       /* End of reception */
@@ -332,7 +330,7 @@ PRIVATE u8_t syscall_receive(struct thread* th_receiver, struct proc* proc_sende
       /* Current thread (receiver) is blocked, need scheduling */
       sched_elect();
     }
-
+  
   return IPC_SUCCESS;
 }
 
@@ -473,7 +471,7 @@ PRIVATE struct thread* syscall_find_receiver(struct proc* ptarget, struct proc* 
 **/
    
 
-PRIVATE struct thread* syscall_find_waitig_sender(struct proc* ptarget, struct proc* pfrom)
+PRIVATE struct thread* syscall_find_waiting_sender(struct proc* ptarget, struct proc* pfrom)
 {
 
   struct thread* th;
@@ -522,26 +520,26 @@ PRIVATE struct thread* syscall_find_waitig_sender(struct proc* ptarget, struct p
 PRIVATE struct thread* syscall_find_blocked_sender(struct proc* ptarget, struct proc* pfrom)
 {
 
-  struct thread* th;
+  struct thread_wrapper* wrapper;
 
    /* Check all threads in `ptarget` wait list*/
   if (!LLIST_ISNULL(pfrom->thread_list))
     {
-      th=LLIST_GETHEAD(pfrom->thread_list);
+      wrapper=LLIST_GETHEAD(pfrom->thread_list);
 
       /* look from a thread sending to `ptarget` */
       do
 	{
-	  if ( (th->ipc.send_to == ptarget)
-	       && (th->state = THREAD_BLOCKED)
-	       && (th->ipc.state != SYSCALL_IPC_RECEIVING) )
+	  if ( (wrapper->thread->ipc.send_to == ptarget)
+	       && (wrapper->thread->state = THREAD_BLOCKED)
+	       && (wrapper->thread->ipc.state != SYSCALL_IPC_RECEIVING) )
 	    {
-	      return th;
+	      return wrapper->thread;
 	    }
 	  
-	  th = LLIST_NEXT(pfrom->thread_list,th);
+	  wrapper = LLIST_NEXT(pfrom->thread_list,wrapper);
 	  
-	}while(!LLIST_ISHEAD(pfrom->thread_list,th));
+	}while(!LLIST_ISHEAD(pfrom->thread_list,wrapper));
     }
 
   return NULL;
