@@ -414,9 +414,10 @@ PRIVATE u8_t syscall_notify(struct thread* th_from, struct proc* proc_to)
       return IPC_SUCCESS;
     }
 
-  arch_printf("Notify failed\n");
+  //arch_printf("Notify failed\n");
 
-  return IPC_FAILURE;
+  //return IPC_FAILURE;
+  return IPC_SUCCESS;
 }
 
 
