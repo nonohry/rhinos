@@ -10,7 +10,7 @@ CFLAGS	:=	-I../include -I../include/arch/$(ARCH)
 
 # Files
 
-C_SRC	:=	user.c
+C_SRC	:=	user_send.c user_recv.c
 C_OUT	:=	${C_SRC:.c=.o}
 OBJ	:=	$(ASM_OUT) $(C_OUT)
 
