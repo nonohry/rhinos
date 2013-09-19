@@ -27,4 +27,5 @@ clean:
 
 # DO NOT DELETE
 
-user.o: ../include/define.h ../include/arch/x86/types.h ../include/ipc.h
+user_send.o: ../include/define.h ../include/arch/x86/types.h ../include/ipc.h
+user_recv.o: ../include/define.h ../include/arch/x86/types.h ../include/ipc.h
