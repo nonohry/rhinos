@@ -265,7 +265,7 @@ PRIVATE u8_t syscall_send(struct thread* th_sender, struct proc* proc_receiver)
        
 
       /* Message is delivered to receiver, set end of sending */
-      th_sender->ipc.state &= ~SYSCALL_IPC_SENDING;    
+      th_sender->ipc.state &= ~SYSCALL_IPC_SENDING;
 
        /* Scheduler queues manipulations (blocks sender) */
       sched_dequeue(SCHED_READY_QUEUE, th_sender);
