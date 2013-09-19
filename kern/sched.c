@@ -29,6 +29,7 @@
 #include "thread.h"
 #include "sched.h"
 
+#include <arch_io.h>
 
 /**
    
@@ -185,6 +186,32 @@ PUBLIC u8_t sched_dequeue(u8_t queue, struct thread* th)
 PUBLIC struct thread* sched_elect()
 {
   struct thread* th;
+
+  //arch_printf("READY: ");
+  if (!LLIST_ISNULL(sched_ready))
+    {
+      th = LLIST_GETHEAD(sched_ready);
+      do
+	{
+	  //arch_printf("%u ",th->proc?th->proc->pid:0);
+	  th = LLIST_NEXT(sched_ready,th);
+	}while(!LLIST_ISHEAD(sched_ready,th));
+    }
+  //arch_printf("\n");
+
+  //arch_printf("BLOCKED: ");
+  if (!LLIST_ISNULL(sched_blocked))
+    {
+      th = LLIST_GETHEAD(sched_blocked);
+      do
+	{
+	  //arch_printf("%u ",th->proc?th->proc->pid:0);
+	  th = LLIST_NEXT(sched_blocked,th);
+	}while(!LLIST_ISHEAD(sched_blocked,th));
+    }
+  //arch_printf("\n");
+
+
 
   th = LLIST_GETHEAD(sched_ready);
   sched_dequeue(SCHED_READY_QUEUE,th);

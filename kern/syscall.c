@@ -124,22 +124,25 @@ PUBLIC void syscall_handle(void)
   u32_t syscall_num;
   u8_t res;
 
+  arch_printf("syscall_handle\n");
+
+  struct thread* th = cur_th;
 
   /* Get current thread */
-  if (cur_th == NULL)
+  if (th == NULL)
     {
       res = IPC_FAILURE;
       goto end;
     }
 
   /* Get syscall number from source register */
-  syscall_num = arch_ctx_get((arch_ctx_t*)cur_th, ARCH_CONST_SOURCE);
+  syscall_num = arch_ctx_get((arch_ctx_t*)th, ARCH_CONST_SOURCE);
 
   /* Put originator proc into source register instead */
-  arch_ctx_set((arch_ctx_t*)cur_th, ARCH_CONST_SOURCE,cur_th->proc->pid);
+  arch_ctx_set((arch_ctx_t*)th, ARCH_CONST_SOURCE,th->proc->pid);
 
   /* Destination proc, stored in EDI */
-  pid = (pid_t)arch_ctx_get((arch_ctx_t*)cur_th, ARCH_CONST_DEST);
+  pid = (pid_t)arch_ctx_get((arch_ctx_t*)th, ARCH_CONST_DEST);
   if ( pid == IPC_ANY)
     {
       target_proc = NULL;
@@ -160,19 +163,19 @@ PUBLIC void syscall_handle(void)
     {
     case SYSCALL_SEND:
       {
-	res = syscall_send(cur_th, target_proc);
+	res = syscall_send(th, target_proc);
 	break;
       }
 
     case SYSCALL_RECEIVE:
       {
-	res = syscall_receive(cur_th, target_proc);
+	res = syscall_receive(th, target_proc);
 	break;
       }
 
     case SYSCALL_NOTIFY:
       {
-	res = syscall_notify(cur_th, target_proc);
+	res = syscall_notify(th, target_proc);
 	break;
       }
     default:
@@ -184,11 +187,11 @@ PUBLIC void syscall_handle(void)
     }
 
  end:
-
-  arch_printf("end of syscall :%u\n",res);
 	
   /* Set result in caller's return register */
-  arch_ctx_set((arch_ctx_t*)cur_th, ARCH_CONST_RETURN,res);
+  arch_ctx_set((arch_ctx_t*)th, ARCH_CONST_RETURN,res);
+
+  arch_printf("end of syscall :%u\n",arch_ctx_get((arch_ctx_t*)th, ARCH_CONST_RETURN));
 
   return;
 }
@@ -216,6 +219,7 @@ PUBLIC void syscall_handle(void)
 
 PRIVATE u8_t syscall_send(struct thread* th_sender, struct proc* proc_receiver)
 {
+
   struct thread* th_receiver;
   
   /* There must be a receiver - No broadcast allow */
@@ -433,7 +437,7 @@ PRIVATE u8_t syscall_deadlock(struct proc* psender, struct proc* ptarget)
 {
 
   struct thread_wrapper* wrapper;
-
+  
   /* Check all threads in `ptarget`*/
   if (!LLIST_ISNULL(ptarget->thread_list))
     {
@@ -483,8 +487,8 @@ PRIVATE struct thread* syscall_find_receiver(struct proc* ptarget, struct proc* 
 {
 
   struct thread_wrapper* wrapper;
-
-   /* Check all threads in `ptarget`*/
+  
+  /* Check all threads in `ptarget`*/
   if (!LLIST_ISNULL(ptarget->thread_list))
     {
       wrapper=LLIST_GETHEAD(ptarget->thread_list);
@@ -523,7 +527,7 @@ PRIVATE struct thread* syscall_find_waiting_sender(struct proc* ptarget, struct 
 
   struct thread* th;
 
-   /* Check all threads in `ptarget` wait list*/
+  /* Check all threads in `ptarget` wait list*/
   if (!LLIST_ISNULL(ptarget->wait_list))
     {
       th=LLIST_GETHEAD(ptarget->wait_list);

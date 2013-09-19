@@ -38,15 +38,15 @@ int main()
     {
       cm.op_1 = j%10;
       cm.op_2 = j%100;
-      mem_copy((addr_t)&cm,(addr_t)m.data,sizeof(struct calc_msg));
+      //mem_copy((addr_t)&cm,(addr_t)m.data,sizeof(struct calc_msg));
       if (ipc_sendrec(1,&m)!=IPC_SUCCESS)
       	{
       	  break;
       	}
-      mem_copy((addr_t)m.data,(addr_t)&cm,sizeof(struct calc_msg));
+      //mem_copy((addr_t)m.data,(addr_t)&cm,sizeof(struct calc_msg));
       //j++;
     }
-  while(1){}
+  //while(1){}
   return 0;
 }
 

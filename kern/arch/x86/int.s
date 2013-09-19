@@ -371,7 +371,7 @@ restore_ctx:
 	mov 	esp, dword [esp+THREAD_ESP_OFFSET]
 	
 restore_ctx_next:
-	add 	esp,4		; pop save_ctxt return address
+	add 	esp,4		; pop save_ctx return address
 	add 	esp,4		; pop error code
 	iretd
 

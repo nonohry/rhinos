@@ -58,7 +58,8 @@ proc.o: arch/x86/vm_paging.h vm_pool.h vm_slab.h thread.h arch/x86/arch_ctx.h
 proc.o: proc.h
 sched.o: ../include/define.h ../include/arch/x86/types.h ../include/llist.h
 sched.o: thread.h arch/x86/arch_ctx.h arch/x86/context.h proc.h
-sched.o: arch/x86/arch_vm.h arch/x86/vm_paging.h sched.h
+sched.o: arch/x86/arch_vm.h arch/x86/vm_paging.h sched.h arch/x86/arch_io.h
+sched.o: arch/x86/serial.h arch/x86/x86_lib.h arch/x86/x86_const.h
 pager0.o: ../include/define.h ../include/arch/x86/types.h
 pager0.o: arch/x86/arch_const.h arch/x86/x86_const.h arch/x86/context.h
 pager0.o: arch/x86/vm_paging.h boot.h pager0.h arch/x86/arch_io.h

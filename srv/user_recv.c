@@ -32,7 +32,7 @@ int main()
 
   while(ipc_receive(IPC_ANY,&m)==IPC_SUCCESS)
     {
-      mem_copy((addr_t)m.data,(addr_t)&cm,sizeof(struct calc_msg)); 
+      //mem_copy((addr_t)m.data,(addr_t)&cm,sizeof(struct calc_msg)); 
       
       switch(cm.op_code)
         {
@@ -45,12 +45,12 @@ int main()
         default:
           cm.op_res = 0;
         }
-      mem_copy((addr_t)&cm,(addr_t)m.data,sizeof(struct calc_msg));
+      //mem_copy((addr_t)&cm,(addr_t)m.data,sizeof(struct calc_msg));
       ipc_notify(m.from);
       ipc_send(m.from,&m);
     }
   
-  while(1){}
+  //while(1){}
   return 0;
 }
 
