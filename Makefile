@@ -4,7 +4,7 @@
 ARCH	?=	x86
 
 MAKE	:=	make
-SUBDIRS	:=	kern kern/arch/$(ARCH) srv #lib
+SUBDIRS	:=	kern srv lib kern/arch/$(ARCH)
 RM	:=	rm -f
 KERN	:=	kern/kern
 USER_SEND	:=	srv/user_send
