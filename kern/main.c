@@ -118,7 +118,7 @@ PUBLIC int main(void)
     }
 
 
-  thtest1 = thread_create("thtest1",0x80000000,0x90000000,0x200);
+  thtest1 = thread_create("thtest1",0x80000000,0x90000000,0x1000);
   if (thtest1 == NULL)
     {
       arch_printf("Unable to create in thtest1\n");
@@ -149,7 +149,7 @@ PUBLIC int main(void)
     }
 
 
-  thtest2 = thread_create("thtest2",0x80000000,0x90000000,0x200);
+  thtest2 = thread_create("thtest2",0x80000000,0x90000000,0x1000);
   if (thtest2 == NULL)
     {
       arch_printf("Unable to create in thtest2\n");
@@ -180,7 +180,7 @@ PUBLIC int main(void)
     }
 
 
-  thtest3 = thread_create("thtest3",0x80000000,0x90000000,0x200);
+  thtest3 = thread_create("thtest3",0x80000000,0x90000000,0x1000);
   if (thtest3 == NULL)
     {
       arch_printf("Unable to create in thtest3\n");

@@ -86,7 +86,7 @@ PUBLIC u8_t ctx_setup(struct x86_context* ctx, virtaddr_t base, virtaddr_t stack
   ctx->eip = (reg32_t)base;
 
   /* Set up ESP */
-  ctx->esp = (reg32_t)(stack_base+stack_size);
+  ctx->esp = (reg32_t)(stack_base+stack_size-2);
 
   return EXIT_SUCCESS;
 }
