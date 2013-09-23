@@ -71,6 +71,33 @@
 	(__x) = (__x) ^ (__y);
 
 
+
+/**
+
+   Structure: struct interval_tree
+   -------------------------------
+
+   Represent a node of an interval tree.
+   Members are:
+   - min     : Start of interval
+   - max     : End of interval
+   - type    : Type (in the sense of e820 mmap entry type)
+   - left    : left son
+   - right   : right son
+
+**/
+
+struct interval_tree
+{
+  u64_t min;
+  u64_t max;
+  u32_t type;
+  struct interval_tree* left;
+  struct interval_tree* right;
+};
+
+
+
 /**
 
    Privates
@@ -81,14 +108,17 @@
 **/
 
 
-PRIVATE u8_t e820_sanitize(struct multiboot_info* bootinfo);
+PRIVATE u8_t e820_partition(struct multiboot_mmap_entry* t,u8_t start,u8_t end);
+PRIVATE void e820_qsort(struct multiboot_mmap_entry* t, u8_t start, u8_t end);
+PRIVATE u8_t e820_tree_insert(u64_t min, u64_t max, u32_t type, struct interval_tree** t);
+PRIVATE void e820_tree_convert(struct interval_tree* t, u8_t index, struct multiboot_mmap_entry* mmap);
+PRIVATE u8_t e820_tree_count(struct interval_tree* t);
+PRIVATE struct interval_tree* e820_tree_alloc(void);
 PRIVATE u8_t e820_truncate32b(struct multiboot_info* bootinfo);
-
-
 
 /**
  
-   Static: mmap
+   Global: mmap
    ------------
 
    Memory map in a controlled location
@@ -99,31 +129,18 @@ PRIVATE u8_t e820_truncate32b(struct multiboot_info* bootinfo);
 struct multiboot_mmap_entry mmap[MULTIBOOT_MMAP_MAX];
 
 
-
 /**
 
-   DEBUG
+   Global: tree_pool
+   -----------------
+
+   Pool of `struct interval_tree` for allocation
 
 **/
 
-#include "serial.h"
 
-void print_mmap(u32_t n)
-{
-  u8_t i;
+struct interval_tree tree_pool[MULTIBOOT_MMAP_MAX];
 
-  serial_printf("\n");
-  for(i=0;i<n;i++)
-    {
-      serial_printf("addr: 0x%x%x \t len: 0x%x%x \t type: 0x%x\n",
-		    (u32_t)(mmap[i].addr >> 32), (u32_t)mmap[i].addr,
-		    (u32_t)(mmap[i].len >> 32), (u32_t)mmap[i].len,
-		    mmap[i].type);
-    }
-  
-  return;
-}
-  
 
 
 /**
@@ -143,6 +160,7 @@ void print_mmap(u32_t n)
 PUBLIC u8_t e820_setup(struct multiboot_info* bootinfo)
 {
   struct multiboot_mmap_entry* entry;
+  struct interval_tree* tree=NULL;
   u8_t i;
 
 
@@ -210,16 +228,23 @@ PUBLIC u8_t e820_setup(struct multiboot_info* bootinfo)
   /* Set number of entries */
   bootinfo->mmap_length = i;
 
-  print_mmap(bootinfo->mmap_length);
-  while(1);
+  /* Reverse sort mmap according to memory type */
+  e820_qsort(mmap,0,bootinfo->mmap_length-1);
 
- 
-  /* Sanitize memory map */
-  if ( e820_sanitize(bootinfo) != EXIT_SUCCESS )
+  /* Build tree */
+  for(i=0;i<bootinfo->mmap_length;i++)
     {
-      return EXIT_FAILURE;
+      if (e820_tree_insert(mmap[i].addr,mmap[i].addr+mmap[i].len-1,mmap[i].type,&tree) != EXIT_SUCCESS)
+	{
+	  return EXIT_FAILURE;
+	}
     }
   
+  /* Update memory map lenght */
+  bootinfo->mmap_length = e820_tree_count(tree);
+
+  /* Convert tree to mmap */
+  e820_tree_convert(tree,0,mmap);
   
   /* Truncate memory at 4GB */ 
   if ( e820_truncate32b(bootinfo) != EXIT_SUCCESS )
@@ -231,217 +256,229 @@ PUBLIC u8_t e820_setup(struct multiboot_info* bootinfo)
 }
 
 
-
 /**
 
-   Function: u8_t e820_sanitize(struct multiboot_info* bootinfo)
-   -------------------------------------------------------------------
+   Function: u8_t partition(struct multiboot_mmap_entry* t,u8_t start,u8_t end)
+   ----------------------------------------------------------------------------
 
-   Sanitize memory map. Memory map provided by bootloader can have overlaps.
-   The function merges these overlaps and sort the entry by starting address.
-   
-   It's a glutton algorithm that inspect entries one by one. If an overlap
-   is discovered, we merge entries in terms of entries type. If new entries
-   are created during merging, they are added at the end of the memory map.
-   
+   Create a memory map partition for reverse quick sorting mmap according to its `type`.
+   Partition is based on a pivot element `type` which is the last element for ease of programming.
+
+   The partition process result in a memeory map partition where all elements before the pivot have
+   a greater `type`and all element after have a smaller `type`.
+
+   It returns the pivot index in the memory map.
+
 **/
 
 
-PRIVATE u8_t e820_sanitize(struct multiboot_info* bootinfo)
+PRIVATE u8_t e820_partition(struct multiboot_mmap_entry* t,u8_t start,u8_t end)
 {
-  u8_t i,j,flag;
-  u64_t A,B,C,D;
-  struct multiboot_mmap_entry* mmap;
-  struct multiboot_mmap_entry tmpEntry;
-
-  mmap = (struct multiboot_mmap_entry*)bootinfo->mmap_addr;
-
-  /* Glutton run through */
-  for(i=0;i<bootinfo->mmap_length-1;i++)
+  if (start+1<end)
     {
-      /* Segment extremities */
-      A=mmap[i].addr;
-      B=mmap[i].len+mmap[i].addr-1;
+      u8_t i,j;
 
-      for(j=i+1;j<bootinfo->mmap_length;j++)
+      /* Partition with t[end] as a pivot */
+      i=start;
+      j=end-1;
+      
+      while( i<j )
 	{
-	  /* Flag (re)initialization  */
-	  flag = 3;
-
-	  /* comapred segment extremities */
-	  C=mmap[j].addr;
-	  D=mmap[j].len+mmap[j].addr-1;
-
-	  /* Overlap ! */
-	  if ((s64_t)(MIN(B,D)-MAX(A,C))>0)
+	  /* Find first index with type greater than t[end] */
+	  while( (t[i].type>=t[end].type)&&(i<end) )
 	    {
-	      /* Flag represents overlap degree */
-	      if (A!=C) flag&=2;
-	      if (B!=D) flag&=1;
-
-	      switch(flag)
-		{
-		case 0:
-		  {
-		    /* 3 new entries creation */
-		    if (bootinfo->mmap_length+1 < MULTIBOOT_MMAP_MAX)
-		      {
-			u8_t t0,t1,t2;
-			
-			/* Types for each segment */
-			t0 = (MIN(A,C) == A ? mmap[i].type : mmap[j].type);
-			t1 = MAX(mmap[i].type,mmap[j].type);
-			t2 = (MAX(B,D) == B ? mmap[i].type : mmap[j].type);
-
-			mmap[i].addr = MIN(A,C);
-			mmap[i].len = MAX(A,C)-MIN(A,C);
-			mmap[i].type = t0;
-
-			mmap[j].addr = MAX(A,C);
-			mmap[j].len = MIN(B,D)-MAX(A,C)+1;
-			mmap[j].type = t1;
-
-			mmap[bootinfo->mmap_length].addr = MIN(B,D)+1;
-			mmap[bootinfo->mmap_length].len = MAX(B,D)-MIN(B,D);
-			mmap[bootinfo->mmap_length].type = t2;
-
-			/* We have created one more entry */
-			bootinfo->mmap_length++; 
-		      }
-		    else
-		      {
-			/* Too much overlaps */
-			return EXIT_FAILURE;
-		      }
-
-		    break;
-		  }
-		case 1:
-		  {
-		    /* First extremity is shared, 2 entries creation */
-		    u8_t t0,t1;
-			
-		    /* Types for each segment */
-		    t0 = MAX(mmap[i].type,mmap[j].type);
-		    t1 = (MAX(B,D) == B ? mmap[i].type : mmap[j].type);
-
-		    mmap[i].addr = MAX(A,C);
-		    mmap[i].len = MIN(B,D)-MAX(A,C)+1;
-		    mmap[i].type = t0;
-		    
-		    mmap[j].addr = MIN(B,D)+1;
-		    mmap[j].len = MAX(B,D)-MIN(B,D);
-		    mmap[j].type = t1;
-		    
-
-		    break;
-		  }
-		case 2:
-		  {
-		    /* Last extremity is shared, 2 entries creation */
-		    u8_t t0,t1;
-
-		    t0 = (MIN(A,C) == A ? mmap[i].type : mmap[j].type);
-		    t1 = MAX(mmap[i].type,mmap[j].type);
-		    
-		    mmap[i].addr = MIN(A,C);
-		    mmap[i].len = MAX(A,C)-MIN(A,C);
-		    mmap[i].type = t0;
-
-		    mmap[j].addr = MAX(A,C);
-		    mmap[j].len = MIN(B,D)-MAX(A,C)+1;
-		    mmap[j].type = t1;
-
-
-		    break;
-		  }
-		case 3:
-		  {
-		    /* Segments are mingled, we remove the one with lowest type */
-		    u8_t k;
-
-		    /* Get higest type */
-		    mmap[i].type = MAX(mmap[i].type,mmap[j].type);
-		    
-		    /* Remove mingled segment */
-		    for(k=j;k<bootinfo->mmap_length-1;k++)
-		      {
-			mmap[k]=mmap[k+1];
-		      }
-		    
-		    bootinfo->mmap_length--;
-
-		    break;
-		  }
-		default:
-		  {
-		    return EXIT_FAILURE;
-		  }
-		}
-	      
-	      /* We have removed an entry */
-	      i--;
-	      break;
-
+	      i++;
+	    }
+	  
+	  
+	  /* Find last index with type lower than t[end] */
+	  while( (t[j].type<t[end].type)&&(j>start) )
+	    {
+	      j--;
+	    }
+	  
+	  /* Swap if possible */
+	  if ( i<j )
+	    {
+	      SWAP(t[i].size,t[j].size);
+	      SWAP(t[i].addr,t[j].addr);
+	      SWAP(t[i].len,t[j].len);
+	      SWAP(t[i].type,t[j].type);
 	    }
 	}
+     
+      /* Place pivot element at the boundary */
+      if (i!=end)
+	{
+	  SWAP(t[i].size,t[end].size);
+	  SWAP(t[i].addr,t[end].addr);
+	  SWAP(t[i].len,t[end].len);
+	  SWAP(t[i].type,t[end].type);
+	}
+
+      /* Return pivot index */
+      return i;
+
     }
-
-  /* Memory map bubble sort */
-  do
-    {
-      flag=0;
-      for(i=0;i<bootinfo->mmap_length-1;i++)
-	{
-	  if (mmap[i].addr > mmap[i+1].addr)
-	    {
-	      /* Entries exchange */
-	      tmpEntry.addr=mmap[i].addr;
-	      tmpEntry.len=mmap[i].len;
-	      tmpEntry.type=mmap[i].type;
-
-	      mmap[i].addr=mmap[i+1].addr;
-	      mmap[i].len=mmap[i+1].len;
-	      mmap[i].type=mmap[i+1].type;
-
-	      mmap[i+1].addr=tmpEntry.addr;
-	      mmap[i+1].len=tmpEntry.len;
-	      mmap[i+1].type=tmpEntry.type;
-
-	      flag=1;
-
-	    }
-	}
-    }while(flag);
-
-
-  /* Memory map smooth */
-  for(i=0;i<bootinfo->mmap_length-1;i++)
-    {
-      /* Merge entries if they share extremities and have same type */
-      if ( (mmap[i].addr+mmap[i].len == mmap[i+1].addr)&&(mmap[i].type == mmap[i+1].type) )
-	{
-	  /* Update size */
-	  mmap[i].len = mmap[i].len+mmap[i+1].len;
-
-	  /* Remove the second entry */
-	  for(j=i+1;j<bootinfo->mmap_length-1;j++)
-	    {
-	      mmap[j]=mmap[j+1];
-	    }
-
-	  /* Update number of entries */
-	  bootinfo->mmap_length--;
-
-	  /* We have removed an entry */
-	  i--;
-
-	}
-    }
-
-  return EXIT_SUCCESS;
+  
+  /* Return `start` as pivot index */
+  return start;
+  
 }
 
+
+/**
+
+   Function: void e820_qsort(struct multiboot_mmap_entry* t, u8_t start, u8_t end)
+   -------------------------------------------------------------------------------
+
+   Reverse quick sort memory map according to `type` fields.
+   
+   It first create a partition using `e820_partition` then sort recursively 
+   the two resulting parts.
+   
+
+**/
+
+
+PRIVATE void e820_qsort(struct multiboot_mmap_entry* t, u8_t start, u8_t end)
+{
+    if (start+1<end)
+    {
+      u8_t n = e820_partition(t,start,end);
+      e820_qsort(t,start,n-1);
+      e820_qsort(t,n+1,end);
+    }
+  return;
+}
+
+
+/**
+
+   Function: u8_t e820_tree_insert(u64_t min, u64_t max, u32_t type, struct interval_tree** t)
+   -------------------------------------------------------------------------------------------
+
+   Insert a new node made of `min`, `max` and `type` in tree `t`.
+   Thus function is recursive.
+
+**/
+
+PRIVATE u8_t e820_tree_insert(u64_t min, u64_t max, u32_t type, struct interval_tree** t)
+{
+  if (*t == NULL)
+   {
+     /* Create a new node */
+     *t=e820_tree_alloc();
+     if (*t == NULL)
+       {
+	 return EXIT_FAILURE;
+       }
+     (*t)->min = min;
+     (*t)->max = max;
+     (*t)->type = type;
+     (*t)->left = NULL;
+     (*t)->right = NULL;
+   }
+   else
+   {
+     if (min < (*t)->min)
+       {
+	 /* Insert remaining left interval */
+	 if (e820_tree_insert(min,(*t)->min > max ? max : (*t)->min-1 ,type,&((*t)->left)) != EXIT_SUCCESS)
+	   {
+	     return EXIT_FAILURE;
+	   }
+	 
+       }
+     
+     /* Insert remaining right interval */
+     if (max > (*t)->max)
+       {
+	 if (e820_tree_insert( (*t)->max < min ? min : (*t)->max+1 ,max,type,&((*t)->right)) != EXIT_SUCCESS)
+	   {
+	     return EXIT_FAILURE;
+	   }
+       }
+   }
+   
+   return EXIT_SUCCESS;
+}
+
+/**
+
+   Function: u8_t e820_tree_count(struct interval_tree* t)
+   -------------------------------------------------------
+
+   Count number of elements in a tree `t`
+   This function is recursive
+
+**/
+
+PRIVATE u8_t e820_tree_count(struct interval_tree* t)
+{
+  if (t!=NULL)
+   {
+     return (1+e820_tree_count(t->left)+e820_tree_count(t->right));
+   }
+  
+  return 0;
+}
+
+
+/**
+
+   Function: void e820_tree_convert(struct interval_tree* t, u8_t index, struct multiboot_mmap_entry* t)
+   -----------------------------------------------------------------------------------------------------
+
+   Convert an interval tree into a memory map stored in `t`.
+
+   Do a Deep First Search, remenbering the index where to store the values into table `t`.
+   This function is recursive.
+
+**/
+
+PRIVATE void e820_tree_convert(struct interval_tree* t, u8_t index, struct multiboot_mmap_entry* mmap)
+{
+  if (t!=NULL)
+    {
+      u8_t n = 0;
+
+      n = e820_tree_count(t->left);
+ 
+      e820_tree_convert(t->left,index,mmap);
+
+      mmap[index+n].addr=t->min;
+      mmap[index+n].len=t->max - t->min + 1;
+      mmap[index+n].type=t->type;
+
+      e820_tree_convert(t->right,index+n+1,mmap);
+    }
+
+  return;
+}
+
+
+/**
+
+   Function: struct interval_tree* e820_tree_alloc(void)
+   -----------------------------------------------------
+
+   Allocate a `struct interval_tree` from `tree_pool`
+
+   Simply return the current element of `tree_pool`.
+
+**/
+
+PRIVATE struct interval_tree* e820_tree_alloc(void)
+{
+  static u8_t i=0;
+  if (i<MULTIBOOT_MMAP_MAX)
+    {
+      return (&(tree_pool[i++]));
+    }
+
+  return NULL;
+}
 
 
 /**
