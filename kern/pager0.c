@@ -86,6 +86,7 @@ PRIVATE u8_t pager0_free(physaddr_t paddr)__attribute__((unused));
 
 **/
 
+#include <arch_io.h>
 
 u8_t pager0_setup(void)
 {
@@ -100,7 +101,6 @@ u8_t pager0_setup(void)
   mmap = (struct boot_mmap_entry*)boot.mmap_addr;
   for(i=0;i<boot.mmap_length;i++)
     {
-      
       for(j=(u32_t)mmap[i].addr;j<(u32_t)(mmap[i].addr+mmap[i].len);j+=ARCH_CONST_PAGE_SIZE)
 	{
 
