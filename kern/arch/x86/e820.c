@@ -58,6 +58,21 @@
 
 /**
 
+   Macro: SWAP
+   -----------
+
+   swap 2 values via XOR
+
+**/
+
+#define SWAP(__x,__y)				\
+        (__x) = (__x) ^ (__y);			\
+	(__y) = (__x) ^ (__y);			\
+	(__x) = (__x) ^ (__y);
+
+
+/**
+
    Privates
    --------
 
@@ -81,7 +96,7 @@ PRIVATE u8_t e820_truncate32b(struct multiboot_info* bootinfo);
 **/
 
 
-static struct multiboot_mmap_entry mmap[MULTIBOOT_MMAP_MAX] __attribute__((section(".data")));
+struct multiboot_mmap_entry mmap[MULTIBOOT_MMAP_MAX];
 
 
 /**
@@ -103,6 +118,8 @@ PUBLIC u8_t e820_setup(struct multiboot_info* bootinfo)
   struct multiboot_mmap_entry* entry;
   u8_t i;
 
+
+  /* Buld memory map in a controled area */
   if (bootinfo->flags & MULTIBOOT_FLAG_MMAP)
     {
       for(entry = (struct multiboot_mmap_entry*)bootinfo->mmap_addr, i=0;
