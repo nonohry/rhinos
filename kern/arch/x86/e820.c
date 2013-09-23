@@ -99,6 +99,33 @@ PRIVATE u8_t e820_truncate32b(struct multiboot_info* bootinfo);
 struct multiboot_mmap_entry mmap[MULTIBOOT_MMAP_MAX];
 
 
+
+/**
+
+   DEBUG
+
+**/
+
+#include "serial.h"
+
+void print_mmap(u32_t n)
+{
+  u8_t i;
+
+  serial_printf("\n");
+  for(i=0;i<n;i++)
+    {
+      serial_printf("addr: 0x%x%x \t len: 0x%x%x \t type: 0x%x\n",
+		    (u32_t)(mmap[i].addr >> 32), (u32_t)mmap[i].addr,
+		    (u32_t)(mmap[i].len >> 32), (u32_t)mmap[i].len,
+		    mmap[i].type);
+    }
+  
+  return;
+}
+  
+
+
 /**
 
    Function: u8_t e820_setup(struct multiboot_info* bootinfo)
@@ -182,6 +209,10 @@ PUBLIC u8_t e820_setup(struct multiboot_info* bootinfo)
   bootinfo->mmap_addr = (u32_t)mmap;
   /* Set number of entries */
   bootinfo->mmap_length = i;
+
+  print_mmap(bootinfo->mmap_length);
+  while(1);
+
  
   /* Sanitize memory map */
   if ( e820_sanitize(bootinfo) != EXIT_SUCCESS )

@@ -42,7 +42,7 @@ setup.o: ../../../include/define.h ../../../include/arch/x86/types.h
 setup.o: ../../boot.h x86_const.h context.h x86_lib.h serial.h e820.h setup.h
 setup.o: vm_segment.h pic.h pit.h vm_paging.h interrupt.h
 e820.o: ../../../include/define.h ../../../include/arch/x86/types.h
-e820.o: x86_const.h context.h setup.h e820.h
+e820.o: x86_const.h context.h setup.h e820.h serial.h
 vm_segment.o: ../../../include/define.h ../../../include/arch/x86/types.h
 vm_segment.o: x86_const.h context.h vm_segment.h
 vm_paging.o: ../../../include/define.h ../../../include/arch/x86/types.h
