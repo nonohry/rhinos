@@ -118,7 +118,7 @@ PRIVATE u8_t e820_truncate32b(struct multiboot_info* bootinfo);
 
 /**
  
-   Global: mmap
+   Static: mmap
    ------------
 
    Memory map in a controlled location
@@ -126,12 +126,12 @@ PRIVATE u8_t e820_truncate32b(struct multiboot_info* bootinfo);
 **/
 
 
-struct multiboot_mmap_entry mmap[MULTIBOOT_MMAP_MAX];
+static struct multiboot_mmap_entry mmap[MULTIBOOT_MMAP_MAX] __attribute__((section(".data")));
 
 
 /**
 
-   Global: tree_pool
+   Static: tree_pool
    -----------------
 
    Pool of `struct interval_tree` for allocation
@@ -139,7 +139,7 @@ struct multiboot_mmap_entry mmap[MULTIBOOT_MMAP_MAX];
 **/
 
 
-struct interval_tree tree_pool[MULTIBOOT_MMAP_MAX];
+static struct interval_tree tree_pool[MULTIBOOT_MMAP_MAX] __attribute__((section(".data")));
 
 
 
@@ -242,6 +242,10 @@ PUBLIC u8_t e820_setup(struct multiboot_info* bootinfo)
   
   /* Update memory map lenght */
   bootinfo->mmap_length = e820_tree_count(tree);
+  if (bootinfo->mmap_length == 0)
+    {
+	  return EXIT_FAILURE;
+    }
 
   /* Convert tree to mmap */
   e820_tree_convert(tree,0,mmap);
