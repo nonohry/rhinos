@@ -315,7 +315,7 @@ save_ctx:
 
 	cld
 
-	;; Save ESP and point it to ret_addr field of thread cpu_info struct
+	;; Save ESP and point it to ret_addr field of context
 	mov dword [save_esp],esp
 	mov esp, [cur_th]
 	add esp,THREAD_RET_OFFSET

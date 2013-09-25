@@ -81,7 +81,7 @@ PUBLIC struct x86_context
    Prototypes
    ----------
 
-   Define symble for context setup, context post save and switch.
+    Give access to context setup, context post save and switch.
 
 **/
 
