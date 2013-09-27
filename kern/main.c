@@ -84,6 +84,7 @@ PUBLIC int main(void)
       goto err;
     }
 
+
   if (proc_setup() != EXIT_SUCCESS)
     {
       arch_printf("Unable to setup process subsystem\n");

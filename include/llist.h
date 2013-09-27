@@ -179,4 +179,22 @@
   (__e)->prev;
 
 
+
+/**
+
+   LLIST_MERGE
+   -----------
+
+   Merge two lists
+
+**/
+
+#define LLIST_MERGE(__l1,__l2,__type)			\
+  ((__l1)->prev)->next = (__l2);                \
+  ((__l2)->prev)->next = (__l1);                \
+  (__l1)->prev = (__type)((unsigned int)((__l1)->prev) ^ (unsigned int)((__l2)->prev)); \
+  (__l2)->prev = (__type)((unsigned int)((__l1)->prev) ^ (unsigned int)((__l2)->prev)); \
+  (__l1)->prev = (__type)((unsigned int)((__l1)->prev) ^ (unsigned int)((__l2)->prev));
+   
+
 #endif
